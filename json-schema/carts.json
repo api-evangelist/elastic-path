@@ -1,0 +1,5644 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/elastic-path/main/json-schema/carts.json",
+  "title": "Carts, Checkout, Orders Introduction",
+  "description": "A cart contains a list of the products that a shopper adds to the cart while browsing your catalog. In the context of a cart, a selected product is called a cart item.",
+  "version": "26.0313.7324347",
+  "$defs": {
+    "CartContact": {
+      "title": "CartContact",
+      "type": "object",
+      "properties": {
+        "email": {
+          "description": "The email address attached to a cart.",
+          "type": "string",
+          "format": "email",
+          "examples": [
+            "tester@email.com"
+          ]
+        }
+      }
+    },
+    "DiscountSettings": {
+      "title": "DiscountSettings",
+      "type": "object",
+      "properties": {
+        "custom_discounts_enabled": {
+          "description": "This parameter enables custom discounts for a cart. When set to true, Elastic Path promotions will not be applied to the new carts. Default is set from cart discount settings for the store. See [Cart Settings](/docs/api/carts/put-v-2-settings-cart).",
+          "type": "boolean",
+          "examples": [
+            false
+          ]
+        },
+        "use_rule_promotions": {
+          "description": "When set to true, this parameter allows the cart to use rule promotions.",
+          "type": "boolean",
+          "examples": [
+            false
+          ]
+        }
+      }
+    },
+    "InventorySettings": {
+      "title": "InventorySettings",
+      "type": "object",
+      "properties": {
+        "defer_inventory_check": {
+          "description": "This parameter enables deferring inventory checks on the cart. This allows items to be added to or updating in the cart without checking stock levels. Inventory checks are still performed as normal on checkout",
+          "type": "boolean",
+          "examples": [
+            false
+          ]
+        }
+      }
+    },
+    "ItemSettings": {
+      "title": "ItemSettings",
+      "type": "object",
+      "properties": {
+        "separate_items_by_location": {
+          "description": "When set to true, cart items with the same SKU but different locations are kept as separate line items instead of being merged. When false (default), items with the same SKU are merged and the location is updated to the most recent value.",
+          "type": "boolean",
+          "examples": [
+            false
+          ]
+        }
+      }
+    },
+    "CustomAttributes": {
+      "title": "CustomAttributes",
+      "type": "object",
+      "description": "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "type",
+          "value"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "The type of the custom attribute value.",
+            "enum": [
+              "string",
+              "integer",
+              "boolean",
+              "float"
+            ]
+          },
+          "value": {
+            "description": "The value of the custom attribute.",
+            "type": [
+              "string",
+              "boolean",
+              "number"
+            ]
+          }
+        }
+      }
+    },
+    "FormattedPriceData": {
+      "title": "FormattedPriceData",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "description": "The raw total.",
+          "type": "number",
+          "examples": [
+            10000
+          ]
+        },
+        "currency": {
+          "description": "The currency set for this amount.",
+          "type": "string",
+          "examples": [
+            "USD"
+          ]
+        },
+        "formatted": {
+          "description": "The formatted total based on the amount and currency.",
+          "type": "string",
+          "examples": [
+            "$10.00"
+          ]
+        }
+      }
+    },
+    "CartTimestamps": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "description": "The date this was created.",
+          "type": "string"
+        },
+        "updated_at": {
+          "description": "The date this was last updated.",
+          "type": "string"
+        },
+        "expires_at": {
+          "description": "The date this expires.",
+          "type": "string"
+        }
+      }
+    },
+    "RelationshipItem": {
+      "title": "RelationshipItem",
+      "description": "Relationship data entry",
+      "required": [
+        "type",
+        "id"
+      ],
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "The type of related resource.",
+          "type": "string"
+        },
+        "id": {
+          "description": "The ID of the related resource.",
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "RelationshipArray": {
+      "title": "RelationshipArray",
+      "description": "Array of relationships",
+      "type": "object",
+      "properties": {
+        "data": {
+          "description": "Individual relationships",
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/RelationshipItem"
+          }
+        }
+      }
+    },
+    "BaseCartResponse": {
+      "title": "BaseCartResponse",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "The unique identifier for the cart. Use SDK or create it yourself.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of this cart.",
+          "type": "string",
+          "examples": [
+            "cart name"
+          ]
+        },
+        "description": {
+          "description": "A description of the cart.",
+          "type": "string",
+          "examples": [
+            "cart description"
+          ]
+        },
+        "contact": {
+          "$ref": "#/components/schemas/CartContact"
+        },
+        "discount_settings": {
+          "$ref": "#/components/schemas/DiscountSettings"
+        },
+        "inventory_settings": {
+          "$ref": "#/components/schemas/InventorySettings"
+        },
+        "item_settings": {
+          "$ref": "#/components/schemas/ItemSettings"
+        },
+        "payment_intent_id": {
+          "description": "Stripe-assigned unique identifier for the linked Payment Intent",
+          "type": "string"
+        },
+        "custom_attributes": {
+          "$ref": "#/components/schemas/CustomAttributes"
+        },
+        "snapshot_date": {
+          "description": "The snapshot date for the cart.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "description": "A link to that specific resource.",
+              "type": "string"
+            }
+          },
+          "examples": [
+            "https://useast.api.elasticpath.com/v2/carts/1"
+          ]
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "display_price": {
+              "type": "object",
+              "properties": {
+                "with_tax": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "without_tax": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "tax": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "discount": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "without_discount": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "shipping": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "shipping_discount": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                }
+              }
+            },
+            "timestamps": {
+              "$ref": "#/components/schemas/CartTimestamps"
+            },
+            "promotion_suggestions": {
+              "description": "Array of promotion suggestions",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "bundle": {
+                    "description": "Bundle configuration with promotion targets",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "auto_add_free_gift": {
+                          "description": "Whether to automatically add free gift",
+                          "type": "boolean"
+                        },
+                        "cart_item_id": {
+                          "description": "Cart item ID for the target",
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "description": "Quantity for the promotion",
+                          "type": "integer"
+                        },
+                        "targets": {
+                          "description": "Array of target SKUs",
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "info": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "promotion_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "properties": {
+            "customers": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RelationshipArray"
+                },
+                {
+                  "type": "object",
+                  "maxProperties": 0
+                }
+              ]
+            },
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RelationshipArray"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "oneOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              ]
+            },
+            "accounts": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RelationshipArray"
+                },
+                {
+                  "type": "object",
+                  "maxProperties": 0
+                }
+              ]
+            },
+            "custom_discounts": {
+              "$ref": "#/components/schemas/RelationshipArray"
+            },
+            "promotions": {
+              "$ref": "#/components/schemas/RelationshipArray"
+            }
+          }
+        }
+      }
+    },
+    "CartResponse": {
+      "title": "CartResponse",
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BaseCartResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "description": "The type of object being returned.",
+              "type": "string",
+              "const": "cart"
+            }
+          }
+        }
+      ]
+    },
+    "Response.PageLinks": {
+      "type": "object",
+      "properties": {
+        "current": {
+          "description": "Always the current page.",
+          "type": "string"
+        },
+        "first": {
+          "description": "Always the first page.",
+          "type": "string"
+        },
+        "last": {
+          "description": "If there is only one page, it is `null`.",
+          "type": "string"
+        },
+        "next": {
+          "description": "If there is only one page, it is `null`.",
+          "type": "string"
+        },
+        "prev": {
+          "description": "if the user is on the first page, it is `null`.",
+          "type": "string"
+        }
+      }
+    },
+    "Response.PaginationPage": {
+      "type": "object",
+      "properties": {
+        "current": {
+          "description": "The current page.",
+          "type": "integer"
+        },
+        "limit": {
+          "description": "The maximum number of records per page for this response. You can set this value up to 100.",
+          "type": "integer"
+        },
+        "offset": {
+          "description": "The current offset by number of records, not pages. Offset is zero-based.",
+          "type": "integer"
+        },
+        "total": {
+          "description": "The total page count.",
+          "type": "integer"
+        }
+      }
+    },
+    "Response.PaginationResults": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "description": "The total page count.",
+          "type": "integer"
+        }
+      }
+    },
+    "Response.Meta.Carts": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/components/schemas/Response.PaginationPage"
+        },
+        "results": {
+          "$ref": "#/components/schemas/Response.PaginationResults"
+        }
+      }
+    },
+    "CartCollectionResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/CartResponse"
+          }
+        },
+        "links": {
+          "$ref": "#/components/schemas/Response.PageLinks"
+        },
+        "meta": {
+          "$ref": "#/components/schemas/Response.Meta.Carts"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "Response.ErrorItem": {
+      "type": "object",
+      "required": [
+        "status",
+        "title"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "A brief summary of the error.",
+          "examples": [
+            "Bad Request"
+          ]
+        },
+        "status": {
+          "type": [
+            "string",
+            "integer"
+          ],
+          "description": "The HTTP response code of the error.",
+          "examples": [
+            "400"
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "description": "Optional additional detail about the error.",
+          "examples": [
+            "The field 'name' is required"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "description": "The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity')."
+        },
+        "meta": {
+          "type": "object",
+          "description": "Additional metadata associated with the error. May include arbitrary keys.",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The resource id associated with the error"
+            },
+            "ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "description": "The resource ids associated with the error"
+              }
+            },
+            "item_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "description": "The cart_item ids associated with the error"
+              }
+            },
+            "shipping_group_id": {
+              "type": "string",
+              "description": "The shipping group id associated with the error"
+            },
+            "shipping_group_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "description": "The shipping group ids associated with the error"
+              }
+            },
+            "cart_id": {
+              "type": "string",
+              "description": "The cart id associated with the error"
+            },
+            "code": {
+              "type": "string",
+              "description": "The code associated with the error."
+            },
+            "order_id": {
+              "type": "string",
+              "description": "The order id associated with the error."
+            },
+            "sku": {
+              "type": "string",
+              "description": "The SKU associated with the error."
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "description": "The email address associated with the error."
+            },
+            "component_product_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The component product ID associated with the error."
+            },
+            "error-meta-key": {
+              "type": "string",
+              "description": "Custom error metadata key used for additional error context (e.g., in payment rejections)."
+            },
+            "value": {
+              "description": "The value associated with the error.",
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                {
+                  "type": "array"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "Response.ErrorResponse": {
+      "type": "object",
+      "required": [
+        "errors"
+      ],
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/Response.ErrorItem"
+          }
+        }
+      }
+    },
+    "CartsRequest": {
+      "title": "CartsRequest",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "The cart description.",
+              "examples": [
+                "cart description"
+              ]
+            },
+            "discount_settings": {
+              "$ref": "#/components/schemas/DiscountSettings"
+            },
+            "inventory_settings": {
+              "$ref": "#/components/schemas/InventorySettings"
+            },
+            "item_settings": {
+              "$ref": "#/components/schemas/ItemSettings"
+            },
+            "name": {
+              "description": "The cart name provided by the shopper. A cart name must contain 1 to 255 characters. You cannot use whitespace characters, but special characters are permitted. For more information, see the [Safe Characters](/guides/Getting-Started/safe-characters) section.",
+              "type": "string",
+              "examples": [
+                "my cart name"
+              ]
+            },
+            "contact": {
+              "$ref": "#/components/schemas/CartContact"
+            },
+            "snapshot_date": {
+              "description": "This optional parameter sets a reference date for the cart. If this parameter is set, it allows the cart to act as one that might occur on that specified date. For example, such future carts might acquire future-enabled discounts, allowing users to test and validate future interactions with carts. The snapshot_date must be in the format 2026-02-21T15:07:25Z. By default, this parameter is left empty.",
+              "type": "string",
+              "examples": [
+                "2026-09-10T00:12:00Z"
+              ]
+            },
+            "custom_attributes": {
+              "description": "Specifies custom attributes for cart objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nAttribute types include:\n  - string\n  - boolean\n  - integer\n  - float\n\nMultiple custom attributes may be submitted together.  A cart can have a maximum of 20 custom attributes.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n\nUpdating an existing cart with new custom attributes clears previously-saved attributes.  In order to maintain existing custom attributes on a cart, please include them in the update request along with any new attributes.\n",
+              "$ref": "#/components/schemas/CustomAttributes"
+            },
+            "payment_intent_id": {
+              "description": "To remove the Stripe payment intent from a cart, pass the empty value in the `payment_intent_id` field.  You must use an empty value for this field. You cannot use this endpoint to directly update the cart to use an existing Payment Intent.",
+              "type": "string",
+              "examples": [
+                ""
+              ]
+            }
+          }
+        }
+      }
+    },
+    "CustomDiscountResponse": {
+      "title": "CustomDiscountResponse",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Specifies the type of the resource. Always `custom_discount`.",
+          "type": "string",
+          "const": "custom_discount"
+        },
+        "id": {
+          "description": "Specifies the UUID of the custom discount.",
+          "type": "string",
+          "format": "uuid",
+          "examples": [
+            "662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9"
+          ]
+        },
+        "external_id": {
+          "description": "Specifies an external id for the custom discount.",
+          "type": "string",
+          "examples": [
+            "custom-discount-external-id"
+          ]
+        },
+        "discount_engine": {
+          "description": "Specifies from where the custom discount is applied.\n",
+          "type": "string",
+          "examples": [
+            "Custom Discount Engine"
+          ]
+        },
+        "amount": {
+          "description": "The amount of the custom discount.",
+          "$ref": "#/components/schemas/FormattedPriceData"
+        },
+        "description": {
+          "description": "Specifies a description for the custom discount.",
+          "type": "string",
+          "examples": [
+            "Custom discount description"
+          ]
+        },
+        "discount_code": {
+          "description": "Specifies the discount code used for the custom discount.",
+          "type": "string",
+          "examples": [
+            "cart-custom-promo-code"
+          ]
+        },
+        "relationships": {
+          "description": "Relationships to other resources like cart items",
+          "type": "object",
+          "properties": {
+            "item": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The cart item ID this discount is related to"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "cart_item",
+                        "custom_item"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "CondensedPromotionResponse": {
+      "title": "CondensedPromotionResponse",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Specifies the type of the resource. Always `promotion`.",
+          "type": "string",
+          "const": "promotion",
+          "examples": [
+            "promotion"
+          ]
+        },
+        "id": {
+          "description": "Specifies the UUID of the promotion.",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true,
+          "examples": [
+            "662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9"
+          ]
+        },
+        "name": {
+          "description": "The name of the promotion.",
+          "type": "string",
+          "examples": [
+            "Summer Sale"
+          ]
+        },
+        "description": {
+          "description": "The description of the promotion.",
+          "type": "string",
+          "examples": [
+            "Get 20% off all summer items"
+          ]
+        },
+        "automatic": {
+          "description": "Whether the promotion is applied automatically.",
+          "type": "boolean",
+          "examples": [
+            true
+          ]
+        },
+        "promotion_type": {
+          "description": "The type of promotion (for v1 promotions).",
+          "type": "string",
+          "examples": [
+            "discount"
+          ]
+        },
+        "promotion_source": {
+          "description": "The source of the promotion (for rule promotions).",
+          "type": "string",
+          "examples": [
+            "rule-promotion"
+          ]
+        },
+        "start": {
+          "description": "The start date and time of the promotion.",
+          "type": "string",
+          "format": "date-time",
+          "examples": [
+            "2024-06-01T00:00:00Z"
+          ]
+        },
+        "end": {
+          "description": "The end date and time of the promotion.",
+          "type": "string",
+          "format": "date-time",
+          "examples": [
+            "2024-08-31T23:59:59Z"
+          ]
+        }
+      }
+    },
+    "CartEntityResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/CartResponse"
+        },
+        "included": {
+          "type": "object",
+          "description": "Related objects that are included in the response.",
+          "properties": {
+            "custom_discounts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CustomDiscountResponse"
+              }
+            },
+            "promotions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CondensedPromotionResponse"
+              }
+            }
+          }
+        },
+        "meta": {
+          "type": "object",
+          "description": "Additional metadata for the cart response.",
+          "properties": {
+            "payment_intent": {
+              "type": "object",
+              "description": "Payment intent details with nested structure including status and other Stripe payment intent fields",
+              "additionalProperties": true
+            }
+          }
+        },
+        "errors": {
+          "type": "array",
+          "description": "Array of error objects, if any errors occurred.",
+          "items": {
+            "$ref": "#/components/schemas/Response.ErrorItem"
+          }
+        }
+      }
+    },
+    "ItemPriceData": {
+      "title": "Order Price Data",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "description": "The amount for this item as an integer.",
+          "type": "number",
+          "readOnly": true,
+          "examples": [
+            10000
+          ]
+        },
+        "currency": {
+          "description": "The currency this item was added to the cart as.",
+          "type": "string",
+          "readOnly": true,
+          "examples": [
+            "USD"
+          ]
+        },
+        "includes_tax": {
+          "description": "Whether or not this price is tax inclusive.",
+          "type": "boolean",
+          "readOnly": true,
+          "examples": [
+            false
+          ]
+        }
+      }
+    },
+    "Money": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "integer",
+          "description": "Amount in minor currency units (e.g., cents)."
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO 4217 currency code (e.g., \"USD\")."
+        },
+        "includes_tax": {
+          "type": "boolean",
+          "description": "Whether the amount includes tax."
+        }
+      },
+      "required": [
+        "amount",
+        "currency",
+        "includes_tax"
+      ]
+    },
+    "Discount": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/components/schemas/Money"
+        },
+        "code": {
+          "type": "string",
+          "description": "The discount code used, if applicable."
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the discount."
+        },
+        "promotion_source": {
+          "type": "string",
+          "description": "The source or origin of the promotion, if applicable."
+        },
+        "is_cart_discount": {
+          "type": "boolean",
+          "description": "Indicates whether the discount applies to the entire cart."
+        },
+        "ordinal": {
+          "type": "integer",
+          "description": "Order in which the discount was applied."
+        }
+      },
+      "required": [
+        "amount",
+        "id"
+      ]
+    },
+    "CartItemFormattedPriceData": {
+      "title": "CartItemFormattedPriceData",
+      "type": "object",
+      "properties": {
+        "unit": {
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/FormattedPriceData"
+            }
+          ],
+          "description": "The amount per each single unit."
+        },
+        "value": {
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/FormattedPriceData"
+            }
+          ],
+          "description": "The total amount of the item (i.e., unit * quantity)."
+        }
+      }
+    },
+    "Timestamps": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "description": "The date this was created.",
+          "type": "string"
+        },
+        "updated_at": {
+          "description": "The date this was last updated.",
+          "type": "string"
+        }
+      }
+    },
+    "CartItemResponse": {
+      "title": "Cart Item Response",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "The unique identifier for the cart item.",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true,
+          "examples": [
+            "4649fbb3-b8ee-4883-82c9-49a3d5fbacf1"
+          ]
+        },
+        "type": {
+          "description": "The type of cart item.",
+          "type": "string",
+          "readOnly": true,
+          "enum": [
+            "cart_item",
+            "custom_item",
+            "subscription_item",
+            "promotion_item"
+          ],
+          "examples": [
+            "cart_item"
+          ]
+        },
+        "product_id": {
+          "description": "The unique ID of the product (for cart_item type).",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true,
+          "examples": [
+            "55cda543-f9d7-42a4-b40a-665f2e4ff7c5"
+          ]
+        },
+        "promotion_id": {
+          "description": "The unique ID of the promotion (for promotion_item type).",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true,
+          "examples": [
+            "9993387e-93ab-468f-bba9-cf13882dc52d"
+          ]
+        },
+        "subscription_offering_id": {
+          "description": "The unique ID of the subscription offering for subscription items.",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true,
+          "examples": [
+            "9c13669e-29d7-42ea-bc95-1b32399adb9d"
+          ]
+        },
+        "name": {
+          "description": "The name of this item",
+          "type": "string",
+          "readOnly": true,
+          "examples": [
+            "shirt"
+          ]
+        },
+        "description": {
+          "description": "A description of the cart item.",
+          "type": "string",
+          "readOnly": true,
+          "examples": [
+            "T-shirt."
+          ]
+        },
+        "sku": {
+          "description": "The SKU of the cart item.",
+          "type": "string",
+          "readOnly": true,
+          "examples": [
+            "sample-sku"
+          ]
+        },
+        "slug": {
+          "description": "The slug of the cart item.",
+          "type": "string",
+          "readOnly": true,
+          "examples": [
+            "sample-product"
+          ]
+        },
+        "catalog_id": {
+          "description": "The unique identifier of the catalog associated with the product is shown if catalog_source=pim is set.",
+          "type": "string",
+          "readOnly": true,
+          "format": "uuid",
+          "examples": [
+            "11d3f9d2-c99b-472c-96c3-51842333daea"
+          ]
+        },
+        "catalog_source": {
+          "description": "The catalog source. Always `pim` or `legacy`.",
+          "type": "string",
+          "readOnly": true,
+          "examples": [
+            "pim"
+          ]
+        },
+        "bundle_configuration": {
+          "description": "Configuration for bundle products.",
+          "type": "object",
+          "readOnly": true,
+          "properties": {
+            "selected_options": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              }
+            },
+            "component_products": {
+              "description": "Array of component products for bundle configuration",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "description": "Product ID",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Product type",
+                    "type": "string"
+                  },
+                  "attributes": {
+                    "description": "Product attributes as a generic object",
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "meta": {
+                    "description": "Product meta information as a generic object",
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "price": {
+                    "description": "Product price",
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "relationships": {
+                    "description": "Product relationships as a generic object",
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "components": {
+          "description": "Components of the cart item for bundle products.",
+          "type": "object",
+          "readOnly": true,
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "quantity": {
+                      "type": "number"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "image": {
+          "type": "object",
+          "readOnly": true,
+          "properties": {
+            "mime_type": {
+              "description": "The MIME type for the uploaded file.",
+              "type": "string",
+              "readOnly": true,
+              "examples": [
+                "image/png"
+              ]
+            },
+            "file_name": {
+              "description": "The name of the image file that was uploaded.",
+              "type": "string",
+              "readOnly": true,
+              "examples": [
+                "shirt-trans.png"
+              ]
+            },
+            "href": {
+              "description": "The link to the image.",
+              "type": "string",
+              "readOnly": true,
+              "examples": [
+                "https://files-eu.epusercontent.com/e8c53cb0-120d-4ea5-8941-ce74dec06038/7cc08cbb-256e-4271-9b01-d03a9fac9f0a.png"
+              ]
+            }
+          }
+        },
+        "quantity": {
+          "description": "The quantity of the cart item.",
+          "type": "integer",
+          "readOnly": true,
+          "examples": [
+            1
+          ]
+        },
+        "auto_add_quantity": {
+          "description": "The quantity automatically added (for gift items).",
+          "type": "integer",
+          "readOnly": true
+        },
+        "manage_stock": {
+          "description": "Whether or not the quantity of the item will be checked against inventory.",
+          "type": "boolean",
+          "readOnly": true,
+          "examples": [
+            true
+          ]
+        },
+        "unit_price": {
+          "description": "The unit price of the item.",
+          "readOnly": true,
+          "$ref": "#/components/schemas/ItemPriceData"
+        },
+        "value": {
+          "description": "The total price of the item (i.e., unit * quantity).",
+          "readOnly": true,
+          "$ref": "#/components/schemas/ItemPriceData"
+        },
+        "discounts": {
+          "description": "Array of discounts applied to the cart item.",
+          "type": "array",
+          "readOnly": true,
+          "items": {
+            "$ref": "#/components/schemas/Discount"
+          }
+        },
+        "custom_inputs": {
+          "description": "Custom inputs for personalized products.",
+          "type": "object",
+          "readOnly": true,
+          "additionalProperties": true,
+          "examples": [
+            {
+              "tshirt_front": "John Doe",
+              "tshirt_back": "My Custom Text"
+            }
+          ]
+        },
+        "subscription_configuration": {
+          "description": "Configuration for subscription items.",
+          "type": "object",
+          "readOnly": true,
+          "properties": {
+            "plan": {
+              "description": "The subscription plan ID.",
+              "type": "string"
+            },
+            "pricing_option": {
+              "description": "The subscription pricing option ID.",
+              "type": "string"
+            }
+          }
+        },
+        "links": {
+          "type": "object",
+          "readOnly": true,
+          "properties": {
+            "product": {
+              "description": "A URL related to the resource.",
+              "type": "string",
+              "examples": [
+                "https://useast.api.elasticpath.com/products/9eda5ba0-4f4a-4074-8547-ccb05d1b5981"
+              ]
+            },
+            "subscription_offering": {
+              "description": "A URL related to the subscription offering resource.",
+              "type": "string"
+            }
+          }
+        },
+        "meta": {
+          "type": "object",
+          "readOnly": true,
+          "properties": {
+            "display_price": {
+              "type": "object",
+              "properties": {
+                "with_tax": {
+                  "description": "The amount of this item after discounts and taxes are applied.",
+                  "$ref": "#/components/schemas/CartItemFormattedPriceData"
+                },
+                "without_tax": {
+                  "description": "The amount of this item after discounts are applied and before taxes.",
+                  "$ref": "#/components/schemas/CartItemFormattedPriceData"
+                },
+                "tax": {
+                  "description": "The amount of taxes applied to this item.",
+                  "$ref": "#/components/schemas/CartItemFormattedPriceData"
+                },
+                "discount": {
+                  "description": "The amount of the discount applied to this item.",
+                  "$ref": "#/components/schemas/CartItemFormattedPriceData"
+                },
+                "without_discount": {
+                  "$ref": "#/components/schemas/CartItemFormattedPriceData"
+                },
+                "original_price": {
+                  "description": "The product's original catalog price before any catalog-level sales, tiered pricing adjustments, or cart/item level promotions are applied. This value is sourced from the product's `meta.original_display_price` field in the catalog response. See [Get a Product](/docs/api/pxm/catalog/get-by-context-product).",
+                  "$ref": "#/components/schemas/CartItemFormattedPriceData"
+                },
+                "discounts": {
+                  "description": "Detailed discount information.",
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "required": [
+                      "amount",
+                      "currency",
+                      "formatted"
+                    ],
+                    "properties": {
+                      "amount": {
+                        "description": "The discount amount.",
+                        "type": "integer",
+                        "examples": [
+                          100
+                        ]
+                      },
+                      "currency": {
+                        "description": "The currency code.",
+                        "type": "string",
+                        "examples": [
+                          "USD"
+                        ]
+                      },
+                      "formatted": {
+                        "description": "The formatted discount amount.",
+                        "type": "string",
+                        "examples": [
+                          "$1.00"
+                        ]
+                      },
+                      "constituents": {
+                        "description": "The discount constituents.",
+                        "type": "object",
+                        "additionalProperties": {
+                          "$ref": "#/components/schemas/FormattedPriceData"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "timestamps": {
+              "$ref": "#/components/schemas/Timestamps"
+            }
+          }
+        },
+        "relationships": {
+          "description": "Relationships to other resources.",
+          "readOnly": true,
+          "type": "object",
+          "properties": {
+            "taxes": {
+              "description": "Related tax items.",
+              "type": "object",
+              "properties": {
+                "data": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RelationshipItem"
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "custom_discounts": {
+              "description": "Related custom discounts.",
+              "type": "object",
+              "properties": {
+                "data": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RelationshipItem"
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "promotions": {
+              "description": "Related promotions.",
+              "type": "object",
+              "properties": {
+                "data": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RelationshipItem"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "shipping_group_id": {
+          "description": "The shipping group ID for this item.",
+          "type": "string",
+          "readOnly": true,
+          "examples": [
+            "eb063818-939a-458f-97a4-2601c0c2b445"
+          ]
+        },
+        "promotion_source": {
+          "description": "The source of the promotion (for promotion items).",
+          "type": "string",
+          "readOnly": true,
+          "enum": [
+            "rule-promotion"
+          ],
+          "examples": [
+            "rule-promotion"
+          ]
+        },
+        "location": {
+          "description": "The stock location for this item.",
+          "type": "string",
+          "readOnly": true,
+          "examples": [
+            "warehouse-1"
+          ]
+        },
+        "custom_attributes": {
+          "description": "Custom attributes attached to the cart item.",
+          "readOnly": true,
+          "$ref": "#/components/schemas/CustomAttributes"
+        }
+      }
+    },
+    "TaxItemResponse": {
+      "title": "TaxItemResponse",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Specifies the type of the resource. Always `tax_item`.",
+          "type": "string",
+          "const": "tax_item"
+        },
+        "id": {
+          "description": "Specifies the UUID of the tax item.",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true,
+          "examples": [
+            "662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9"
+          ]
+        },
+        "jurisdiction": {
+          "description": "The jurisdiction for the tax item.",
+          "type": "string",
+          "examples": [
+            "US-CA"
+          ]
+        },
+        "code": {
+          "description": "The tax code for the tax item.",
+          "type": "string",
+          "examples": [
+            "CA_SALES_TAX"
+          ]
+        },
+        "name": {
+          "description": "The name of the tax item.",
+          "type": "string",
+          "examples": [
+            "California Sales Tax"
+          ]
+        },
+        "rate": {
+          "description": "The tax rate as a decimal (e.g., 0.085 for 8.5%).",
+          "type": "number",
+          "format": "float",
+          "examples": [
+            0.085
+          ]
+        },
+        "amount": {
+          "description": "The tax amount in the smallest currency unit.",
+          "type": "integer",
+          "examples": [
+            850
+          ]
+        }
+      }
+    },
+    "CartItemCollectionResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/CartItemResponse"
+          }
+        },
+        "included": {
+          "type": "object",
+          "description": "Related objects that are included in the response.",
+          "properties": {
+            "custom_discounts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CustomDiscountResponse"
+              }
+            },
+            "promotions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "automatic": {
+                    "type": "boolean"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "promotion_type": {
+                    "type": "string"
+                  },
+                  "promotion_source": {
+                    "type": "string",
+                    "description": "The source of the promotion"
+                  },
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "promotion"
+                  }
+                }
+              }
+            },
+            "tax_items": {
+              "description": "Array of tax items included in the response.",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/TaxItemResponse"
+              }
+            }
+          }
+        },
+        "meta": {
+          "type": "object",
+          "description": "Additional meta information about the cart items collection.",
+          "properties": {
+            "display_price": {
+              "type": "object",
+              "properties": {
+                "with_tax": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "without_tax": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "tax": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "discount": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "without_discount": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "shipping": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "shipping_discount": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "authorized": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "balance_owing": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                },
+                "paid": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                }
+              }
+            },
+            "timestamps": {
+              "$ref": "#/components/schemas/CartTimestamps"
+            },
+            "messages": {
+              "type": "array",
+              "description": "Optional array of informational messages that provide feedback about operations performed on the cart items, such as promotions added or discounts applied. This field is only present when there are relevant messages to display.\n",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "object",
+                    "description": "Identifies the cart item that triggered this message",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "description": "The type of the source item"
+                      },
+                      "id": {
+                        "type": "string",
+                        "description": "The unique identifier of the source item"
+                      },
+                      "code": {
+                        "type": "string",
+                        "description": "The promotion code (present when source type is promotion)"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "id"
+                    ]
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "A short descriptive title for the message"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "A detailed description of the message"
+                  }
+                },
+                "required": [
+                  "title",
+                  "description"
+                ]
+              }
+            },
+            "promotion_suggestions": {
+              "description": "Array of promotion suggestions",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "bundle": {
+                    "description": "Bundle configuration with promotion targets",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "auto_add_free_gift": {
+                          "description": "Whether to automatically add free gift",
+                          "type": "boolean"
+                        },
+                        "cart_item_id": {
+                          "description": "Cart item ID for the target",
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "description": "Quantity for the promotion",
+                          "type": "integer"
+                        },
+                        "targets": {
+                          "description": "Array of target SKUs",
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "info": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "promotion_id": {
+                    "type": "string"
+                  },
+                  "auto_add": {
+                    "type": "boolean",
+                    "description": "Whether this promotion should be automatically added"
+                  },
+                  "targets": {
+                    "description": "Array of promotion targets (alternative structure)",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "cart_item_id": {
+                          "type": "string",
+                          "description": "The cart item ID for this target"
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "description": "The quantity for this target"
+                        },
+                        "skus": {
+                          "type": "array",
+                          "description": "Array of SKU codes for this target",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "errors": {
+          "type": "array",
+          "description": "Array of error objects, if any errors occurred.",
+          "items": {
+            "$ref": "#/components/schemas/Response.ErrorItem"
+          }
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "BulkUpdateCartsItemsCommon": {
+      "title": "Bulk Update Carts Items (Common Properties)",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Specifies the ID of the cart item that you want to update in cart.",
+          "type": "string",
+          "format": "uuid"
+        },
+        "quantity": {
+          "description": "Specifies the amount of items to update in the cart.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "type": {
+          "description": "The type of cart item being updated.",
+          "type": "string",
+          "enum": [
+            "cart_item",
+            "custom_item"
+          ]
+        },
+        "custom_inputs": {
+          "description": "Specifies the custom text to be added to a product. See [custom inputs](https://elasticpath.dev/docs/pxm/products/ep-pxm-products-api/update-a-product#using-custom-inputs-attribute).",
+          "type": "object"
+        },
+        "custom_attributes": {
+          "description": "Specifies custom attributes to be added to the cart item.",
+          "$ref": "#/components/schemas/CustomAttributes"
+        },
+        "shipping_group_id": {
+          "description": "Specifies the shipping group ID for the cart item.",
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "BulkUpdateCartsItemsWithQuantity": {
+      "title": "Update Cart Item Quantity",
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BulkUpdateCartsItemsCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "quantity",
+            "id"
+          ],
+          "properties": {
+            "quantity": {},
+            "id": {}
+          }
+        }
+      ]
+    },
+    "BulkUpdateCartsItemsWithShippingGroup": {
+      "title": "Update Cart Item Shipping Group",
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BulkUpdateCartsItemsCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "shipping_group_id",
+            "id"
+          ],
+          "properties": {
+            "shipping_group_id": {},
+            "id": {}
+          }
+        }
+      ]
+    },
+    "BulkUpdateCartsItemsWithCustomInputs": {
+      "title": "Update Cart Item Custom Inputs",
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BulkUpdateCartsItemsCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "custom_inputs",
+            "id"
+          ],
+          "properties": {
+            "custom_inputs": {},
+            "id": {}
+          }
+        }
+      ]
+    },
+    "UpdateAllOrNothingOptionsObject": {
+      "title": "Update All Or Nothing Options Object",
+      "type": "object",
+      "properties": {
+        "update_all_or_nothing": {
+          "description": "When set to`true`, if an error occurs for any item, no items are updated in the cart. When set to `false`, valid items are updated in the cart and the items with errors are reported in the response. Default is `true`.",
+          "type": "boolean",
+          "examples": [
+            false
+          ]
+        }
+      }
+    },
+    "BulkUpdateCartsItems": {
+      "title": "Bulk Update Carts Items",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BulkUpdateCartsItemsWithQuantity"
+              },
+              {
+                "$ref": "#/components/schemas/BulkUpdateCartsItemsWithShippingGroup"
+              },
+              {
+                "$ref": "#/components/schemas/BulkUpdateCartsItemsWithCustomInputs"
+              }
+            ]
+          }
+        },
+        "options": {
+          "$ref": "#/components/schemas/UpdateAllOrNothingOptionsObject"
+        }
+      }
+    },
+    "BaseItemObjectData": {
+      "title": "Base Item Object Data",
+      "type": "object",
+      "required": [
+        "quantity"
+      ],
+      "properties": {
+        "quantity": {
+          "description": "The number of items to add.",
+          "type": "number",
+          "examples": [
+            2
+          ]
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Specifies the ID of the product you want to add. (use this OR sku)",
+          "examples": [
+            "78d7b5c2-c852-40ad-87bb-beb161f61f37"
+          ]
+        },
+        "sku": {
+          "type": "string",
+          "description": "Specifies the item SKU that you want to add. (use this OR id)",
+          "examples": [
+            "my-item"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "Optional name for the product item. If not provided, the product name from catalog will be used.",
+          "examples": [
+            "Custom Product Name"
+          ]
+        },
+        "custom_inputs": {
+          "description": "The custom text to be added to a product.",
+          "type": "object"
+        },
+        "bundle_configuration": {
+          "description": "Object used to describe the bundle options selected.",
+          "type": "object",
+          "properties": {
+            "selected_options": {
+              "description": "Specifies selected options.",
+              "type": "object"
+            },
+            "component_products": {
+              "description": "Array of component products for the selected options.",
+              "type": "array"
+            }
+          }
+        },
+        "shipping_group_id": {
+          "description": "Identifier for a Shipping Group",
+          "type": "string"
+        },
+        "location": {
+          "description": "The slug of a stock location.",
+          "type": "string"
+        },
+        "custom_attributes": {
+          "$ref": "#/components/schemas/CustomAttributes"
+        }
+      }
+    },
+    "CartItemObjectData": {
+      "title": "Cart Item Object Data",
+      "allOf": [
+        {
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "description": "The type of object being returned. Must be `cart_item` for cart items.",
+              "type": "string",
+              "const": "cart_item"
+            }
+          }
+        },
+        {
+          "$ref": "#/components/schemas/BaseItemObjectData"
+        }
+      ]
+    },
+    "CartItemObjectRequest": {
+      "title": "Cart Item Object Request",
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/CartItemObjectData"
+        }
+      }
+    },
+    "SubscriptionItemObjectData": {
+      "title": "Subscription Item Object Data",
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "quantity",
+        "subscription_configuration"
+      ],
+      "properties": {
+        "type": {
+          "description": "The type of object being returned.",
+          "type": "string",
+          "const": "subscription_item"
+        },
+        "quantity": {
+          "description": "The number of items added to the cart.",
+          "type": "number",
+          "examples": [
+            1
+          ]
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Specifies the ID of the subscription offering you want to add to cart.",
+          "examples": [
+            "4ca958bc-7d69-4e2d-b5d4-c74bd5a6cde6"
+          ]
+        },
+        "subscription_configuration": {
+          "type": "object",
+          "description": "Specifies how the subscription offering should be configured.",
+          "required": [
+            "pricing_option",
+            "plan"
+          ],
+          "properties": {
+            "pricing_option": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The ID of the pricing option within the offering to use for the subscription."
+            },
+            "plan": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The ID of the plan within the offering to use for the subscription.",
+              "deprecated": true
+            }
+          }
+        }
+      }
+    },
+    "SubscriptionItemObject": {
+      "title": "Subscription Item Object",
+      "type": "object",
+      "properties": {
+        "data": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/SubscriptionItemObjectData"
+            },
+            {
+              "$ref": "#/components/schemas/CartItemResponse"
+            }
+          ]
+        }
+      }
+    },
+    "CartMergeObject": {
+      "title": "Cart Merge Object",
+      "type": "object",
+      "required": [
+        "type",
+        "cart_id"
+      ],
+      "properties": {
+        "type": {
+          "description": "The type of object being returned. Must be `cart_items`.",
+          "type": "string",
+          "const": "cart_items"
+        },
+        "cart_id": {
+          "description": "The original cart to be merged from.",
+          "type": "string",
+          "format": "uuid",
+          "examples": [
+            "78d7b5c2-c852-40ad-87bb-beb161f61f37"
+          ]
+        }
+      }
+    },
+    "AddAllOrNothingOptionsObject": {
+      "title": "Add All Or Nothing Options Object",
+      "type": "object",
+      "properties": {
+        "add_all_or_nothing": {
+          "description": "When `true`, if an error occurs for any item, no items are added to the cart. When `false`, valid items are added to the cart and the items with errors are reported in the response. Default is `false`.",
+          "type": "boolean",
+          "examples": [
+            false
+          ]
+        }
+      }
+    },
+    "CartMergeObjectRequest": {
+      "title": "Cart Merge Object Request",
+      "type": "object",
+      "properties": {
+        "data": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/CartMergeObject"
+            }
+          ],
+          "description": ""
+        },
+        "options": {
+          "$ref": "#/components/schemas/AddAllOrNothingOptionsObject"
+        }
+      }
+    },
+    "CustomItemObjectData": {
+      "title": "Custom Item Object Data",
+      "type": "object",
+      "required": [
+        "type",
+        "name",
+        "quantity",
+        "price"
+      ],
+      "properties": {
+        "type": {
+          "description": "The type of object being returned. Must be `custom_item`.",
+          "type": "string",
+          "const": "custom_item"
+        },
+        "quantity": {
+          "description": "The number of custom items to add to cart.",
+          "type": "number",
+          "examples": [
+            2
+          ]
+        },
+        "price": {
+          "type": "object",
+          "required": [
+            "amount"
+          ],
+          "properties": {
+            "amount": {
+              "description": "The unit price of the custom item.",
+              "type": "number",
+              "examples": [
+                10000
+              ]
+            },
+            "includes_tax": {
+              "description": "Set to`true` if relevant taxes have been included in the price, `false` if not. Defaults to `true`.",
+              "type": "boolean"
+            }
+          }
+        },
+        "description": {
+          "description": "A description of the custom item.",
+          "type": "string",
+          "examples": [
+            "My first custom item!"
+          ]
+        },
+        "sku": {
+          "type": "string",
+          "description": "The `SKU` code to use for the custom item. See [best practices](https://elasticpath.dev/docs/commerce-cloud/carts/cart-items/add-custom-item-to-cart#best-practices) to use the `SKU` code.",
+          "examples": [
+            "my-custom-item"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the custom item.",
+          "examples": [
+            "My Custom Item"
+          ]
+        },
+        "custom_inputs": {
+          "description": "The custom text to be added to a product.",
+          "type": "object"
+        },
+        "shipping_group_id": {
+          "description": "Identifier for a created Cart Shipping Group",
+          "type": "string"
+        },
+        "custom_attributes": {
+          "$ref": "#/components/schemas/CustomAttributes"
+        }
+      }
+    },
+    "CustomItemObject": {
+      "title": "Custom Item Object",
+      "type": "object",
+      "properties": {
+        "data": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/CustomItemObjectData"
+            }
+          ],
+          "description": ""
+        }
+      }
+    },
+    "ReOrderObject": {
+      "title": "Re Order Object",
+      "type": "object",
+      "required": [
+        "type",
+        "order_id"
+      ],
+      "properties": {
+        "type": {
+          "description": "The type of resource being returned. Use `order_items`.",
+          "type": "string",
+          "const": "order_items"
+        },
+        "order_id": {
+          "description": "The unique identifier of the order.",
+          "type": "string",
+          "format": "uuid",
+          "examples": [
+            "78d7b5c2-c852-40ad-87bb-beb161f61f37"
+          ]
+        }
+      }
+    },
+    "ReOrderObjectRequest": {
+      "title": "Re-Order Object Request",
+      "type": "object",
+      "properties": {
+        "data": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/ReOrderObject"
+            }
+          ]
+        },
+        "options": {
+          "$ref": "#/components/schemas/AddAllOrNothingOptionsObject"
+        }
+      }
+    },
+    "PromotionItemObjectData": {
+      "title": "Promotion Item Object Data",
+      "type": "object",
+      "required": [
+        "type",
+        "code"
+      ],
+      "properties": {
+        "type": {
+          "description": "Specifies the type of resource, which is `promotion_item`.",
+          "type": "string",
+          "const": "promotion_item"
+        },
+        "code": {
+          "description": "Specifies the promotion code. For more information about codes[].user[], see the [Create Promotion codes](/docs/api/promotions/create-promotion-codes) section.",
+          "type": "string",
+          "examples": [
+            "PROMO_CODE"
+          ]
+        }
+      }
+    },
+    "PromotionItemObject": {
+      "title": "Promotion Item Object",
+      "type": "object",
+      "properties": {
+        "data": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/PromotionItemObjectData"
+            }
+          ]
+        }
+      }
+    },
+    "BulkAddItemsRequest": {
+      "title": "Bulk Add Items Request",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CartItemObjectData"
+              },
+              {
+                "$ref": "#/components/schemas/CartMergeObject"
+              },
+              {
+                "$ref": "#/components/schemas/CustomItemObjectData"
+              },
+              {
+                "$ref": "#/components/schemas/ReOrderObject"
+              },
+              {
+                "$ref": "#/components/schemas/PromotionItemObjectData"
+              }
+            ]
+          }
+        },
+        "options": {
+          "$ref": "#/components/schemas/AddAllOrNothingOptionsObject"
+        }
+      }
+    },
+    "UpdateCartsItems": {
+      "title": "Update Carts Items",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "description": "The type of the cart item.",
+              "type": "string",
+              "const": "cart_item"
+            },
+            "id": {
+              "description": "The unique identifier of the cart item.",
+              "type": "string",
+              "format": "uuid",
+              "examples": [
+                "{{cartitemID}}"
+              ]
+            },
+            "quantity": {
+              "description": "The amount of products to add to cart.",
+              "type": "number",
+              "examples": [
+                2
+              ]
+            },
+            "custom_inputs": {
+              "description": "The custom text to be added to a product.",
+              "type": "object"
+            },
+            "custom_attributes": {
+              "description": "Custom attributes to be added to the cart item.",
+              "$ref": "#/components/schemas/CustomAttributes"
+            },
+            "shipping_group_id": {
+              "description": "The unique identifier of the shipping group to be added to the cart.",
+              "type": "string",
+              "format": "uuid",
+              "examples": [
+                "900ab9c1-4b39-43fe-b080-0dc2806065d9"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "CartsRelationshipsAccountsData": {
+      "title": "Carts Relationships Accounts Data",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "description": "The ID of the account.",
+                "type": "string",
+                "examples": [
+                  "{{accountID}}"
+                ]
+              },
+              "type": {
+                "description": "The type of related object. Ensure that it is account.",
+                "type": "string",
+                "examples": [
+                  "account"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "CartsRelationshipsCustomersData": {
+      "title": "Carts Relationships Customers Data",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "description": "The ID of the customer.",
+                "type": "string",
+                "examples": [
+                  "{{customerID}}"
+                ]
+              },
+              "type": {
+                "description": "The type of related object. Ensure that it is customer.",
+                "type": "string",
+                "examples": [
+                  "customer"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "CartsItemsTaxesCommon": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "code": {
+          "description": "A unique tax code in this jurisdiction.",
+          "type": "string"
+        },
+        "jurisdiction": {
+          "description": "The relevant tax jurisdiction.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the tax item.",
+          "type": "string"
+        },
+        "rate": {
+          "description": "The tax rate as a decimal (12.5% -> 0.125). You must specify either `rate` or `amount`, but not both.\n",
+          "type": "number"
+        },
+        "amount": {
+          "description": "The tax as an absolute amount in the smallest currency unit (e.g., $10 -> 1000). You must specify either `rate` or `amount`, but not both.\n",
+          "type": "number"
+        },
+        "type": {
+          "description": "The type of object being returned. Use `tax_item`.",
+          "type": "string",
+          "const": "tax_item"
+        },
+        "id": {
+          "description": "The unique identifier for this tax item.",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true
+        }
+      }
+    },
+    "CartsItemsTaxesWithRate": {
+      "title": "Tax Object (With Rate)",
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/CartsItemsTaxesCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "rate"
+          ],
+          "properties": {
+            "rate": {
+              "description": "The tax rate as a decimal (12.5% -> 0.125). Required when using rate-based taxation.\n",
+              "type": "number",
+              "examples": [
+                0.2
+              ]
+            },
+            "amount": {
+              "description": "The tax as an absolute amount. Not allowed when rate is specified.\n",
+              "type": "number",
+              "examples": [
+                1000
+              ]
+            }
+          },
+          "not": {
+            "type": "object",
+            "required": [
+              "amount"
+            ],
+            "properties": {
+              "amount": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CartsItemsTaxesWithAmount": {
+      "title": "Tax Object (With Amount)",
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/CartsItemsTaxesCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "amount"
+          ],
+          "properties": {
+            "amount": {
+              "description": "The tax as an absolute amount in the smallest currency unit (e.g., $10 -> 1000). Required when using amount-based taxation.\n",
+              "type": "number",
+              "examples": [
+                1000
+              ]
+            },
+            "rate": {
+              "description": "The tax rate as a decimal. Not allowed when amount is specified.\n",
+              "type": "number",
+              "examples": [
+                0.2
+              ]
+            }
+          },
+          "not": {
+            "type": "object",
+            "required": [
+              "rate"
+            ],
+            "properties": {
+              "rate": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CartsItemsTaxesObject": {
+      "title": "Carts Items Taxes Object",
+      "description": "A tax item that can be applied to cart items or bundle components. You must specify either a rate (percentage) or an amount (fixed value), but not both.\n",
+      "oneOf": [
+        {
+          "$ref": "#/components/schemas/CartsItemsTaxesWithRate"
+        },
+        {
+          "$ref": "#/components/schemas/CartsItemsTaxesWithAmount"
+        }
+      ],
+      "examples": [
+        {
+          "type": "tax_item",
+          "code": "VAT",
+          "jurisdiction": "UK",
+          "name": "Value Added Tax",
+          "rate": 0.2
+        },
+        {
+          "type": "tax_item",
+          "code": "EXCISE",
+          "jurisdiction": "US",
+          "name": "Excise Tax",
+          "amount": 500
+        }
+      ]
+    },
+    "CartItemTaxesEntityResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "$ref": "#/components/schemas/CartsItemsTaxesObject"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "CartItemRelationship": {
+      "title": "CartItemRelationship",
+      "type": "object",
+      "properties": {
+        "relationships": {
+          "type": "object",
+          "required": [
+            "item"
+          ],
+          "properties": {
+            "item": {
+              "type": "object",
+              "required": [
+                "data"
+              ],
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "id"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "Specifies the type of item. For example, `custom_item` or `cart_item`.",
+                      "type": "string",
+                      "examples": [
+                        "cart_item"
+                      ]
+                    },
+                    "id": {
+                      "description": "Specifies the unique identifier of the `cart_item` or `custom_item` in the cart.",
+                      "type": "string",
+                      "format": "uuid",
+                      "examples": [
+                        "5601a4b1-9d13-42d3-8fb7-03b35169d1b6"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "CartsBulkTaxes": {
+      "title": "CartsBulkTaxes",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CartsItemsTaxesObject"
+              },
+              {
+                "$ref": "#/components/schemas/CartItemRelationship"
+              }
+            ]
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/Response.ErrorItem"
+          }
+        },
+        "options": {
+          "$ref": "#/components/schemas/AddAllOrNothingOptionsObject"
+        }
+      }
+    },
+    "CartsCustomDiscountsObject": {
+      "title": "CartsCustomDiscountsObject",
+      "type": "object",
+      "required": [
+        "amount",
+        "description",
+        "discount_code",
+        "discount_engine",
+        "external_id",
+        "type"
+      ],
+      "properties": {
+        "amount": {
+          "type": "object",
+          "oneOf": [
+            {
+              "type": "number",
+              "examples": [
+                -1000
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "amount": {
+                  "type": "number",
+                  "examples": [
+                    -1000
+                  ]
+                },
+                "currency": {
+                  "type": "string",
+                  "examples": [
+                    "USD"
+                  ]
+                },
+                "formatted": {
+                  "type": "string",
+                  "examples": [
+                    "-$10.00"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "description": {
+          "description": "Specifies a description for the custom discount.",
+          "type": "string",
+          "examples": [
+            "Custom discount description"
+          ]
+        },
+        "discount_code": {
+          "description": "Specifies the discount code used for the custom discount.",
+          "type": "string",
+          "examples": [
+            "cart-custom-promo-code"
+          ]
+        },
+        "discount_engine": {
+          "description": "Specifies from where the custom discount is applied. For example, Talon.one.",
+          "type": "string",
+          "examples": [
+            "Custom Discount Engine"
+          ]
+        },
+        "external_id": {
+          "description": "Specifies an external id for the custom discount.",
+          "type": "string",
+          "examples": [
+            "custom-discount-external-id"
+          ]
+        },
+        "type": {
+          "description": "Specifies the type of the resource. Always `custom_discount`.",
+          "type": "string",
+          "const": "custom_discount"
+        },
+        "id": {
+          "description": "Specifies the UUID of the custom discount.",
+          "type": "string",
+          "format": "uuid"
+        },
+        "relationships": {
+          "description": "Relationships to other resources like cart items",
+          "type": "object",
+          "properties": {
+            "item": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The item ID this discount is related to"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "cart_item",
+                        "custom_item"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "CustomDiscountRelationshipsCartItemRequest": {
+      "title": "CustomDiscountRelationshipsCartItemRequest",
+      "type": "object",
+      "properties": {
+        "relationships": {
+          "type": "object",
+          "properties": {
+            "item": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "id"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "Specifies the type of item. For example, `custom_item` or `cart_item`.",
+                      "type": "string",
+                      "examples": [
+                        "cart_item"
+                      ]
+                    },
+                    "id": {
+                      "description": "Specifies the unique identifier of the `cart_item` or `custom_item` in the cart.",
+                      "type": "string",
+                      "format": "uuid",
+                      "examples": [
+                        "5601a4b1-9d13-42d3-8fb7-03b35169d1b6"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "CartItemBulkCustomDiscountObject": {
+      "title": "CartItemBulkCustomDiscountObject",
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/CartsCustomDiscountsObject"
+        },
+        {
+          "$ref": "#/components/schemas/CustomDiscountRelationshipsCartItemRequest"
+        }
+      ]
+    },
+    "CartsBulkCustomDiscounts": {
+      "title": "CartsBulkCustomDiscounts",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CartsCustomDiscountsObject"
+              },
+              {
+                "$ref": "#/components/schemas/CartItemBulkCustomDiscountObject"
+              }
+            ]
+          }
+        },
+        "options": {
+          "$ref": "#/components/schemas/AddAllOrNothingOptionsObject"
+        }
+      }
+    },
+    "CartsBulkCustomDiscountsResponse": {
+      "title": "CartsBulkCustomDiscountsResponse",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "$ref": "#/components/schemas/CartsCustomDiscountsObject"
+        },
+        "errors": {
+          "type": "array",
+          "description": "Array of validation or processing errors",
+          "items": {
+            "$ref": "#/components/schemas/Response.ErrorItem"
+          }
+        }
+      }
+    },
+    "CartsBulkCustomDiscountsCollectionResponse": {
+      "title": "CartsBulkCustomDiscountsCollectionResponse",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/components/schemas/CartsCustomDiscountsObject"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "description": "Array of validation or processing errors",
+          "items": {
+            "$ref": "#/components/schemas/Response.ErrorItem"
+          }
+        }
+      }
+    },
+    "CartsCustomDiscountsResponseObject": {
+      "title": "CartsCustomDiscountsResponse",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "description": "Specifies an amount to be applied for the custom discount. It must be less than zero.",
+              "type": "number",
+              "examples": [
+                -1000
+              ]
+            },
+            "currency": {
+              "description": "The currency set for the custom discount.",
+              "type": "string",
+              "examples": [
+                "USD"
+              ]
+            },
+            "formatted": {
+              "description": "The formatted value for the custom discount.",
+              "type": "string",
+              "examples": [
+                "-$10.00"
+              ]
+            }
+          }
+        },
+        "description": {
+          "description": "Specifies a description for the custom discount.",
+          "type": "string",
+          "examples": [
+            "Custom discount description"
+          ]
+        },
+        "discount_code": {
+          "description": "Specifies the discount code used for the custom discount.",
+          "type": "string",
+          "examples": [
+            "cart-custom-promo-code"
+          ]
+        },
+        "discount_engine": {
+          "description": "Specifies from where the custom discount is applied. For example, Talon.one.",
+          "type": "string",
+          "examples": [
+            "Custom Discount Engine"
+          ]
+        },
+        "external_id": {
+          "description": "Specifies an external id for the custom discount.",
+          "type": "string",
+          "examples": [
+            "custom-discount-external-id"
+          ]
+        },
+        "type": {
+          "description": "Specifies the type of the resource. Always `custom_discount`.",
+          "type": "string",
+          "const": "custom_discount"
+        },
+        "id": {
+          "description": "Specifies the UUID of the custom discount.",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true,
+          "examples": [
+            "662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9"
+          ]
+        },
+        "relationships": {
+          "description": "Relationships to other resources like cart items",
+          "type": "object",
+          "properties": {
+            "item": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The item ID this discount is related to"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "cart_item",
+                        "custom_item"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "CartsCustomDiscountsEntityRequest": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "$ref": "#/components/schemas/CartsCustomDiscountsResponseObject"
+        }
+      }
+    },
+    "CartsCustomDiscountsEntityResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "$ref": "#/components/schemas/CartsCustomDiscountsObject"
+        }
+      }
+    },
+    "CartsCustomDiscountsCollectionResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/components/schemas/CartsCustomDiscountsObject"
+          }
+        }
+      }
+    },
+    "AddressCommon": {
+      "type": "object",
+      "required": [
+        "first_name",
+        "last_name",
+        "line_1",
+        "postcode",
+        "country"
+      ],
+      "properties": {
+        "first_name": {
+          "description": "First name of the recipient.",
+          "type": "string",
+          "examples": [
+            "John"
+          ]
+        },
+        "last_name": {
+          "description": "Last name of the recipient.",
+          "type": "string",
+          "examples": [
+            "Doe"
+          ]
+        },
+        "company_name": {
+          "description": "Company of the recipient.",
+          "type": "string",
+          "examples": [
+            "John Doe Enterprises"
+          ]
+        },
+        "line_1": {
+          "description": "First line of the address.",
+          "type": "string",
+          "examples": [
+            "1 Sunny Street"
+          ]
+        },
+        "line_2": {
+          "description": "Second line of the address.",
+          "type": "string",
+          "examples": [
+            "Apartment 123"
+          ]
+        },
+        "city": {
+          "description": "City of the address.",
+          "type": "string",
+          "examples": [
+            "Los Angeles"
+          ]
+        },
+        "postcode": {
+          "description": "Post code of the address.",
+          "type": "string",
+          "examples": [
+            "92802"
+          ]
+        },
+        "county": {
+          "description": "County of the address.",
+          "type": "string",
+          "examples": [
+            "Orange"
+          ]
+        },
+        "country": {
+          "description": "Country of the address.",
+          "type": "string",
+          "examples": [
+            "US"
+          ]
+        },
+        "region": {
+          "description": "State, province, or region of the address.",
+          "type": "string",
+          "examples": [
+            "CA"
+          ]
+        }
+      }
+    },
+    "AddressWithRegion": {
+      "title": "Address with Region",
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/AddressCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "region"
+          ],
+          "properties": {
+            "region": {
+              "description": "State, province, or region of the address.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "AddressWithCounty": {
+      "title": "Address with County",
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/AddressCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "county"
+          ],
+          "properties": {
+            "county": {
+              "description": "County of the address.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "ShippingAddress": {
+      "title": "ShippingAddress",
+      "description": "Shipping address information. You must specify at least one of region (state/province) or county.\n",
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/AddressWithRegion"
+            },
+            {
+              "$ref": "#/components/schemas/AddressWithCounty"
+            }
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "phone_number": {
+              "description": "Phone number of the shipping recipient.",
+              "type": "string"
+            },
+            "instructions": {
+              "description": "Delivery instructions.",
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "examples": [
+        {
+          "first_name": "John",
+          "last_name": "Doe",
+          "line_1": "1 Sunny Street",
+          "line_2": "Apartment 123",
+          "city": "Los Angeles",
+          "postcode": "92802",
+          "region": "CA",
+          "country": "US",
+          "instructions": "Please leave on porch"
+        },
+        {
+          "first_name": "Jane",
+          "last_name": "Smith",
+          "line_1": "123 Main Street",
+          "city": "London",
+          "postcode": "SW1A 1AA",
+          "county": "Greater London",
+          "country": "GB",
+          "phone_number": "+44 20 7946 0958"
+        }
+      ]
+    },
+    "DeliveryEstimate": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "end": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "SingleRelationship": {
+      "title": "SingleRelationship",
+      "description": "Single relationship",
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/RelationshipItem"
+        }
+      }
+    },
+    "Discounts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/Discount"
+      }
+    },
+    "ShippingPriceResponse": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "$ref": "#/components/schemas/FormattedPriceData"
+        },
+        "base": {
+          "$ref": "#/components/schemas/FormattedPriceData"
+        },
+        "tax": {
+          "$ref": "#/components/schemas/FormattedPriceData"
+        },
+        "fees": {
+          "$ref": "#/components/schemas/FormattedPriceData"
+        },
+        "discount": {
+          "$ref": "#/components/schemas/FormattedPriceData"
+        }
+      },
+      "required": [
+        "total",
+        "base"
+      ]
+    },
+    "NonNegativeFormattedPriceData": {
+      "title": "NonNegativeFormattedPriceData",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "description": "The raw total. Must be non-negative.",
+          "type": "number",
+          "minimum": 0,
+          "examples": [
+            10000
+          ]
+        },
+        "currency": {
+          "description": "The currency set for this amount.",
+          "type": "string",
+          "examples": [
+            "USD"
+          ]
+        },
+        "formatted": {
+          "description": "The formatted total based on the amount and currency.",
+          "type": "string",
+          "examples": [
+            "$10.00"
+          ]
+        }
+      }
+    },
+    "DiscountFormattedPriceData": {
+      "title": "DiscountFormattedPriceData",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "description": "The discount amount. Must be non-positive (zero or negative).",
+          "type": "number",
+          "maximum": 0,
+          "examples": [
+            -1000,
+            0
+          ]
+        },
+        "currency": {
+          "description": "The currency set for this amount.",
+          "type": "string",
+          "examples": [
+            "USD"
+          ]
+        },
+        "formatted": {
+          "description": "The formatted total based on the amount and currency.",
+          "type": "string",
+          "examples": [
+            "-$10.00",
+            "$0.00"
+          ]
+        }
+      }
+    },
+    "OrderPriceWrapperMeta": {
+      "description": "Order pricing information.",
+      "type": "object",
+      "properties": {
+        "with_tax": {
+          "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+        },
+        "without_tax": {
+          "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+        },
+        "tax": {
+          "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+        },
+        "discount": {
+          "$ref": "#/components/schemas/DiscountFormattedPriceData"
+        },
+        "balance_owing": {
+          "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+        },
+        "paid": {
+          "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+        },
+        "authorized": {
+          "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+        },
+        "without_discount": {
+          "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+        },
+        "shipping": {
+          "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+        },
+        "shipping_discount": {
+          "$ref": "#/components/schemas/DiscountFormattedPriceData"
+        }
+      },
+      "required": [
+        "with_tax",
+        "without_tax",
+        "tax",
+        "discount",
+        "balance_owing",
+        "paid",
+        "authorized",
+        "without_discount",
+        "shipping",
+        "shipping_discount"
+      ]
+    },
+    "ShippingGroupMeta": {
+      "type": "object",
+      "properties": {
+        "shipping_display_price": {
+          "$ref": "#/components/schemas/ShippingPriceResponse"
+        },
+        "total_display_price": {
+          "$ref": "#/components/schemas/OrderPriceWrapperMeta"
+        }
+      }
+    },
+    "ShippingGroupResponse": {
+      "title": "Shipping Group Response",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "shipping_group"
+        },
+        "id": {
+          "type": "string"
+        },
+        "relation": {
+          "type": "string"
+        },
+        "cart_id": {
+          "type": "string"
+        },
+        "order_id": {
+          "type": "string"
+        },
+        "shipping_type": {
+          "type": "string"
+        },
+        "tracking_reference": {
+          "type": "string"
+        },
+        "external_ref": {
+          "description": "An optional external ID reference for a shipping group. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.",
+          "type": "string",
+          "maxLength": 64,
+          "examples": [
+            "SG-12345"
+          ]
+        },
+        "address": {
+          "$ref": "#/components/schemas/ShippingAddress"
+        },
+        "delivery_estimate": {
+          "$ref": "#/components/schemas/DeliveryEstimate"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "relationships": {
+          "type": "object",
+          "properties": {
+            "cart": {
+              "$ref": "#/components/schemas/SingleRelationship"
+            },
+            "order": {
+              "$ref": "#/components/schemas/SingleRelationship"
+            }
+          }
+        },
+        "discounts": {
+          "$ref": "#/components/schemas/Discounts"
+        },
+        "meta": {
+          "$ref": "#/components/schemas/ShippingGroupMeta"
+        }
+      }
+    },
+    "ShippingPriceRequest": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "number"
+        },
+        "base": {
+          "type": "number"
+        },
+        "tax": {
+          "type": "number"
+        },
+        "fees": {
+          "type": "number"
+        },
+        "discount": {
+          "type": "number"
+        }
+      }
+    },
+    "CreateShippingGroupRequest": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "shipping_group"
+            },
+            "shipping_type": {
+              "type": "string"
+            },
+            "tracking_reference": {
+              "type": "string"
+            },
+            "external_ref": {
+              "description": "An optional external ID reference for a shipping group. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters.",
+              "type": "string",
+              "maxLength": 64
+            },
+            "shipping_price": {
+              "$ref": "#/components/schemas/ShippingPriceRequest"
+            },
+            "address": {
+              "$ref": "#/components/schemas/ShippingAddress"
+            },
+            "includes_tax": {
+              "type": "boolean"
+            },
+            "delivery_estimate": {
+              "$ref": "#/components/schemas/DeliveryEstimate"
+            }
+          }
+        }
+      }
+    },
+    "OrderPriceData": {
+      "title": "OrderPriceData",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "description": "The amount for this item.",
+          "type": "number",
+          "examples": [
+            10000
+          ]
+        },
+        "currency": {
+          "description": "The currency this item.",
+          "type": "string",
+          "examples": [
+            "USD"
+          ]
+        },
+        "includes_tax": {
+          "description": "Whether this price is tax inclusive.",
+          "type": "boolean",
+          "examples": [
+            false
+          ]
+        }
+      }
+    },
+    "DiscountData": {
+      "title": "DiscountData",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/components/schemas/OrderPriceData"
+        },
+        "code": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true
+        },
+        "promotion_source": {
+          "type": "string",
+          "description": "The source or origin of the promotion, if applicable."
+        },
+        "is_cart_discount": {
+          "type": "boolean",
+          "description": "Indicates whether the discount applies to the entire cart."
+        },
+        "ordinal": {
+          "type": "integer",
+          "description": "Order in which the discount was applied."
+        }
+      }
+    },
+    "OrderItemFormattedUnitPriceData": {
+      "title": "OrderItemFormattedUnitPriceData",
+      "type": "object",
+      "properties": {
+        "unit": {
+          "$ref": "#/components/schemas/FormattedPriceData"
+        },
+        "value": {
+          "$ref": "#/components/schemas/FormattedPriceData"
+        }
+      }
+    },
+    "OrderItemResponse": {
+      "title": "OrderItemResponse",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "The type represents the object being returned.",
+          "type": "string",
+          "examples": [
+            "order_item"
+          ]
+        },
+        "id": {
+          "description": "The unique identifier for this order item.",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true,
+          "examples": [
+            "68bf8510-bebf-47b1-96ba-8a9930c7d928"
+          ]
+        },
+        "quantity": {
+          "description": "The quantity of this item were ordered.",
+          "type": "number",
+          "examples": [
+            1
+          ]
+        },
+        "product_id": {
+          "description": "The unique identifier for this order item.",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true,
+          "examples": [
+            "4e9c6098-9701-4839-a69c-54d8256d9012"
+          ]
+        },
+        "subscription_offering_id": {
+          "description": "The unique identifier for the subscription offering for this order item.",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true,
+          "examples": [
+            "69a39623-e681-415e-83c0-e1281010c77d"
+          ]
+        },
+        "name": {
+          "description": "The name of this order item.",
+          "type": "string",
+          "examples": [
+            "Product 123"
+          ]
+        },
+        "sku": {
+          "description": "The SKU code for the order item.",
+          "type": "string",
+          "examples": [
+            "IFD-1"
+          ]
+        },
+        "location": {
+          "description": "The stock location for this order item.",
+          "type": "string",
+          "readOnly": true
+        },
+        "unit_price": {
+          "$ref": "#/components/schemas/OrderPriceData"
+        },
+        "value": {
+          "$ref": "#/components/schemas/OrderPriceData"
+        },
+        "discounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/DiscountData"
+          }
+        },
+        "links": {
+          "type": "object"
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "display_price": {
+              "type": "object",
+              "properties": {
+                "with_tax": {
+                  "$ref": "#/components/schemas/OrderItemFormattedUnitPriceData"
+                },
+                "without_tax": {
+                  "$ref": "#/components/schemas/OrderItemFormattedUnitPriceData"
+                },
+                "tax": {
+                  "$ref": "#/components/schemas/OrderItemFormattedUnitPriceData"
+                },
+                "discount": {
+                  "$ref": "#/components/schemas/OrderItemFormattedUnitPriceData"
+                },
+                "without_discount": {
+                  "$ref": "#/components/schemas/OrderItemFormattedUnitPriceData"
+                },
+                "discounts": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "amount": {
+                        "type": "number",
+                        "examples": [
+                          -1000
+                        ]
+                      },
+                      "currency": {
+                        "type": "string",
+                        "examples": [
+                          "USD"
+                        ]
+                      },
+                      "formatted": {
+                        "type": "string",
+                        "examples": [
+                          "-$1.00"
+                        ]
+                      },
+                      "constituents": {
+                        "type": "object",
+                        "description": "Detailed breakdown of discount constituents by ID",
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "amount": {
+                              "type": "number",
+                              "description": "The discount amount"
+                            },
+                            "currency": {
+                              "type": "string",
+                              "description": "The currency code"
+                            },
+                            "formatted": {
+                              "type": "string",
+                              "description": "The formatted discount amount"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "original_price": {
+                  "description": "The product's original catalog price before any catalog-level sales, tiered pricing adjustments, or cart/item level promotions are applied. This value is sourced from the product's `meta.original_display_price` field in the catalog response. See [Get a Product](/docs/api/pxm/catalog/get-by-context-product).",
+                  "$ref": "#/components/schemas/OrderItemFormattedUnitPriceData"
+                }
+              }
+            },
+            "timestamps": {
+              "$ref": "#/components/schemas/Timestamps"
+            }
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "properties": {
+            "cart_item": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "description": "The type represents the object being returned.",
+                      "type": "string",
+                      "examples": [
+                        "order_item"
+                      ]
+                    },
+                    "id": {
+                      "description": "The unique identifier for this item.",
+                      "type": "string",
+                      "format": "uuid",
+                      "readOnly": true,
+                      "examples": [
+                        "5601a4b1-9d13-42d3-8fb7-03b35169d1b6"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "taxes": {
+              "description": "Related tax items.",
+              "type": "object",
+              "properties": {
+                "data": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RelationshipItem"
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "promotions": {
+              "description": "Related promotions.",
+              "type": "object",
+              "properties": {
+                "data": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RelationshipItem"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "catalog_id": {
+          "description": "The unique identifier of the catalog associated with the product is shown if `catalog_source=pim` is set.",
+          "type": "string",
+          "examples": [
+            "default"
+          ]
+        },
+        "catalog_source": {
+          "description": "The catalog source. Always `pim` or `legacy`.",
+          "type": "string",
+          "examples": [
+            "pim",
+            "legacy"
+          ]
+        },
+        "bundle_configuration": {
+          "description": "Configuration for bundle products.",
+          "type": "object",
+          "properties": {
+            "selected_options": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              }
+            },
+            "component_products": {
+              "description": "Array of component products for bundle configuration",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "description": "Component product ID",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "Component product type",
+                    "type": "string"
+                  },
+                  "attributes": {
+                    "description": "Product attributes as a generic object",
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "meta": {
+                    "description": "Product metadata as a generic object",
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "price": {
+                    "description": "Product price information as a generic object",
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "relationships": {
+                    "description": "Product relationships as a generic object",
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "components": {
+          "description": "Components of the bundle product.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "quantity": {
+                      "type": "number"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "custom_inputs": {
+          "description": "Custom inputs for the order item as a generic object",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "custom_attributes": {
+          "description": "Custom attributes attached to the order item.",
+          "readOnly": true,
+          "$ref": "#/components/schemas/CustomAttributes"
+        },
+        "shipping_group_id": {
+          "description": "The shipping group ID for the order item",
+          "type": "string"
+        },
+        "promotion_source": {
+          "description": "The promotion source for the order item",
+          "type": "string"
+        },
+        "subscription_configuration": {
+          "description": "Subscription configuration for the order item",
+          "type": "object",
+          "properties": {
+            "plan": {
+              "description": "Subscription plan details",
+              "type": "string"
+            },
+            "pricing_option": {
+              "description": "Pricing option for the subscription",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "ShippingGroupEntityResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "$ref": "#/components/schemas/ShippingGroupResponse"
+        },
+        "included": {
+          "type": "object",
+          "description": "Related objects that are included in the response when using the include query parameter.",
+          "properties": {
+            "items": {
+              "description": "Array of order items associated with this shipping group.",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/OrderItemResponse"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "errors": {
+          "type": "array",
+          "description": "Array of validation or processing errors",
+          "items": {
+            "$ref": "#/components/schemas/Response.ErrorItem"
+          }
+        }
+      }
+    },
+    "UpdateCartShippingGroupRequest": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "shipping_group"
+            },
+            "shipping_type": {
+              "type": "string"
+            },
+            "tracking_reference": {
+              "type": "string"
+            },
+            "external_ref": {
+              "description": "An optional external ID reference for a shipping group. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters.",
+              "type": "string",
+              "maxLength": 64
+            },
+            "shipping_price": {
+              "$ref": "#/components/schemas/ShippingPriceRequest"
+            },
+            "address": {
+              "$ref": "#/components/schemas/ShippingAddress"
+            },
+            "includes_tax": {
+              "type": "boolean"
+            },
+            "delivery_estimate": {
+              "$ref": "#/components/schemas/DeliveryEstimate"
+            }
+          }
+        }
+      }
+    },
+    "Data.BasePayments": {
+      "title": "Data.BasePayments",
+      "type": "object",
+      "required": [
+        "gateway",
+        "method"
+      ],
+      "properties": {
+        "gateway": {
+          "type": "string",
+          "enum": [
+            "adyen",
+            "authorize_net",
+            "braintree",
+            "card_connect",
+            "cyber_source",
+            "elastic_path_payments_stripe",
+            "manual",
+            "paypal_express_checkout",
+            "stripe",
+            "stripe_payment_intents"
+          ]
+        },
+        "method": {
+          "description": "Specifies the transaction method, such as `purchase` or `authorize`.",
+          "type": "string",
+          "enum": [
+            "authorize",
+            "purchase",
+            "purchase_setup",
+            "authorize_setup"
+          ]
+        },
+        "amount": {
+          "description": "The amount to be paid for the transaction.",
+          "type": "number",
+          "examples": [
+            10000
+          ]
+        }
+      }
+    },
+    "ElasticPathPaymentsPoweredByStripePayment": {
+      "title": "Elastic Path Payments Powered By Stripe",
+      "type": "object",
+      "properties": {
+        "data": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/Data.BasePayments"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "gateway": {
+                  "description": "Specifies the gateway. You must use `elastic_path_payments_stripe`.",
+                  "type": "string",
+                  "const": "elastic_path_payments_stripe"
+                },
+                "options": {
+                  "type": "object",
+                  "properties": {
+                    "receipt_email": {
+                      "description": "Provides the email address to which you want to send the Stripe receipts for the transactions within the store. This feature is available only in the live mode.",
+                      "type": "string"
+                    },
+                    "automatic_payment_methods": {
+                      "type": "object",
+                      "description": "Parent object determining whether to use Stripe's `automatic_payment_methods` setting.",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "description": "When set to true, it displays all enabled payment methods from the Stripe dashboard. When set to false, the Stripe default, which is card, is used."
+                        }
+                      }
+                    }
+                  }
+                },
+                "payment_method_types": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Specifies the Stripe payment method types configured for the store. See [Stripe Documentation](https://docs.stripe.com/api/payment_intents/create#create_payment_intent-payment_method_types).",
+                  "examples": [
+                    [
+                      "card"
+                    ]
+                  ]
+                },
+                "payment": {
+                  "description": "Specifies the Stripe token or source.",
+                  "type": "string"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "CartPaymentUpdate": {
+      "title": "Cart Payment Update",
+      "type": "object",
+      "required": [
+        "data"
+      ],
+      "properties": {
+        "data": {
+          "type": "object",
+          "required": [
+            "gateway",
+            "method",
+            "payment_method_types",
+            "amount"
+          ],
+          "properties": {
+            "gateway": {
+              "type": "string"
+            },
+            "method": {
+              "type": "string"
+            },
+            "payment_method_types": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "amount": {
+              "type": "integer"
+            },
+            "options": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "BillingAddress": {
+      "title": "BillingAddress",
+      "description": "Billing address information. You must specify at least one of region (state/province) or county.\n",
+      "anyOf": [
+        {
+          "$ref": "#/components/schemas/AddressWithRegion"
+        },
+        {
+          "$ref": "#/components/schemas/AddressWithCounty"
+        }
+      ],
+      "examples": [
+        {
+          "first_name": "John",
+          "last_name": "Doe",
+          "company_name": "John Doe Enterprises",
+          "line_1": "1 Sunny Street",
+          "line_2": "Apartment 123",
+          "city": "Los Angeles",
+          "postcode": "92802",
+          "region": "CA",
+          "country": "US"
+        },
+        {
+          "first_name": "Jane",
+          "last_name": "Smith",
+          "line_1": "123 Main Street",
+          "city": "London",
+          "postcode": "SW1A 1AA",
+          "county": "Greater London",
+          "country": "GB"
+        }
+      ]
+    },
+    "CustomerCheckout": {
+      "title": "Customer Checkout",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "order_number": {
+              "description": "A user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.",
+              "type": "string"
+            },
+            "external_ref": {
+              "description": "An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.",
+              "type": "string"
+            },
+            "customer": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "description": "The ID of the customer.",
+                  "type": "string"
+                },
+                "email": {
+                  "description": "The email of the customer.",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "The name of the customer.",
+                  "type": "string"
+                }
+              }
+            },
+            "billing_address": {
+              "$ref": "#/components/schemas/BillingAddress"
+            },
+            "shipping_address": {
+              "$ref": "#/components/schemas/ShippingAddress"
+            }
+          }
+        }
+      }
+    },
+    "AccountCheckout": {
+      "title": "Account Checkout",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "order_number": {
+              "description": "A user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.",
+              "type": "string"
+            },
+            "external_ref": {
+              "description": "An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.",
+              "type": "string"
+            },
+            "account": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "description": "The account ID.",
+                  "type": "string"
+                },
+                "member_id": {
+                  "description": "The account member ID.",
+                  "type": "string"
+                }
+              }
+            },
+            "contact": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "description": "The name of the account member.",
+                  "type": "string"
+                },
+                "email": {
+                  "description": "The email address of the account member.",
+                  "type": "string",
+                  "format": "email"
+                }
+              }
+            },
+            "billing_address": {
+              "$ref": "#/components/schemas/BillingAddress"
+            },
+            "shipping_address": {
+              "$ref": "#/components/schemas/ShippingAddress"
+            }
+          }
+        }
+      }
+    },
+    "OrderTimestamps": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "description": "The date this order was created.",
+          "type": "string"
+        },
+        "updated_at": {
+          "description": "The date this order was last updated.",
+          "type": "string"
+        },
+        "fully_paid_at": {
+          "description": "The date this order was fully paid. Only present for orders with payment status 'paid'.",
+          "type": "string"
+        }
+      }
+    },
+    "OrderMeta": {
+      "title": "OrderMeta",
+      "type": "object",
+      "properties": {
+        "timestamps": {
+          "$ref": "#/components/schemas/OrderTimestamps"
+        },
+        "display_price": {
+          "description": "Order pricing information including amounts, tax, discounts, and payment details.",
+          "type": "object",
+          "properties": {
+            "with_tax": {
+              "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+            },
+            "without_tax": {
+              "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+            },
+            "tax": {
+              "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+            },
+            "discount": {
+              "$ref": "#/components/schemas/DiscountFormattedPriceData"
+            },
+            "balance_owing": {
+              "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+            },
+            "paid": {
+              "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+            },
+            "authorized": {
+              "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+            },
+            "without_discount": {
+              "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+            },
+            "shipping": {
+              "$ref": "#/components/schemas/NonNegativeFormattedPriceData"
+            },
+            "shipping_discount": {
+              "$ref": "#/components/schemas/DiscountFormattedPriceData"
+            }
+          }
+        },
+        "is_manual": {
+          "description": "Specifies if the order was created manually.",
+          "type": "boolean"
+        }
+      }
+    },
+    "Contact": {
+      "title": "Contact",
+      "type": "object",
+      "properties": {
+        "email": {
+          "description": "The email address of the contact.",
+          "type": "string",
+          "examples": [
+            "johndoe@email.com"
+          ]
+        },
+        "name": {
+          "description": "The name of the contact.",
+          "type": "string",
+          "examples": [
+            "John Doe"
+          ]
+        }
+      }
+    },
+    "Customer": {
+      "title": "Customer",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The name of the customer.",
+          "type": "string",
+          "examples": [
+            "John Doe"
+          ]
+        },
+        "email": {
+          "description": "The email address of the customer.",
+          "type": "string",
+          "format": "email",
+          "examples": [
+            "john.doe@example.com"
+          ]
+        },
+        "id": {
+          "description": "The unique identifier of the customer.",
+          "type": "string",
+          "format": "uuid",
+          "examples": [
+            "e5a0d684-a4af-4919-a348-f66b0b4955e0"
+          ]
+        }
+      }
+    },
+    "OrderResponse": {
+      "title": "OrderResponse",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Specifies the type of object being returned. You must use `order`.",
+          "type": "string",
+          "const": "order"
+        },
+        "order_number": {
+          "description": "Specifies a user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.",
+          "type": "string",
+          "examples": [
+            1234
+          ]
+        },
+        "external_ref": {
+          "description": "An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.",
+          "type": "string",
+          "examples": [
+            "e-123456789"
+          ]
+        },
+        "id": {
+          "description": "Specifies the unique identifier of the order.",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true,
+          "examples": [
+            "aa854b8f-5930-476d-951a-e9b9cfbdefb1"
+          ]
+        },
+        "status": {
+          "description": "Specifies the status of the order, such as `incomplete`, `complete`, `processing`, or `cancelled`.",
+          "type": "string",
+          "enum": [
+            "complete",
+            "incomplete",
+            "cancelled",
+            "processing"
+          ]
+        },
+        "payment": {
+          "description": "Specifies the status of the payment, such as `unpaid`, `authorized`, `paid`, or `refunded`.",
+          "type": "string",
+          "enum": [
+            "authorized",
+            "paid",
+            "unpaid",
+            "refunded",
+            "partially_paid",
+            "partially_authorized"
+          ]
+        },
+        "shipping": {
+          "description": "Specifies the status of the shipment, such as `fulfilled` or `unfulfilled`.",
+          "type": "string",
+          "enum": [
+            "unfulfilled",
+            "fulfilled"
+          ]
+        },
+        "anonymized": {
+          "description": "Specifies if the order is anonymized.",
+          "type": "boolean",
+          "examples": [
+            false
+          ]
+        },
+        "payment_intent_id": {
+          "description": "Stripe Payment Intent ID.  Please see Stripe's Payment Intent [documentation](https://docs.stripe.com/api/payment_intents) for more information on Payment Intents.",
+          "type": "string",
+          "examples": [
+            "pi_3MtwBwLkdIwHu7ix28a3tqPa"
+          ]
+        },
+        "custom_attributes": {
+          "$ref": "#/components/schemas/CustomAttributes"
+        },
+        "links": {
+          "type": "object"
+        },
+        "meta": {
+          "$ref": "#/components/schemas/OrderMeta"
+        },
+        "billing_address": {
+          "$ref": "#/components/schemas/BillingAddress"
+        },
+        "contact": {
+          "$ref": "#/components/schemas/Contact"
+        },
+        "customer": {
+          "$ref": "#/components/schemas/Customer"
+        },
+        "shipping_address": {
+          "$ref": "#/components/schemas/ShippingAddress"
+        },
+        "relationships": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "$ref": "#/components/schemas/RelationshipArray"
+            },
+            "custom_discounts": {
+              "$ref": "#/components/schemas/RelationshipArray"
+            },
+            "promotions": {
+              "$ref": "#/components/schemas/RelationshipArray"
+            },
+            "customer": {
+              "$ref": "#/components/schemas/SingleRelationship"
+            },
+            "account": {
+              "$ref": "#/components/schemas/SingleRelationship"
+            },
+            "account_member": {
+              "$ref": "#/components/schemas/SingleRelationship"
+            },
+            "store": {
+              "$ref": "#/components/schemas/SingleRelationship"
+            }
+          }
+        }
+      }
+    },
+    "OrderEntityResponse": {
+      "title": "OrderEntityResponse",
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/OrderResponse"
+        },
+        "included": {
+          "description": "Optional included data such as order items, tax items, custom discounts, and promotions.\n",
+          "type": "object",
+          "properties": {
+            "items": {
+              "description": "Array of order items included in the response.",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/OrderItemResponse"
+              }
+            },
+            "tax_items": {
+              "description": "Array of tax items included in the response.",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/TaxItemResponse"
+              }
+            },
+            "custom_discounts": {
+              "description": "Array of custom discounts included in the response.",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CustomDiscountResponse"
+              }
+            },
+            "promotions": {
+              "description": "Array of promotions included in the response.",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CondensedPromotionResponse"
+              }
+            }
+          }
+        },
+        "errors": {
+          "type": "array",
+          "description": "Array of error objects, if any errors occurred.",
+          "items": {
+            "$ref": "#/components/schemas/Response.ErrorItem"
+          }
+        }
+      }
+    },
+    "Response.Meta.Orders": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/components/schemas/Response.PaginationPage"
+        },
+        "results": {
+          "$ref": "#/components/schemas/Response.PaginationResults"
+        }
+      }
+    },
+    "OrderCollectionResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/OrderResponse"
+          }
+        },
+        "links": {
+          "$ref": "#/components/schemas/Response.PageLinks"
+        },
+        "meta": {
+          "$ref": "#/components/schemas/Response.Meta.Orders"
+        }
+      }
+    },
+    "OrdersAddressData": {
+      "title": "OrdersAddressData",
+      "type": "object",
+      "required": [
+        "type",
+        "shipping_address"
+      ],
+      "properties": {
+        "type": {
+          "description": "The type of the resource. You must use \"order\".",
+          "type": "string",
+          "examples": [
+            "order"
+          ]
+        },
+        "order_number": {
+          "description": "Specifies a user-managed, optional field used as an alternative to the existing order_id. If provided, the order-number will be sent to Authorize.net instead of the order_id, and will appear as the invoice number in Authorize.net transactions.",
+          "type": "string",
+          "examples": [
+            1234
+          ]
+        },
+        "external_ref": {
+          "description": "Represents an optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.",
+          "type": "string",
+          "examples": [
+            "external_order_123"
+          ]
+        },
+        "shipping_address": {
+          "type": "object",
+          "properties": {
+            "first_name": {
+              "description": "Specifies the first name of the address holder.",
+              "type": "string",
+              "examples": [
+                "James"
+              ]
+            },
+            "last_name": {
+              "description": "Specifies the last name of the address holder.",
+              "type": "string",
+              "examples": [
+                "Doe"
+              ]
+            },
+            "phone_number": {
+              "description": "Specifies the phone number of the address holder.",
+              "type": "string",
+              "examples": [
+                5558679305
+              ]
+            },
+            "company_name": {
+              "description": "Specifies the company name.",
+              "type": "string",
+              "examples": [
+                "company name"
+              ]
+            },
+            "line_1": {
+              "description": "Specifies the first line of the address.",
+              "type": "string",
+              "examples": [
+                "1234 Disney Drive"
+              ]
+            },
+            "line_2": {
+              "description": "Specifies the second line of the address.",
+              "type": "string",
+              "examples": [
+                "Disney Resort"
+              ]
+            },
+            "city": {
+              "description": "Specifies the name of the city in the shipping address.",
+              "type": "string",
+              "examples": [
+                "Anaheim"
+              ]
+            },
+            "county": {
+              "description": "Specifies the county of the shipping address.",
+              "type": "string",
+              "examples": [
+                "Orange"
+              ]
+            },
+            "region": {
+              "description": "Specifies the state, province, or region of the shipping address.",
+              "type": "string",
+              "examples": [
+                "CA"
+              ]
+            },
+            "postcode": {
+              "description": "Specifies the postcode or ZIP code of the address.",
+              "type": "string",
+              "examples": [
+                92802
+              ]
+            },
+            "country": {
+              "description": "Specifies the country in the shipping address.",
+              "type": "string",
+              "examples": [
+                "US"
+              ]
+            },
+            "instructions": {
+              "description": "Specifies any instructions provided with the shipping address.",
+              "type": "string",
+              "examples": [
+                "Buzzer 10233"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "OrdersCancelData": {
+      "title": "OrdersCancelData",
+      "type": "object",
+      "required": [
+        "type",
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "description": "The status of the order. You can only update the status to `cancelled`.",
+          "type": "string",
+          "examples": [
+            "cancelled"
+          ]
+        },
+        "type": {
+          "description": "The type of the resource. You must use order.",
+          "type": "string",
+          "examples": [
+            "order"
+          ]
+        },
+        "external_ref": {
+          "description": "Represents an optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.",
+          "type": "string",
+          "examples": [
+            "external_order_123"
+          ]
+        }
+      }
+    },
+    "OrdersFulfilledData": {
+      "title": "OrdersFulfilledData",
+      "type": "object",
+      "required": [
+        "type",
+        "shipping"
+      ],
+      "properties": {
+        "shipping": {
+          "description": "The shipping status of the order. You can only update the shipping status to `fulfilled`.",
+          "type": "string",
+          "examples": [
+            "fulfilled"
+          ]
+        },
+        "type": {
+          "description": "The type of the resource. You must use order.",
+          "type": "string",
+          "examples": [
+            "order"
+          ]
+        },
+        "external_ref": {
+          "description": "Represents an optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.",
+          "type": "string",
+          "examples": [
+            "external_order_123"
+          ]
+        }
+      }
+    },
+    "OrdersUpdateRequest": {
+      "title": "OrdersUpdateRequest",
+      "type": "object",
+      "properties": {
+        "data": {
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/OrdersAddressData"
+            },
+            {
+              "$ref": "#/components/schemas/OrdersCancelData"
+            },
+            {
+              "$ref": "#/components/schemas/OrdersFulfilledData"
+            }
+          ]
+        }
+      }
+    },
+    "OrderItemCollectionResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/OrderItemResponse"
+          }
+        },
+        "included": {
+          "description": "Optional included data such as tax items, custom discounts, and promotions.\n",
+          "type": "object",
+          "properties": {
+            "tax_items": {
+              "description": "Array of tax items included in the response.",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/TaxItemResponse"
+              }
+            },
+            "custom_discounts": {
+              "description": "Array of custom discounts included in the response.",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CustomDiscountResponse"
+              }
+            },
+            "promotions": {
+              "description": "Array of promotions included in the response.",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CondensedPromotionResponse"
+              }
+            }
+          }
+        }
+      }
+    },
+    "OrdersAnonymizeData": {
+      "title": "OrdersAnonymizeData",
+      "type": "object",
+      "properties": {
+        "order_ids": {
+          "description": "The unique identifiers of the orders to be anonymized. You can anonymize multiple orders at the same time.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "examples": [
+            [
+              "{{orderID}}"
+            ]
+          ]
+        }
+      }
+    },
+    "OrdersAnonymizeRequest": {
+      "title": "OrdersAnonymizeRequest",
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/OrdersAnonymizeData"
+        }
+      }
+    },
+    "OrdersListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/OrderResponse"
+          }
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "FailureDetails": {
+      "title": "FailureDetails",
+      "description": "Non-PII payment failure information from the payment gateway. Only present on failed transactions where the gateway provided structured failure details.",
+      "type": "object",
+      "properties": {
+        "code": {
+          "description": "Machine-readable failure or error code from the payment gateway.",
+          "type": "string",
+          "examples": [
+            "2"
+          ]
+        },
+        "reason": {
+          "description": "Human-readable failure reason or error message from the payment gateway.",
+          "type": "string",
+          "examples": [
+            "This transaction has been declined."
+          ]
+        }
+      }
+    },
+    "TransactionResponse": {
+      "title": "TransactionResponse",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "The ID of the transaction.",
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true
+        },
+        "reference": {
+          "description": "The payment gateway reference.",
+          "type": "string",
+          "examples": [
+            "manual"
+          ]
+        },
+        "name": {
+          "description": "A custom name associated with the payment method.",
+          "type": "string",
+          "examples": [
+            "payment method name"
+          ]
+        },
+        "custom_reference": {
+          "description": "A reference associated with the payment method. This might include loyalty points or gift card identifiers. We recommend you not to include personal information in this field.",
+          "type": "string",
+          "examples": [
+            "custom reference"
+          ]
+        },
+        "gateway": {
+          "description": "The name of the payment gateway used.",
+          "type": "string",
+          "enum": [
+            "adyen",
+            "authorize_net",
+            "braintree",
+            "card_connect",
+            "cyber_source",
+            "elastic_path_payments_stripe",
+            "manual",
+            "paypal_express_checkout",
+            "stripe",
+            "stripe_payment_intents",
+            "stripe_platform_account"
+          ]
+        },
+        "amount": {
+          "description": "The amount for this transaction.",
+          "type": "number",
+          "examples": [
+            10000
+          ]
+        },
+        "refunded_amount": {
+          "description": "The refunded amount.",
+          "type": "number",
+          "examples": [
+            0
+          ]
+        },
+        "currency": {
+          "description": "The transaction currency.",
+          "type": "string",
+          "examples": [
+            "USD"
+          ]
+        },
+        "transaction_type": {
+          "description": "The type of transaction, such as `purchase`, `capture`, `authorize` or `refund`.",
+          "type": "string",
+          "enum": [
+            "purchase",
+            "authorize",
+            "capture",
+            "refund"
+          ]
+        },
+        "type": {
+          "description": "The type of object being returned.",
+          "type": "string"
+        },
+        "status": {
+          "description": "The status provided by the gateway for this transaction, such as `complete` or `failed`.",
+          "type": "string",
+          "examples": [
+            "complete"
+          ]
+        },
+        "payment_details": {
+          "description": "Payment gateway specific details.",
+          "type": "object",
+          "properties": {
+            "detailed_status": {
+              "description": "Detailed status from the payment gateway.",
+              "type": "string"
+            }
+          }
+        },
+        "failure_details": {
+          "description": "Non-PII payment failure details from the gateway. Only present on failed transactions where the gateway provided structured failure information.",
+          "$ref": "#/components/schemas/FailureDetails"
+        },
+        "payment_intent": {
+          "description": "Payment intent details.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "capture_mechanism": {
+          "description": "The mechanism used for capturing the transaction.",
+          "type": "string",
+          "enum": [
+            "automatic",
+            "manual"
+          ]
+        },
+        "refund_mechanism": {
+          "description": "The mechanism used for refunding the transaction.",
+          "type": "string",
+          "enum": [
+            "automatic",
+            "manual"
+          ]
+        },
+        "client_parameters": {
+          "description": "Client-specific parameters for payment processing.",
+          "type": "object",
+          "properties": {
+            "redirect_url": {
+              "description": "URL to redirect the client after payment.",
+              "type": "string"
+            },
+            "secret": {
+              "description": "Client secret for payment processing.",
+              "type": "string"
+            },
+            "token": {
+              "description": "Client token for payment processing.",
+              "type": "string"
+            }
+          }
+        },
+        "next_actions": {
+          "description": "Array of next actions for the transaction.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "properties": {
+            "order": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "description": "Represents the type of the object being returned. It is always `order`.",
+                      "type": "string",
+                      "examples": [
+                        "order"
+                      ]
+                    },
+                    "id": {
+                      "description": "The ID of the order.",
+                      "type": "string",
+                      "format": "uuid",
+                      "examples": [
+                        "5601a4b1-9d13-42d3-8fb7-03b35169d1b6"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "display_price": {
+              "$ref": "#/components/schemas/FormattedPriceData"
+            },
+            "display_refunded_amount": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "$ref": "#/components/schemas/FormattedPriceData"
+                }
+              }
+            },
+            "timestamps": {
+              "$ref": "#/components/schemas/Timestamps"
+            }
+          }
+        }
+      }
+    },
+    "TransactionEntityResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "$ref": "#/components/schemas/TransactionResponse"
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "Data.AdyenPayment": {
+      "title": "Data.AdyenPayment",
+      "required": [
+        "payment",
+        "gateway"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/Data.BasePayments"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "gateway": {
+              "description": "Specifies the gateway. You must use `adyen`.",
+              "type": "string",
+              "const": "adyen"
+            },
+            "options": {
+              "type": "object",
+              "properties": {
+                "shopper_reference": {
+                  "description": "The shopper reference token associated with the saved payment method.",
+                  "type": "string"
+                },
+                "recurring_processing_model": {
+                  "description": "Enter CardOnFile for a one-time purchase.",
+                  "type": "string"
+                }
+              }
+            },
+            "payment": {
+              "description": "The Adyen recurringDetailReference payment method identifier.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "Data.AuthorizeNetPayment": {
+      "title": "Data.AuthorizeNetPayment",
+      "required": [
+        "payment",
+        "gateway"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/Data.BasePayments"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "gateway": {
+              "description": "Specifies the gateway. You must use `authorize_net`.",
+              "type": "string",
+              "const": "authorize_net"
+            },
+            "options": {
+              "type": "object",
+              "properties": {
+                "customer_payment_profile_id": {
+                  "description": "The Authorize.net customer payment profile ID.",
+                  "type": "string"
+                }
+              }
+            },
+            "payment": {
+              "description": "The Authorize.net customer profile ID.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "Data.BraintreePayment": {
+      "title": "Data.BraintreePayment",
+      "required": [
+        "payment",
+        "gateway"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/Data.BasePayments"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "gateway": {
+              "description": "Specifies the gateway. You must use `braintree`.",
+              "type": "string",
+              "const": "braintree"
+            },
+            "payment": {
+              "description": "The Braintree Customer ID that you want to bill.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "Data.CardConnectPayment": {
+      "title": "Data.CardConnectPayment",
+      "required": [
+        "payment",
+        "gateway"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/Data.BasePayments"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "gateway": {
+              "description": "Specifies the gateway. You must use `card_connect`.",
+              "type": "string",
+              "const": "card_connect"
+            },
+            "payment": {
+              "description": "Enter account_id, profile_id from CardPointe API. For example, 1|16178397535388255208.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "Data.CyberSourcePayment": {
+      "title": "Data.CyberSourcePayment",
+      "required": [
+        "payment",
+        "gateway"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/Data.BasePayments"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "gateway": {
+              "description": "Specifies the gateway. You must use `cyber_source`.",
+              "type": "string",
+              "const": "cyber_source"
+            },
+            "payment": {
+              "description": "The CyberSource token.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "Data.ManualPayment": {
+      "title": "Data.ManualPayment",
+      "required": [
+        "gateway"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/Data.BasePayments"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "gateway": {
+              "description": "Specifies the type of payment gateway. You must use `manual`.",
+              "type": "string",
+              "const": "manual"
+            },
+            "paymentmethod_meta": {
+              "type": "object",
+              "properties": {
+                "custom_reference": {
+                  "description": "A reference associated with the payment method. This might include loyalty points or gift card identifiers. We recommend not to include personal information in this field.",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "A custom name associated with the payment method.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Data.PayPalExpressCheckoutPayment": {
+      "title": "Data.PayPalExpressCheckoutPayment",
+      "required": [
+        "gateway"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/Data.BasePayments"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "gateway": {
+              "description": "Specifies the type of payment gateway. You must use `paypal_express_checkout`.",
+              "type": "string",
+              "const": "paypal_express_checkout"
+            },
+            "options": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "description": "The description for the payment.",
+                  "type": "string"
+                },
+                "soft_descriptor": {
+                  "description": "The descriptor appended to PayPal generated descriptor that is visible on the card statement of the payer.",
+                  "type": "string"
+                },
+                "application_context": {
+                  "type": "object",
+                  "properties": {
+                    "brand_name": {
+                      "description": "The label that overrides the business name in the PayPal account on the PayPal site.",
+                      "type": "string"
+                    },
+                    "locale": {
+                      "description": "The locale pages that appear based on language and country code. PayPal supports a five-character code. For example, ja-JP.",
+                      "type": "string"
+                    },
+                    "landing_page": {
+                      "description": "The type of landing page to show on the PayPal site for customer checkout. Use values LOGIN, BILLING, or NO_PREFERENCE.",
+                      "type": "string"
+                    },
+                    "shipping_preference": {
+                      "description": "The shipping preference. Use SET_PROVIDED_ADDRESS value. This parameter does allow the user to change their address on PayPal site.",
+                      "type": "string"
+                    },
+                    "user_action": {
+                      "description": "If you set `useraction=commit` in the query string, the flow redirects the buyer to the PayPal payment page and displays a Pay Now button. When the shopper clicks **Pay Now**, call `DoExpressCheckoutPayment` to complete the payment without additional interaction from the shopper. Choose this flow when you know the final payment amount when you initiate the checkout flow.",
+                      "type": "string"
+                    },
+                    "return_url": {
+                      "description": "The callback URL for PayPal to redirect the user in the case of approved payment.",
+                      "type": "string"
+                    },
+                    "cancel_url": {
+                      "description": "The callback URL for PayPal to redirect user in the case a cancelled payment.",
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Data.StripePayment": {
+      "title": "Data.StripePayment",
+      "required": [
+        "gateway"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/Data.BasePayments"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "gateway": {
+              "description": "Specifies the type of payment gateway. You must use `stripe`.",
+              "type": "string",
+              "const": "stripe"
+            },
+            "options": {
+              "type": "object",
+              "properties": {
+                "receipt_email": {
+                  "description": "The option to provide an email for Stripe receipts. Specify live mode to access this feature.",
+                  "type": "string"
+                }
+              }
+            },
+            "payment": {
+              "description": "The Stripe token or source.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "Data.StripePaymentIntentsPayment": {
+      "title": "Data.StripePaymentIntentsPayment",
+      "required": [
+        "gateway"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/Data.BasePayments"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "gateway": {
+              "description": "Specifies the type of payment gateway. You must use `stripe_payment_intents`.",
+              "type": "string",
+              "const": "stripe_payment_intents"
+            },
+            "options": {
+              "type": "object",
+              "properties": {
+                "receipt_email": {
+                  "description": "Provides the email address to which you want to send the Stripe receipts for the transactions within the store. This feature is available only in the live mode.",
+                  "type": "string"
+                }
+              }
+            },
+            "payment": {
+              "description": "Specifies the Stripe token or source.",
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "Data.PaymentObject": {
+      "oneOf": [
+        {
+          "$ref": "#/components/schemas/Data.AdyenPayment"
+        },
+        {
+          "$ref": "#/components/schemas/Data.AuthorizeNetPayment"
+        },
+        {
+          "$ref": "#/components/schemas/Data.BraintreePayment"
+        },
+        {
+          "$ref": "#/components/schemas/Data.CardConnectPayment"
+        },
+        {
+          "$ref": "#/components/schemas/Data.CyberSourcePayment"
+        },
+        {
+          "$ref": "#/components/schemas/ElasticPathPaymentsPoweredByStripePayment"
+        },
+        {
+          "$ref": "#/components/schemas/Data.ManualPayment"
+        },
+        {
+          "$ref": "#/components/schemas/Data.PayPalExpressCheckoutPayment"
+        },
+        {
+          "$ref": "#/components/schemas/Data.StripePayment"
+        },
+        {
+          "$ref": "#/components/schemas/Data.StripePaymentIntentsPayment"
+        }
+      ]
+    },
+    "PaymentsRequest": {
+      "title": "PaymentsRequest",
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/Data.PaymentObject"
+        }
+      }
+    },
+    "OrdersTransactionsConfirmRequest": {
+      "title": "OrdersTransactionsConfirmRequest",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object"
+        }
+      }
+    },
+    "OrdersTransactionsCaptureRequest": {
+      "title": "OrdersTransactionsCaptureRequest",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "options": {
+              "type": "object",
+              "properties": {
+                "soft_descriptor": {
+                  "type": "string"
+                },
+                "note_to_payer": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "OrdersTransactionsRefundRequest": {
+      "title": "OrdersTransactionsRefundRequest",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "description": "The amount value to be refunded. If this field is not provided, it will be considered as manual refund (Mark as Refunded) and the refund process must be manually handled via payment provider. If the amount value is same as payment value, then it will be treated as a full refund and sent to the payment provider to process refund automatically.",
+              "type": "number",
+              "examples": [
+                1000
+              ]
+            },
+            "options": {
+              "type": "object",
+              "properties": {
+                "note": {
+                  "description": "Provides comments about the refund. It is used by PayPal Express.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "TransactionListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/TransactionResponse"
+          }
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "Response.Data": {
+      "type": "object",
+      "properties": {
+        "data": {}
+      }
+    },
+    "OrdersTransactionsCancelRequest": {
+      "title": "OrdersTransactionsCancelRequest",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "options": {
+              "type": "object"
+            },
+            "reason": {
+              "description": "Specifies the reason for canceling the transaction. The reason may include `duplicate`, `fraudulent`, `requested_by_customer`, or `abandoned`.",
+              "type": "string",
+              "examples": [
+                "requested_by_customer"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "UpdateOrderShippingGroupRequest": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "shipping_group"
+            },
+            "shipping_type": {
+              "type": "string"
+            },
+            "tracking_reference": {
+              "type": "string"
+            },
+            "external_ref": {
+              "description": "An optional external ID reference for a shipping group. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters.",
+              "type": "string",
+              "maxLength": 64
+            },
+            "address": {
+              "$ref": "#/components/schemas/ShippingAddress"
+            },
+            "delivery_estimate": {
+              "$ref": "#/components/schemas/DeliveryEstimate"
+            }
+          }
+        }
+      }
+    },
+    "SettingsCart": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Describes the type of request payload you're sending. Set this value to `settings`.",
+              "example": "settings"
+            },
+            "id": {
+              "type": "string",
+              "description": "The unique identifier for the cart settings.",
+              "readOnly": true,
+              "example": "15419118-44ce-5343-8ff6-574daf52bc6b"
+            },
+            "cart_expiry_days": {
+              "type": "integer",
+              "description": "Indicates the number of days before a cart expires.",
+              "example": 25
+            },
+            "discounts": {
+              "type": "object",
+              "properties": {
+                "custom_discounts_enabled": {
+                  "description": "When `true`, custom discounts are enabled. Default is false. This setting only affects the new empty carts while the existing active carts will not be affected.",
+                  "type": "boolean",
+                  "example": false
+                },
+                "use_rule_promotions": {
+                  "description": "When set to `true`, this parameter allows the cart to use rule promotions.",
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            },
+            "inventories": {
+              "type": "object",
+              "properties": {
+                "defer_inventory_check": {
+                  "description": "When `true`, inventory checks are not performed when adding products to a cart but still occur on checkout as normal. Default is false. This setting only affects the new empty carts while the existing active carts will not be affected.",
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "separate_items_by_location": {
+                  "description": "When `true`, cart items with the same SKU but different locations are kept as separate line items instead of being merged. When `false` (default), items with the same SKU are merged and the location is updated to the most recent value.",
+                  "type": "boolean",
+                  "example": false
+                }
+              }
+            },
+            "show_all_carts": {
+              "description": "When `true`, admins (users with admin scope) can retrieve all carts in the store via `GET /v2/carts`, regardless of customer or account associations. When `false`, admins can only see carts that are registered (associated with customers or accounts).\n\nFor new stores, this defaults to `true`. For existing stores created before this feature was introduced, this defaults to `false` to maintain backward compatibility.\n",
+              "type": "boolean",
+              "example": true
+            }
+          },
+          "required": [
+            "type"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1012 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/elastic-path/main/json-schema/accounts.json",
+  "title": "Account Management Introduction",
+  "description": "An Account represents the entity that participates in a Commerce transaction. Accounts can have Carts, Orders,",
+  "version": "26.0208.7165720",
+  "$defs": {
+    "Account": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Specifies the type of object. Set this value to `account`.",
+          "const": "account"
+        },
+        "name": {
+          "type": "string",
+          "description": "Specifies the name of the account.",
+          "example": "acc-name"
+        },
+        "legal_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Specifies the legal name of the account.",
+          "example": "acc-legal-name"
+        },
+        "registration_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Specifies the registration ID. If specified, this field is checked for uniqueness.",
+          "example": "reg-id"
+        },
+        "external_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The unique attribute associated with the account. For example, this could be an external reference from a separate company system. The maximum length is 2048 characters. Default is `null`.",
+          "example": "ext-ref"
+        }
+      },
+      "required": [
+        "type",
+        "name"
+      ]
+    },
+    "ReadOnlyParentId": {
+      "type": "object",
+      "properties": {
+        "parent_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "readOnly": true,
+          "description": "Specifies the ID of the parent account.",
+          "example": "96b1f750-55d3-4768-a3f8-adffba694a2c"
+        }
+      }
+    },
+    "UUID": {
+      "type": "string",
+      "description": "The unique identifier.",
+      "format": "uuid",
+      "x-go-type": "uuid.UUID",
+      "x-go-type-import": {
+        "name": "uuid",
+        "path": "github.com/google/uuid"
+      },
+      "example": "deb6b25f-8451-4211-9a22-95610333df23"
+    },
+    "MetaTimestamps": {
+      "type": "object",
+      "properties": {
+        "timestamps": {
+          "type": "object",
+          "properties": {
+            "created_at": {
+              "description": "The date the resource is created.",
+              "type": "string",
+              "example": "2021-02-23T09:40:33.882Z"
+            },
+            "updated_at": {
+              "description": "The date the resource is updated.",
+              "type": "string",
+              "example": "2021-02-23T09:40:33.882Z"
+            }
+          }
+        }
+      }
+    },
+    "AccountResponse": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/Account"
+        },
+        {
+          "$ref": "#/components/schemas/ReadOnlyParentId"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/components/schemas/UUID",
+              "description": "The unique identifier for an Account."
+            },
+            "meta": {
+              "$ref": "#/components/schemas/MetaTimestamps",
+              "description": "Additional information for this realm. For more information, see [The meta object](https://elasticpath.dev/docs/commerce-cloud/accounts/using-account-management-api/account-management-api-overview#the-meta-object) section."
+            },
+            "relationships": {
+              "type": "object",
+              "properties": {
+                "account_tags": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "$ref": "#/components/schemas/UUID",
+                            "description": "The unique identifier for an Account Tag."
+                          },
+                          "type": {
+                            "type": "string",
+                            "const": "account_tag"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "description": "Tags associated with the account."
+                },
+                "ancestors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "$ref": "#/components/schemas/UUID",
+                            "description": "The unique identifier for an Account."
+                          },
+                          "type": {
+                            "type": "string",
+                            "const": "account"
+                          }
+                        }
+                      }
+                    },
+                    "description": "All parent accounts in the hierarchy in sorted order (root first)."
+                  }
+                },
+                "parent": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "account"
+                        },
+                        "id": {
+                          "$ref": "#/components/schemas/UUID",
+                          "description": "The unique identifier for an Account."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "MetaListPage": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "description": "The maximum number of records per page for this response. You can set this value up to 100.",
+          "example": 25
+        },
+        "current": {
+          "type": "integer",
+          "description": "The current page.",
+          "example": 0
+        },
+        "offset": {
+          "type": "integer",
+          "description": "The current offset by number of records, not pages. Offset is zero-based.",
+          "example": 0
+        },
+        "total": {
+          "type": "integer",
+          "description": "The total page count.",
+          "example": 1
+        }
+      }
+    },
+    "MetaListResults": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "description": "The total number of results after applying filters, if any, or all results.",
+          "example": 1
+        }
+      }
+    },
+    "MetaList": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "$ref": "#/components/schemas/MetaListPage"
+        },
+        "results": {
+          "$ref": "#/components/schemas/MetaListResults"
+        }
+      }
+    },
+    "Error": {
+      "type": "object",
+      "required": [
+        "status",
+        "title"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "A brief summary of the error.",
+          "examples": [
+            "Bad Request"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "format": "string",
+          "description": "The HTTP response code of the error.",
+          "examples": [
+            "400"
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "description": "Optional additional detail about the error.",
+          "examples": [
+            "The field 'name' is required"
+          ]
+        }
+      }
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "required": [
+        "errors"
+      ],
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/Error"
+          }
+        }
+      }
+    },
+    "WritableParentId": {
+      "type": "object",
+      "properties": {
+        "parent_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "description": "Specifies the ID of the parent account, this field cannot be changed after creation.",
+          "example": "96b1f750-55d3-4768-a3f8-adffba694a2c"
+        }
+      }
+    },
+    "AccountTagsRelationshipIdentifier": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "The unique identifier for the related Account Tag.",
+          "type": "string",
+          "example": "652e39d8-d613-493e-8c20-fef99ad6327a"
+        },
+        "type": {
+          "description": "Specifies the type of the resource object.",
+          "type": "string",
+          "const": "account_tag"
+        }
+      }
+    },
+    "AccountTagsRelationshipResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/AccountTagsRelationshipIdentifier"
+          }
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "description": "A URL to the specific resource.",
+              "type": "string",
+              "example": "https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/relationships/account-tags"
+            }
+          }
+        }
+      }
+    },
+    "AddAccountTagsOnAccount": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/AccountTagsRelationshipIdentifier"
+          }
+        }
+      }
+    },
+    "RemoveAccountTagsOnAccount": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/AccountTagsRelationshipIdentifier"
+          }
+        }
+      }
+    },
+    "AccountMember": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "The unique identifier for the account member.",
+          "type": "string",
+          "format": "uuid",
+          "example": "908f7849-60da-4e4a-a3b1-51d4cbe3b953"
+        },
+        "type": {
+          "description": "The type of the object that is returned.",
+          "type": "string",
+          "const": "account_member"
+        },
+        "name": {
+          "description": "The name of the account member.",
+          "type": "string",
+          "example": "Ron Swanson"
+        },
+        "given_name": {
+          "description": "The given name of the account member. This field is optional and not computed or extracted from the name field.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "example": "Ron"
+        },
+        "middle_name": {
+          "description": "The middle name of the account member. This field is optional and not computed or extracted from the name field.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "example": "Ulysses"
+        },
+        "family_name": {
+          "description": "The family name of the account member. This field is optional and not computed or extracted from the name field.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "example": "Swanson"
+        },
+        "email": {
+          "description": "The email address of the account member.",
+          "type": "string",
+          "format": "email",
+          "example": "ron@swanson.com"
+        }
+      }
+    },
+    "AccountMemberResponse": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/AccountMember"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "meta": {
+              "$ref": "#/components/schemas/MetaTimestamps"
+            },
+            "links": {
+              "type": "object",
+              "properties": {
+                "self": {
+                  "description": "A URL to the specific resource.",
+                  "type": "string",
+                  "example": "https://useast.api.elasticpath.com/v2/account-members/908f7849-60da-4e4a-a3b1-51d4cbe3b953"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AccountMembershipResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Represents the unique identifier for the account membership.",
+          "type": "string",
+          "format": "uuid",
+          "example": "24e939f6-178f-497b-9d64-5bf2b5a70a2e"
+        },
+        "type": {
+          "description": "Represents the type of the object returned.",
+          "type": "string",
+          "const": "account_membership"
+        },
+        "meta": {
+          "$ref": "#/components/schemas/MetaTimestamps"
+        },
+        "relationships": {
+          "type": "object",
+          "properties": {
+            "account_member": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "description": "Specifies the ID of the account member.",
+                      "type": "string",
+                      "format": "uuid",
+                      "example": "908f7849-60da-4e4a-a3b1-51d4cbe3b953"
+                    },
+                    "type": {
+                      "description": "Specifies the type of the account member.",
+                      "type": "string",
+                      "const": "account_member"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "description": "A URL to the specific resource.",
+              "type": "string",
+              "format": "uri",
+              "example": "https://useast.api.elasticpath.com/v2/accounts/5b495058-9ffc-4b9b-810a-c9d43ffc6500/account-memberships/24e939f6-178f-497b-9d64-5bf2b5a70a2e"
+            }
+          }
+        }
+      }
+    },
+    "AccountMembership": {
+      "type": "object",
+      "properties": {
+        "account_member_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Specifies the unique identifier of the account member that the membership is associated with.",
+          "example": "908f7849-60da-4e4a-a3b1-51d4cbe3b953"
+        },
+        "type": {
+          "type": "string",
+          "const": "account_membership",
+          "description": "Specifies the type of the object. Set this value to `account_membership`."
+        }
+      }
+    },
+    "AccountMembershipResponseUsingAccountMemberId": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Represents the unique identifier for the account membership.",
+          "type": "string",
+          "format": "uuid",
+          "example": "24e939f6-178f-497b-9d64-5bf2b5a70a2e"
+        },
+        "type": {
+          "description": "Represents the type of the object returned.",
+          "type": "string",
+          "const": "account_membership"
+        },
+        "meta": {
+          "$ref": "#/components/schemas/MetaTimestamps"
+        },
+        "relationships": {
+          "type": "object",
+          "properties": {
+            "account": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "description": "Specifies the ID of the account.",
+                      "type": "string",
+                      "format": "uuid",
+                      "example": "908f7849-60da-4e4a-a3b1-51d4cbe3b953"
+                    },
+                    "type": {
+                      "description": "Specifies the type of the Account.",
+                      "type": "string",
+                      "const": "account"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "description": "A URL to the specific resource.",
+              "type": "string",
+              "format": "uri",
+              "example": "https://useast.api.elasticpath.com/v2/accounts/5b495058-9ffc-4b9b-810a-c9d43ffc6500/account-memberships/24e939f6-178f-497b-9d64-5bf2b5a70a2e"
+            }
+          }
+        }
+      }
+    },
+    "AccountMembershipSettings": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Specifies the type of object. Set this value to `account_membership_setting`.",
+              "example": "account_membership_setting",
+              "enum": [
+                "account_membership_setting"
+              ]
+            },
+            "membership_limit": {
+              "type": "integer",
+              "description": "The number of accounts an account member can be associated with. You can set this value to any number up to 10,000.",
+              "example": 100
+            }
+          }
+        }
+      }
+    },
+    "AccountAuthenticationSettings": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Specifies the type of object. Set this value to `account_authentication_settings`.",
+          "const": "account_authentication_settings"
+        },
+        "enable_self_signup": {
+          "description": "Set to `true` to enable self signup.",
+          "type": "boolean",
+          "example": true
+        },
+        "auto_create_account_for_account_members": {
+          "description": "This will automatically create an account for each new account member, using the account member\u2019s name as the account name.",
+          "type": "boolean",
+          "example": true
+        },
+        "account_member_self_management": {
+          "description": "Whether a user with an [Account Management Authentication Token](/docs/api/accounts/post-v-2-account-members-tokens) can update their own account member details. By default, this is `disabled`. Set to `update_only` if you want the user to be able to update their own account member details (e.g., name, email, and if applicable their username and password). The user can update their own account member details by updating their [User Authentication Info](/docs/authentication/single-sign-on/user-authentication-info-api/update-a-user-authentication-info) using the `account_member_id` retrieved from the `meta` in the response of [Generating an Account Management Authentication Token](/docs/api/accounts/post-v-2-account-members-tokens) as the `id` and find the authentication credentials to update by calling the [Get All User Authentication Password Profile Info](/docs/authentication/single-sign-on/user-authentication-password-profiles-api/get-all-user-authentication-password-profile-info) endpoint.",
+          "type": "string",
+          "default": "disabled",
+          "enum": [
+            "disabled",
+            "update_only"
+          ]
+        },
+        "account_management_authentication_token_timeout_secs": {
+          "description": "The expiry time for Account Management Authentication Token in seconds. If you want to implement idle timout for you application, see [Implementing Idle Timeout](/guides/How-To/Accounts/implement-idle-timeout)",
+          "type": "integer",
+          "default": 86400,
+          "example": 86400
+        }
+      }
+    },
+    "AccountAuthenticationSettingsResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/AccountAuthenticationSettings"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "$ref": "#/components/schemas/UUID"
+                },
+                "relationships": {
+                  "type": "object",
+                  "properties": {
+                    "authentication_realm": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "description": "The ID of the authentication realm entity.",
+                              "type": "string",
+                              "format": "uuid",
+                              "example": "3418c54e-d768-42c1-a9db-d7afd2a18452"
+                            },
+                            "type": {
+                              "description": "The type of the authentication realm entity.",
+                              "type": "string",
+                              "const": "authentication_realm"
+                            },
+                            "links": {
+                              "type": "object",
+                              "properties": {
+                                "self": {
+                                  "description": "A URL to the specific resource.",
+                                  "type": "string",
+                                  "example": "https://useast.api.elasticpath.com/v2/authentication-realms/3418c54e-d768-42c1-a9db-d7afd2a18452"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "client_id": {
+                      "description": "The client ID to be used in Single Sign On authentication flows for accounts.",
+                      "type": "string",
+                      "example": "account-management"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "description": "A URL to the specific resource.",
+              "type": "string",
+              "example": "https://useast.api.elasticpath.com/v2/account_authentication_settings"
+            }
+          }
+        }
+      }
+    },
+    "AccountManagementAuthenticationToken": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Specifies the type of the object. You must use `account_management_authentication_token`.",
+          "type": "string",
+          "const": "account_management_authentication_token"
+        }
+      }
+    },
+    "OpenIDConnectRequest": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/AccountManagementAuthenticationToken"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "authentication_mechanism": {
+              "description": "Species the authentication mechanism. You must use `oidc`.",
+              "type": "string",
+              "const": "oidc"
+            },
+            "oauth_authorization_code": {
+              "description": "Specifies the code returned from the OpenID Connect Provider authentication.",
+              "type": "string",
+              "example": "c2490f06-6d8e-4927-99aa-4bf02b419e96"
+            },
+            "oauth_redirect_uri": {
+              "description": "Specifies the URL of the front-end that handles the callback of the token.",
+              "type": "string",
+              "format": "uri",
+              "example": "https://example-store.com/oauth2/callback"
+            },
+            "oauth_code_verifier": {
+              "description": "Specifies the Proof Key for Code Exchange (PKCE) code verifier corresponding to the code challenge supplied to the authorization endpoint. For more information about code verifier and challenge, see Generating a [Code Verifier and Challenge](https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/get-single-sign-on-customer-token#generate-proof-key-for-code-exchange-pkce-parameters).",
+              "type": "string",
+              "example": "0E934PurR8ExVg6Pj7T4kQewxKzWSfSFG5d15FGfww8"
+            }
+          }
+        }
+      ],
+      "required": [
+        "type",
+        "authentication_mechanism",
+        "oauth_authorization_code",
+        "oauth_redirect_uri",
+        "oauth_code_verifier"
+      ]
+    },
+    "PasswordRequest": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/AccountManagementAuthenticationToken"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "authentication_mechanism": {
+              "description": "Species the authentication mechanism. You must use `password`.",
+              "type": "string",
+              "const": "password"
+            },
+            "password_profile_id": {
+              "description": "The password profile ID. For more information, see [password profiles page](https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/password-profiles-api/overview).",
+              "type": "string",
+              "format": "uuid",
+              "example": "c2490f06-6d8e-4927-99aa-4bf02b419e96"
+            },
+            "username": {
+              "description": "The username.",
+              "type": "string",
+              "example": "username"
+            },
+            "password": {
+              "description": "The password.",
+              "type": "string",
+              "format": "password",
+              "example": "pa$$word"
+            }
+          }
+        }
+      ],
+      "required": [
+        "type",
+        "authentication_mechanism",
+        "password_profile_id",
+        "username",
+        "password"
+      ]
+    },
+    "PasswordlessRequest": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/AccountManagementAuthenticationToken"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "authentication_mechanism": {
+              "description": "Species the authentication mechanism. You must use `passwordless`.",
+              "type": "string",
+              "const": "passwordless"
+            },
+            "password_profile_id": {
+              "description": "The password profile ID. For more information, see [password profiles page](https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/password-profiles-api/overview).",
+              "type": "string",
+              "format": "uuid",
+              "example": "c2490f06-6d8e-4927-99aa-4bf02b419e96"
+            },
+            "username": {
+              "description": "The username.",
+              "type": "string",
+              "example": "jane.doe@gmail.com"
+            },
+            "one_time_password_token": {
+              "description": "The one-time password token.",
+              "type": "string",
+              "example": "abd1g5"
+            }
+          }
+        }
+      ],
+      "required": [
+        "type",
+        "authentication_mechanism",
+        "password_profile_id",
+        "username",
+        "one_time_password_token"
+      ]
+    },
+    "SelfSignupRequest": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/AccountManagementAuthenticationToken"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "authentication_mechanism": {
+              "description": "Species the authentication mechanism. You must use `self_signup`.",
+              "type": "string",
+              "const": "self_signup"
+            },
+            "password_profile_id": {
+              "description": "The password profile ID. For more information, see [password profiles page](https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/password-profiles-api/overview).",
+              "type": "string",
+              "format": "uuid",
+              "example": "c2490f06-6d8e-4927-99aa-4bf02b419e96"
+            },
+            "username": {
+              "description": "The username.",
+              "type": "string",
+              "example": "username"
+            },
+            "password": {
+              "description": "The password.",
+              "type": "string",
+              "format": "password",
+              "example": "pa$$word"
+            },
+            "name": {
+              "description": "The name.",
+              "type": "string",
+              "example": "Ron Swanson"
+            },
+            "given_name": {
+              "description": "The given name for the user.",
+              "type": [
+                "string",
+                "null"
+              ],
+              "example": "Ron"
+            },
+            "middle_name": {
+              "description": "The middle name for the user.",
+              "type": [
+                "string",
+                "null"
+              ],
+              "example": "Ulysses"
+            },
+            "family_name": {
+              "description": "The family name for the user.",
+              "type": [
+                "string",
+                "null"
+              ],
+              "example": "Swanson"
+            },
+            "email": {
+              "description": "The email.",
+              "type": "string",
+              "format": "email",
+              "example": "ron@swanson.com"
+            }
+          }
+        }
+      ],
+      "required": [
+        "type",
+        "authentication_mechanism",
+        "password_profile_id",
+        "username",
+        "password",
+        "name",
+        "email"
+      ]
+    },
+    "SwitchingAccountRequest": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/AccountManagementAuthenticationToken"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "authentication_mechanism": {
+              "description": "Species the authentication mechanism. You must use `account_management_authentication_token`.",
+              "type": "string",
+              "const": "account_management_authentication_token"
+            }
+          }
+        }
+      ],
+      "required": [
+        "type",
+        "authentication_mechanism"
+      ]
+    },
+    "AccountManagementAuthenticationTokenResponse": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Specifies the type of the object.",
+          "type": "string",
+          "const": "account_management_authentication_token"
+        },
+        "account_name": {
+          "description": "The name of the account that this token grants access to.",
+          "type": "string",
+          "example": "acc-name-1"
+        },
+        "account_id": {
+          "description": "The ID of the account that this token grants access to.",
+          "type": "string",
+          "format": "uuid",
+          "example": "908f7849-60da-4e4a-a3b1-51d4cbe3b953"
+        },
+        "token": {
+          "description": "The JWT authentication token that the shopper uses as the `EP-Account-Management-Authentication-Token` header [in all other endpoints](https://elasticpath.dev/docs/commerce-cloud/authentication/tokens/account-management-authentication-token).",
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiIyMDIxLTAzLTE2VDE5OjM2OjExLjA3MFoiLCJpYXQiOiIyMDIxLTAzLTE1VDE5OjM2OjExLjA3MFoiLCJzY29wZSI6IjFjNDVlNGVjLTI2ZTAtNDA0My04NmU0LWMxNWI5Y2Y5ODVhMyIsInN1YiI6IjFjNDVlNGVjLTI2ZTAtNDA0My04NmU0LWMxNWI5Y2Y5ODVhMiJ9.ytQ3UutTl_RJ8NiB1xN29Ta23p-FXsYOhcUM7MUQ4CM"
+        },
+        "expires": {
+          "description": "The epoch time that this token expires at. The time is set to 24 hours after the token is generated.",
+          "type": "string",
+          "format": "date-time",
+          "example": "2021-03-16T19:36:11.070Z"
+        }
+      }
+    },
+    "MetaAccountMemberId": {
+      "type": "object",
+      "properties": {
+        "account_member_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "The unique identifier for the Account Member that authenticated. This is useful if `account_member_self_management` is enabled in [Account Authentication Settings](/docs/api/accounts/get-v-2-settings-account-authentication), so that the user can update details for their account.",
+          "example": "f5d08d48-bbc8-4f61-818f-a78583045f56"
+        }
+      }
+    },
+    "AccountTag": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Specifies the type of the resource object, use `account_tag` for Account Tags.",
+          "type": "string",
+          "const": "account_tag"
+        },
+        "name": {
+          "type": "string",
+          "description": "Specifies the name of the account tag.",
+          "example": "account-name-tag"
+        },
+        "description": {
+          "type": "string",
+          "description": "Describes the account tag."
+        }
+      }
+    },
+    "AccountTagResponse": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/AccountTag"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/components/schemas/UUID",
+              "description": "The unique identifier for the account tag."
+            },
+            "meta": {
+              "$ref": "#/components/schemas/MetaTimestamps",
+              "description": "Additional information for this resource."
+            },
+            "links": {
+              "type": "object",
+              "properties": {
+                "self": {
+                  "description": "A URL to the specific resource.",
+                  "type": "string",
+                  "example": "https://useast.api.elasticpath.com/v2/account-tags/deb6b25f-8451-4211-9a22-95610333df23"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

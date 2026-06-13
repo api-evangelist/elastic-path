@@ -1,0 +1,539 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/elastic-path/main/json-schema/integrations.json",
+  "title": "Integrations Introduction",
+  "description": "You can integrate Commerce with your external systems like enterprise resource planning, order management, fulfilment, and other systems, ensuring that buying is quick and easy for your shoppers.",
+  "version": "26.0212.7184796",
+  "$defs": {
+    "IntegrationCreate": {
+      "required": [
+        "type",
+        "observers",
+        "integration_type",
+        "name",
+        "configuration"
+      ],
+      "properties": {
+        "type": {
+          "description": "The type represents the object being returned. Always `integration`.",
+          "type": "string",
+          "example": "integration",
+          "enum": [
+            "integration"
+          ],
+          "default": "integration"
+        },
+        "name": {
+          "type": "string",
+          "example": "Order shipping notification",
+          "description": "The name of the integration."
+        },
+        "description": {
+          "type": "string",
+          "example": "Send a shipping notification via email with discount code",
+          "description": "A description of what the integration is for."
+        },
+        "enabled": {
+          "type": "boolean",
+          "example": true,
+          "description": "Whether the integration is enabled."
+        },
+        "integration_type": {
+          "type": "string",
+          "description": "Specifies how the event is delivered. The options are `webhook`, `aws-sqs`, or `stomp`.",
+          "example": "webhook",
+          "enum": [
+            "webhook",
+            "aws_sqs",
+            "stomp"
+          ],
+          "default": "webhook"
+        },
+        "observes": {
+          "description": "The list of events you want to observe. See [**Observable Events**](#observable-events).",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "configuration": {
+          "description": "The content of the configuration object depends on the value of `integration_type`.",
+          "type": "object",
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/AWSSQSConfigurationObject"
+            },
+            {
+              "$ref": "#/components/schemas/WebhookConfigurationObject"
+            },
+            {
+              "$ref": "#/components/schemas/STOMPConfigurationObject"
+            }
+          ]
+        }
+      }
+    },
+    "IntegrationUpdate": {
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "description": "The type represents the object being returned. Always `integration`.",
+          "type": "string",
+          "example": "integration",
+          "enum": [
+            "integration"
+          ],
+          "default": "integration"
+        },
+        "name": {
+          "type": "string",
+          "example": "Order shipping notification",
+          "description": "The name of the integration."
+        },
+        "description": {
+          "type": "string",
+          "example": "Send a shipping notification via email with discount code",
+          "description": "A description of what the integration is for."
+        },
+        "enabled": {
+          "type": "boolean",
+          "example": true,
+          "description": "Whether the integration is enabled."
+        },
+        "integration_type": {
+          "type": "string",
+          "example": "webhook",
+          "enum": [
+            "webhook",
+            "aws_sqs",
+            "stomp"
+          ],
+          "default": "webhook"
+        },
+        "observes": {
+          "type": "array",
+          "description": "The list of events you want to observe. See [**Observable Events**](#observable-events).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "configuration": {
+          "description": "The content of the configuration object depends on the value of `integration_type`.",
+          "type": "object",
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/AWSSQSConfigurationObject"
+            },
+            {
+              "$ref": "#/components/schemas/WebhookConfigurationObject"
+            },
+            {
+              "$ref": "#/components/schemas/STOMPConfigurationObject"
+            }
+          ]
+        }
+      }
+    },
+    "Integration": {
+      "properties": {
+        "id": {
+          "description": "The unique identifier of the integration.",
+          "type": "string",
+          "example": "2da46671-b4c2-44ac-b133-d1221aafc77b"
+        },
+        "type": {
+          "description": "The type represents the object being returned. Always `integration`.",
+          "type": "string",
+          "example": "integration",
+          "enum": [
+            "integration"
+          ],
+          "default": "integration"
+        },
+        "name": {
+          "type": "string",
+          "example": "Order shipping notification",
+          "description": "The name of the integration."
+        },
+        "description": {
+          "type": "string",
+          "example": "Send a shipping notification via email with discount code",
+          "description": "A description of what the integration is for."
+        },
+        "enabled": {
+          "type": "boolean",
+          "example": true,
+          "description": "Whether the integration is enabled."
+        },
+        "integration_type": {
+          "type": "string",
+          "example": "webhook",
+          "description": "Specifies how the event is delivered. The options are `webhook`, `aws-sqs`, or `stomp`.",
+          "enum": [
+            "webhook",
+            "aws_sqs",
+            "stomp"
+          ],
+          "default": "webhook"
+        },
+        "observes": {
+          "description": "The list of events you want to observe. See [**Observable Events**](#observable-events).",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "configuration": {
+          "type": "object",
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/AWSSQSConfigurationObject"
+            },
+            {
+              "$ref": "#/components/schemas/WebhookConfigurationObject"
+            },
+            {
+              "$ref": "#/components/schemas/STOMPConfigurationObject"
+            }
+          ]
+        }
+      }
+    },
+    "IntegrationLog": {
+      "description": "As integrations can fail over time, Commerce provides the ability to browse all logs for your integrations.",
+      "properties": {
+        "id": {
+          "description": "A unique identifier of an integration whose logs you want to view.",
+          "type": "string",
+          "example": "ac8bb58e-2b9b-4ccf-9dd2-ecdf50417849"
+        },
+        "type": {
+          "description": "This represents the type of resource object being returned. Always `integration`.",
+          "type": "string",
+          "example": "integration",
+          "enum": [
+            "integration"
+          ],
+          "default": "integration"
+        },
+        "succeeded": {
+          "type": "boolean",
+          "example": true,
+          "description": "Whether the integration was successful."
+        },
+        "attempt": {
+          "type": "integer",
+          "example": 1,
+          "description": "The number of attempts made to process the integration."
+        },
+        "body": {
+          "type": "string",
+          "example": "Not Found",
+          "description": "The response returned from the integration."
+        },
+        "status_code": {
+          "type": "integer",
+          "example": 404,
+          "description": "The status code returned from the integration."
+        },
+        "error_detail": {
+          "type": "string",
+          "example": "Received a status code outside of 2xx range - treating webhook as a fail",
+          "description": "The reason why the integration failed."
+        },
+        "relationships": {
+          "description": "Relationships are established between different integration entities. For example, a log and an integration job are related to an integration.",
+          "type": "object",
+          "properties": {
+            "integration": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The ID of the integration processed.",
+                      "example": "ff8634a8-a89e-4eac-baab-9b7b8c4f8720"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "This represents the resource type of the object being returned. Always `integration`.",
+                      "example": "integration"
+                    }
+                  }
+                }
+              }
+            },
+            "job": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The ID of the integration job processed.",
+                      "example": "ff8634a8-a89e-4eac-baab-9b7b8c4f8720"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "This represents the resource type of the object being returned. Always `integration-job`.",
+                      "example": "job"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "IntegrationJob": {
+      "properties": {
+        "id": {
+          "description": "The ID of the integration job processed.",
+          "type": "string",
+          "example": "8848646b-2745-469e-8cc1-ee3b04738f8f"
+        },
+        "type": {
+          "type": "string",
+          "description": "This represents the type of resource object being returned. Always `integration-job`.",
+          "enum": [
+            "integration-job"
+          ],
+          "example": "integration-job"
+        }
+      }
+    },
+    "WebhookConfigurationObject": {
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "example": "https://yourwebsite.com/order-created-notification",
+          "description": "A required URL that the integration fires.",
+          "format": "uri"
+        },
+        "secret_key": {
+          "type": "string",
+          "example": "secret_key_to_validate_on_your_endpoint",
+          "description": "An optional header. Useful to authenticate the response came from Elastic Path. This is sent as `X-MOLTIN-SECRET-KEY`."
+        }
+      }
+    },
+    "AWSSQSConfigurationObject": {
+      "required": [
+        "url",
+        "aws_access_key_id",
+        "aws_secret_access_key",
+        "region"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "example": "https://sqs.eu-west-1.amazonaws.com/123456789/epcc-external-queue",
+          "description": "The required SQS queue URL."
+        },
+        "aws_access_key_id": {
+          "type": "string",
+          "example": "****************JIMB",
+          "description": "The required AWS access key ID."
+        },
+        "aws_secret_access_key": {
+          "type": "string",
+          "example": "************************************HK4o",
+          "description": "The required AWS secret key ID."
+        },
+        "region": {
+          "type": "string",
+          "example": "eu-west-1",
+          "description": "The required AWS region."
+        }
+      }
+    },
+    "STOMPConfigurationObject": {
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "username": {
+          "type": "string",
+          "example": "epcc-integration-1",
+          "description": "The username used to authenticate against a STOMP server."
+        },
+        "password": {
+          "type": "string",
+          "example": "****************************CDKn",
+          "description": "The password used to authenticate against a STOMP server."
+        },
+        "destination": {
+          "type": "string",
+          "example": "/queue/epcc-integrations.order-created",
+          "description": "The destination in the messaging queuing system."
+        },
+        "addresses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          },
+          "example": [
+            "stomp+ssl://b-618354a5-e04f-4eff-99c7-734e9d8b91a5-2.mq.us-west-2.amazonaws.com:61614",
+            "stomp+ssl://b-618354a5-e04f-4eff-99c7-734e9d8b91a5-1.mq.us-west-2.amazonaws.com:61614"
+          ],
+          "description": "The addresses that correspond with the destination name."
+        }
+      }
+    },
+    "Results": {
+      "description": "The results for this response for the entire collection.",
+      "type": "object",
+      "properties": {
+        "total": {
+          "description": "The total number of records for this response for the entire collection.",
+          "type": "integer",
+          "example": 1
+        }
+      }
+    },
+    "Meta": {
+      "type": "object",
+      "properties": {
+        "meta": {
+          "type": "object",
+          "properties": {
+            "timestamps": {
+              "$ref": "#/components/schemas/Timestamps"
+            }
+          }
+        }
+      }
+    },
+    "Links": {
+      "type": "object",
+      "properties": {
+        "links": {
+          "description": "Links are used to allow you to move between requests.",
+          "type": "object",
+          "properties": {
+            "self": {
+              "description": "Single entities use a self parameter with a link to that specific resource.",
+              "$ref": "#/components/schemas/LinkURI"
+            }
+          }
+        }
+      }
+    },
+    "LinkURI": {
+      "type": "string",
+      "format": "uri",
+      "example": "?page[offset]=0&page[limit]=25"
+    },
+    "ErrorResponse": {
+      "required": [
+        "errors"
+      ],
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        }
+      }
+    },
+    "ErrorBody": {
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "status": {
+          "type": "integer",
+          "format": "int",
+          "description": "The HTTP response code of the error.",
+          "example": 500
+        },
+        "title": {
+          "type": "string",
+          "description": "A brief summary of the error.",
+          "example": "Internal server error"
+        },
+        "detail": {
+          "type": "string",
+          "description": "Optional additional detail about the error.",
+          "example": "An internal error has occurred."
+        }
+      }
+    },
+    "Timestamps": {
+      "description": "The date and time a transaction is created.",
+      "properties": {
+        "created_at": {
+          "description": "The date and time an integration is updated.",
+          "type": "string",
+          "format": "date-time",
+          "example": "2017-07-21T17:32:28Z"
+        },
+        "updated_at": {
+          "description": "The date and time an integration is updated.",
+          "type": "string",
+          "format": "date-time",
+          "example": "2017-07-21T17:32:28Z"
+        }
+      }
+    },
+    "PaginationLinks": {
+      "type": "object",
+      "description": "Links are used to allow you to move between pages.",
+      "properties": {
+        "first": {
+          "description": "Always the first page. This is not present on the first page.",
+          "type": "string",
+          "example": "/integrations?page[offset]=0&page[limit]=10"
+        },
+        "last": {
+          "description": "This is not present if there is only one page.",
+          "type": "string",
+          "example": "/integrations?page[offset]=20&page[limit]=10"
+        },
+        "next": {
+          "description": "This is not present if there is no next page.",
+          "type": "string",
+          "example": "/integrations?page[offset]=10&page[limit]=10"
+        },
+        "prev": {
+          "description": "This is not present on the first page.",
+          "type": "string",
+          "example": "/integrations?page[offset]=8&page[limit]=10"
+        }
+      }
+    },
+    "LogsPaginationLinks": {
+      "type": "object",
+      "description": "Links are used to allow you to move between pages.",
+      "properties": {
+        "first": {
+          "description": "Always the first page. This is not present on the first page.",
+          "type": "string",
+          "example": "/integrations/logs?page[offset]=0&page[limit]=10"
+        },
+        "next": {
+          "description": "Next page link.",
+          "type": "string",
+          "example": "/integrations/logs?page[offset]=10&page[limit]=10"
+        },
+        "prev": {
+          "description": "This is not present on the first page.",
+          "type": "string",
+          "example": "/integrations/logs?page[offset]=8&page[limit]=10"
+        }
+      }
+    }
+  }
+}
