@@ -1,0 +1,184 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Standard Shopper Roles API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Standard Shopper Roles
+  description: 'Standard Shopper Roles represent the roles of customers.
+
+    '
+paths:
+  /v2/permissions/standard-shopper-roles:
+    get:
+      tags:
+      - Standard Shopper Roles
+      summary: List Standard Shopper Roles
+      operationId: ListStandardShopperRoles
+      description: 'Retrieves a list of Standard Shopper Roles
+
+        '
+      responses:
+        '200':
+          $ref: '#/components/responses/ListOfStandardShopperRoles'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/permissions/standard-shopper-roles/{standard-shopper-role-id}:
+    parameters:
+    - $ref: '#/components/parameters/StandardShopperRoleID'
+    get:
+      tags:
+      - Standard Shopper Roles
+      summary: Get a Standard Shopper Role
+      operationId: GetAStandardShopperRole
+      description: Get a Standard Shopper Role
+      responses:
+        '200':
+          $ref: '#/components/responses/StandardShopperRole'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+    Errors:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                format: string
+                examples:
+                - '400'
+              title:
+                type: string
+                description: A brief summary of the error.
+                examples:
+                - Bad Request
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                examples:
+                - The field 'name' is required
+    StandardShopperRole:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the Standard Shopper Role.
+        type:
+          type: string
+          description: Specifies the type of the resource object, use `standard_shopper_role` for Standard Shopper Roles.
+          const: standard_shopper_role
+        name:
+          type: string
+          description: Specifies the name of the Standard Shopper Role.
+        links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/LinkURI'
+              description: Specifies the URI of the Standard Shopper Role.
+              example: /v2/permissions/standard-shopper-roles/guest-shopper
+  responses:
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            not-found:
+              summary: Requested entity not found
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Not Found\",\n      \"status\": \"404\",\n      \"detail\": \"Not found\"\n    }\n  ]\n}\n"
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            missing-name:
+              summary: Required field missing
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Bad Request\",\n      \"status\": \"400\",\n      \"detail\": \"The field 'name' is required.\"\n    }\n  ]\n}\n"
+    StandardShopperRole:
+      description: A Standard Shopper Role
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/StandardShopperRole'
+    ListOfStandardShopperRoles:
+      description: List of Standard Shopper Roles
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StandardShopperRole'
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
+  parameters:
+    StandardShopperRoleID:
+      name: standard-shopper-role-id
+      description: The ID of the Standard Shopper Role.
+      in: path
+      required: true
+      schema:
+        type: string
+      example: guest-shopper
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

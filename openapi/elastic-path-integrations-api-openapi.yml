@@ -1,0 +1,713 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Integrations API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Integrations
+  description: Setting up and managing integrations.
+paths:
+  /integrations:
+    get:
+      summary: List integrations
+      description: Returns a list of all integrations created by the store.
+      tags:
+      - Integrations
+      operationId: ListIntegrations
+      responses:
+        '200':
+          description: Success. All integrations are returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                      - $ref: '#/components/schemas/Integration'
+                      - $ref: '#/components/schemas/Links'
+                      - $ref: '#/components/schemas/Meta'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  results:
+                    $ref: '#/components/schemas/Results'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Create an integration
+      description: Create an integration.
+      tags:
+      - Integrations
+      operationId: CreateIntegration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  $ref: '#/components/schemas/IntegrationCreate'
+      responses:
+        '200':
+          description: Success. Integration created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    allOf:
+                    - $ref: '#/components/schemas/Integration'
+                    - $ref: '#/components/schemas/Links'
+                    - $ref: '#/components/schemas/Meta'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /integrations/{integration_uuid}:
+    get:
+      parameters:
+      - $ref: '#/components/parameters/IntegrationUUID'
+      summary: Get an integration
+      description: Returns the integration for the given UUID.
+      tags:
+      - Integrations
+      operationId: GetIntegration
+      responses:
+        '200':
+          description: Success. An integration is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    allOf:
+                    - $ref: '#/components/schemas/Integration'
+                    - $ref: '#/components/schemas/Links'
+                    - $ref: '#/components/schemas/Meta'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      parameters:
+      - $ref: '#/components/parameters/IntegrationUUID'
+      summary: Update an integration
+      description: Updates the Integration for the given UUID. Specify whichever attributes you want to change. The values of the other attributes remain the same. If the attributes section is empty, the integration is not updated.
+      tags:
+      - Integrations
+      operationId: UpdateIntegration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  $ref: '#/components/schemas/IntegrationUpdate'
+      responses:
+        '200':
+          description: Success. All integrations are returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    allOf:
+                    - $ref: '#/components/schemas/Integration'
+                    - $ref: '#/components/schemas/Links'
+                    - $ref: '#/components/schemas/Meta'
+                  links:
+                    $ref: '#/components/schemas/Links'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      parameters:
+      - $ref: '#/components/parameters/IntegrationUUID'
+      summary: Delete an integration
+      description: Deletes the Integration for the given UUID
+      tags:
+      - Integrations
+      operationId: DeleteIntegration
+      responses:
+        '200':
+          description: Integration was successfully deleted
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /integrations/logs:
+    get:
+      summary: List logs for all integrations for the store
+      description: Returns all integration logs for the store.
+      tags:
+      - Integrations
+      operationId: ListStoreLogs
+      responses:
+        '200':
+          description: Success. Returns a list of integration logs.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IntegrationLog'
+                  links:
+                    $ref: '#/components/schemas/LogsPaginationLinks'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /integrations/{integration_uuid}/logs:
+    parameters:
+    - $ref: '#/components/parameters/IntegrationUUID'
+    get:
+      summary: List logs for integration
+      description: Returns the logs for the given integration UUID.
+      tags:
+      - Integrations
+      operationId: ListIntegrationLogs
+      responses:
+        '200':
+          description: Success. Returns a list of integration logs.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IntegrationLog'
+                  links:
+                    $ref: '#/components/schemas/LogsPaginationLinks'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /integrations/{integration_uuid}/jobs:
+    parameters:
+    - $ref: '#/components/parameters/IntegrationUUID'
+    get:
+      summary: List jobs for integration
+      description: Returns the jobs for the given integration UUID.
+      tags:
+      - Integrations
+      operationId: ListIntegrationJobs
+      responses:
+        '200':
+          description: Success. All integrations are returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IntegrationJob'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /integrations/{integration_uuid}/jobs/{job_uuid}/logs:
+    parameters:
+    - $ref: '#/components/parameters/IntegrationUUID'
+    - $ref: '#/components/parameters/JobUUID'
+    get:
+      summary: List logs for the job
+      description: Returns the integration logs for the given integration and job UUID.
+      tags:
+      - Integrations
+      operationId: ListJobLogs
+      responses:
+        '200':
+          description: Success. Returns a list of integration logs.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IntegrationLog'
+                  links:
+                    $ref: '#/components/schemas/LogsPaginationLinks'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    WebhookConfigurationObject:
+      required:
+      - url
+      properties:
+        url:
+          type: string
+          example: https://yourwebsite.com/order-created-notification
+          description: A required URL that the integration fires.
+          format: uri
+        secret_key:
+          type: string
+          example: secret_key_to_validate_on_your_endpoint
+          description: An optional header. Useful to authenticate the response came from Elastic Path. This is sent as `X-MOLTIN-SECRET-KEY`.
+    AWSSQSConfigurationObject:
+      required:
+      - url
+      - aws_access_key_id
+      - aws_secret_access_key
+      - region
+      properties:
+        url:
+          type: string
+          format: uri
+          example: https://sqs.eu-west-1.amazonaws.com/123456789/epcc-external-queue
+          description: The required SQS queue URL.
+        aws_access_key_id:
+          type: string
+          example: '****************JIMB'
+          description: The required AWS access key ID.
+        aws_secret_access_key:
+          type: string
+          example: '************************************HK4o'
+          description: The required AWS secret key ID.
+        region:
+          type: string
+          example: eu-west-1
+          description: The required AWS region.
+    IntegrationUpdate:
+      required:
+      - type
+      properties:
+        type:
+          description: The type represents the object being returned. Always `integration`.
+          type: string
+          example: integration
+          enum:
+          - integration
+          default: integration
+        name:
+          type: string
+          example: Order shipping notification
+          description: The name of the integration.
+        description:
+          type: string
+          example: Send a shipping notification via email with discount code
+          description: A description of what the integration is for.
+        enabled:
+          type: boolean
+          example: true
+          description: Whether the integration is enabled.
+        integration_type:
+          type: string
+          example: webhook
+          enum:
+          - webhook
+          - aws_sqs
+          - stomp
+          default: webhook
+        observes:
+          type: array
+          description: The list of events you want to observe. See [**Observable Events**](#observable-events).
+          items:
+            type: string
+        configuration:
+          description: The content of the configuration object depends on the value of `integration_type`.
+          type: object
+          oneOf:
+          - $ref: '#/components/schemas/AWSSQSConfigurationObject'
+          - $ref: '#/components/schemas/WebhookConfigurationObject'
+          - $ref: '#/components/schemas/STOMPConfigurationObject'
+    Timestamps:
+      description: The date and time a transaction is created.
+      properties:
+        created_at:
+          description: The date and time an integration is updated.
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+        updated_at:
+          description: The date and time an integration is updated.
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+    IntegrationCreate:
+      required:
+      - type
+      - observers
+      - integration_type
+      - name
+      - configuration
+      properties:
+        type:
+          description: The type represents the object being returned. Always `integration`.
+          type: string
+          example: integration
+          enum:
+          - integration
+          default: integration
+        name:
+          type: string
+          example: Order shipping notification
+          description: The name of the integration.
+        description:
+          type: string
+          example: Send a shipping notification via email with discount code
+          description: A description of what the integration is for.
+        enabled:
+          type: boolean
+          example: true
+          description: Whether the integration is enabled.
+        integration_type:
+          type: string
+          description: Specifies how the event is delivered. The options are `webhook`, `aws-sqs`, or `stomp`.
+          example: webhook
+          enum:
+          - webhook
+          - aws_sqs
+          - stomp
+          default: webhook
+        observes:
+          description: The list of events you want to observe. See [**Observable Events**](#observable-events).
+          type: array
+          items:
+            type: string
+        configuration:
+          description: The content of the configuration object depends on the value of `integration_type`.
+          type: object
+          oneOf:
+          - $ref: '#/components/schemas/AWSSQSConfigurationObject'
+          - $ref: '#/components/schemas/WebhookConfigurationObject'
+          - $ref: '#/components/schemas/STOMPConfigurationObject'
+    Meta:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            timestamps:
+              $ref: '#/components/schemas/Timestamps'
+    LogsPaginationLinks:
+      type: object
+      description: Links are used to allow you to move between pages.
+      properties:
+        first:
+          description: Always the first page. This is not present on the first page.
+          type: string
+          example: /integrations/logs?page[offset]=0&page[limit]=10
+        next:
+          description: Next page link.
+          type: string
+          example: /integrations/logs?page[offset]=10&page[limit]=10
+        prev:
+          description: This is not present on the first page.
+          type: string
+          example: /integrations/logs?page[offset]=8&page[limit]=10
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorBody'
+    IntegrationLog:
+      description: As integrations can fail over time, Commerce provides the ability to browse all logs for your integrations.
+      properties:
+        id:
+          description: A unique identifier of an integration whose logs you want to view.
+          type: string
+          example: ac8bb58e-2b9b-4ccf-9dd2-ecdf50417849
+        type:
+          description: This represents the type of resource object being returned. Always `integration`.
+          type: string
+          example: integration
+          enum:
+          - integration
+          default: integration
+        succeeded:
+          type: boolean
+          example: true
+          description: Whether the integration was successful.
+        attempt:
+          type: integer
+          example: 1
+          description: The number of attempts made to process the integration.
+        body:
+          type: string
+          example: Not Found
+          description: The response returned from the integration.
+        status_code:
+          type: integer
+          example: 404
+          description: The status code returned from the integration.
+        error_detail:
+          type: string
+          example: Received a status code outside of 2xx range - treating webhook as a fail
+          description: The reason why the integration failed.
+        relationships:
+          description: Relationships are established between different integration entities. For example, a log and an integration job are related to an integration.
+          type: object
+          properties:
+            integration:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The ID of the integration processed.
+                      example: ff8634a8-a89e-4eac-baab-9b7b8c4f8720
+                    type:
+                      type: string
+                      description: This represents the resource type of the object being returned. Always `integration`.
+                      example: integration
+            job:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The ID of the integration job processed.
+                      example: ff8634a8-a89e-4eac-baab-9b7b8c4f8720
+                    type:
+                      type: string
+                      description: This represents the resource type of the object being returned. Always `integration-job`.
+                      example: job
+    Links:
+      type: object
+      properties:
+        links:
+          description: Links are used to allow you to move between requests.
+          type: object
+          properties:
+            self:
+              description: Single entities use a self parameter with a link to that specific resource.
+              $ref: '#/components/schemas/LinkURI'
+    Integration:
+      properties:
+        id:
+          description: The unique identifier of the integration.
+          type: string
+          example: 2da46671-b4c2-44ac-b133-d1221aafc77b
+        type:
+          description: The type represents the object being returned. Always `integration`.
+          type: string
+          example: integration
+          enum:
+          - integration
+          default: integration
+        name:
+          type: string
+          example: Order shipping notification
+          description: The name of the integration.
+        description:
+          type: string
+          example: Send a shipping notification via email with discount code
+          description: A description of what the integration is for.
+        enabled:
+          type: boolean
+          example: true
+          description: Whether the integration is enabled.
+        integration_type:
+          type: string
+          example: webhook
+          description: Specifies how the event is delivered. The options are `webhook`, `aws-sqs`, or `stomp`.
+          enum:
+          - webhook
+          - aws_sqs
+          - stomp
+          default: webhook
+        observes:
+          description: The list of events you want to observe. See [**Observable Events**](#observable-events).
+          type: array
+          items:
+            type: string
+        configuration:
+          type: object
+          oneOf:
+          - $ref: '#/components/schemas/AWSSQSConfigurationObject'
+          - $ref: '#/components/schemas/WebhookConfigurationObject'
+          - $ref: '#/components/schemas/STOMPConfigurationObject'
+    ErrorBody:
+      required:
+      - title
+      properties:
+        status:
+          type: integer
+          format: int
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+    Results:
+      description: The results for this response for the entire collection.
+      type: object
+      properties:
+        total:
+          description: The total number of records for this response for the entire collection.
+          type: integer
+          example: 1
+    LinkURI:
+      type: string
+      format: uri
+      example: ?page[offset]=0&page[limit]=25
+    STOMPConfigurationObject:
+      required:
+      - url
+      properties:
+        username:
+          type: string
+          example: epcc-integration-1
+          description: The username used to authenticate against a STOMP server.
+        password:
+          type: string
+          example: '****************************CDKn'
+          description: The password used to authenticate against a STOMP server.
+        destination:
+          type: string
+          example: /queue/epcc-integrations.order-created
+          description: The destination in the messaging queuing system.
+        addresses:
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+          - stomp+ssl://b-618354a5-e04f-4eff-99c7-734e9d8b91a5-2.mq.us-west-2.amazonaws.com:61614
+          - stomp+ssl://b-618354a5-e04f-4eff-99c7-734e9d8b91a5-1.mq.us-west-2.amazonaws.com:61614
+          description: The addresses that correspond with the destination name.
+    IntegrationJob:
+      properties:
+        id:
+          description: The ID of the integration job processed.
+          type: string
+          example: 8848646b-2745-469e-8cc1-ee3b04738f8f
+        type:
+          type: string
+          description: This represents the type of resource object being returned. Always `integration-job`.
+          enum:
+          - integration-job
+          example: integration-job
+    PaginationLinks:
+      type: object
+      description: Links are used to allow you to move between pages.
+      properties:
+        first:
+          description: Always the first page. This is not present on the first page.
+          type: string
+          example: /integrations?page[offset]=0&page[limit]=10
+        last:
+          description: This is not present if there is only one page.
+          type: string
+          example: /integrations?page[offset]=20&page[limit]=10
+        next:
+          description: This is not present if there is no next page.
+          type: string
+          example: /integrations?page[offset]=10&page[limit]=10
+        prev:
+          description: This is not present on the first page.
+          type: string
+          example: /integrations?page[offset]=8&page[limit]=10
+  responses:
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: 404
+                  detail: The resource could not be found
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: 400
+                  detail: Your request was invalid
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: 500
+  parameters:
+    JobUUID:
+      name: job_uuid
+      in: path
+      description: The unique identifier of the integration job.
+      required: true
+      schema:
+        type: string
+    IntegrationUUID:
+      name: integration_uuid
+      in: path
+      description: The unique identifier of the integration.
+      required: true
+      schema:
+        type: string
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

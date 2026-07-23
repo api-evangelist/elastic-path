@@ -1,0 +1,675 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Custom Relationships API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Custom Relationships
+paths:
+  /pcm/custom-relationships:
+    post:
+      summary: Create a custom relationship
+      description: "Custom relationships can either be bi-directional or uni-directional.\n  - **Uni-Directional**: By setting `bi_directional` to `false` (or omitted from request) a uni-directional custom relationship will be created. \n  Within a uni-directional relationship, if Product A links to Product B, Product B will not link back to Product A. \n  This is ideal when one product (e.g., a base product) recommends another (e.g., an upsell), but the reverse \n  recommendation is unnecessary.\n \n - **Bi-Directional**: By setting `bi_directional` to `true` a bi-directional custom relationship will be created. Within a bi-directional \n relationship, if Product A is linked to Product B, Product B will automatically link back to Product A. \n This bi-directionality ensures a consistent experience, where products always suggest each other as related items.\n \n  For more information on use cases, see [Custom Relationships](/guides/key-concepts/product-experience-manager/custom-relationships/).\n\nCustom Relationship slugs must meet the following criteria:\n  - be unique \n  - be prefixed with `CRP_`. Product Experience Manager automatically adds the `CRP_` prefix if you do not include it.\n  - contain A to Z, a to z, 0 to 9, hyphen, underscore, and period. Spaces or other special characters like ^, [], *, and $ are not allowed.\n \nOnce a custom relationship has been created, you can then create Product Relationships:\n   1. Add the custom relationship to a product. See [Attach a custom relationship to a product](/docs/api/pxm/products/attach-custom-relationships).\n   2. Associate a product to multiple products. See [Associate a product with other products under a custom relationship](/docs/api/pxm/products/product-association-id).\n"
+      operationId: createCustomRelationship
+      tags:
+      - Custom Relationships
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/create_custom_relationship'
+            examples:
+              create-basic-custom-relationship:
+                $ref: '#/components/examples/create_basic_custom_relationship'
+              create-custom-relationship-external-sort-order:
+                $ref: '#/components/examples/create_custom_relationship_with_external_sort_order'
+              create-custom-relationship-bi-directional:
+                $ref: '#/components/examples/create_custom_relationship_bi_directional'
+        required: true
+      responses:
+        '201':
+          description: Returns a created custom relationship with the following attributes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/single_custom_relationship'
+              examples:
+                created-basic-custom-relationship:
+                  $ref: '#/components/examples/custom_relationship_created'
+                created-custom-relationship-external-sort-order:
+                  $ref: '#/components/examples/custom_relationship_with_external_sort_order_created'
+                created-custom-relationship-bi-directional:
+                  $ref: '#/components/examples/custom_relationship_bi_directional_created'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+    get:
+      operationId: getCustomRelationships
+      parameters:
+      - $ref: '#/components/parameters/page_offset'
+      - $ref: '#/components/parameters/page_limit'
+      - $ref: '#/components/parameters/filtercr'
+      summary: Get all custom relationships
+      description: "Gets all Custom Relationships. \n\nTo see a list of custom relationships a product is attached to, see [Get all Custom Relationships attached to a Product](/docs/api/pxm/products/list-attached-custom-relationship).\n\nTo see a list of products that a product is related to, see [Get all Related Products of a Products' attached Custom Relationship](/docs/api/pxm/products/get-related-products-of-a-product-id).\n\n### Filtering\n\n Many Commerce API endpoints support filtering. The general syntax is described in [**Filtering**](/guides/Getting-Started/filtering).\n\n The following attributes and operators are supported.\n\n | Operator | Attribute | Description | Example |\n | :--- |:---|:---|:---|\n | `eq` | `owner`, `slug` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. | `filter=eq(owner,store)` |\n | `in` | `slug`          | In. Checks if a value exists in a given list of values. If the value matches any item in the list, the condition is true. | `filter=in(slug,slug-1,slug-2,slug-3)` |\n"
+      tags:
+      - Custom Relationships
+      responses:
+        '200':
+          description: Returns a list of all custom relationships.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/multi_custom_relationships'
+              examples:
+                list-custom-relationships:
+                  $ref: '#/components/examples/resp_multi_custom_relationships'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '500':
+          $ref: '#/components/responses/internal'
+  /pcm/custom-relationships/{customRelationshipSlug}:
+    put:
+      operationId: updateCustomRelationship
+      parameters:
+      - $ref: '#/components/parameters/custom_relationship_slug'
+      summary: Update a custom relationship
+      description: "Updates a custom relationship. \n\nA partial update can be performed, where you specify only the fields that need to be changed.\n\nThe custom relationship slug cannot be updated.\n"
+      tags:
+      - Custom Relationships
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/update_custom_relationship'
+            examples:
+              update-custom-relationship:
+                $ref: '#/components/examples/update_custom_relationship'
+        required: true
+      responses:
+        '200':
+          description: Successfully returns the updated custom relationship
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/single_custom_relationship'
+              examples:
+                updated-custom-relationship:
+                  summary: Updated
+                  $ref: '#/components/examples/custom_relationship_updated'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+    get:
+      parameters:
+      - $ref: '#/components/parameters/custom_relationship_slug'
+      summary: Get a custom relationship
+      description: 'Gets a Custom Relationship.
+
+
+        To see a list of custom relationships a product is attached to, see [Get all Custom Relationships attached to a Product](/docs/api/pxm/products/list-attached-custom-relationship).
+
+
+        To see a list of products that a product is related to, see [Get all Related Products of a Products'' attached Custom Relationship](/docs/api/pxm/products/get-related-products-of-a-product-id).
+
+        '
+      operationId: getCustomRelationship
+      tags:
+      - Custom Relationships
+      responses:
+        '200':
+          description: Returns a custom relationship with the following attributes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/single_custom_relationship'
+              examples:
+                get-custom-relationship:
+                  summary: Get
+                  $ref: '#/components/examples/custom_relationship_updated'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '500':
+          $ref: '#/components/responses/internal'
+    delete:
+      operationId: deleteCustomRelationship
+      parameters:
+      - $ref: '#/components/parameters/custom_relationship_slug'
+      summary: Delete a custom relationship
+      description: 'Deletes the specified custom relationship.
+
+
+        Custom Relationships cannot be deleted if they are in use.
+
+        '
+      tags:
+      - Custom Relationships
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '500':
+          $ref: '#/components/responses/internal'
+components:
+  schemas:
+    multi_links_cr:
+      type: object
+      description: Links are used to allow you to move between requests.
+      properties:
+        first:
+          description: Always the first page.
+          type: string
+          example: /pcm/custom_relationships?page[offset]=0&page[limit]=10
+        last:
+          description: This is `null` if there is only one page.
+          type: string
+          example: /pcm/custom_relationships?page[offset]=20&page[limit]=10
+        next:
+          description: This is `null` if there is only one page.
+          type: string
+          example: /pcm/custom_relationships?page[offset]=10&page[limit]=10
+        prev:
+          description: This is `null` if you on the first page.
+          type: string
+          example: /pcm/custom_relationships?page[offset]=8&page[limit]=10
+    custom_relationship:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: A unique identifier generated when a custom relationship is created.
+          type: string
+        type:
+          description: This represents the type of resource object being returned. Always `custom-relationship`.
+          type: string
+          enum:
+          - custom-relationship
+        attributes:
+          $ref: '#/components/schemas/req_attributes_custom_relationship'
+        meta:
+          type: object
+          required:
+          - owner
+          - timestamps
+          properties:
+            owner:
+              description: The owner of the resource.
+              type: string
+              example: store
+            timestamps:
+              type: object
+              required:
+              - created_at
+              - updated_at
+              properties:
+                created_at:
+                  description: The date and time the resource is created.
+                  type: string
+                  example: '2024-01-10T20:16:35.343Z'
+                  format: date-time
+                updated_at:
+                  description: The date and time the resource is updated.
+                  type: string
+                  example: '2024-01-10T20:16:35.343Z'
+                  format: date-time
+    error:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                example: '500'
+              title:
+                type: string
+                description: A brief summary of the error.
+                example: Internal server error
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                example: An internal error has occurred.
+              request_id:
+                type: string
+                description: Internal request ID.
+                example: 00000000-0000-0000-0000-000000000000
+              meta:
+                type: object
+                description: Additional supporting meta data for the error.
+                example:
+                  missing_ids:
+                  - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    update_custom_relationship:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - id
+          - type
+          - attributes
+          properties:
+            id:
+              type: string
+              description: The unique identifier of the custom relationship.
+              example: 00000000-0000-0000-0000-000000000000
+            type:
+              description: This represents the type of resource object being returned. Always `custom-relationship`.
+              type: string
+              enum:
+              - custom-relationship
+              example: custom-relationship
+            attributes:
+              $ref: '#/components/schemas/req_attributes_custom_relationship'
+    req_attributes_custom_relationship:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - slug
+      properties:
+        name:
+          description: The name of the custom relationship to display to shoppers, such as `Kitchen electrics`.
+          type: string
+          example: Related Products
+        description:
+          description: A description of the custom relationship.
+          type: string
+          example: A list of related products shown on the PDP.
+        slug:
+          description: A unique slug for the custom relationship. Must match the slug specified in the request path. A slug can contain A to Z, a to z, 0 to 9, hyphen, underscore, and period. Spaces or other special characters like ^, [], *, and $ are not allowed.
+          type: string
+          example: CRP_related_products
+          pattern: ^[A-Za-z0-9._-]+$
+        sort_order:
+          description: The order in which the custom relationship should be displayed in relation to others. A lower value represents a higher priority in the display order. If set to NULL, the sort order will be removed.
+          nullable: true
+          type: integer
+          example: 5
+        external_name:
+          description: The shopper-facing name for the custom relationship. This value will be displayed to shoppers in the store-front, replacing the internal name if present. If set to NULL, the external name will be removed.
+          nullable: true
+          type: string
+          example: Similar items to consider
+        external_description:
+          description: The shopper-facing description for the custom relationship. This value will be shown to shoppers in the store-front, replacing the internal description if present. If set to NULL, the external description will be removed.
+          nullable: true
+          type: string
+          example: Check out these similar products that may also meet your needs or match your preferences.
+        bi_directional:
+          type: boolean
+          description: Is this relationship one way or bi-directional `true` or `false`. Default is false
+          default: false
+    multi_meta:
+      type: object
+      properties:
+        results:
+          description: Contains the results for the entire collection.
+          type: object
+          properties:
+            total:
+              description: Total number of results for the entire collection.
+              type: integer
+              example: 30
+              minimum: 0
+    create_custom_relationship:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - attributes
+          properties:
+            type:
+              description: This represents the type of resource object being returned. Always `custom-relationship`.
+              type: string
+              enum:
+              - custom-relationship
+            attributes:
+              $ref: '#/components/schemas/req_attributes_custom_relationship'
+    single_custom_relationship:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/custom_relationship'
+    multi_custom_relationships:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_relationship'
+        links:
+          $ref: '#/components/schemas/multi_links_cr'
+        meta:
+          $ref: '#/components/schemas/multi_meta'
+  parameters:
+    filtercr:
+      name: filter
+      in: query
+      description: 'Many Commerce API endpoints support filtering. The general syntax is described [**here**](/guides/Getting-Started/filtering).
+
+        '
+      style: form
+      explode: true
+      schema:
+        type: string
+      examples:
+        eq-owner:
+          value: eq(owner,store)
+    custom_relationship_slug:
+      name: customRelationshipSlug
+      in: path
+      schema:
+        type: string
+        example: CRP_electric_devices_2024
+      required: true
+      description: A custom relationship slug.
+    page_offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 10000
+        format: int64
+        example: 0
+    page_limit:
+      name: page[limit]
+      in: query
+      description: The number of records per page. The maximum limit is 100.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 10000
+        format: int64
+        example: 10
+  responses:
+    bad_request:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            bad-request:
+              value:
+                errors:
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
+    internal:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: '500'
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+    forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Forbidden
+                  status: '403'
+                  detail: entity owned by organization
+    not_found:
+      description: Bad Request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+  examples:
+    custom_relationship_updated:
+      value:
+        data:
+          type: custom-relationship
+          id: f3297ee8-da90-45e9-ae56-a2654aebbdfe
+          attributes:
+            name: Related Products
+            description: A list of related products shown on the PDP
+            slug: CRP_related_products
+            sort_order: 5
+            external_name: Similar items to consider
+            external_description: Check out these similar products that may also meet your needs or match your preferences.
+            bi_directional: false
+          meta:
+            owner: store
+            timestamps:
+              created_at: '2024-01-10T20:16:35.343Z'
+              updated_at: '2024-01-10T20:16:35.343Z'
+    update_custom_relationship:
+      summary: Update
+      value:
+        data:
+          type: custom-relationship
+          id: f3297ee8-da90-45e9-ae56-a2654aebbdfe
+          attributes:
+            name: Related Products
+            description: A list of related products shown on the PDP
+            slug: CRP_related_products
+            sort_order: 5
+            external_name: Similar items to consider
+            external_description: Check out these similar products that may also meet your needs or match your preferences.
+            bi_directional: false
+    create_basic_custom_relationship:
+      summary: Basic
+      description: Create a custom relationship with minimal fields.
+      value:
+        data:
+          type: custom-relationship
+          attributes:
+            name: Kitchen electrics
+            description: Kitchen electric devices
+            slug: CRP_kitchen_individual_devices
+    create_custom_relationship_with_external_sort_order:
+      summary: External Name and Description, and Sort Order
+      description: Create a custom relationship with an external name and description, as well as specifying a sort order.
+      value:
+        data:
+          type: custom-relationship
+          attributes:
+            name: Related Products
+            description: A list of related products shown on the PDP
+            slug: CRP_related_products
+            sort_order: 5
+            external_name: Similar items to consider
+            external_description: Check out these similar products that may also meet your needs or match your preferences.
+    custom_relationship_with_external_sort_order_created:
+      summary: External name and description, and sort order
+      value:
+        data:
+          id: e390ff7e-efc4-4769-90d2-fceabcc1e2cd
+          type: custom-relationship
+          attributes:
+            name: Related Products
+            description: A list of related products shown on the PDP
+            slug: CRP_related_products
+            sort_order: 5
+            external_name: Similar items to consider
+            external_description: Check out these similar products that may also meet your needs or match your preferences.
+            bi_directional: false
+          meta:
+            owner: store
+            timestamps:
+              created_at: '2024-01-10T20:16:35.343Z'
+              updated_at: '2024-01-10T20:16:35.343Z'
+    resp_multi_custom_relationships:
+      value:
+        data:
+        - id: f3297ee8-da90-45e9-ae56-a2654aebbdfe
+          type: custom-relationship
+          attributes:
+            name: Kitchen electrics
+            description: Kitchen electric devices
+            slug: CRP_kitchen_individual_devices
+            bi_directional: false
+          meta:
+            owner: store
+            timestamps:
+              created_at: '2024-01-10T20:16:35.343Z'
+              updated_at: '2024-01-10T20:16:35.343Z'
+        - id: 21b1315b-c47f-4766-85bf-7bf0f94d73b6
+          type: custom-relationship
+          attributes:
+            name: Related Products
+            description: A list of related products shown on the PDP
+            slug: CRP_related_products
+            bi_directional: true
+          meta:
+            owner: store
+            timestamps:
+              created_at: '2024-01-10T20:16:35.343Z'
+              updated_at: '2024-01-10T20:16:35.343Z'
+        - id: e390ff7e-efc4-4769-90d2-fceabcc1e2cd
+          type: custom-relationship
+          attributes:
+            name: Related Products
+            description: A list of related products shown on the PDP
+            slug: CRP_related_products
+            sort_order: 5
+            external_name: Similar items to consider
+            external_description: Check out these similar products that may also meet your needs or match your preferences.
+            bi_directional: false
+          meta:
+            owner: store
+            timestamps:
+              created_at: '2024-01-10T20:16:35.343Z'
+              updated_at: '2024-01-10T20:16:35.343Z'
+        links:
+          last: /pcm/custom_relationships?page[offset]=29&page[limit]=1
+          next: /pcm/custom_relationships?page[offset]=1&page[limit]=1
+        meta:
+          results:
+            total: 3
+    create_custom_relationship_bi_directional:
+      summary: Bi-Directional
+      description: Create a custom relationship with bi-directional relationships.
+      value:
+        data:
+          type: custom-relationship
+          attributes:
+            name: Related Products
+            description: A list of related products shown on the PDP
+            slug: CRP_related_products
+            bi_directional: true
+    custom_relationship_created:
+      summary: Basic
+      value:
+        data:
+          id: f3297ee8-da90-45e9-ae56-a2654aebbdfe
+          type: custom-relationship
+          attributes:
+            name: Kitchen electrics
+            description: Kitchen electric devices
+            slug: CRP_kitchen_individual_devices
+            bi_directional: false
+          meta:
+            owner: store
+            timestamps:
+              created_at: '2024-01-10T20:16:35.343Z'
+              updated_at: '2024-01-10T20:16:35.343Z'
+    custom_relationship_bi_directional_created:
+      summary: Bi-Directional
+      value:
+        data:
+          id: e390ff7e-efc4-4769-90d2-fceabcc1e2cd
+          type: custom-relationship
+          attributes:
+            name: Related Products
+            description: A list of related products shown on the PDP
+            slug: CRP_related_products
+            bi_directional: true
+          meta:
+            owner: store
+            timestamps:
+              created_at: '2024-01-10T20:16:35.343Z'
+              updated_at: '2024-01-10T20:16:35.343Z'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

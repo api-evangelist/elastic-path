@@ -1,0 +1,734 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Search API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Search
+  description: 'The Search API enables you to search for products in your published catalogs. Search provides powerful capabilities including full-text search, filtering, faceting, and sorting to help shoppers find products quickly and efficiently.
+
+
+    ### How Search Works
+
+
+    When you publish a catalog with search enabled, the catalog''s products are automatically indexed for search. The search index contains product data optimized for fast querying, including product names, descriptions, SKUs, categories, prices, and any custom fields you''ve configured.
+
+
+    There are two types of search operations:
+
+
+    - **Search**: Execute a single search query against a catalog. Use the GET endpoint for simple searches with query parameters.
+
+    - **Multi-search**: Execute multiple search queries in a single request. Use the POST endpoint to batch searches together for improved performance.
+
+
+    ### Search Features
+
+
+    - **Full-text search**: Search across product names, descriptions, SKUs, and custom fields with typo tolerance and relevance ranking
+
+    - **Filtering**: Narrow results using conditions on product attributes, categories, prices, and custom fields
+
+    - **Faceting**: Get aggregated counts for attribute values to build dynamic navigation and refinement options
+
+    - **Sorting**: Order results by price, name, custom fields, or relevance score
+
+    - **Highlighting**: Get highlighted snippets showing where search terms match in product fields
+
+    - **Autocomplete**: Get search suggestions as shoppers type their queries
+
+
+    ### Shopper Context
+
+
+    Search results are personalized based on the shopper''s context. The system automatically determines which catalog and prices to use based on:
+
+
+    - **Channel**: The shopping experience (web, mobile, B2B portal)
+
+    - **Account**: For B2B scenarios, the account and parent accounts
+
+    - **Customer**: The logged-in customer''s segment
+
+    - **Tags**: Custom context tags for advanced segmentation
+
+
+    This context is provided via request headers and is used to resolve the appropriate catalog rules and price books.
+
+
+    ### Admin vs Shopper Endpoints
+
+
+    - **Shopper endpoints** (`/pcm/catalog/search`, `/pcm/catalog/multi-search`): Use shopper context headers to automatically resolve the correct catalog and prices.
+
+    - **Admin endpoints** (`/pcm/catalogs/{catalog_id}/releases/{release_id}/search`): Directly specify the catalog and release to search, useful for previewing releases or testing.
+
+    '
+paths:
+  /pcm/catalog/multi-search:
+    post:
+      tags:
+      - Search
+      operationId: postMultiSearch
+      summary: Multi-search
+      description: Execute one or more searches in a single request.
+      parameters:
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/channel'
+      - $ref: '#/components/parameters/products-include'
+      - $ref: '#/components/parameters/tag'
+      - $ref: '#/components/parameters/search-profile'
+      - $ref: '#/components/parameters/simulated-shopper-date'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultiSearchRequest'
+      responses:
+        '200':
+          description: Multi-search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiSearchResponse'
+        '400':
+          description: Bad request - invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid-filter:
+                  value:
+                    errors:
+                    - title: Invalid Filter
+                      status: '400'
+                      detail: Could not parse the filter query.
+                invalid-facet:
+                  value:
+                    errors:
+                    - title: Invalid Facet
+                      status: '400'
+                      detail: Invalid facet field specified.
+                invalid-pagination:
+                  value:
+                    errors:
+                    - title: Invalid Pagination
+                      status: '400'
+                      detail: Invalid page or per_page parameter.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /pcm/catalogs/{catalog_id}/releases/{release_id}/multi-search:
+    post:
+      tags:
+      - Search
+      operationId: multiSearchByCatalogRelease
+      summary: Admin Multi-search
+      description: Execute one or more searches in a single request.
+      parameters:
+      - name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The ID of the catalog to query
+        x-go-name: catalogID
+      - name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique ID of a published release of the catalog or `latestPublished` for the most recently published version
+        x-go-name: releaseID
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/products-include'
+      - $ref: '#/components/parameters/pricebook-ids-for-price-segmentation-preview'
+      - $ref: '#/components/parameters/pricebook-ids-of-available-prices-to-show'
+      - $ref: '#/components/parameters/search-profile'
+      - $ref: '#/components/parameters/simulated-shopper-date'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultiSearchRequest'
+      responses:
+        '200':
+          description: Multi-search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiSearchResponse'
+        '400':
+          description: Bad request - invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid-filter:
+                  value:
+                    errors:
+                    - title: Invalid Filter
+                      status: '400'
+                      detail: Could not parse the filter query.
+                invalid-facet:
+                  value:
+                    errors:
+                    - title: Invalid Facet
+                      status: '400'
+                      detail: Invalid facet field specified.
+                invalid-pagination:
+                  value:
+                    errors:
+                    - title: Invalid Pagination
+                      status: '400'
+                      detail: Invalid page or per_page parameter.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /pcm/catalog/search:
+    get:
+      tags:
+      - Search
+      operationId: searchByContext
+      summary: Search
+      description: Execute search.
+      parameters:
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/channel'
+      - $ref: '#/components/parameters/products-include'
+      - $ref: '#/components/parameters/tag'
+      - $ref: '#/components/parameters/search-profile'
+      - $ref: '#/components/parameters/search-query-param-type'
+      - $ref: '#/components/parameters/search-query-param-highlight-full-fields'
+      - $ref: '#/components/parameters/search-query-param-q'
+      - $ref: '#/components/parameters/search-query-param-facet-by'
+      - $ref: '#/components/parameters/search-query-param-filter-by'
+      - $ref: '#/components/parameters/search-query-param-sort-by'
+      - $ref: '#/components/parameters/search-query-param-max-facet-values'
+      - $ref: '#/components/parameters/simulated-shopper-date'
+      - in: query
+        name: page
+        schema:
+          type: integer
+        example: 1
+      - in: query
+        name: per_page
+        schema:
+          type: integer
+        example: 10
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Bad request - invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid-filter:
+                  value:
+                    errors:
+                    - title: Invalid Filter
+                      status: '400'
+                      detail: Could not parse the filter query.
+                invalid-facet:
+                  value:
+                    errors:
+                    - title: Invalid Facet
+                      status: '400'
+                      detail: Invalid facet field specified.
+                invalid-pagination:
+                  value:
+                    errors:
+                    - title: Invalid Pagination
+                      status: '400'
+                      detail: Invalid page or per_page parameter.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /pcm/catalogs/{catalog_id}/releases/{release_id}/search:
+    get:
+      tags:
+      - Search
+      operationId: searchByCatalogRelease
+      summary: Admin Search
+      description: Execute search.
+      parameters:
+      - name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The ID of the catalog to query
+        x-go-name: catalogID
+      - name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique ID of a published release of the catalog or `latestPublished` for the most recently published version
+        x-go-name: releaseID
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/products-include'
+      - $ref: '#/components/parameters/pricebook-ids-for-price-segmentation-preview'
+      - $ref: '#/components/parameters/pricebook-ids-of-available-prices-to-show'
+      - $ref: '#/components/parameters/search-profile'
+      - $ref: '#/components/parameters/search-query-param-type'
+      - $ref: '#/components/parameters/search-query-param-highlight-full-fields'
+      - $ref: '#/components/parameters/search-query-param-q'
+      - $ref: '#/components/parameters/search-query-param-facet-by'
+      - $ref: '#/components/parameters/search-query-param-filter-by'
+      - $ref: '#/components/parameters/search-query-param-sort-by'
+      - $ref: '#/components/parameters/search-query-param-max-facet-values'
+      - $ref: '#/components/parameters/simulated-shopper-date'
+      - in: query
+        name: page
+        schema:
+          type: integer
+        example: 1
+      - in: query
+        name: per_page
+        schema:
+          type: integer
+        example: 10
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Bad request - invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid-filter:
+                  value:
+                    errors:
+                    - title: Invalid Filter
+                      status: '400'
+                      detail: Could not parse the filter query.
+                invalid-facet:
+                  value:
+                    errors:
+                    - title: Invalid Facet
+                      status: '400'
+                      detail: Invalid facet field specified.
+                invalid-pagination:
+                  value:
+                    errors:
+                    - title: Invalid Pagination
+                      status: '400'
+                      detail: Invalid page or per_page parameter.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  parameters:
+    search-query-param-filter-by:
+      in: query
+      name: filter_by
+      description: Applies conditions to narrow down search results based on specific field values. See [filtering](/guides/How-To/Catalogs/Search/filtering) for more details.
+      example: meta.search.nodes.name:=Electronics && price.float_price:>=10.00
+      schema:
+        type: string
+    pricebook-ids-for-price-segmentation-preview:
+      in: header
+      name: EP-Pricebook-IDs-For-Price-Segmentation-Preview
+      description: Supply a comma delimited list of pricebook ids to be used to lookup product prices from when the catalog supports price segmentation. The first pricebook will be highest priority (if more than one is supplied) and the rest in descending priority order. Used only for admin endpoints that dont support shopper context lookup.
+      schema:
+        type: array
+        maxItems: 5
+        items:
+          type: string
+    search-query-param-facet-by:
+      in: query
+      name: facet_by
+      description: Specifies which fields to use for generating facets in search results. See [faceting](/guides/How-To/Catalogs/Search/faceting) for more details.
+      example: meta.search.nodes.name
+      schema:
+        type: string
+    search-query-param-max-facet-values:
+      in: query
+      name: max_facet_values
+      description: Maximum number of facet values to return
+      schema:
+        type: integer
+      example: 10
+    search-profile:
+      in: query
+      name: search_profile
+      description: The slug of the search profile to use for this search. Do not specify to use default search profile.
+      schema:
+        type: string
+        pattern: ^[a-zA-Z0-9_.-]+$
+      example: clothing
+      x-go-name: SearchProfileSlug
+    search-query-param-q:
+      in: query
+      name: q
+      description: Search query
+      schema:
+        type: string
+      required: true
+      example: search query
+    accept-language:
+      description: The language and locale your storefront prefers. See [Accept-Language](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
+      in: header
+      name: accept-language
+      schema:
+        type: string
+      example: en-US
+      required: false
+    search-query-param-sort-by:
+      in: query
+      name: sort_by
+      description: Orders search results by specified fields. See [sorting](/guides/How-To/Catalogs/Search/sorting) for more details.
+      example: price.amount:asc,extensions.products(Specification).rating:desc
+      schema:
+        type: string
+    products-include:
+      name: include
+      in: query
+      description: 'Using the include parameter, you can retrieve top-level resources.
+
+
+        - Files or main image. For example, `include=files,main_image`.
+
+        - Component product data. For example, `include=component_products`.
+
+        - Key attribute data, such as SKU or slug.
+
+        '
+      required: false
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+          - files
+          - main_image
+          - component_products
+    pricebook-ids-of-available-prices-to-show:
+      in: header
+      name: EP-Pricebook-IDs-Of-Available-Prices-To-Show
+      description: Supply a comma delimited list of pricebook ids to be listed in meta sections available prices . 'all' is a permitted value and will ensure all available prices for a product are shown. 'all' is not recommended if there are lots(10+) of available prices due the large response size.
+      schema:
+        type: array
+        maxItems: 5
+        items:
+          type: string
+    simulated-shopper-date:
+      in: header
+      name: EP-Simulated-Shopper-Date
+      schema:
+        type: string
+      required: false
+    tag:
+      description: Tags are used to refine the eligibility criteria for a rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
+      in: header
+      name: EP-Context-Tag
+      schema:
+        type: string
+      required: false
+    channel:
+      description: The list of channels in which this catalog can be displayed. A channel is the shopping experience, such as a mobile app or web storefront. If empty, the catalog rule matches all channels. The channel will eventually be included in the bearer token that is used for authorization, but currently, you must set the `EP-Channel` header in your requests.
+      in: header
+      name: EP-Channel
+      schema:
+        type: string
+      required: false
+    search-query-param-type:
+      in: query
+      name: type
+      description: Type of search operation to perform
+      schema:
+        type: string
+        enum:
+        - search
+        - autocomplete
+      example: search
+    search-query-param-highlight-full-fields:
+      in: query
+      name: highlight_full_fields
+      description: Comma-separated list of fields to highlight
+      schema:
+        type: string
+      example: name,description
+  schemas:
+    IncludedResponse:
+      type: object
+      description: Included is an array of resources that are included in the response.
+      additionalProperties:
+        type: array
+        items:
+          type: object
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Hit:
+      type: object
+      properties:
+        document:
+          oneOf:
+          - $ref: '#/components/schemas/Product'
+          - $ref: '#/components/schemas/AutocompleteResponse'
+          description: Document object - either a Product or AutocompleteResponse
+        highlight:
+          type: object
+        highlights:
+          type: array
+          items:
+            type: object
+    AutocompleteResponse:
+      type: object
+      title: AutocompleteResponse
+      description: An autocomplete suggestion with query frequency information.
+      properties:
+        id:
+          description: A unique identifier for the autocomplete suggestion.
+          type: string
+          example: hammer_123
+          x-go-name: ID
+        q:
+          description: The query text for the autocomplete suggestion.
+          type: string
+          example: hammer
+          x-go-name: Query
+        count:
+          description: The frequency count of this query.
+          type: integer
+          example: 42
+          x-go-name: Count
+    SearchResponse:
+      allOf:
+      - $ref: '#/components/schemas/SearchResult'
+      - type: object
+        properties:
+          included:
+            $ref: '#/components/schemas/IncludedResponse'
+    SearchQuery:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - search
+          - autocomplete
+          example: search
+          description: Type of search operation to perform
+        highlight_full_fields:
+          type: string
+          example: name,description
+        q:
+          type: string
+          example: search query
+        facet_by:
+          $ref: '#/components/schemas/FacetByField'
+        filter_by:
+          $ref: '#/components/schemas/FilterByField'
+        sort_by:
+          $ref: '#/components/schemas/SortByField'
+        max_facet_values:
+          type: integer
+          example: 10
+        page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 20
+    SearchResult:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/SearchResultType'
+        facet_counts:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacetCount'
+        found:
+          type: integer
+          example: 150
+        hits:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hit'
+        out_of:
+          type: integer
+          example: 150
+        page:
+          type: integer
+          example: 1
+        request_params:
+          type: object
+        search_cutoff:
+          type: boolean
+          example: false
+        search_time_ms:
+          type: integer
+          example: 25
+    FacetByField:
+      type: string
+      description: Specifies which fields to use for generating facets in search results. See [faceting](/guides/How-To/Catalogs/Search/faceting) for more details.
+      example: meta.search.nodes.name
+    SortByField:
+      type: string
+      description: Orders search results by specified fields. See [sorting](/guides/How-To/Catalogs/Search/sorting) for more details.
+      example: price.amount:asc,extensions.products(Specification).rating:desc
+    FilterByField:
+      type: string
+      description: Applies conditions to narrow down search results based on specific field values. See [filtering](/guides/How-To/Catalogs/Search/filtering) for more details.
+      example: meta.search.nodes.name:=Electronics && price.float_price:>=10.00
+    MultiSearchRequest:
+      type: object
+      required:
+      - searches
+      properties:
+        searches:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SearchQuery'
+    FacetCount:
+      type: object
+      properties:
+        counts:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacetValue'
+        field_name:
+          type: string
+          example: category
+        sampled:
+          type: boolean
+          example: false
+        stats:
+          type: object
+    FacetValue:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 42
+        highlighted:
+          type: string
+          example: <em>electronics</em>
+        value:
+          type: string
+          example: electronics
+    Product:
+      type: object
+      title: Product
+      description: A product in a catalog with the following attributes.
+      properties:
+        attributes:
+          type: object
+          description: Arbitrary document object
+        id:
+          description: A unique identifier for a product.
+          type: string
+          example: 8fccaa19-dba9-4621-8d11-31a222a68c7c
+          x-go-name: ID
+        relationships:
+          type: object
+          description: Arbitrary document object
+        type:
+          description: This represents the type of object being returned. Always `product`.
+          type: string
+          example: product
+          x-go-name: Type
+        meta:
+          type: object
+          description: Arbitrary document object
+    MultiSearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        included:
+          $ref: '#/components/schemas/IncludedResponse'
+    SearchResultType:
+      type: string
+      enum:
+      - search
+      - autocomplete
+      example: search
+      description: Type of search operation to performed
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

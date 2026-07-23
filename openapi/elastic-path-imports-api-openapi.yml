@@ -1,0 +1,876 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Imports API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Imports
+  description: "You can import stock positions for up to 50,000 products in a single operation via an import. This is useful for synchronosing external systems with Elastic Path.\nThe API uses a [**JSONL**](https://jsonlines.org/) file, with one line per product. For each product one specifies the total stock in each location. For example\n\n```\n{\"data\":{\"type\":\"stock\",\"id\":\"b36ba644-6fdc-49b3-9ebb-410ed34908a8\",\"attributes\":{\"locations\":{\"vancouver\":{\"total\":20}}}}}\n{\"data\":{\"type\":\"stock\",\"id\":\"2e5a4c7b-6f88-4aad-a3c2-4d8b29bc32a4\",\"attributes\":{\"locations\":{\"vancouver\":{\"total\":54},\"denver\":{\"total\":1},\"boston\":{\"total\":20},\"portland\":{\"total\":100}}}}}\n```\n\n### Characteristics of Inventories Import\n\nThe Inventories Import API has the following characteristics:\n\n- The Inventories Import API reads the entire file and then updates the inventory.\n\n- Inventories imports are asynchronous and are processed one at a time. You can continue to send import requests, but these are queued. \n\n- If a product in an import does not already exist in the inventories database it will be created.\n"
+paths:
+  /inventories/imports:
+    post:
+      tags:
+      - Imports
+      summary: Import a dataset
+      operationId: CreateImport
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - import_file
+              properties:
+                external_ref:
+                  $ref: '#/components/schemas/ExternalRef'
+                import_file:
+                  description: The JSONL file you want to upload.
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Success. The import was started.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Import'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+      - Imports
+      summary: List import jobs
+      description: 'Retrieves a list of all import jobs.
+
+        '
+      parameters:
+      - $ref: '#/components/parameters/Filter'
+      - $ref: '#/components/parameters/PageOffset'
+      - $ref: '#/components/parameters/PageLimit'
+      operationId: ListImportJobs
+      responses:
+        '200':
+          description: Success. A list of import jobs is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Import'
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /inventories/imports/{import_uuid}:
+    parameters:
+    - name: import_uuid
+      in: path
+      description: The unique identifier of the import.
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    get:
+      parameters:
+      - $ref: '#/components/parameters/PageOffset'
+      - $ref: '#/components/parameters/PageLimit'
+      tags:
+      - Imports
+      summary: Get import
+      description: Retrieves the import job for the specified ID.
+      operationId: GetImport
+      responses:
+        '200':
+          description: Success. The import is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Import'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /inventories/imports/{import_uuid}/errors:
+    parameters:
+    - name: import_uuid
+      in: path
+      description: The unique identifier of the import.
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    get:
+      tags:
+      - Imports
+      parameters:
+      - $ref: '#/components/parameters/PageOffset'
+      - $ref: '#/components/parameters/PageLimit'
+      summary: Get import errors
+      description: "Retrieves all errors encountered as part of the import. Each error is attributed to a line in the JSONL file \nimported, so for example, if at line 1 in your JSONL you had a stock without locations, there would\nbe a missing key error for locations.\n\nErrors are also ordered by line number ascending, and can be paginated.\n"
+      operationId: GetImportErrors
+      responses:
+        '200':
+          description: Success. The import errors are returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InventoriesImportError'
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/subscriptions/imports:
+    parameters:
+    - $ref: '#/components/parameters/Filter_2'
+    post:
+      tags:
+      - Imports
+      summary: Import a dataset
+      operationId: CreateImport
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - import_file
+              properties:
+                external_ref:
+                  $ref: '#/components/schemas/ExternalRef'
+                import_file:
+                  description: The JSONL file you want to upload.
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Success. The import was started.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Import_2'
+        '400':
+          $ref: '#/components/responses/ValidationError_2'
+        '409':
+          $ref: '#/components/responses/WriteConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+      - Imports
+      summary: List import jobs
+      description: 'Retrieves a list of all import jobs.
+
+        '
+      parameters:
+      - $ref: '#/components/parameters/PageOffset_2'
+      - $ref: '#/components/parameters/PageLimit_2'
+      operationId: ListImportJobs
+      responses:
+        '200':
+          description: Success. A list of import jobs is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Import_2'
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/subscriptions/imports/{import_uuid}:
+    parameters:
+    - name: import_uuid
+      in: path
+      description: The unique identifier of the import.
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID_2'
+    get:
+      parameters:
+      - $ref: '#/components/parameters/PageOffset_2'
+      - $ref: '#/components/parameters/PageLimit_2'
+      tags:
+      - Imports
+      summary: Get import
+      description: Retrieves the import job for the specified ID.
+      operationId: GetImport
+      responses:
+        '200':
+          description: Success. The import is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Import_2'
+        '400':
+          $ref: '#/components/responses/ValidationError_2'
+        '404':
+          $ref: '#/components/responses/NotFoundError_2'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/subscriptions/imports/{import_uuid}/errors:
+    parameters:
+    - name: import_uuid
+      in: path
+      description: The unique identifier of the import.
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID_2'
+    get:
+      tags:
+      - Imports
+      parameters:
+      - $ref: '#/components/parameters/PageOffset_2'
+      - $ref: '#/components/parameters/PageLimit_2'
+      summary: Get import errors
+      description: "Retrieves all errors encountered as part of the import. Each error is attributed to a line in the JSONL file \nimported, so for example, if at line 1 in your JSONL you had a subscription_offering without a name, there would\nbe a minimum string error for the `name` attribute with `\"line_number\": 1`.\n\nErrors are also ordered by line number ascending, and can be paginated.\n"
+      operationId: GetImportErrors
+      responses:
+        '200':
+          description: Success. The import errors are returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SubscriptionImportError'
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '404':
+          $ref: '#/components/responses/NotFoundError_2'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    Error_2:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    Timestamps_2:
+      required:
+      - created_at
+      - updated_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    InventoriesImportError:
+      type: object
+      required:
+      - id
+      - type
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/InventoriesImportErrorType'
+        meta:
+          $ref: '#/components/schemas/InventoriesImportErrorMeta'
+    Timestamps:
+      required:
+      - created_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    ImportAttributes:
+      required:
+      - status
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+        status:
+          type: string
+          description: 'The status of job.
+
+            - **pending** - Commerce has received the request but is currently busy processing other requests.
+
+            - **started** - Commerce has started processing the job.
+
+            - **success** - The job has successfully completed.
+
+            - **failed** - The job has failed.
+
+            '
+          enum:
+          - pending
+          - started
+          - success
+          - failed
+          example: pending
+          x-go-type: model.JobStatus
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/inventories.svc/internal/domain/model
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    ImportRecords:
+      type: object
+      description: You can track the number of records imported to ensure the completeness, accuracy and integrity of the import. Uploaded shows the number of records ready to be imported. However, this does not mean they are valid objects, only that they have the correct type and their JSON format is properly formatted. Imported shows the number of records that have been both validated and successfully added.
+      required:
+      - uploaded
+      - imported
+      properties:
+        uploaded:
+          type: object
+          properties:
+            stock:
+              description: The total number of product transactions uploaded.
+              type: integer
+              example: 50000
+          required:
+          - stock
+        imported:
+          properties:
+            stock:
+              description: The total number of product transactions uploaded.
+              type: integer
+              example: 50000
+          required:
+          - stock
+    InventoriesImportErrorType:
+      type: string
+      example: inventories_import_error
+      enum:
+      - inventories_import_error
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Import:
+      required:
+      - id
+      - type
+      - meta
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/InventoriesImportType'
+        attributes:
+          $ref: '#/components/schemas/ImportAttributes'
+        meta:
+          $ref: '#/components/schemas/ImportMeta'
+    ImportAttributes_2:
+      required:
+      - status
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+        status:
+          type: string
+          description: 'The status of job.
+
+            - **pending** - Commerce has received the request but is currently busy processing other requests.
+
+            - **started** - Commerce has started processing the job.
+
+            - **success** - The job has successfully completed.
+
+            - **failed** - The job has failed.
+
+            '
+          enum:
+          - pending
+          - started
+          - success
+          - failed
+          example: pending
+          x-go-type: model.JobStatus
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    SubscriptionImportErrorType:
+      type: string
+      example: subscription_import_error
+      enum:
+      - subscription_import_error
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    InventoriesImportErrorMeta:
+      type: object
+      required:
+      - timestamps
+      - error
+      - field
+      - line_number
+      properties:
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+        error:
+          type: string
+          example: product name cannot be empty
+        field:
+          type: string
+          example: name
+        line_number:
+          type: integer
+          description: The line in the imported JSONL file at which the validation error occurred. Starts from 1.
+          example: 123
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+    InventoriesImportType:
+      type: string
+      example: inventories_import
+      enum:
+      - inventories_import
+    SubscriptionImportType:
+      type: string
+      example: subscription_import
+      enum:
+      - subscription_import
+    ImportMeta:
+      readOnly: true
+      required:
+      - timestamps
+      - records
+      properties:
+        timestamps:
+          $ref: '#/components/schemas/JobTimestamps'
+        records:
+          $ref: '#/components/schemas/ImportRecords'
+    ImportRecords_2:
+      type: object
+      description: You can track the number of records imported to ensure the completeness, accuracy and integrity of the import. Uploaded shows the number of records ready to be imported into Subscriptions. However, this does not mean they are valid subscription objects, only that they have the correct type and their JSON format is properly formatted. Imported shows the number of records that have been both validated and successfully added to Subscriptions.
+      required:
+      - uploaded
+      - imported
+      properties:
+        uploaded:
+          type: object
+          properties:
+            subscription_feature:
+              description: The total number of features uploaded.
+              type: integer
+              example: 50000
+            subscription_subscriber:
+              description: The total number of subscribers uploaded.
+              type: integer
+              example: 50000
+            subscription_offering:
+              description: The total number of offerings uploaded.
+              type: integer
+              example: 50000
+            subscription:
+              description: The total number of subscriptions uploaded.
+              type: integer
+              example: 50000
+          required:
+          - subscription_feature
+          - subscription_subscriber
+          - subscription_offering
+          - subscription
+        imported:
+          properties:
+            subscription_feature:
+              description: The total number of features uploaded.
+              type: integer
+              example: 50000
+            subscription_subscriber:
+              description: The total number of subscribers imported.
+              type: integer
+              example: 45090
+            subscription_offering:
+              description: The total number of offerings imported.
+              type: integer
+              example: 45090
+            subscription:
+              description: The total number of subscriptions imported.
+              type: integer
+              example: 45090
+          required:
+          - subscription_feature
+          - subscription_subscriber
+          - subscription_offering
+          - subscription
+    UUID:
+      type: string
+      description: The unique identifier.
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 00000000-0000-0000-0000-000000000000
+    LinkURI:
+      type: string
+      format: uri
+      example: http://example.com/articles/1/comments
+      nullable: true
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
+    SubscriptionImportError:
+      type: object
+      required:
+      - id
+      - type
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID_2'
+        type:
+          $ref: '#/components/schemas/SubscriptionImportErrorType'
+        meta:
+          $ref: '#/components/schemas/SubscriptionImportErrorMeta'
+    Import_2:
+      required:
+      - type
+      - meta
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID_2'
+        type:
+          $ref: '#/components/schemas/SubscriptionImportType'
+        attributes:
+          $ref: '#/components/schemas/ImportAttributes_2'
+        meta:
+          $ref: '#/components/schemas/ImportMeta_2'
+    UUID_2:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    JobTimestamps:
+      allOf:
+      - $ref: '#/components/schemas/Timestamps'
+      - properties:
+          started_at:
+            description: The date and time a job is started.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+          finished_at:
+            description: The date and time a job finished.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+    SubscriptionImportErrorMeta:
+      type: object
+      required:
+      - owner
+      - timestamps
+      - error
+      - field
+      - line_number
+      properties:
+        owner:
+          type: string
+          example: store
+        timestamps:
+          $ref: '#/components/schemas/Timestamps_2'
+        error:
+          type: string
+          example: offering name cannot be empty
+        field:
+          type: string
+          example: name
+        line_number:
+          type: integer
+          description: The line in the imported JSONL file at which the validation error occurred. Starts from 1.
+          example: 123
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+    ImportMeta_2:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      - records
+      properties:
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/JobTimestamps'
+        records:
+          $ref: '#/components/schemas/ImportRecords_2'
+    ExternalRef:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
+    ErrorResponse_2:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error_2'
+  parameters:
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [**page length**](https://elasticpath.dev/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int
+        minimum: 0
+        maximum: 10000
+        example: 10
+    Filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Inventories API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(location,new-york)
+    PageLimit:
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the the [**page length**](https://elasticpath.dev/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      name: page[limit]
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int
+        minimum: 0
+        example: 100
+    PageLimit_2:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
+    Filter_2:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(name,Alan Turing)
+    PageOffset_2:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+  responses:
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No location found
+    WriteConflictError:
+      description: Write conflict. Unable to perform the operation at this time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse_2'
+          example:
+            errors:
+            - title: Write Conflict
+              status: '409'
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: Your request was invalid
+    ValidationError_2:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse_2'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: 'data.attributes.name: "name" is required'
+    NotFoundError_2:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse_2'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No plan found
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

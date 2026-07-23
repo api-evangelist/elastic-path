@@ -1,0 +1,169 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Logs Time to Live Settings API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Logs Time to Live Settings
+  description: 'You can use the Logs TTL Settings endpoint to retrieve and update settings controlling logs time-to-live (TTL).
+
+    '
+paths:
+  /v2/settings/logs-ttl:
+    get:
+      tags:
+      - Logs Time to Live Settings
+      summary: Get Logs Time-to-Live (TTL) Settings
+      operationId: get-logs-ttl
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    $ref: '#/components/schemas/LogsTtl'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        default:
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Logs Time to Live Settings
+      summary: Update Logs Time-to-Live (TTL) Settings
+      operationId: put-logs-ttl
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  $ref: '#/components/schemas/LogsTtl'
+                  required:
+                  - type
+            examples:
+              update-logs-ttl:
+                summary: Update Logs TTL
+                value:
+                  data:
+                    days: 10
+                    type: time_to_live
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    $ref: '#/components/schemas/LogsTtl'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        default:
+          $ref: '#/components/responses/InternalServerError'
+components:
+  responses:
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              summary: Required field missing
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Bad Request\",\n      \"status\": \"400\",\n      \"detail\": \"Validation failed: field 'Type' on the 'ttl-type' tag.\"\n    }\n  ]\n}\n"
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              summary: Unauthorized
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Unauthorized\",\n      \"status\": \"401\"\n    }\n  ]\n}\n"
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
+  schemas:
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    LogsTtl:
+      properties:
+        days:
+          type: integer
+          description: The number of days to retain the logs. Allowed values are between 1 and 365.
+          minimum: 1
+          maximum: 365
+          example: 10
+        type:
+          type: string
+          const: time_to_live
+          description: The type of the object. Always equal to `time_to_live`.
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

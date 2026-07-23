@@ -1,0 +1,358 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Personal Data Logs API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Personal Data Logs
+  description: 'When a user’s personal data is changed, an event is logged by Commerce. You can use the Personal Data Logs endpoint to access these logs.
+
+
+    This API is read only, and you cannot add, update, or delete logs using this API.
+
+
+    The API only allows you to read all logs for a particular data entry (specified in the filter GET parameter).
+
+
+    :::note
+
+    Currently, personal data management is only enabled for a limited set of endpoints. See the [personal data concepts page](/docs/api/personal-data/personal-data-introduction) for the list of endpoints that support personal data management.
+
+    :::
+
+    '
+paths:
+  /v2/personal-data/logs:
+    get:
+      tags:
+      - Personal Data Logs
+      summary: Get Personal Data Logs
+      description: "Gets a list of logs for a specific resource id and resource type.\n\nYou can use pagination with this resource. For more information, see [pagination](/guides/Getting-Started/pagination).\n\n:::note\n* This request is only accessible to `client_credentials` token users with `Seller Admin`, `Support` and `IT` roles.\n* Non `client_credentials` token users cannot access this endpoint. See [Permissions](/docs/authentication/tokens/permissions).\n* This request requires a filter for `resource_type` and `resource_id`.\n  :::\n\n## Filtering\n\nThe following operator and attributes are **required** for [filtering](/guides/Getting-Started/filtering) erasure requests.\n\n| Operator | Description                                                                                          |\n|:---------|:-----------------------------------------------------------------------------------------------------|\n| `eq`     | Checks whether the values of two operands are equal. If the values are equal, the condition is true. |\n\n| Attribute         | Type     | Operator | Example                                                   |\n| :---------------- | :---     | :---     | :-------------------------------------------------------- |\n| `resource_type`   | `string` | `eq`     | `eq(resource_type,customer)`                              |\n| `resource_id`     | `string` | `eq`     | `eq(resource_id,0f850c15-d643-480a-a2b4-9e3c26067178)`    |\n"
+      operationId: get-personal-data-logs
+      parameters:
+      - $ref: '#/components/parameters/PageOffset'
+      - $ref: '#/components/parameters/PageLimit'
+      - $ref: '#/components/parameters/Filter'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PersonalDataLog'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+              examples:
+                getLogs:
+                  value:
+                    data:
+                    - id: faf8c40f-a680-40ae-b7bc-78533bbdd8c3
+                      store_id: 00000000-0000-1000-8000-000000000000
+                      type: personal_data_log_entry
+                      initiator:
+                        access-token-email: accounts@molt.in
+                        access-token-id: '1222341536243515939'
+                        access-token-name: moltin test team
+                        access-token-store-id: 15ea9633-278c-4807-80f7-2009fed63c7e
+                        access-token-type: client-credentials-token
+                      time: '2022-04-29T10:51:14.374Z'
+                      event_type: user-authentication-info.event.created
+                      delta:
+                        email: some@email.com
+                        id: 00000000-0000-1000-8000-111111111112
+                        name: some_name
+                        realm_id: 00000000-0000-1000-8000-111111111111
+                        store_id: 00000000-0000-1000-8000-000000000000
+                        type: user-authentication-info
+                      resource_id: 00000000-0000-1000-8000-111111111112
+                      resource_type: user-authentication-info
+                      relationships:
+                        resource_path:
+                          url: http://www.elaticpath.com
+                    meta:
+                      page:
+                        limit: 100
+                        offset: 0
+                        current: 1
+                        total: 1
+                      results:
+                        total: 1
+                    links:
+                      current: https://useast.api.elasticpath.com/v2/personal-data/logs?page[offset]=0&page[limit]=20
+                      first: https://useast.api.elasticpath.com/v2/personal-data/logs?page[offset]=0&page[limit]=20
+                      last: https://useast.api.elasticpath.com/v2/personal-data/logs?page[offset]=0&page[limit]=20
+                      next: 'null'
+                      prev: 'null'
+        '400':
+          $ref: '#/components/responses/BadFilterError'
+        default:
+          $ref: '#/components/responses/InternalServerError'
+components:
+  responses:
+    BadFilterError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-filter:
+              summary: Required filter missing
+              value: "{\n  \"errors\": [\n    {\n      \"detail\": \"bad filter: resource_id and resource_type are the filter fields that are both mandatory and only they are allowed\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}\n"
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
+  parameters:
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 0
+    Filter:
+      name: filter
+      in: query
+      required: false
+      description: Filter attributes. For more information, see the [Filtering](/guides/Getting-Started/filtering) section.
+      schema:
+        type: string
+        format: string
+        example: eq(resource_id,0f850c15-d643-480a-a2b4-9e3c26067178)
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
+  schemas:
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    PersonalDataLog:
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier for the log entry.
+          example: faf8c40f-a680-40ae-b7bc-78533bbdd8c3
+        store_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the store id.
+          example: 00000000-0000-1000-8000-000000000000
+        type:
+          type: string
+          const: personal_data_log_entry
+          description: The type of the object. Always equal to `personal_data_log_entry`.
+        initiator:
+          type: object
+          description: Specifies who initiated the personal data change.
+          properties:
+            access-token-email:
+              type: string
+              example: accounts@elasticpath.com
+            access-token-id:
+              type: string
+              example: 1222341536243515939
+            access-token-name:
+              type: string
+              example: elastic path test team
+            access-token-store-id:
+              type: string
+              format: uuid
+              example: 15ea9633-278c-4807-80f7-2009fed63c7e
+            access-token-type:
+              type: string
+              example: client-credentials-token
+        time:
+          type: string
+          description: Specifies the time when the change happened.
+          example: 2022-04-29 10:51:14.374000+00:00
+        event_type:
+          type: string
+          description: Specifies the type of the event.
+          example: user-authentication-info.event.created
+        delta:
+          type: object
+          description: Includes fields that were changed as a result of the event.
+          properties:
+            email:
+              type: string
+              example: some@eamil.com
+            id:
+              type: string
+              format: uuid
+              example: 00000000-0000-1000-8000-111111111112
+            name:
+              type: string
+              example: some_name
+            realm_id:
+              type: string
+              example: 00000000-0000-1000-8000-111111111111
+            store_id:
+              type: string
+              format: uuid
+              example: 00000000-0000-1000-8000-000000000000
+            type:
+              type: string
+              example: user-authentication-info
+        resource_id:
+          type: string
+          description: The ID of the data entry that was changed.
+          example: 00000000-0000-1000-8000-111111111112
+        resource_type:
+          type: string
+          description: The type of the data entry that was changed.
+          example: user-authentication-info
+        relationships:
+          type: object
+          properties:
+            resource_path:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  example: http://www.elaticpath.com
+    PaginationMeta:
+      type: object
+      required:
+      - page
+      - results
+      properties:
+        results:
+          type: object
+          properties:
+            total:
+              description: Total number of results for the entire collection.
+              type: integer
+              example: 1
+        page:
+          type: object
+          properties:
+            limit:
+              description: The maximum number of records for all pages.
+              type: integer
+              example: 100
+            offset:
+              description: The current offset by number of pages.
+              type: integer
+              example: 0
+            current:
+              description: The current number of pages.
+              type: integer
+              example: 1
+            total:
+              description: The total number of records for the entire collection.
+              type: integer
+              example: 1
+    PaginationLinks:
+      required:
+      - current
+      - first
+      - last
+      - next
+      - prev
+      type: object
+      properties:
+        current:
+          description: Always the current page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        first:
+          description: Always the first page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        last:
+          description: Always `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        next:
+          description: Always `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+        prev:
+          description: Always `null` if the user is on the first page.
+          type:
+          - string
+          - 'null'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

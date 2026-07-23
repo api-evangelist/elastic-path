@@ -1,0 +1,1471 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Product Relationships API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Product Relationships
+paths:
+  /pcm/products/{productID}/custom-relationships:
+    post:
+      parameters:
+      - $ref: '#/components/parameters/product_id'
+      summary: Attach Custom Relationships to a Product
+      description: "You can attach up to 5 custom relationships to a product.  \n\nOnce you have attached a custom relationship to a product, you can then create relationships from a product to one or many other products. See [Associate a product to one or more products using a custom relationship](/docs/api/pxm/products/product-association-id). \n\nSee [Custom Relationships](/guides/key-concepts/product-experience-manager/custom-relationships/).\n\n### Prerequisites\n  - A Custom Relationship has been created, see [create a Custom Relationship](/docs/api/pxm/products/create-custom-relationship),\n  - A Product has been created.\n"
+      operationId: attachCustomRelationships
+      tags:
+      - Product Relationships
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/attach_custom_relationship_request'
+            examples:
+              assign-custom-relationships-to-product:
+                summary: attach custom relationships to product
+                $ref: '#/components/examples/attach_custom_relationship_request'
+      responses:
+        '201':
+          description: Returns the attached custom relationships
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/multi_custom_relationships'
+              examples:
+                custom-relationship:
+                  summary: Attached custom relationships
+                  $ref: '#/components/examples/resp_multi_custom_relationships'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '409':
+          $ref: '#/components/responses/write_conflict'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+    delete:
+      parameters:
+      - $ref: '#/components/parameters/product_id'
+      summary: Delete Custom Relationships from a Product
+      description: 'Delete Custom Relationships from a Product. Multiple Custom Relationships can be deleted from a product in one request.
+
+        '
+      operationId: detachCustomRelationships
+      tags:
+      - Product Relationships
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/attach_custom_relationship_request'
+            examples:
+              assign-custom-relationship-to-product:
+                $ref: '#/components/examples/attach_custom_relationship_request'
+      responses:
+        '204':
+          description: Successfully deleted custom relationships.
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '409':
+          $ref: '#/components/responses/write_conflict'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+    get:
+      parameters:
+      - $ref: '#/components/parameters/product_id'
+      - $ref: '#/components/parameters/page_offset'
+      - $ref: '#/components/parameters/page_limit'
+      summary: Get all Custom Relationships attached to a Product
+      description: "### Prerequisites\n  - Custom Relationships have been attached to a product, see [Attach Custom Relationships to a Product](/docs/api/pxm/products/attach-custom-relationships)\n  - **OR** Products have been related to one another, see [Create a Relationship between a product with one or more products](/docs/api/pxm/products/product-association-id)\n"
+      operationId: listAttachedCustomRelationship
+      tags:
+      - Product Relationships
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/attach_custom_relationship_request'
+            examples:
+              assign-custom-relationship-to-product:
+                $ref: '#/components/examples/attach_custom_relationship_request'
+      responses:
+        '200':
+          description: Returns the attached custom relationship.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/multi_custom_relationships'
+              examples:
+                custom-relationship:
+                  $ref: '#/components/examples/resp_multi_custom_relationships'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '409':
+          $ref: '#/components/responses/write_conflict'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+  /pcm/products/{productID}/custom-relationships/{customRelationshipSlug}:
+    post:
+      parameters:
+      - $ref: '#/components/parameters/product_id'
+      - $ref: '#/components/parameters/custom_relationship_slug'
+      summary: Create a Relationship between a Product with one or more Products
+      description: "- You can associate a product with up to 2000 other products. \n- You do not need to attach a custom relationship to products beforehand, this will be done automatically by this endpoint. \n- This is a partial update, so if you make a request to this endpoint multiple times with different products in each request, they will not be overwritten but will be appended to the related products list. \n\nIf you want to remove a relationship between products, see [Delete a Relationship between a product with one or more products](/docs/api/pxm/products/dissociate-products).  \n\n ### Prerequisites\n   - A Custom Relationship has been created, see [create a Custom Relationship](/docs/api/pxm/products/create-custom-relationship).\n   - A Product has been created for the relationship to be based from.\n   - One or many Product have been created for the product to relate to.\n"
+      operationId: productAssociationId
+      tags:
+      - Product Relationships
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/product_association_request'
+            examples:
+              create-product-association:
+                $ref: '#/components/examples/create_product_association_request'
+      responses:
+        '201':
+          description: Returns information related to associated products.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/product_association_response'
+              examples:
+                create-product-association:
+                  $ref: '#/components/examples/create_product_association_created_response'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '409':
+          $ref: '#/components/responses/write_conflict'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+    delete:
+      parameters:
+      - $ref: '#/components/parameters/product_id'
+      - $ref: '#/components/parameters/custom_relationship_slug'
+      summary: Delete a Relationship between a product with one or more products
+      operationId: dissociateProducts
+      tags:
+      - Product Relationships
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/product_association_delete_request'
+            examples:
+              delete-product-association:
+                $ref: '#/components/examples/delete_product_association_request'
+      responses:
+        '204':
+          description: Products are dissociated.
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '409':
+          $ref: '#/components/responses/write_conflict'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+    get:
+      summary: Get all Related Product IDs of a Products' attached Custom Relationship
+      description: "### Prerequisites\n  - Relationships have been created between Products, see [Create a Relationship between a product with one or more products](/docs/api/pxm/products/product-association-id).\n"
+      operationId: getRelatedProductIDsOfAProductId
+      tags:
+      - Product Relationships
+      parameters:
+      - $ref: '#/components/parameters/page_offset'
+      - $ref: '#/components/parameters/page_limit'
+      - $ref: '#/components/parameters/product_id'
+      - $ref: '#/components/parameters/custom_relationship_slug'
+      responses:
+        '200':
+          description: Returns all related product ids.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/product_association_list_product_ids_response'
+              examples:
+                list-product-association-product-ids:
+                  $ref: '#/components/examples/list_product_association_product_ids_response'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '409':
+          $ref: '#/components/responses/write_conflict'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+  /pcm/products/{productID}/custom-relationships/{customRelationshipSlug}/products:
+    get:
+      summary: Get all Related Products of a Products' attached Custom Relationship
+      operationId: getRelatedProductsOfAProductId
+      description: "### Prerequisites\n  - Relationships have been created between Products, see [Create a Relationship between a product with one or more products](/docs/api/pxm/products/product-association-id).\n"
+      tags:
+      - Product Relationships
+      parameters:
+      - $ref: '#/components/parameters/page_offset'
+      - $ref: '#/components/parameters/page_limit'
+      - $ref: '#/components/parameters/product_id'
+      - $ref: '#/components/parameters/custom_relationship_slug'
+      responses:
+        '200':
+          description: Returns all related products.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/multi_product_response'
+              examples:
+                list-products:
+                  $ref: '#/components/examples/multi_product_response'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+components:
+  schemas:
+    product_association_delete_request:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - type
+            properties:
+              id:
+                type: string
+                description: The ID of the product you want to relate.
+              type:
+                type: string
+                enum:
+                - product
+                description: This represents the type of resource being returned. Always `product`.
+    multi_links_cr:
+      type: object
+      description: Links are used to allow you to move between requests.
+      properties:
+        first:
+          description: Always the first page.
+          type: string
+          example: /pcm/custom_relationships?page[offset]=0&page[limit]=10
+        last:
+          description: This is `null` if there is only one page.
+          type: string
+          example: /pcm/custom_relationships?page[offset]=20&page[limit]=10
+        next:
+          description: This is `null` if there is only one page.
+          type: string
+          example: /pcm/custom_relationships?page[offset]=10&page[limit]=10
+        prev:
+          description: This is `null` if you on the first page.
+          type: string
+          example: /pcm/custom_relationships?page[offset]=8&page[limit]=10
+    product_build_rules:
+      type: object
+      description: You can build a combination of child products associated with a product, based on build rules that you specify. This is useful, for example, if you have a variation option that you do not sell. This makes managing and building your child products quick and easy. See [Using Build Rules](/docs/api/pxm/products/build-child-products#using-build-rules).
+      properties:
+        default:
+          description: Specifies the default behaviour, either `include` or `exclude`.
+          type: string
+          enum:
+          - include
+          - exclude
+        include:
+          description: An array of option IDs to include when child products are built. Each combination consists of a nested array of option IDs from one or more variations. Combinations of option IDs in the nested arrays must come from different variations.
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        exclude:
+          description: An array of option IDs to exclude when child products are built. Each combination consists of a nested array of option IDs from one or more variations. Combinations of option IDs in the nested arrays must come from different variations.
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+    custom_relationship:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: A unique identifier generated when a custom relationship is created.
+          type: string
+        type:
+          description: This represents the type of resource object being returned. Always `custom-relationship`.
+          type: string
+          enum:
+          - custom-relationship
+        attributes:
+          $ref: '#/components/schemas/req_attributes_custom_relationship'
+        meta:
+          type: object
+          required:
+          - owner
+          - timestamps
+          properties:
+            owner:
+              description: The owner of the resource.
+              type: string
+              example: store
+            timestamps:
+              type: object
+              required:
+              - created_at
+              - updated_at
+              properties:
+                created_at:
+                  description: The date and time the resource is created.
+                  type: string
+                  example: '2024-01-10T20:16:35.343Z'
+                  format: date-time
+                updated_at:
+                  description: The date and time the resource is updated.
+                  type: string
+                  example: '2024-01-10T20:16:35.343Z'
+                  format: date-time
+    error:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                example: '500'
+              title:
+                type: string
+                description: A brief summary of the error.
+                example: Internal server error
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                example: An internal error has occurred.
+              request_id:
+                type: string
+                description: Internal request ID.
+                example: 00000000-0000-0000-0000-000000000000
+              meta:
+                type: object
+                description: Additional supporting meta data for the error.
+                example:
+                  missing_ids:
+                  - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    product_association_response:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            associated_products:
+              description: A list of product IDs that have been successfully associated with this custom relationship.
+              type: array
+              items:
+                type: string
+              example:
+              - 68c48149-0e94-4ef2-93d5-8d5f3774980a
+              - ab4826d1-4a5a-4951-a2a5-98058899f891
+            products_not_associated:
+              description: A list of products that could not be associated, including the reasons why.
+              type: array
+              items:
+                type: object
+                properties:
+                  ID:
+                    description: The ID of the product that could not be associated.
+                    type: string
+                    example: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
+                  Details:
+                    description: Details about why the product could not be associated.
+                    type: string
+                    example: could not find product
+              example:
+              - ID: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
+                Details: could not find product
+              - ID: a0ef3291-2ec1-4d7d-9d6d-1705ae01bb99
+                Details: product already has 5 custom relationships, cannot associate more as it has reached the limit of 5 custom relationships
+              - ID: bde79675-4783-40b7-8a7e-ac6df41459c6
+                Details: product already has 5 custom relationships, cannot associate more as it has reached the limit of 5 custom relationships
+              - ID: aaddd5f4-a5f8-42e8-be9a-097986f22e58
+                Details: exceeded maximum allowed associations (2000). Please review and try again
+            owner:
+              description: The owner of the resource.
+              type: string
+              example: store
+            timestamps:
+              type: object
+              properties:
+                created_at:
+                  description: The date and time the resource was created.
+                  type: string
+                  example: '2024-08-08T09:29:08.295Z'
+                  format: date-time
+                updated_at:
+                  description: The date and time the resource was last updated.
+                  type: string
+                  example: '2024-08-08T09:29:08.295Z'
+                  format: date-time
+    req_attributes_custom_relationship:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - slug
+      properties:
+        name:
+          description: The name of the custom relationship to display to shoppers, such as `Kitchen electrics`.
+          type: string
+          example: Related Products
+        description:
+          description: A description of the custom relationship.
+          type: string
+          example: A list of related products shown on the PDP.
+        slug:
+          description: A unique slug for the custom relationship. Must match the slug specified in the request path. A slug can contain A to Z, a to z, 0 to 9, hyphen, underscore, and period. Spaces or other special characters like ^, [], *, and $ are not allowed.
+          type: string
+          example: CRP_related_products
+          pattern: ^[A-Za-z0-9._-]+$
+        sort_order:
+          description: The order in which the custom relationship should be displayed in relation to others. A lower value represents a higher priority in the display order. If set to NULL, the sort order will be removed.
+          nullable: true
+          type: integer
+          example: 5
+        external_name:
+          description: The shopper-facing name for the custom relationship. This value will be displayed to shoppers in the store-front, replacing the internal name if present. If set to NULL, the external name will be removed.
+          nullable: true
+          type: string
+          example: Similar items to consider
+        external_description:
+          description: The shopper-facing description for the custom relationship. This value will be shown to shoppers in the store-front, replacing the internal description if present. If set to NULL, the external description will be removed.
+          nullable: true
+          type: string
+          example: Check out these similar products that may also meet your needs or match your preferences.
+        bi_directional:
+          type: boolean
+          description: Is this relationship one way or bi-directional `true` or `false`. Default is false
+          default: false
+    attach_custom_relationship_request:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - slug
+            - type
+            properties:
+              slug:
+                type: string
+                description: The slug of the custom relationship.
+              type:
+                type: string
+                enum:
+                - custom-relationship
+                description: This represents the type of resource. Always `custom-relationship`.
+    multi_meta:
+      type: object
+      properties:
+        results:
+          description: Contains the results for the entire collection.
+          type: object
+          properties:
+            total:
+              description: Total number of results for the entire collection.
+              type: integer
+              example: 30
+              minimum: 0
+    admin_attributes:
+      type: object
+      description: "`admin_attributes` are not displayed in catalogs. This means `admin_attributes` can only be viewed by administrators. If you want a custom attribute to be displayed in a catalog, you must add it to `shopper_attributes`. \n\n`admin_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
+      example:
+        cost_of_goods: '42.0'
+        charge_type: credit card
+      additionalProperties:
+        nullable: true
+        type: string
+    elastic_path_file:
+      type: object
+      title: ElasticPathFile
+      properties:
+        id:
+          type: string
+          description: The unique identifier for this file.
+          format: uuid
+        type:
+          description: The type represents the object being returned.
+          type: string
+          example: file
+        file_name:
+          description: The name of the file.
+          type: string
+          example: file_name.jpg
+        mime_type:
+          description: The mime type of the file.
+          type: string
+          example: image/jpeg
+        file_size:
+          description: The size of the file. Required when uploading files.
+          type: integer
+          example: 36000
+        public:
+          description: DEPRECATED Whether the file public or not. Required when uploading files.
+          type: boolean
+          example: true
+        meta:
+          properties:
+            timestamps:
+              type: object
+              description: The date and time the file was created.
+              properties:
+                created_at:
+                  description: The date and time the file was created.
+                  type: string
+                  example: '2023-10-11T13:02:25.293Z'
+            dimensions:
+              description: The file dimensions.
+              type: object
+              properties:
+                width:
+                  description: The width of the file.
+                  type: integer
+                  example: 1800
+                height:
+                  description: The height of the file.
+                  type: integer
+                  example: 1000
+        links:
+          description: Links are used to allow you to move between requests.
+          type: object
+          properties:
+            self:
+              description: Single entities use a self parameter with a link to that specific resource.
+              type: string
+              example: https://useast.api.elasticpath.com/v2/files/ddc28c74-a7df-46be-b262-8fa69a6e7d52
+        link:
+          type: object
+          description: The publicly available URL for this file.
+          properties:
+            href:
+              description: The publicly available URL for this file.
+              type: string
+              example: https://files-eu.epusercontent.com/e8c53cb0-120d-4ea5-8941-ce74dec06038/f8cf26b3-6d38-4275-937a-624a83994702.png
+            meta:
+              type: object
+              properties:
+                results:
+                  description: Contains the results for the entire collection.
+                  type: object
+                  properties:
+                    total:
+                      description: Total number of results for the entire collection.
+                      type: integer
+                      example: 2
+    multi_links:
+      type: object
+      description: 'Links allow you to navigate between pages of results.
+
+
+        :::caution Planned pagination changes — on or after 1 September 2026
+
+
+        The pagination behaviour of PIM list endpoints (for example, `GET /pcm/products` and `GET /pcm/hierarchies`) currently differs from the rest of the Elastic Path Commerce Cloud platform. We plan to align PIM pagination with the platform standard on or after **1 September 2026**. Please review the details below and check that your integration code will handle the new behaviour correctly.
+
+
+        :::
+
+
+        #### Current behaviour
+
+
+        The current pagination link behaviour in PIM has the following known issues:
+
+
+        - The `current` link is **not returned**.
+
+        - The `first` and `last` links are **not always returned**.
+
+        - The `prev` link is omitted on both the first **and** second pages. It should only be omitted on the first page.
+
+        - The `next` link is omitted on both the last **and** second-to-last pages. It should only be omitted on the last page.
+
+
+        #### Planned behaviour (on or after 1 September 2026)
+
+
+        On or after 1 September 2026, PIM list endpoints will adopt the following pagination link behaviour, aligning with the rest of the platform:
+
+
+        - `current` — always present, pointing to the current page.
+
+        - `first` — always present.
+
+        - `last` — present on all pages **except the final page**. Omitting `last` on the final page is intentional, to avoid triggering infinite‑loop bugs in integration code that uses the presence of `last` to detect whether more pages remain.
+
+        - `next` — present on all pages except the last page.
+
+        - `prev` — present on all pages except the first page.
+
+        '
+      properties:
+        current:
+          description: 'A link to the current page of results. **Note:** this link is not currently returned by PIM endpoints. It will be introduced on or after 1 September 2026.
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=10&page[limit]=10
+        first:
+          description: 'A link to the first page of results. Currently this may not always be present. After the planned changes it will always be present.
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=0&page[limit]=10
+        last:
+          description: 'A link to the last page of results. Currently this may not always be present. After the planned changes it will be present on all pages except the final page (where it is intentionally omitted).
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=20&page[limit]=10
+        next:
+          description: 'A link to the next page of results. Should be absent on the last page. Currently this is incorrectly absent on the second-to-last page as well; this will be fixed on or after 1 September 2026.
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=10&page[limit]=10
+        prev:
+          description: 'A link to the previous page of results. Should be absent on the first page. Currently this is incorrectly absent on the second page as well; this will be fixed on or after 1 September 2026.
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=8&page[limit]=10
+    multi_product_response:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/product_response'
+        included:
+          $ref: '#/components/schemas/included_response'
+        links:
+          $ref: '#/components/schemas/multi_links'
+        meta:
+          type: object
+          properties:
+            results:
+              description: Contains the results for the entire collection.
+              type: object
+              properties:
+                total:
+                  description: Total number of results for the entire collection.
+                  type: integer
+                  example: 2
+    shopper_attributes:
+      type: object
+      description: "`shopper_attributes` are displayed in catalogs. This means `shopper_attributes` can be viewed by both shoppers and administrators. If you do not want a custom attribute to be displayed in a catalog, you must add it to `admin_attributes`. \n\n`shopper_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
+      example:
+        cost_of_goods: '42.0'
+        charge_type: credit card
+      additionalProperties:
+        nullable: true
+        type: string
+    included_response:
+      type: object
+      description: Included is an array of resources that are included in the response.
+      properties:
+        main_images:
+          description: The main images associated with a product.
+          type: array
+          items:
+            $ref: '#/components/schemas/elastic_path_file'
+        component_products:
+          description: Returns a list of component products in a product bundle. If a bundle has no component products (in other words, is not a product bundle), an empty array is returned.
+          type: array
+          items:
+            $ref: '#/components/schemas/product_response'
+        files:
+          description: The files associated with a product.
+          type: array
+          items:
+            $ref: '#/components/schemas/elastic_path_file'
+    product_association_list_product_ids_response:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - type
+            properties:
+              id:
+                description: A unique identifier generated when a product relationship is created.
+                type: string
+              type:
+                description: This represents the type of resource object being returned. Always `product`.
+                type: string
+                enum:
+                - product
+              attributes:
+                type: object
+                properties:
+                  sort_order:
+                    description: The order in which the product to product should be displayed in relation to others. A lower value represents a higher priority in the display order. If set to NULL, the sort order will be removed.
+                    nullable: true
+                    type: integer
+                    example: 5
+    multi_custom_relationships:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_relationship'
+        links:
+          $ref: '#/components/schemas/multi_links_cr'
+        meta:
+          $ref: '#/components/schemas/multi_meta'
+    product_locales:
+      type: object
+      description: Product Experience Manager supports localization of products and hierarchies. If your store supports multiple languages, you can localize product names and descriptions. You can have as many locales as you want.
+      additionalProperties:
+        description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+        type: object
+        required:
+        - name
+        properties:
+          name:
+            type: string
+            description: A localized name for the product.
+          description:
+            type: string
+            description: A localized description for the product.
+    product_association_request:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - type
+            properties:
+              id:
+                type: string
+                description: The ID of the product you want to relate.
+              type:
+                type: string
+                enum:
+                - product
+                description: This represents the type of resource being returned. Always `product`.
+              attributes:
+                type: object
+                properties:
+                  sort_order:
+                    description: The order in which the product to product should be displayed in relation to others. A lower value represents a higher priority in the display order. If set to NULL, the sort order will be removed.
+                    nullable: true
+                    type: integer
+                    example: 5
+    product_response:
+      type: object
+      properties:
+        id:
+          description: A unique product ID that is generated when you create the product.
+          type: string
+        type:
+          description: This represents the type of resource object being returned. Always `product`.
+          type: string
+          enum:
+          - product
+        attributes:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              description: A name for the product.
+              type: string
+            description:
+              description: A description for the product.
+              type: string
+            slug:
+              description: A label for the product that is used in the URL paths. A slug can contain A to Z, a to z, 0 to 9, hyphen, underscore, and period. Spaces or other special characters like ^, [], *, and $ are not allowed. By default, the product name is used as the slug.
+              type: string
+            sku:
+              description: The unique stock keeping unit of the product.
+              type: string
+            status:
+              description: The status for the product, either `draft` or `live`.
+              type: string
+              enum:
+              - live
+              - draft
+            commodity_type:
+              description: The commodity type, either `physical` or `digital`.
+              type: string
+              enum:
+              - physical
+              - digital
+            upc_ean:
+              description: The universal product code or european article number of the product.
+              type: string
+            mpn:
+              description: The manufacturer part number of the product.
+              type: string
+            external_ref:
+              description: The unique attribute associated with the product. This could be an external reference from a separate company system, for example. The maximum length is 2048 characters.
+              type: string
+            locales:
+              $ref: '#/components/schemas/product_locales'
+            tags:
+              description: You can use product tags to store or assign a key word against a product. The product tag can then be used to describe or label that product. Using product tags means that you can group your products together, for example, by brand, category, subcategory, colors, types, industries, and so on. A product can have up to 20 tags. A product tag can be up to 255 characters. Product tags must not contain any spaces or commas.
+              type: array
+              items:
+                type: string
+            shopper_attributes:
+              $ref: '#/components/schemas/shopper_attributes'
+            admin_attributes:
+              $ref: '#/components/schemas/admin_attributes'
+            extensions:
+              type: object
+              additionalProperties:
+                type: object
+                additionalProperties:
+                  oneOf:
+                  - type: string
+                    nullable: true
+                  - type: number
+                  - type: boolean
+            custom_inputs:
+              $ref: '#/components/schemas/product_custom_inputs'
+            build_rules:
+              $ref: '#/components/schemas/product_build_rules'
+            components:
+              $ref: '#/components/schemas/product_bundle_components'
+        meta:
+          type: object
+          properties:
+            created_at:
+              description: The date and time a product is created.
+              type: string
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+            updated_at:
+              description: The date and time a product is updated.
+              type: string
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+            owner:
+              description: The resource owner, either `organization` or `store`.
+              type: string
+              enum:
+              - organization
+              - store
+            variations:
+              description: A product's variations and the options defined for each variation. If you have specified `build_rules`, only the child products included in the `build_rules` are specified.
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: A unique ID generated when a variation is created.
+                  name:
+                    type: string
+                    description: The name of a variation.
+                  sort_order:
+                    type: integer
+                    description: The sort order of the variation.
+                  options:
+                    type: array
+                    items:
+                      type: object
+                      description: The options available for this variation.
+                      properties:
+                        id:
+                          type: string
+                          description: A unique ID that is generated an option is created.
+                        name:
+                          type: string
+                          description: The name of an option.
+                        description:
+                          type: string
+                          description: A description of an option.
+                        sort_order:
+                          type: integer
+                          description: The sort order of the option.
+            custom_relationships:
+              description: Custom relationship slugs that are attached to the product.
+              type: array
+            child_variations:
+              description: A child product's variations and the option defined for each variation. This details the variation and options specific to a child product.
+              type: array
+              nullable: true
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: A unique ID generated when a variation is created.
+                  name:
+                    type: string
+                    description: The name of a variation.
+                  sort_order:
+                    description: The sort order value is visible when you add the variations and variation options to your catalogs. You can then use the `sort_order` value to program your storefront to display the variation options in the order that you want. The variation with the highest value of `sort_order` is displayed first. For example, a variation with a `sort_order` value of 3 appears before a variation with a `sort_order` value of 2. You can specify any numbers that you want. You can use 1, 2, 3, or 100, 90, 80, including, zero or negative numbers. You can set `sort_order` to either `null` or omit it entirely from the request if you wish to remove an existing `sort_order` attribute.
+                    type: integer
+                  options:
+                    type: array
+                    nullable: true
+                    description: This will be unset for child product variations.
+                    items:
+                      type: object
+                      description: The options available for this variation.
+                      properties:
+                        id:
+                          type: string
+                          description: A unique ID that is generated an option is created.
+                        name:
+                          type: string
+                          description: The name of an option.
+                        description:
+                          type: string
+                          description: A description of an option.
+                        sort_order:
+                          type: integer
+                          description: The sort order of the option.
+                  option:
+                    type: object
+                    description: The options available for this variation.
+                    properties:
+                      id:
+                        type: string
+                        description: A unique ID that is generated an option is created.
+                      name:
+                        type: string
+                        description: The name of an option.
+                      description:
+                        type: string
+                        description: A description of an option.
+                      sort_order:
+                        type: integer
+                        description: The sort order of the option.
+            product_types:
+              description: "One of the following product types: \n\n- `standard` - A `standard` product is a standalone product.\n- `parent` - A `parent` product is a product that has child products that have been built using the `Build Child Products` endpoint. \n- `child` - When you configure product variations and variation options for `parent` products, the `child` products derived from the `parent` products are automatically created in Commerce.\n- `bundle` - A `bundle` is a purchasable product, comprising one or more standalone products (in other words, components) to be sold together.\n"
+              type: array
+              items:
+                type: string
+                enum:
+                - parent
+                - child
+                - bundle
+                - standard
+            variation_matrix:
+              description: The child products defined for a product. The order of the variations in the `variation_matrix` is the order of the variations in the array when the variations were linked to the product. For example, the first variation in the `variation_matrix` corresponds to the first variation in the array, and so on. You can use the `sort_order`attribute to sort the order of your variation and variation options in the `variation_matrix` object. See [Sorting the Order of Variations and Options](/docs/api/pxm/products/variations#sorting-the-order-of-variations-and-options) If no variations are defined for a product, the `variation_matrix` is empty.
+              type: object
+              additionalProperties: true
+        relationships:
+          description: Relationships are established between different product entities. For example, a `bundle` product and a `child` product are related to a `parent` product, as both are associated with it.
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              data:
+                oneOf:
+                - type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        description: A unique identifier for a resource.
+                        type: string
+                      type:
+                        description: This represents the type of resource object being returned.
+                        type: string
+                - type: object
+                  nullable: true
+                  properties:
+                    id:
+                      description: A unique identifier for a resource.
+                      type: string
+                    type:
+                      description: This represents the type of resource object being returned.
+                      type: string
+              links:
+                description: "Links are used to allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Sometimes, there are not enough entities for a project to fill multiple pages. In this situation, we return some defaults.\n\n | Property | Description |\n | :--- | :--- |\n | `current` | Always the current page. |\n | `first` | Always the first page. |\n | `last` | `null` if there is only one page. |\n | `prev` | `null` if the user is on the first page. |\n | `next` | `null` if there is only one page. |\n"
+                type: object
+                additionalProperties:
+                  type: string
+    product_bundle_components:
+      type: object
+      description: With Product Experience Manager, you can create and manage bundles. A bundle is a purchasable product, consisting of one or more products that you want to sell together. You can create multiple components within a bundle. Each component must have at least one or more options. Each option is a product and a quantity. See [Bundles](/docs/api/pxm/products/products#bundles).
+      additionalProperties:
+        description: The name of the component, such as `games`. The `bundle_configuration` uses the component name to reference a component. A component name should be relatively short and must not contain any special characters.
+        type: object
+        properties:
+          name:
+            type: string
+            description: The component name. The component name is the name that is displayed in your storefront.
+          options:
+            type: array
+            description: The product options included in a component. This can be the ID of another bundle.
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: The unique ID of the product you want to add to a component.
+                type:
+                  type: string
+                  description: This represents the type of object being returned. Always `product`.
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: The number of this product option that a shopper must purchase.
+                min:
+                  type: integer
+                  minimum: 1
+                  description: The minimum quantity of this product option that a shopper can select. Must be 1 or greater. If specified, max must also be specified.
+                max:
+                  type: integer
+                  minimum: 1
+                  description: The maximum quantity of this product option that a shopper can select. Must be 1 or greater and greater than or equal to min. If specified, min must also be specified.
+                sort_order:
+                  type: integer
+                  description: The sort order of the options. The `create a bundle` and `update a bundle` endpoints do not sort the options. You can use the `sort_order` attribute when programming your storefront to display the options in the order that you want.
+                default:
+                  description: Whether the product option is a default option in a bundle. Shoppers can select a bundle that specifies a default list of product options. See [Dynamic Bundles](/docs/api/pxm/products/products#dynamic-bundles).
+                  type: boolean
+                product_should_be_substituted_with_child:
+                  description: Whether the product option should be substituted with a child product.
+                  type: boolean
+                excluded_children:
+                  description: The IDs of child products that are excluded from the bundle option.
+                  type: array
+                  items:
+                    type: string
+          min:
+            type: integer
+            description: The minimum number of product options a shopper can select from this component.
+          max:
+            type: integer
+            description: The maximum number of product options a shopper can select from this component.
+          sort_order:
+            type: integer
+            description: The sort order of the components. The `create a bundle` and `update a bundle` endpoints do not sort the components. You can use the `sort_order` attribute when programming your storefront to display the components in the order that you want.
+    product_custom_inputs:
+      type: object
+      description: You use the `custom_inputs` attribute to allow your shoppers to add custom text to a product when adding product items to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized or you sell greetings cards that can be printed with your shoppers personalized messages. See [Personalizing Products](/docs/api/pxm/products/create-product#personalizing-products).
+      additionalProperties:
+        description: A name for the custom text field. You can rename this to something more representative of the input that shoppers are adding, for example, `message` or `front`.
+        type: object
+        properties:
+          name:
+            type: string
+            description: A name for the custom text field.
+          validation_rules:
+            type: array
+            description: The validation rules for the custom text.
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: The type of validation rule. For example, `string`.
+                options:
+                  type: object
+                  description: The options for the validation rule.
+                  properties:
+                    max_length:
+                      type: integer
+                      description: The number of characters the custom text field can be. You can specify a maximum length up to 255 characters, as the limit is 255 characters.
+          required:
+            type: boolean
+            description: '`true` or `false` depending on whether the custom text is required.'
+  responses:
+    write_conflict:
+      description: Write conflict detected
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Conflict
+                  status: '409'
+                  detail: write conflict detected
+    bad_request:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            bad-request:
+              value:
+                errors:
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
+    internal:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: '500'
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+    forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Forbidden
+                  status: '403'
+                  detail: entity owned by organization
+    not_found:
+      description: Bad Request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+  parameters:
+    custom_relationship_slug:
+      name: customRelationshipSlug
+      in: path
+      schema:
+        type: string
+        example: CRP_electric_devices_2024
+      required: true
+      description: A custom relationship slug.
+    page_offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 10000
+        format: int64
+        example: 0
+    product_id:
+      name: productID
+      in: path
+      schema:
+        type: string
+        example: 00000000-0000-0000-0000-000000000000
+        x-postman-example: '{{productID}}'
+      required: true
+      description: A unique identifier for the product.
+    page_limit:
+      name: page[limit]
+      in: query
+      description: The number of records per page. The maximum limit is 100.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 10000
+        format: int64
+        example: 10
+  examples:
+    attach_custom_relationship_request:
+      value:
+        data:
+        - type: custom-relationship
+          slug: CRP_related_products
+        - type: custom-relationship
+          slug: CRP_cart_products
+    create_product_association_request:
+      value:
+        data:
+        - type: product
+          id: 68c48149-0e94-4ef2-93d5-8d5f3774980a
+          attributes:
+            sort_order: 5
+        - type: product
+          id: ab4826d1-4a5a-4951-a2a5-98058899f891
+        - type: product
+          id: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
+        - type: product
+          id: a0ef3291-2ec1-4d7d-9d6d-1705ae01bb99
+          attributes:
+            sort_order: 2
+        - type: product
+          id: bde79675-4783-40b7-8a7e-ac6df41459c6
+        - type: product
+          id: aaddd5f4-a5f8-42e8-be9a-097986f22e58
+    delete_product_association_request:
+      value:
+        data:
+        - type: product
+          id: 68c48149-0e94-4ef2-93d5-8d5f3774980a
+        - type: product
+          id: ab4826d1-4a5a-4951-a2a5-98058899f891
+        - type: product
+          id: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
+        - type: product
+          id: a0ef3291-2ec1-4d7d-9d6d-1705ae01bb99
+        - type: product
+          id: bde79675-4783-40b7-8a7e-ac6df41459c6
+        - type: product
+          id: aaddd5f4-a5f8-42e8-be9a-097986f22e58
+    multi_product_response:
+      value:
+        data:
+        - type: product
+          id: 9c85b276-09b4-488e-a59c-c561bae14c9e
+          attributes:
+            commodity_type: physical
+            custom_inputs:
+              back:
+                name: T-Shirt Back
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+              front:
+                name: T-Shirt Front
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+            description: T-shirt.
+            mpn: 1234-5678-TTTT
+            name: T-Shirt
+            sku: '97805'
+            slug: '97805'
+            status: live
+            upc_ean: '12345656'
+            tags:
+            - tag1
+            - tag2
+            extensions:
+              products(size):
+                widthMM: 600
+                fuelType: electric
+                hasUKPlug: true
+                online: null
+          relationships:
+            children:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/children
+            component_products:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/templates
+            variations:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/variations
+          meta:
+            created_at: '2022-08-18T14:25:57.391Z'
+            owner: store
+            product_types:
+            - standard
+            updated_at: '2022-08-18T14:25:57.391Z'
+        meta:
+          results:
+            total: 1
+    list_product_association_product_ids_response:
+      value:
+        data:
+        - id: 68c48149-0e94-4ef2-93d5-8d5f3774980a
+          type: product
+          attributes:
+            sort_order: 5
+        - id: ab4826d1-4a5a-4951-a2a5-98058899f891
+          type: product
+    create_product_association_created_response:
+      value:
+        meta:
+          associated_products:
+          - 68c48149-0e94-4ef2-93d5-8d5f3774980a
+          - ab4826d1-4a5a-4951-a2a5-98058899f891
+          products_not_associated:
+          - ID: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
+            Details: could not find product
+          - ID: a0ef3291-2ec1-4d7d-9d6d-1705ae01bb99
+            Details: product already has 5 custom relationships, cannot associate more as it has reached the limit of 5 custom relationships
+          - ID: bde79675-4783-40b7-8a7e-ac6df41459c6
+            Details: product already has 5 custom relationships, cannot associate more as it has reached the limit of 5 custom relationships
+          - ID: aaddd5f4-a5f8-42e8-be9a-097986f22e58
+            Details: product exceeds the maximum limit of associated products (2000). Please review and try again
+          owner: store
+          timestamps:
+            created_at: '2024-08-08T09:29:08.295Z'
+            updated_at: '2024-08-08T09:29:08.295Z'
+    resp_multi_custom_relationships:
+      value:
+        data:
+        - id: f3297ee8-da90-45e9-ae56-a2654aebbdfe
+          type: custom-relationship
+          attributes:
+            name: Kitchen electrics
+            description: Kitchen electric devices
+            slug: CRP_kitchen_individual_devices
+            bi_directional: false
+          meta:
+            owner: store
+            timestamps:
+              created_at: '2024-01-10T20:16:35.343Z'
+              updated_at: '2024-01-10T20:16:35.343Z'
+        - id: 21b1315b-c47f-4766-85bf-7bf0f94d73b6
+          type: custom-relationship
+          attributes:
+            name: Related Products
+            description: A list of related products shown on the PDP
+            slug: CRP_related_products
+            bi_directional: true
+          meta:
+            owner: store
+            timestamps:
+              created_at: '2024-01-10T20:16:35.343Z'
+              updated_at: '2024-01-10T20:16:35.343Z'
+        - id: e390ff7e-efc4-4769-90d2-fceabcc1e2cd
+          type: custom-relationship
+          attributes:
+            name: Related Products
+            description: A list of related products shown on the PDP
+            slug: CRP_related_products
+            sort_order: 5
+            external_name: Similar items to consider
+            external_description: Check out these similar products that may also meet your needs or match your preferences.
+            bi_directional: false
+          meta:
+            owner: store
+            timestamps:
+              created_at: '2024-01-10T20:16:35.343Z'
+              updated_at: '2024-01-10T20:16:35.343Z'
+        links:
+          last: /pcm/custom_relationships?page[offset]=29&page[limit]=1
+          next: /pcm/custom_relationships?page[offset]=1&page[limit]=1
+        meta:
+          results:
+            total: 3
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

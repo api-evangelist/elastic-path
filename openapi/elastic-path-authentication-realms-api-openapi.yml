@@ -1,0 +1,502 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Authentication Realms API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Authentication Realms
+  description: "An authentication realm is a container that consists of the following:\n\n  - Users -  Represented by [User Authentication Info](/docs/api/single-sign-on/user-authentication-infos) objects\n  - Authentication profiles - Ways for the users to authenticate, such as one or more [OpenID Connect Profiles](/docs/api/single-sign-on/oidc-profiles) or [Password Profiles](/docs/api/single-sign-on/password-profiles)\n  - Mappings between users and authentication profiles - [User Authentication OpenID Connect Profile Info](/docs/api/single-sign-on/user-authentication-oidc-profile-infos) or [User Authentication Password Profile Infos](/docs/api/single-sign-on/user-authentication-password-profile-infos)\n\nHere's a domain diagram showing these relationships\n![authentication realm](/assets/authentication-realm-domain.png)\n\nComposable Commerce comes with three per-store pre-set realms:\n  - Buyer Organization. For customers: users who buy products from your store.\n  - Merchant Organization. For administrators: users who log in to Commerce Manager to modify the store’s settings or catalog.\n  - Account Management Realm. For account members: users who buy products from your store on behalf of accounts. Password profiles are only available for account management realm.\n"
+  externalDocs:
+    url: https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/authentication-realms
+paths:
+  /v2/authentication-realms:
+    get:
+      tags:
+      - Authentication Realms
+      summary: Get all Authentication Realms
+      description: 'Retrieve a list of all authentication realms configured for your store.
+
+        Authentication Realms allow you to configure authentication options and manage single sign-on settings. Each realm contains users, authentication profiles, and mappings between users and authentication profiles.
+
+        '
+      operationId: get-v2-authentication-realms
+      parameters:
+      - $ref: '#/components/parameters/page-limit'
+      - $ref: '#/components/parameters/page-offset'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuthenticationRealmResponse'
+                  meta:
+                    $ref: '#/components/schemas/MetaList'
+                  links:
+                    type: object
+                    properties:
+                      current:
+                        description: Always the current page.
+                        type: string
+                        format: uri
+                        example: https://euwest.api.elasticpath.com/v2/authentication-realms/?page[offset]=0&page[limit]=25
+                      first:
+                        description: Always the first page.
+                        type: string
+                        format: uri
+                        example: https://euwest.api.elasticpath.com/v2/authentication-realms/?page[offset]=0&page[limit]=25
+                      last:
+                        description: Always null if there is only one page.
+                        type:
+                        - string
+                        - 'null'
+                        format: uri
+                        example: https://euwest.api.elasticpath.com/v2/authentication-realms/?page[offset]=0&page[limit]=25
+                      next:
+                        description: Always null if there is only one page.
+                        type:
+                        - string
+                        - 'null'
+                        format: uri
+                        example: null
+                      prev:
+                        description: Always null if the user is on the first page.
+                        type:
+                        - string
+                        - 'null'
+                        format: uri
+                        example: null
+              examples:
+                list_authentication_realms:
+                  summary: List of authentication realms
+                  value:
+                    data:
+                    - id: 45928070-44a6-448b-8246-a85aa35320af
+                      type: authentication-realm
+                      name: Buyer Organization
+                      duplicate_email_policy: allowed
+                      redirect_uris:
+                      - https://example-shop.com/oidc/callback
+                      relationships:
+                        origin:
+                          data:
+                            id: '0'
+                            type: customer-authentication-settings
+                    - id: bbd4a3f8-6a93-44a2-8f4f-2a1e3f8b3b9c
+                      type: authentication-realm
+                      name: Merchant Organization
+                      duplicate_email_policy: disallowed
+                      redirect_uris:
+                      - https://cm.example.com/oidc/callback
+                      relationships:
+                        origin:
+                          data:
+                            id: '1'
+                            type: merchant-realm-mappings
+                    meta:
+                      results:
+                        total: 2
+                      page:
+                        limit: 25
+                        offset: 0
+                    links:
+                      current: https://euwest.api.elasticpath.com/v2/authentication-realms/?page%5Boffset%5D=0&page%5Blimit%5D=25
+                      first: https://euwest.api.elasticpath.com/v2/authentication-realms/?page%5Boffset%5D=0&page%5Blimit%5D=25
+                      last: null
+                      next: null
+                      prev: null
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/authentication-realms/{realmId}:
+    get:
+      tags:
+      - Authentication Realms
+      summary: Get an Authentication Realm
+      description: Retrieve a specific authentication realm by its ID.
+      operationId: get-v2-authentication-realms-realmId
+      parameters:
+      - name: realmId
+        in: path
+        description: The ID of the authentication realm to retrieve.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthenticationRealmResponse'
+                  links:
+                    $ref: '#/components/schemas/SelfLink'
+              examples:
+                get_authentication_realm:
+                  summary: Authentication realm
+                  value:
+                    data:
+                      id: 45928070-44a6-448b-8246-a85aa35320af
+                      type: authentication-realm
+                      name: Buyer Organization
+                      duplicate_email_policy: allowed
+                      redirect_uris:
+                      - https://example-shop.com/oidc/callback
+                      relationships:
+                        origin:
+                          data:
+                            id: '0'
+                            type: customer-authentication-settings
+                    links:
+                      self: https://euwest.api.elasticpath.com/v2/authentication-realms/45928070-44a6-448b-8246-a85aa35320af
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Authentication Realms
+      summary: Update an Authentication Realm
+      description: Update a specific authentication realm by its ID.
+      operationId: put-v2-authentication-realms-realmId
+      parameters:
+      - name: realmId
+        in: path
+        description: The ID of the authentication realm to update.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/AuthenticationRealm'
+              required:
+              - data
+            examples:
+              Update an authentication realm:
+                value:
+                  data:
+                    type: authentication-realm
+                    name: updated-auth-realm
+                    duplicate_email_policy: disallowed
+                    redirect_uris:
+                    - https://updated-example.com/callback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthenticationRealmResponse'
+                  links:
+                    $ref: '#/components/schemas/SelfLink'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    MetaTimestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date the resource is created.
+          type: string
+          format: date-time
+          example: '2021-02-23T09:40:33.882Z'
+        updated_at:
+          description: The date the resource is updated.
+          type: string
+          format: date-time
+          example: '2021-02-23T09:40:33.882Z'
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
+    MetaList:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/MetaListPage'
+        results:
+          $ref: '#/components/schemas/MetaListResults'
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    SelfLink:
+      type: object
+      properties:
+        self:
+          description: A URL to the specific resource.
+          type: string
+          format: uri
+    MetaListPage:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
+        total:
+          type: integer
+          description: The total page count.
+          example: 1
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+        links:
+          $ref: '#/components/schemas/SelfLink'
+    AuthenticationRealmResponse:
+      allOf:
+      - $ref: '#/components/schemas/AuthenticationRealm'
+      - type: object
+        properties:
+          id:
+            $ref: '#/components/schemas/UUID'
+            description: The unique identifier for an Authentication Realm.
+          meta:
+            $ref: '#/components/schemas/MetaTimestamps'
+            description: Additional information for this realm.
+          links:
+            type: object
+            properties:
+              self:
+                description: A URL to the specific resource.
+                type: string
+                format: uri
+                example: https://useast.api.elasticpath.com/v2/authentication-realms/deb6b25f-8451-4211-9a22-95610333df23
+    AuthenticationRealm:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Specifies the type of object. Set this value to `authentication-realm`.
+          const: authentication-realm
+        name:
+          type: string
+          description: Specifies the name of the authentication realm.
+          example: my-auth-realm
+        duplicate_email_policy:
+          type: string
+          description: The values permitted for this parameter are, `allowed` or `api_only`. In Single Sign On (SSO) each user in the Identity Provider (IdP) has a unique identifier, but different IdPs might differ in whether distinct users can share the same email address. For the `allowed` setting, when a user with a new unique identifier signs in through SSO for the first time, the system creates a new user. However, for the `api_only` setting, the system assigns the new unique identifier to the existing user in the system, in this case both the old and new unique identifier from the IdP points to the same user in Commerce. The `api_only` setting is recommended only when all configured identity providers treat e-mail address as a unique identifier for the user, otherwise a user might get access to another user’s account and data. Thus the `api_only` value can simplify administration of users.
+          enum:
+          - allowed
+          - disallowed
+          - api_only
+          example: allowed
+        redirect_uris:
+          type: array
+          description: An array of Storefront URIs that can start Single Sign On authentication. These URIs must follow the rules for [redirection endpoints in OAuth 2.0.](https://tools.ietf.org/html/rfc6749#section-3.1.2) All URIs must start with https:// except for http://localhost.
+          items:
+            type: string
+            format: uri
+          example:
+          - https://example.com/callback
+        relationships:
+          type: object
+          description: Specifies the relationships for this authentication realm.
+          properties:
+            origin:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The ID of the origin entity.
+                      example: '0'
+                    type:
+                      type: string
+                      description: The type of the origin entity.
+                      enum:
+                      - customer-authentication-settings
+                      - merchant-realm-mappings
+                      - account_authentication_settings
+      required:
+      - type
+      - name
+  parameters:
+    page-limit:
+      name: page[limit]
+      in: query
+      description: The number of records per page.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+        maximum: 100
+        default: 25
+    page-offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        default: 0
+  responses:
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: Resource not found
+    UnprocessableEntityError:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unprocessable-entity-error:
+              value:
+                errors:
+                - title: Unprocessable Entity
+                  status: '422'
+                  detail: Constraint violation
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value:
+                errors:
+                - title: Unauthorized
+                  status: '401'
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

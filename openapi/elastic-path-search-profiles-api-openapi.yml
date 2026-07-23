@@ -1,0 +1,958 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Search Profiles API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Search Profiles
+  description: 'Search Profiles are configuration objects that control how search queries are executed. They provide a powerful way to customize search relevance, filtering, and ranking without requiring code changes, enabling merchandisers and business users to optimize the search experience.
+
+
+    ### How Search Profiles Work
+
+
+    A Search Profile defines:
+
+
+    - **Which fields to search**: Select which product fields are included in search queries
+
+    - **Field weights**: Assign relative importance to each field for relevance ranking
+
+    - **Default filters**: Apply business rules that filter results for all searches
+
+    - **Boost rules**: Promote or demote products based on specific conditions
+
+    - **Match type**: Control how scores from multiple fields are combined
+
+
+    When a search request is made, the system uses the specified profile (or the default profile) to configure the search behavior.
+
+
+    ### Search Profile Components
+
+
+    | Component         | Description                                                                               |
+
+    |-------------------|-------------------------------------------------------------------------------------------|
+
+    | `slug`            | Unique identifier used to reference the profile in search requests                        |
+
+    | `fields`          | List of fields to search with optional weights for relevance ranking                      |
+
+    | `filters`         | Default filter expressions applied to all searches using this profile                     |
+
+    | `boosts`          | Rules for promoting or demoting products based on conditions                              |
+
+    | `text_match_type` | How to combine scores when multiple fields match (`max_score`, `max_weight`, `sum_score`) |
+
+
+    ### Field Weights
+
+
+    Field weights control how important each field is when ranking search results. Higher weights mean matches in that field contribute more to the relevance score. Weights must be in the range `[0, 15]`.
+
+
+    **Example**: A profile with `name` (weight 10) and `description` (weight 5) will rank products with search term matches in the name higher than those with matches only in the description.
+
+
+    ### Filters
+
+
+    Profile filters enforce business rules that apply to all searches:
+
+
+    - Ensure only live/published products appear in results
+
+    - Restrict results to specific categories or channels
+
+    - Hide products based on visibility settings
+
+
+    Multiple filters are combined with OR logic, then ANDed with any filters in the search request.
+
+
+    ### Boost Rules
+
+
+    Boost rules allow you to promote or demote products in search results:
+
+
+    - **Positive weights**: Push matching products to the top of results
+
+    - **Negative weights**: Push matching products to the bottom (burying)
+
+    - **Zero weight**: No effect on ranking
+
+
+    Rules are evaluated in weight order, and the first matching rule determines the product''s boost.
+
+
+    ### Text Match Types
+
+
+    | Type         | Description                                                                            |
+
+    |--------------|----------------------------------------------------------------------------------------|
+
+    | `max_score`  | Uses the highest score from any single matching field. Prioritizes match quality.      |
+
+    | `max_weight` | Uses the score from the highest-weighted matching field. Prioritizes field importance. |
+
+    | `sum_score`  | Sums weighted scores from all matching fields. Rewards multi-field matches.            |
+
+
+    ### Default Profile
+
+
+    Each store has a default search profile that is used when no profile is specified in the search request. You can set any profile as the default using the set default endpoint.
+
+
+    ### Use Cases
+
+
+    - **A/B testing**: Create multiple profiles with different configurations to test search relevance
+
+    - **Channel optimization**: Different profiles for web, mobile, and B2B channels
+
+    - **Seasonal merchandising**: Profiles that boost seasonal or promotional products
+
+    - **Customer segmentation**: Different ranking strategies for different customer tiers
+
+    '
+paths:
+  /pcm/catalogs/search-profiles:
+    post:
+      tags:
+      - Search Profiles
+      operationId: createSearchProfile
+      summary: Create search profile
+      description: Create a new search profile.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchProfileCreateRequest'
+      responses:
+        '201':
+          description: Successfully created search profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchProfileResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+      - Search Profiles
+      operationId: listSearchProfiles
+      summary: List search profiles
+      description: List search profiles.
+      responses:
+        '200':
+          description: List search profiles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSearchProfilesResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /pcm/catalogs/search-profiles/{search_profile_id}:
+    parameters:
+    - name: search_profile_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The unique ID of the search profile
+      example: ac107ce9-96ac-4bd5-aa3d-59f40b91279b
+      x-go-name: ProfileID
+    get:
+      tags:
+      - Search Profiles
+      operationId: getSearchProfile
+      summary: Get search profile
+      description: Get a search profile.
+      parameters:
+      - name: search_profile_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique ID of the search profile or 'default' to retrieve the default search profile.
+        example: ac107ce9-96ac-4bd5-aa3d-59f40b91279b
+        x-go-name: ProfileID
+      responses:
+        '200':
+          description: Successfully retrieved search profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchProfileResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Search profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Search Profiles
+      operationId: updateSearchProfile
+      summary: Update search profile
+      description: Update a search profile.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchProfileUpdateRequest'
+      responses:
+        '200':
+          description: Successfully updated search profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchProfileResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permission denied - search profile owned by the organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Search profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+      - Search Profiles
+      operationId: deleteSearchProfile
+      summary: Delete search profile
+      description: Delete a search profile.
+      responses:
+        '204':
+          description: Successfully deleted search profile
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permission denied - search profile owned by the organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /pcm/catalogs/search-profiles/{search_profile_id}/default:
+    parameters:
+    - name: search_profile_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The unique ID of the search profile
+      example: ac107ce9-96ac-4bd5-aa3d-59f40b91279b
+      x-go-name: ProfileID
+    post:
+      tags:
+      - Search Profiles
+      operationId: setDefaultSearchProfile
+      summary: Set search profile as default
+      description: Set a search profile as the default.
+      responses:
+        '200':
+          description: Successfully updated the search profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchProfileResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permission denied - search profile owned by the organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Search profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    SearchProfileAttributes:
+      type: object
+      required:
+      - slug
+      - description
+      - fields
+      - force_use_default_price_for_faceting_and_sorting
+      properties:
+        slug:
+          type: string
+          description: The unique slug of the search profile. A slug can contain A to Z, a to z, 0 to 9, hyphen, underscore, and period. Spaces or other special characters like ^, [], *, and $ are not allowed.
+          example: default
+          pattern: ^[a-zA-Z0-9_.-]+$
+          minLength: 1
+        description:
+          type: string
+          description: The description of the search profile.
+          example: Default search profile
+          default: ''
+        fields:
+          type: array
+          description: A collection of search fields
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SearchField'
+        text_match_type:
+          $ref: '#/components/schemas/TextMatchType'
+        filters:
+          type: array
+          description: 'Optional list of filter expressions to apply to search results. Multiple filters in the array are combined using OR logic (records matching filter1 || filter2 || ... filterN).
+
+            To combine conditions with AND logic, include multiple conditions within a single filter string (e.g., "meta.search.categories.lvl1:=`All Products > Mens Shoes` && meta.display_price.without_tax.float_price:>100").
+
+            These profile-level filters are ANDed with any filters provided in the search request via the filter_by parameter, resulting in: (profile_filter1 || profile_filter2 || ... profile_filterN) && request_filters.
+
+            '
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: string
+            example: meta.search.categories.lvl1:=`All Products > Mens Shoes`
+            minLength: 1
+        exclusions:
+          type: array
+          description: A collection of exclusion expressions to apply to search results. Multiple exclusions in the array are combined using OR logic (records matching exclusion1 || exclusion2 || ... exclusionN).
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: string
+            example: meta.search.categories.lvl1:=`All Products > Mens Shoes`
+            minLength: 1
+        boosts:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchBoostRule'
+          x-go-type-skip-optional-pointer: true
+        prefix:
+          type: boolean
+          description: 'Profile-level default for prefix (partial match) behavior on the last query token. When true, the last word in the query is treated as a prefix for all fields that do not have an explicit per-field prefix value. For example, a search request for "red app" matches "red apple". When false, the last word must match exactly. If omitted, default of true applies. Per-field prefix values override this setting.
+
+            The primary use case is to show results as the user is typing in the search box.
+
+            '
+          example: true
+        typo_tolerance:
+          $ref: '#/components/schemas/TypoTolerance'
+        synonym_sets:
+          type: array
+          description: 'Optional list of synonym set IDs to apply at search time. Each synonym set must exist and must have been synced to the search engine at least once. Organization-level search profiles may only reference organization-level synonym sets. Store-level search profiles may reference organization-level and same-store synonym sets.
+
+            '
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: string
+            format: uuid
+            example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        force_use_default_price_for_faceting_and_sorting:
+          type: boolean
+          description: When set to true, the default price is used for faceting and sorting for segmented catalogs even if the catalog rule has a supported price book.
+          default: false
+          example: true
+    SearchProfile:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: The unique identifier for the search profile.
+          type: string
+          format: uuid
+          example: 805103ff-0a37-4f83-8fe0-95a16039bd98
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/SearchProfileType'
+        attributes:
+          $ref: '#/components/schemas/SearchProfileAttributes'
+        meta:
+          $ref: '#/components/schemas/SearchProfileMeta'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    SearchField:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: The name of the search field.
+          example: name
+          minLength: 1
+        weight:
+          type: integer
+          description: 'The relative weight to give each field when ranking results. This can be used to boost fields in priority, when looking for matches.
+
+            If no explicit weights are provided for all fields, fields earlier in the fields list will be considered to have greater weight.
+
+            If no explicit weights are provided for some fields, the default weight of zero (0) will be used for the fields with no explicit weight.
+
+            '
+          example: 10
+          minimum: 0
+          maximum: 15
+        num_typos:
+          type: integer
+          description: 'Per-field override for the maximum number of typographical errors [Damerau-Levenshtein distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance) allowed
+
+            when matching this field. Accepted values: 0 (exact match only), 1, or 2.
+
+            Overrides `typo_tolerance.num_typos` for this field. Falls back to `typo_tolerance.num_typos`
+
+            if set, otherwise default of 2.
+
+
+            For example, a search request for "red appla" matches "red apple" with a `num_typos` of 1.
+
+
+            **`num_typos` is an upper bound, not a guarantee.** The number of corrections actually
+
+            applied to a query token is also capped by its length via
+
+            `typo_tolerance.min_len_to_allow_single_character_correction` (default 4) and
+
+            `typo_tolerance.min_len_to_allow_two_character_correction` (default 7):
+
+            - A token shorter than the single-character threshold gets **no** typo correction, even with `num_typos` 1 or 2.
+
+            - A token at least as long as the single-character threshold but shorter than the two-character threshold is corrected by **at most one** character, even with `num_typos` of 2.
+
+            - Only tokens at least as long as the two-character threshold can use the full two corrections.
+
+
+            For example, with the defaults, "appla" → "apple" (length 5, one correction) is allowed,
+
+            but a 5-character query with two mistakes is not corrected even with `num_typos` of 2, because two-character correction requires a token of at least 7 characters.
+
+            '
+          minimum: 0
+          maximum: 2
+          example: 1
+        prefix:
+          type: boolean
+          description: 'Per-field override for prefix (partial match) behavior on the last query token.
+
+            When true, the last word is treated as a prefix; when false, it must match exactly.
+
+            For example, when true, a search request for "red app" matches "red apple".
+
+            Overrides the profile-level `prefix` for this field. Falls back to the profile-level
+
+            `prefix` if set, otherwise default of true.
+
+
+            The primary use case is to show results as the user is typing in the search box.
+
+            '
+          example: true
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
+    ListResponseMeta:
+      type: object
+      required:
+      - results
+      properties:
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
+    SearchProfileResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/SearchProfile'
+    SearchProfileCreateRequestData:
+      type: object
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/SearchProfileType'
+        attributes:
+          $ref: '#/components/schemas/SearchProfileAttributes'
+    ListSearchProfilesResponse:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchProfile'
+        meta:
+          $ref: '#/components/schemas/ListResponseMeta'
+    SearchBoostRule:
+      type: object
+      description: Defines a boosting rule that assigns a score to products matching a specific field value.
+      required:
+      - condition
+      - weight
+      properties:
+        condition:
+          type: string
+          description: 'A filter expression used to identify a subset of products for boosting. This follows the standard filter_by syntax.
+
+
+            It can be a simple condition like `meta.search.nodes.name:=\`Electronics\`` or complex like `meta.search.nodes.name:=\`Electronics\` && extensions.products(Details).brand:=Nike`.
+
+            '
+          minLength: 1
+          example: meta.search.nodes.name:=\`Electronics\`
+        weight:
+          type: integer
+          description: 'A numerical value representing the boost intensity. Products matching the criteria are assigned this value. Higher weights will cause products to appear earlier in the results.
+
+
+            **Impact of Weights:**
+
+            * **Boost (Positive):** Pushes products to the top.
+
+            * **No affect (Zero):** Has no affect. Treated the same as products that match no rules.
+
+            * **Bury (Negative):** Pushes products to the bottom.
+
+
+            **Rule Evaluation:** The system uses "Short-circuit" evaluation. The engine stops at the **first matching rule**.
+
+            This means the weight of the first matching rule will be used as the product weight to sort the results.
+
+            If no rules match, the product is assigned a weight of `0`.
+
+            '
+          example: 5
+    TextMatchType:
+      type: string
+      description: 'When a search profile has multiple fields defined, this parameter determines how the representative text match score of a product is calculated.
+
+
+        - `max_score (Default)`: In this mode, the products''s representative score is simply the highest score from any single matching field. The field weights are used only as a tie-breaker if two products have the exact same highest score. This mode prioritizes the quality of the match in the single best-matching field.
+
+        - `max_weight`: This mode uses the score from the matching field that has the highest weight. This means a partial, lower-quality match on a heavily weighted field (e.g., name) can be prioritized over a perfect match on a lower-weighted field (e.g., description). This mode prioritizes matches in the most important fields, regardless of match quality.
+
+        - `sum_score`: This mode calculates a holistic score by summing the weighted scores from all matching fields. Its advantage is that it rewards products that match a query across multiple attributes. However, it carries the risk that a product with many weak, partial matches across several low-weighted fields could outrank a product with a single strong, perfect match in a high-weighted field.
+
+        '
+      enum:
+      - max_score
+      - max_weight
+      - sum_score
+      example: max_score
+    ListResponseMetaResults:
+      description: Contains the results for the entire collection.
+      type: object
+      required:
+      - total
+      properties:
+        total:
+          description: Total number of results for the entire collection.
+          type: integer
+          example: 100
+    SearchProfileType:
+      description: Represents the type of object being returned. Always `catalog_search_profile`.
+      type: string
+      example: catalog_search_profile
+      enum:
+      - catalog_search_profile
+    SearchProfileUpdateRequestData:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          description: The unique identifier of the search profile. Must match the ID specified in the request path.
+          type: string
+          format: uuid
+          example: 805103ff-0a37-4f83-8fe0-95a16039bd98
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/SearchProfileType'
+        attributes:
+          $ref: '#/components/schemas/SearchProfileUpdateAttributes'
+    SearchProfileUpdateRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/SearchProfileUpdateRequestData'
+    SearchProfileMeta:
+      type: object
+      required:
+      - default
+      - owner
+      properties:
+        default:
+          type: boolean
+          description: Whether this is the default search profile.
+          example: true
+        owner:
+          $ref: '#/components/schemas/ResourceOwner'
+    SearchProfileUpdateAttributes:
+      type: object
+      properties:
+        slug:
+          type: string
+          description: The unique slug of the search profile. A slug can contain A to Z, a to z, 0 to 9, hyphen, underscore, and period. Spaces or other special characters like ^, [], *, and $ are not allowed.
+          example: default
+          pattern: ^[a-zA-Z0-9_.-]+$
+          minLength: 1
+        description:
+          type: string
+          description: The description of the search profile.
+          example: Default search profile
+        fields:
+          type: array
+          description: A collection of search fields
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SearchField'
+        text_match_type:
+          $ref: '#/components/schemas/TextMatchType'
+        filters:
+          type: array
+          description: 'Optional list of filter expressions to apply to search results. Multiple filters in the array are combined using OR logic (records matching filter1 || filter2 || ... filterN).
+
+            To combine conditions with AND logic, include multiple conditions within a single filter string (e.g., "meta.search.categories.lvl1:=`All Products > Mens Shoes` && meta.display_price.without_tax.float_price:>100").
+
+            These profile-level filters are ANDed with any filters provided in the search request via the filter_by parameter, resulting in: (profile_filter1 || profile_filter2 || ... profile_filterN) && request_filters.
+
+            '
+          items:
+            type: string
+            example: meta.search.categories.lvl1:=`All Products > Mens Shoes`
+            minLength: 1
+        exclusions:
+          type: array
+          description: A collection of exclusion expressions to apply to search results. Multiple exclusions in the array are combined using OR logic (records matching exclusion1 || exclusion2 || ... exclusionN).
+          items:
+            type: string
+            example: meta.search.categories.lvl1:=`All Products > Mens Shoes`
+            minLength: 1
+        boosts:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchBoostRule'
+        prefix:
+          type: boolean
+          nullable: true
+          description: 'Profile-level default for prefix (partial match) behavior on the last query token. When true, the last word in the query is treated as a prefix for all fields that do not have an explicit per-field prefix value. For example, a search request for "red app" matches "red apple". When false, the last word must match exactly. If omitted, default of true applies. Per-field prefix values override this setting.
+
+            The primary use case is to show results as the user is typing in the search box.
+
+            '
+          example: true
+        typo_tolerance:
+          $ref: '#/components/schemas/TypoTolerance'
+        synonym_sets:
+          type: array
+          description: 'Optional list of synonym set IDs to apply at search time. Each synonym set must exist and must have been synced to the search engine at least once. Organization-level search profiles may only reference organization-level synonym sets. Store-level search profiles may reference organization-level and same-store synonym sets. Set to an empty array to remove all synonym sets from the search profile.
+
+            '
+          items:
+            type: string
+            format: uuid
+            example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        force_use_default_price_for_faceting_and_sorting:
+          type: boolean
+          description: When set to true, the default price is used for faceting and sorting for segmented catalogs even if the catalog rule has a supported price book.
+          example: true
+    TypoTolerance:
+      type: object
+      nullable: true
+      description: 'Optional typo tolerance configuration applied at search time.
+
+        All fields are optional; defaults are noted on each field.
+
+        '
+      properties:
+        num_typos:
+          type: integer
+          description: 'Profile-level default for the maximum number of typographical errors
+
+            [Damerau-Levenshtein distance](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance) allowed when matching any field.
+
+            Accepted values: 0 (exact match only), 1, or 2.
+
+            Per-field `num_typos` values override this setting. If omitted, default of 2 applies.
+
+
+            For example, a search request for "red appla" matches "red apple" with a `num_typos` of 1.
+
+
+            **`num_typos` is an upper bound, not a guarantee.** The number of corrections actually
+
+            applied to a query token is also capped by its length via
+
+            `min_len_to_allow_single_character_correction` (default 4) and
+
+            `min_len_to_allow_two_character_correction` (default 7): a token shorter than the
+
+            single-character threshold gets no correction at all, and a token shorter than the
+
+            two-character threshold is corrected by at most one character — even when `num_typos` is 2.
+
+            See those two fields for details.
+
+            '
+          minimum: 0
+          maximum: 2
+          example: 1
+        min_len_to_allow_single_character_correction:
+          type: integer
+          description: 'Minimum query-token length required before a single-character typo correction is attempted. This works together with `num_typos`: a token shorter than this length receives no typo correction at all, regardless of `num_typos`. For example, when set to 4, a search for "appla" will match "apple", but a search for "apa" will not match "app" because the length of "apa" is 3.
+
+            Default: 4.
+
+            '
+          minimum: 1
+          example: 3
+        min_len_to_allow_two_character_correction:
+          type: integer
+          description: 'Minimum query-token length required before a two-character typo correction is attempted. This works together with `num_typos`: even when `num_typos` is 2, a token shorter than this length is corrected by at most one character (and a token shorter than `min_len_to_allow_single_character_correction` is not corrected at all). For example, with the default of 7, the 7-character query "monetar" can be corrected to "monitor" (two corrections), but a 6-character query with two mistakes cannot.
+
+            Default: 7
+
+            '
+          minimum: 1
+          example: 7
+        typo_tokens_threshold:
+          type: integer
+          description: 'Typo-corrected query variations are only generated if the number of exact results
+
+            found is fewer than this value. Set to 0 to disable typo tolerance entirely.
+
+            For example, when set to 5 and the search result only has 3 results, the search engine will apply typo correction to try to return 5 or more results.
+
+
+            Default: 1
+
+            '
+          minimum: 0
+          example: 1
+        drop_tokens_threshold:
+          type: integer
+          description: 'For multi-word queries, tokens are progressively dropped if the number of results
+
+            is fewer than this value. Set to 0 to disable token dropping.
+
+
+            For example, when set to 5 and the search result only has 3 results for "red apple" search,
+
+            the search engine will drop the last token "apple" and find more results with just by searching for "red".
+
+
+            Default: 1
+
+            '
+          minimum: 0
+          example: 1
+        drop_tokens_mode:
+          type: string
+          description: "Controls the direction in which tokens are dropped from a multi-word query when\nresults fall below drop_tokens_threshold.\n- `right_to_left` (default): drops tokens from the right end of the query first.\n- `left_to_right`: drops tokens from the left end first.\n- `both_sides:N`: drops from both ends, limited to queries of N tokens or fewer\n  (e.g. `both_sides:3` applies only to queries with 3 or fewer tokens).\n"
+          example: right_to_left
+        enable_typos_for_numerical_tokens:
+          type: boolean
+          description: 'When false, typo tolerance is disabled for query tokens that are purely numeric (every character is a digit, e.g. "98765"). Such a token must then match exactly.
+
+            Default: true
+
+            '
+          example: true
+        enable_typos_for_special_char_tokens:
+          type: boolean
+          description: 'When false, typo tolerance is disabled for query tokens that contain at least one non-alphanumeric character
+
+            (any character outside `a-z`, `A-Z`, `0-9`), forcing such tokens to match exactly.
+
+            Useful for keeping product codes / SKUs precise.
+
+
+            Tokens like `abc-123`, `abc-def`, `123-456`, and `v1.2.0` are affected;
+
+            a plain alphanumeric token like `abc123` is not.
+
+
+            Note: the special character must be indexed on the field (via `symbols_to_index`);
+
+            otherwise the search engine removes the special characters from tokens
+
+            (e.g. a token like v1.2.0 becomes v120) and it no longer qualifies.
+
+
+            Default: true
+
+            '
+          example: true
+        number_of_typos_allowed_when_resolving_synonyms:
+          type: integer
+          description: 'Number of typos allowed when resolving synonyms. Enables fuzzy synonym matching
+
+            so that a misspelled query term can still trigger a synonym expansion for the
+
+            synonym sets attached to the search profile.
+
+            Accepted values: 0 (exact synonym match only, default), 1, or 2.
+
+            '
+          minimum: 0
+          maximum: 2
+          example: 0
+        split_join_tokens:
+          type: string
+          description: 'Controls whether compound words and multi-word phrases are treated as equivalent during search.
+
+            For example, a query for "nonstick" may also match "non stick", and vice versa.
+
+            - `fallback` (default): tries the original query form first; falls back to split/joined variants if results are insufficient.
+
+            - `always`: always generates both split and joined token variants alongside the original query.
+
+            - `off`: disables split/join token handling.
+
+            '
+          enum:
+          - fallback
+          - always
+          - 'off'
+          example: fallback
+    SearchProfileCreateRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/SearchProfileCreateRequestData'
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

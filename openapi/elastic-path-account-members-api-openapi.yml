@@ -1,0 +1,442 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Account Members API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Account Members
+  description: 'An `Account Member` resource is a user that you can add to accounts using account memberships.
+
+
+    Account members API is read only, and you cannot add users using this API. There is a 1 to 1 correspondence between User Authentication Info and an Account Member, the corresponding objects have the same id. You must use the `user_authentication_info` object to create users in the authentication realm of account authentication settings. For more information on adding account members, see the [Adding Accounts and Account Members](/guides/How-To/Accounts/add-account-and-member) section.
+
+    '
+  externalDocs:
+    url: https://elasticpath.dev/docs/commerce-cloud/accounts/using-account-members-api/overview
+paths:
+  /v2/account-members:
+    get:
+      tags:
+      - Account Members
+      summary: Get all Account Members
+      description: "Get all account members contained within your store.\n\n    ### Filtering\n\n\n    The following operators and attributes are available for\n[filtering](/guides/Getting-Started/filtering) account members.\n\n| Attribute | Type | Operator | Example | | :--- | :--- | :--- | :--- | | `email`       | `string` | `ilike`           | `ilike(email,'ronswanson@example.com')` | | `name`        | `string` | `ilike`           | `ilike(name,'*swan*')`                  | | `given_name`  | `string` | `ilike`/`is_null` | `ilike(given_name,'ron*')`              | | `middle_name` | `string` | `ilike`/`is_null` | `is_null(middle_name)`                  | | `family_name` | `string` | `ilike`/`is_null` | `is_null(family_name)`                  |\n"
+      operationId: get-v2-account-members
+      parameters:
+      - $ref: '#/components/parameters/page-limit'
+      - $ref: '#/components/parameters/page-offset'
+      - $ref: '#/components/parameters/filter'
+      - name: sort
+        in: query
+        description: Specifies the order in which account members will be returned. For more information, see [Sorting](/guides/Getting-Started/sorting).
+        required: false
+        schema:
+          type: string
+          enum:
+          - created_at
+          - -created_at
+          - email
+          - -email
+          - id
+          - -id
+          - name
+          - -name
+          - updated_at
+          - -updated_at
+          x-enumDescriptions:
+            created_at: Sort in increasing order of creation
+            -created_at: Sort in decreasing order of creation
+            email: Sort in increasing order of email
+            -email: Sort in decreasing order of email
+            id: Sort in increasing order of ID
+            -id: Sort in decreasing order of ID
+            name: Sort in increasing order of name
+            -name: Sort in decreasing order of name
+            updated_at: Sort in increasing order of last update
+            -updated_at: Sort in decreasing order of last update
+          example: id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AccountMemberResponse'
+                  meta:
+                    $ref: '#/components/schemas/MetaList'
+                  links:
+                    type: object
+                    properties:
+                      current:
+                        description: Always the current page.
+                        type: string
+                        format: uri
+                        example: https://useast.api.elasticpath.com/v2/account-members?page[offset]=0&page[limit]=25
+                      first:
+                        description: Always the first page.
+                        type: string
+                        format: uri
+                        example: https://useast.api.elasticpath.com/v2/account-members?page[offset]=0&page[limit]=25
+                      last:
+                        description: Always `null` if there is only one page.
+                        type: string
+                        format: uri
+                        example: https://useast.api.elasticpath.com/v2/account-members?page[offset]=0&page[limit]=25
+                      next:
+                        description: Always `null` if there is only one page.
+                        type: string
+                        example: null
+                      prev:
+                        description: Always `null` if the user is on the first page.
+                        type: string
+                        example: null
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/account-members/{accountMemberID}:
+    get:
+      tags:
+      - Account Members
+      summary: Get an Account Member
+      description: Get an account member from your store
+      operationId: get-v2-account-members-accountMemberID
+      parameters:
+      - name: accountMemberID
+        in: path
+        description: The unique identifier of the account member that you want to retrieve.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AccountMemberResponse'
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        description: A URL to the specific resource.
+                        type: string
+                        example: https://useast.api.elasticpath.com/v2/account-members/deb6b25f-8451-4211-9a22-95610333df23
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Account Members
+      summary: Update an account member
+      description: This endpoint can be used to update an account member.
+      operationId: put-v2-account-members-accountMemberID
+      parameters:
+      - name: accountMemberID
+        in: path
+        description: The unique identifier of the account member that you want to update the flows of.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      const: account_member
+                      description: The type of the object.
+                    id:
+                      type: string
+                      format: uuid
+                      example: 908f7849-60da-4e4a-a3b1-51d4cbe3b95
+              required:
+              - data
+            examples:
+              Update an Account Member:
+                value:
+                  data:
+                    type: account_member
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AccountMemberResponse'
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        description: A URL to the specific resource.
+                        type: string
+                        example: https://useast.api.elasticpath.com/v2/account-members/908f7849-60da-4e4a-a3b1-51d4cbe3b953
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  responses:
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: account not found
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value:
+                errors:
+                - title: Unauthorized
+                  status: '401'
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
+  schemas:
+    MetaTimestamps:
+      type: object
+      properties:
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              description: The date the resource is created.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+            updated_at:
+              description: The date the resource is updated.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+    MetaList:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/MetaListPage'
+        results:
+          $ref: '#/components/schemas/MetaListResults'
+    AccountMember:
+      type: object
+      properties:
+        id:
+          description: The unique identifier for the account member.
+          type: string
+          format: uuid
+          example: 908f7849-60da-4e4a-a3b1-51d4cbe3b953
+        type:
+          description: The type of the object that is returned.
+          type: string
+          const: account_member
+        name:
+          description: The name of the account member.
+          type: string
+          example: Ron Swanson
+        given_name:
+          description: The given name of the account member. This field is optional and not computed or extracted from the name field.
+          type:
+          - string
+          - 'null'
+          example: Ron
+        middle_name:
+          description: The middle name of the account member. This field is optional and not computed or extracted from the name field.
+          type:
+          - string
+          - 'null'
+          example: Ulysses
+        family_name:
+          description: The family name of the account member. This field is optional and not computed or extracted from the name field.
+          type:
+          - string
+          - 'null'
+          example: Swanson
+        email:
+          description: The email address of the account member.
+          type: string
+          format: email
+          example: ron@swanson.com
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    AccountMemberResponse:
+      allOf:
+      - $ref: '#/components/schemas/AccountMember'
+      - type: object
+        properties:
+          meta:
+            $ref: '#/components/schemas/MetaTimestamps'
+          links:
+            type: object
+            properties:
+              self:
+                description: A URL to the specific resource.
+                type: string
+                example: https://useast.api.elasticpath.com/v2/account-members/908f7849-60da-4e4a-a3b1-51d4cbe3b953
+    MetaListPage:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
+        total:
+          type: integer
+          description: The total page count.
+          example: 1
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    page-limit:
+      name: page[limit]
+      in: query
+      description: The number of records per page.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 25
+    filter:
+      name: filter
+      in: query
+      description: Specifies the filter attributes.
+      required: false
+      schema:
+        type: string
+        format: string
+        example: ilike(name,"*swan*")
+    page-offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

@@ -1,0 +1,522 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Account Management Authentication API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Account Management Authentication
+  description: Commerce provides authentication tokens for an `Account` and an `Account Member`.
+  externalDocs:
+    url: https://elasticpath.dev/docs/commerce-cloud/accounts/account-management-authentication/account-member-authentication-api-overview
+paths:
+  /v2/account-members/tokens:
+    post:
+      tags:
+      - Account Management Authentication
+      summary: Generate an Account Management Authentication Token
+      description: 'Commerce provides authentication tokens for anyone using the Account Management APIs, including accounts and account members.
+
+
+        For each element in the list returned by the account member authentication API, a token value is returned. In order for a shopper to authenticate as the account, this value should be set as the `EP-Account-Management-Authentication-Token` header when calling Commerce. This header grants access to additional resources associated with the account, such as [carts](/docs/api/carts/account-cart-associations), [orders](/docs/api/carts/orders), [catalogs with associated rules](/docs/api/pxm/catalog/rules), and [addresses](/docs/api/addresses/addresses-introduction).
+
+
+        The set of permissions available to a shopper using an Account Management Authentication token is documented in [Permissions](/docs/authentication/tokens/permissions)
+
+
+        Commerce provides authentication tokens for an account and an account member using:
+
+
+        - OpenID Connect
+
+        - Username and password
+
+        - Self signup
+
+        - One-time password token
+
+        - Switch account token
+
+        '
+      operationId: post-v2-account-members-tokens
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  oneOf:
+                  - $ref: '#/components/schemas/OpenIDConnectRequest'
+                  - $ref: '#/components/schemas/PasswordRequest'
+                  - $ref: '#/components/schemas/PasswordlessRequest'
+                  - $ref: '#/components/schemas/SelfSignupRequest'
+                  - $ref: '#/components/schemas/SwitchingAccountRequest'
+                  discriminator:
+                    propertyName: authentication_mechanism
+                    mapping:
+                      oidc: '#/components/schemas/OpenIDConnectRequest'
+                      password: '#/components/schemas/PasswordRequest'
+                      passwordless: '#/components/schemas/PasswordlessRequest'
+                      self_signup: '#/components/schemas/SelfSignupRequest'
+                      account_management_authentication_token: '#/components/schemas/SwitchingAccountRequest'
+              required:
+              - data
+            examples:
+              OpenID Connect:
+                value:
+                  data:
+                    type: account_management_authentication_token
+                    authentication_mechanism: oidc
+                    oauth_authorization_code: c2490f06-6d8e-4927-99aa-4bf02b419e96
+                    oauth_redirect_uri: https://example-store.com/oauth2/callback
+                    oauth_code_verifier: 0E934PurR8ExVg6Pj7T4kQewxKzWSfSFG5d15FGfww8
+              Username and Password:
+                value:
+                  data:
+                    type: account_management_authentication_token
+                    authentication_mechanism: password
+                    password_profile_id: 161292d3-c105-490f-8798-0ec71cd5a272
+                    username: john.doe
+                    password: password
+              One-time Password Token:
+                value:
+                  data:
+                    type: account_management_authentication_token
+                    authentication_mechanism: passwordless
+                    password_profile_id: 161292d3-c105-490f-8798-0ec71cd5a272
+                    username: john.doe
+                    one_time_password_token: abc123
+              Self Signup:
+                value:
+                  data:
+                    type: account_management_authentication_token
+                    authentication_mechanism: self_signup
+                    password_profile_id: 161292d3-c105-490f-8798-0ec71cd5a272
+                    username: john.doe@gmail.com
+                    password: password
+                    name: john
+                    email: john.doe@gmail.com
+              Switch account tokens:
+                value:
+                  data:
+                    type: account_management_authentication_token
+                    authentication_mechanism: account_management_authentication_token
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AccountManagementAuthenticationTokenResponse'
+                  meta:
+                    allOf:
+                    - $ref: '#/components/schemas/MetaList'
+                    - $ref: '#/components/schemas/MetaAccountMemberId'
+                  links:
+                    type: object
+                    properties:
+                      current:
+                        description: Always the current page.
+                        type: string
+                        format: uri
+                        example: https://useast.api.elasticpath.com/v2/account-members/tokens?page[offset]=0&page[limit]=25
+                      first:
+                        description: Always the first page.
+                        type: string
+                        format: uri
+                        example: https://useast.api.elasticpath.com/v2/account-members/tokens?page[offset]=0&page[limit]=25
+                      last:
+                        description: Always `null` if there is only one page.
+                        type: string
+                        format: uri
+                        example: https://useast.api.elasticpath.com/v2/account-members/tokens?page[offset]=0&page[limit]=25
+                      next:
+                        description: Always `null` if there is only one page.
+                        type: string
+                        example: null
+                      prev:
+                        description: Always `null` if the user is on the first page.
+                        type: string
+                        example: null
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  responses:
+    ForbiddenError:
+      description: Forbidden Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            forbidden-error:
+              value:
+                errors:
+                - title: Forbidden
+                  status: '403'
+                  detail: forbidden
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: account not found
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unprocessable-entity:
+              value:
+                errors:
+                - title: Unprocessable Entity
+                  status: '422'
+                  detail: store id mismatch
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value:
+                errors:
+                - title: Unauthorized
+                  status: '401'
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+  schemas:
+    SelfSignupRequest:
+      allOf:
+      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
+      - type: object
+        properties:
+          authentication_mechanism:
+            description: Species the authentication mechanism. You must use `self_signup`.
+            type: string
+            const: self_signup
+          password_profile_id:
+            description: The password profile ID. For more information, see [password profiles page](https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/password-profiles-api/overview).
+            type: string
+            format: uuid
+            example: c2490f06-6d8e-4927-99aa-4bf02b419e96
+          username:
+            description: The username.
+            type: string
+            example: username
+          password:
+            description: The password.
+            type: string
+            format: password
+            example: pa$$word
+          name:
+            description: The name.
+            type: string
+            example: Ron Swanson
+          given_name:
+            description: The given name for the user.
+            type:
+            - string
+            - 'null'
+            example: Ron
+          middle_name:
+            description: The middle name for the user.
+            type:
+            - string
+            - 'null'
+            example: Ulysses
+          family_name:
+            description: The family name for the user.
+            type:
+            - string
+            - 'null'
+            example: Swanson
+          email:
+            description: The email.
+            type: string
+            format: email
+            example: ron@swanson.com
+      required:
+      - type
+      - authentication_mechanism
+      - password_profile_id
+      - username
+      - password
+      - name
+      - email
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    MetaListPage:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
+        total:
+          type: integer
+          description: The total page count.
+          example: 1
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    AccountManagementAuthenticationTokenResponse:
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the object.
+          type: string
+          const: account_management_authentication_token
+        account_name:
+          description: The name of the account that this token grants access to.
+          type: string
+          example: acc-name-1
+        account_id:
+          description: The ID of the account that this token grants access to.
+          type: string
+          format: uuid
+          example: 908f7849-60da-4e4a-a3b1-51d4cbe3b953
+        token:
+          description: The JWT authentication token that the shopper uses as the `EP-Account-Management-Authentication-Token` header [in all other endpoints](https://elasticpath.dev/docs/commerce-cloud/authentication/tokens/account-management-authentication-token).
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiIyMDIxLTAzLTE2VDE5OjM2OjExLjA3MFoiLCJpYXQiOiIyMDIxLTAzLTE1VDE5OjM2OjExLjA3MFoiLCJzY29wZSI6IjFjNDVlNGVjLTI2ZTAtNDA0My04NmU0LWMxNWI5Y2Y5ODVhMyIsInN1YiI6IjFjNDVlNGVjLTI2ZTAtNDA0My04NmU0LWMxNWI5Y2Y5ODVhMiJ9.ytQ3UutTl_RJ8NiB1xN29Ta23p-FXsYOhcUM7MUQ4CM
+        expires:
+          description: The epoch time that this token expires at. The time is set to 24 hours after the token is generated.
+          type: string
+          format: date-time
+          example: '2021-03-16T19:36:11.070Z'
+    AccountManagementAuthenticationToken:
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the object. You must use `account_management_authentication_token`.
+          type: string
+          const: account_management_authentication_token
+    SwitchingAccountRequest:
+      allOf:
+      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
+      - type: object
+        properties:
+          authentication_mechanism:
+            description: Species the authentication mechanism. You must use `account_management_authentication_token`.
+            type: string
+            const: account_management_authentication_token
+      required:
+      - type
+      - authentication_mechanism
+    MetaList:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/MetaListPage'
+        results:
+          $ref: '#/components/schemas/MetaListResults'
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
+    OpenIDConnectRequest:
+      allOf:
+      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
+      - type: object
+        properties:
+          authentication_mechanism:
+            description: Species the authentication mechanism. You must use `oidc`.
+            type: string
+            const: oidc
+          oauth_authorization_code:
+            description: Specifies the code returned from the OpenID Connect Provider authentication.
+            type: string
+            example: c2490f06-6d8e-4927-99aa-4bf02b419e96
+          oauth_redirect_uri:
+            description: Specifies the URL of the front-end that handles the callback of the token.
+            type: string
+            format: uri
+            example: https://example-store.com/oauth2/callback
+          oauth_code_verifier:
+            description: Specifies the Proof Key for Code Exchange (PKCE) code verifier corresponding to the code challenge supplied to the authorization endpoint. For more information about code verifier and challenge, see Generating a [Code Verifier and Challenge](https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/get-single-sign-on-customer-token#generate-proof-key-for-code-exchange-pkce-parameters).
+            type: string
+            example: 0E934PurR8ExVg6Pj7T4kQewxKzWSfSFG5d15FGfww8
+      required:
+      - type
+      - authentication_mechanism
+      - oauth_authorization_code
+      - oauth_redirect_uri
+      - oauth_code_verifier
+    MetaAccountMemberId:
+      type: object
+      properties:
+        account_member_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the Account Member that authenticated. This is useful if `account_member_self_management` is enabled in [Account Authentication Settings](/docs/api/accounts/get-v-2-settings-account-authentication), so that the user can update details for their account.
+          example: f5d08d48-bbc8-4f61-818f-a78583045f56
+    PasswordRequest:
+      allOf:
+      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
+      - type: object
+        properties:
+          authentication_mechanism:
+            description: Species the authentication mechanism. You must use `password`.
+            type: string
+            const: password
+          password_profile_id:
+            description: The password profile ID. For more information, see [password profiles page](https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/password-profiles-api/overview).
+            type: string
+            format: uuid
+            example: c2490f06-6d8e-4927-99aa-4bf02b419e96
+          username:
+            description: The username.
+            type: string
+            example: username
+          password:
+            description: The password.
+            type: string
+            format: password
+            example: pa$$word
+      required:
+      - type
+      - authentication_mechanism
+      - password_profile_id
+      - username
+      - password
+    PasswordlessRequest:
+      allOf:
+      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
+      - type: object
+        properties:
+          authentication_mechanism:
+            description: Species the authentication mechanism. You must use `passwordless`.
+            type: string
+            const: passwordless
+          password_profile_id:
+            description: The password profile ID. For more information, see [password profiles page](https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/password-profiles-api/overview).
+            type: string
+            format: uuid
+            example: c2490f06-6d8e-4927-99aa-4bf02b419e96
+          username:
+            description: The username.
+            type: string
+            example: jane.doe@gmail.com
+          one_time_password_token:
+            description: The one-time password token.
+            type: string
+            example: abd1g5
+      required:
+      - type
+      - authentication_mechanism
+      - password_profile_id
+      - username
+      - one_time_password_token
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

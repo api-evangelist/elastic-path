@@ -1,0 +1,604 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Indexable Fields API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Indexable Fields
+  description: "Indexable Fields allow you to extend and fine-tune the search schema. By default, the search index includes all the core product fields like name, description, SKU, slug etc. Indexable Fields let you:\n\n- **Add custom fields** to the index from product extension templates or custom (shopper and admin) attributes\n- **Configure core field behavior** such as stemming and tokenization on built-in fields like `name` and `description`\n- **Control tokenization** at the collection or per-field level using token separators and symbols to index\n\n### When to Use Indexable Fields\n\nUse Indexable Fields when you want to:\n\n- **Search custom attributes**: Enable full-text search on custom product fields like brand, material, or specifications\n- **Filter by custom attributes**: Allow shoppers to filter products by custom fields like color, size, or rating\n- **Facet on custom attributes**: Display aggregated counts for custom field values in your navigation\n- **Sort by custom attributes**: Order search results by custom numeric fields like rating or popularity\n- **Enable stemming**: Match different word forms (e.g., \"running\" also matches \"run\", \"runs\") on both custom or core fields\n- **Customize tokenization**: Control how hyphenated, compound, or symbol-containing text is split and indexed\n\n### How Indexable Fields Work\n\n1. **Create indexable fields**: Define custom fields to index and configure collection-level or per-field tokenization settings\n2. **Override core field behavior**: Use `core_field_overrides` to configure stemming, token separators, or symbols to index on built-in fields like `name` and `description`\n3. **Reindex catalogs**: After creating or modifying indexable fields, reindex your catalog releases to apply the changes\n4. **Use in searches**: Once reindexed, custom fields are available in search queries for filtering, faceting, and sorting\n\n### Field Configuration\n\nEach entry in the custom fields (`fields` array) supports the following options:\n\n| Option             | Description                                                                                               |\n|--------------------|-----------------------------------------------------------------------------------------------------------|\n| `name`             | The field path — see **Field Types** below for supported formats                                          |\n| `facetable`        | When `true`, the field can be used for faceting to show aggregated value counts                           |\n| `sortable`         | When `true`, the field can be used for sorting results                                                    |\n| `locale`           | Language code for text tokenization, defaults to `en` for English                                         |\n| `stem`             | When `true`, enables word stemming using the Snowball stemmer — see **Stemming** below                    |\n| `token_separators` | Per-field characters to use as token separators, overriding the collection-level setting                  |\n| `symbols_to_index` | Per-field special characters to preserve as part of tokens, overriding the collection-level setting       |\n\n### Field Types\n\nTwo categories of fields can be indexed:\n\n#### Extension Fields\n\nFields from your product extension templates, following the pattern `extensions.products(<template_slug>).<field_name>`:\n\n- `<template_slug>` is the slug of your product extension template\n- `<field_name>` is the name of the field within that template\n- The field must exist and be enabled in the flows service\n- Only enumerated string fields, numeric fields, and boolean fields can be faceted\n\n**Example**: For a product extension template with slug `Details` containing a field `brand`, the indexable field name would be `extensions.products(Details).brand`.\n\n#### Custom Attribute Fields\n\nMerchant-defined key/value attributes stored directly on products:\n\n- `shopper_attributes.<attribute_name>` — visible in shopper and admin catalog API responses and available for filtering, sorting, and faceting in both shopper and admin search\n- `admin_attributes.<attribute_name>` — available for filtering and sorting in both shopper and admin search; not returned in search response payloads\n- `<attribute_name>` must be no longer than **64 characters** and can only contain alphanumeric characters, underscores (`_`), and hyphens (`-`).\n- Attribute fields are always typed as `string`\n- Faceting and sorting can be enabled\n\n**Examples**: `shopper_attributes.fabric`, `admin_attributes.internal_grade`\n\n### Core Field Overrides\n\nIn addition to configuring custom fields, Indexable Fields can influence the behavior of built-in product fields such as `name`, `description`, and `sku`. Use the `core_field_overrides` to apply per-field settings.\n\nEach entry in `core_field_overrides` supports `stem`, `token_separators`, `symbols_to_index`, and `sortable`. This is useful when you want to enable stemming on the product description, apply custom tokenization to a specific core field, or enable sorting on fields like `name` and `sku`.\n\n**Example**: Enable stemming on `description` and treat hyphens as token separators only on `name`:\n\n```json\n{\n  \"core_field_overrides\": [\n    { \"name\": \"description\", \"stem\": true },\n    { \"name\": \"name\", \"token_separators\": [\"-\"], \"sortable\": true }\n  ]\n}\n```\n\n### Stemming\n\nStemming reduces words to their root form at both index and query time, so a search for \"running\" also matches products containing \"run\", \"runs\", or \"runner\". This improves search recall for descriptive text fields where shoppers may use different word forms than those found in product data.\n\n- Enable per field using `stem: true` on any entry in `fields` or `core_field_overrides`\n- Uses the [Snowball stemmer](https://snowballstem.org/)\n- Only valid for string-typed fields\n- Defaults to `false`\n\n### Token Separators and Symbols to Index\n\nThese settings control how text is split into tokens during indexing and searching.\n\n#### Token Separators\n\n`token_separators` specifies characters that split text into separate tokens, in addition to the default whitespace splitting. This is useful for hyphenated text, part numbers, or other compound formats.\n\nFor example, with `token_separators: [\"-\"]`, the text `non-tech` is tokenized to `non` and `tech`, so searches for both `non-tech` and `non tech` will match.\n\n#### Symbols to Index\n\n`symbols_to_index` specifies special characters that should be preserved within tokens rather than stripped during indexing. Useful when products contain meaningful symbols like `+`, `#`, or `@`.\n\n#### Collection-Level vs Field-Level\n\nBoth settings can be configured at two scopes:\n\n- **Collection-level**: Set `token_separators` or `symbols_to_index` at the top level of the indexable fields resource to apply the setting across all indexed fields.\n- **Field-level**: Set the same properties on an individual entry in `fields` or `core_field_overrides` to apply only to that field, overriding the collection-level setting.\n\nAn empty array at the field level defers to the collection-level setting.\n\n### Reindexing Requirement\n\nAny change to indexable fields requires reindexing your catalog releases to take effect. The system detects when indexes are out of sync. Use the [reindex endpoint](/docs/api/pxm/catalog-search/reindex-tenant-releases) to apply changes. See [Jobs](/docs/api/pxm/catalog-search/jobs) for more details on reindexing operations.\n"
+paths:
+  /pcm/catalogs/indexable-fields:
+    post:
+      tags:
+      - Indexable Fields
+      operationId: createIndexableFields
+      summary: Create indexable fields
+      description: Specify additional fields to be indexed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexableFieldsCreateRequest'
+      responses:
+        '201':
+          description: Successfully created indexable fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexableFieldsResponse'
+        '400':
+          description: Bad request - invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - reindexing job queued or in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+      - Indexable Fields
+      operationId: listIndexableFields
+      summary: List indexable fields
+      description: List indexable fields.
+      responses:
+        '200':
+          description: List indexable fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListIndexableFieldsResponse'
+        '400':
+          description: Bad request - invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /pcm/catalogs/indexable-fields/{indexable_fields_id}:
+    parameters:
+    - name: indexable_fields_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The unique ID of the indexable fields
+      example: ac107ce9-96ac-4bd5-aa3d-59f40b91279b
+      x-go-name: IndexableFieldsID
+    get:
+      tags:
+      - Indexable Fields
+      operationId: getIndexableFields
+      summary: Get indexable fields
+      description: Get additional fields to be indexed.
+      responses:
+        '200':
+          description: Get indexable fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexableFieldsResponse'
+        '400':
+          description: Bad request - invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Indexable fields not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Indexable Fields
+      operationId: updateIndexableFields
+      summary: Update indexable fields
+      description: Update additional fields to be indexed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexableFieldsUpdateRequest'
+      responses:
+        '200':
+          description: Successfully updated indexable fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexableFieldsResponse'
+        '400':
+          description: Bad request - invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permission denied - indexable fields owned by the organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Indexable fields not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - reindexing job queued or in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+      - Indexable Fields
+      operationId: deleteIndexableFields
+      summary: Delete indexable fields
+      description: Delete additional fields to be indexed.
+      responses:
+        '204':
+          description: Successfully deleted indexable fields
+        '400':
+          description: Bad request - invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permission denied - indexable fields owned by the organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - reindexing job queued or in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    IndexableFieldsUpdateRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/IndexableFieldsUpdateRequestData'
+    IndexableFieldsResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/IndexableFields'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    IndexableFieldsMeta:
+      type: object
+      required:
+      - owner
+      properties:
+        owner:
+          $ref: '#/components/schemas/ResourceOwner'
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    CoreFieldOverride:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: 'Name of the core field to configure. Must be one of the supported core fields.
+
+            '
+          example: name
+        stem:
+          $ref: '#/components/schemas/Stem'
+        token_separators:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1
+          description: 'Per-field token separators for this core field. Overrides the collection-level token_separators for this field. An empty array defers to the collection-level setting. Each element must be a single character.
+
+            For example, take text `non-tech`. By default, it will be tokenized to `nontech`. So, search for `non tech` will not match the product. Set `token_separators: ["-"]`. Then it will be tokenized to `non` and `tech`. Now, search for both `non-tech` and `non tech` will match this product.
+
+            '
+        symbols_to_index:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1
+          description: 'By default, special characters are removed from fields when indexing and searching for them. Provide per-field special characters to index for this core field. Overrides the collection-level symbols_to_index for this field. An empty array defers to the collection-level setting. Each element must be a single character.
+
+            '
+        sortable:
+          type: boolean
+          description: 'When set to true, enables sorting on this core field. Only supported for specific core fields.
+
+            '
+          example: true
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
+    IndexableFields:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: A unique identifier of the indexable fields.
+          type: string
+          format: uuid
+          example: 805103ff-0a37-4f83-8fe0-95a16039bd98
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/IndexableFieldsType'
+        attributes:
+          $ref: '#/components/schemas/IndexableFieldsAttributes'
+        meta:
+          $ref: '#/components/schemas/IndexableFieldsMeta'
+    FieldType:
+      type: string
+      description: The type of the field.
+      enum:
+      - string
+      - int32
+      - int64
+      - bool
+      - float
+      example: string
+      x-go-type: model.FieldType
+      x-go-type-import:
+        name: model
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/model
+    IndexableFieldRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: 'The name of the field to index. Two formats are supported:
+
+
+            - **Extension fields**: `extensions.products(<template_slug>).<field_name>` — indexes a field from a product extension template. The field must exist and be enabled in the flows service.
+
+            - **Shopper attribute fields**: `shopper_attributes.<attribute_name>` — indexes a merchant-defined shopper attribute. Always typed as `string`. The attribute name must be no longer than **64 characters** and can only contain alphanumeric characters, underscores (`_`), and hyphens (`-`).
+
+            - **Admin attribute fields**: `admin_attributes.<attribute_name>` — indexes a merchant-defined admin attribute. Always typed as `string`. The attribute name must be no longer than **64 characters** and can only contain alphanumeric characters, underscores (`_`), and hyphens (`-`).
+
+            '
+          example: extensions.products(clothing).color
+          minLength: 1
+        facetable:
+          type: boolean
+          description: Enables faceting on the field.
+          default: false
+          example: true
+        sortable:
+          type: boolean
+          description: 'When set to true, the field will be sortable. Default: true for numbers, false otherwise.'
+          example: true
+        locale:
+          type: string
+          description: 'For configuring language specific tokenization, e.g. jp for Japanese. Default: en which also broadly supports most European languages. For valid values, see [ISO 639 language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes).'
+          default: en
+          example: en
+        stem:
+          $ref: '#/components/schemas/Stem'
+        token_separators:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1
+          description: 'Per-field token separators for this field. Overrides the collection-level token_separators for this field. An empty array defers to the collection-level setting. Each element must be a single character.
+
+            For example, take text `non-tech`. By default, it will be tokenized to `nontech`. So, search for `non tech` will not match the product. Set `token_separators: ["-"]`. Then it will be tokenized to `non` and `tech`. Now, search for both `non-tech` and `non tech` will match this product.
+
+            '
+        symbols_to_index:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1
+          description: 'By default, special characters are removed from fields when indexing and searching for them. Provide per-field special characters to index for this field. Overrides the collection-level symbols_to_index for this field. An empty array defers to the collection-level setting. Each element must be a single character.
+
+            '
+    IndexableFieldsType:
+      description: Represents the type of object being returned. Always `catalog_search_indexable_fields`.
+      type: string
+      example: catalog_search_indexable_fields
+      enum:
+      - catalog_search_indexable_fields
+    IndexableFieldsRequestAttributes:
+      type: object
+      properties:
+        fields:
+          type: array
+          description: A collection of indexable fields
+          title: IndexableFields
+          items:
+            $ref: '#/components/schemas/IndexableFieldRequest'
+          example:
+          - name: extensions.products(clothing).color
+            facetable: false
+            sortable: false
+            locale: en
+          - name: shopper_attributes.fabric
+            facetable: false
+            sortable: false
+          - name: admin_attributes.internal_grade
+            sortable: true
+        core_field_overrides:
+          type: array
+          description: Per-field configuration for core product fields (e.g. name, description).
+          items:
+            $ref: '#/components/schemas/CoreFieldOverride'
+        token_separators:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1
+          description: 'Characters to use as token separators across all the index fields, in addition to spaces and newlines. Each element must be a single character. Defaults to none set.
+
+            For example, take text `non-tech`. By default, it will be tokenized to `nontech`. So, search for `non tech` will not match the product. Set `token_separators: ["-"]`. Then it will be tokenized to `non` and `tech`. Now, search for both `non-tech` and `non tech` will match this product.
+
+            '
+        symbols_to_index:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1
+          description: 'By default, special characters are removed from fields when indexing and searching for them. Provide list of special characters that should be indexed as part of the tokens across the all index fields. Each element must be a single character. Defaults to none set.
+
+            '
+    IndexableField:
+      type: object
+      required:
+      - name
+      - type
+      properties:
+        name:
+          type: string
+          description: The name of the field.
+          example: extensions.products(clothing).color
+          minLength: 1
+        type:
+          $ref: '#/components/schemas/FieldType'
+        facetable:
+          type: boolean
+          description: Enables faceting on the field.
+          default: false
+          example: true
+        sortable:
+          type: boolean
+          description: 'When set to true, the field will be sortable. Default: true for numbers, false otherwise.'
+          example: true
+        locale:
+          type: string
+          description: 'For configuring language specific tokenization, e.g. jp for Japanese. Default: en which also broadly supports most European languages. For valid values, see [ISO 639 language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes).'
+          default: en
+          example: en
+        stem:
+          $ref: '#/components/schemas/Stem'
+        token_separators:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1
+          description: 'Per-field token separators for this field. Overrides the collection-level token_separators for this field. An empty array defers to the collection-level setting.
+
+            '
+        symbols_to_index:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1
+          description: 'Provide per-field special characters to index for this field. Overrides the collection-level symbols_to_index for this field. An empty array defers to the collection-level setting.
+
+            '
+    IndexableFieldsUpdateRequestData:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          description: The unique identifier of the indexable fields. Must match the ID specified in the request path.
+          type: string
+          format: uuid
+          example: 805103ff-0a37-4f83-8fe0-95a16039bd98
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/IndexableFieldsType'
+        attributes:
+          $ref: '#/components/schemas/IndexableFieldsRequestAttributes'
+    ListIndexableFieldsResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/IndexableFields'
+    IndexableFieldsCreateRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - attributes
+          properties:
+            type:
+              $ref: '#/components/schemas/IndexableFieldsType'
+            attributes:
+              $ref: '#/components/schemas/IndexableFieldsRequestAttributes'
+    Stem:
+      type: boolean
+      description: 'When true, enables word stemming on this field using [Snowball stemmer](https://snowballstem.org/). Stemming reduces words to their root form at index and query time, so a search for "running" will also match products containing "run", "runs", or "runner". This improves search recall for descriptive text fields where shoppers may use different word forms than those used in product data. Only valid for string-typed fields. Defaults to false.
+
+        '
+      example: true
+    IndexableFieldsAttributes:
+      type: object
+      properties:
+        fields:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          description: A collection of indexable fields
+          title: IndexableFields
+          items:
+            $ref: '#/components/schemas/IndexableField'
+          example:
+          - name: extensions.products(clothing).color
+            type: string
+            facetable: false
+            sortable: false
+            locale: en
+          - name: shopper_attributes.fabric
+            type: string
+            facetable: false
+            sortable: false
+          - name: admin_attributes.internal_grade
+            type: string
+            sortable: true
+        core_field_overrides:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          description: Per-field configuration for core product fields (e.g. name, description).
+          items:
+            $ref: '#/components/schemas/CoreFieldOverride'
+        token_separators:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1
+          description: 'Characters used as token separators across the entire collection.
+
+            '
+        symbols_to_index:
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1
+          description: 'Characters indexed as part of tokens across the entire collection.
+
+            '
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

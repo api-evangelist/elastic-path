@@ -1,0 +1,258 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Searchable Fields API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Searchable Fields
+  description: 'The Searchable Fields API returns a list of all fields available for searching, filtering, faceting, and sorting in your search queries. This includes both the standard product fields that are indexed by default and any custom fields you''ve added through Indexable Fields.
+
+
+    ### Using Searchable Fields
+
+
+    Use this endpoint to:
+
+
+    - **Discover available fields**: See all fields that can be used in search queries
+
+    - **Build dynamic UIs**: Programmatically generate filter and facet options based on available fields
+
+    - **Validate configurations**: Verify that your indexable fields have been properly added to the schema
+
+
+    ### Field Properties
+
+
+    Each searchable field includes:
+
+
+    | Property | Description |
+
+    | --- | --- |
+
+    | `name` | The field name to use in search queries |
+
+    | `type` | The data type (`string`, `int32`, `int64`, `float`, `bool`) |
+
+    | `facetable` | Whether the field can be used for faceting |
+
+    | `sortable` | Whether the field can be used for sorting |
+
+    | `locale` | The language code for text fields |
+
+
+    ### Standard vs Custom Fields
+
+
+    - **Standard fields**: Built-in fields like `name`, `description`, `sku`, `meta.search.nodes.name` that are always available
+
+    - **Custom fields**: Fields added through Indexable Fields from your product extensions
+
+    '
+paths:
+  /pcm/catalogs/searchable-fields:
+    get:
+      tags:
+      - Searchable Fields
+      operationId: listSearchableFields
+      summary: List searchable fields
+      description: List searchable fields.
+      responses:
+        '200':
+          description: List searchable fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchableFieldsResponse'
+        '400':
+          description: Bad request - invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
+    ListResponseMeta:
+      type: object
+      required:
+      - results
+      properties:
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
+    SearchableFieldAttributes:
+      type: object
+      required:
+      - name
+      - type
+      properties:
+        name:
+          type: string
+          description: The name of the field.
+          example: name
+          minLength: 1
+        type:
+          $ref: '#/components/schemas/FieldType'
+        facetable:
+          type: boolean
+          description: Enables faceting on the field.
+          default: false
+          example: true
+        sortable:
+          type: boolean
+          description: 'When set to true, the field will be sortable. Default: true for numbers, false otherwise.'
+          example: true
+        locale:
+          type: string
+          description: 'For configuring language specific tokenization, e.g. jp for Japanese. Default: en which also broadly supports most European languages. For valid values, see [ISO 639 language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes).'
+          default: en
+          example: en
+    ListResponseMetaResults:
+      description: Contains the results for the entire collection.
+      type: object
+      required:
+      - total
+      properties:
+        total:
+          description: Total number of results for the entire collection.
+          type: integer
+          example: 100
+    SearchableFieldMeta:
+      type: object
+      required:
+      - owner
+      properties:
+        owner:
+          $ref: '#/components/schemas/ResourceOwner'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    SearchableField:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: A unique identifier of the field.
+          type: string
+          example: name
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/SearchableFieldType'
+        attributes:
+          $ref: '#/components/schemas/SearchableFieldAttributes'
+        meta:
+          $ref: '#/components/schemas/SearchableFieldMeta'
+    SearchableFieldType:
+      description: Represents the type of object being returned. Always `catalog_searchable_field`.
+      type: string
+      example: catalog_searchable_field
+      enum:
+      - catalog_searchable_field
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    FieldType:
+      type: string
+      description: The type of the field.
+      enum:
+      - string
+      - int32
+      - int64
+      - bool
+      - float
+      example: string
+      x-go-type: model.FieldType
+      x-go-type-import:
+        name: model
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/model
+    SearchableFieldsResponse:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          description: A collection of searchable fields.
+          items:
+            $ref: '#/components/schemas/SearchableField'
+        meta:
+          $ref: '#/components/schemas/ListResponseMeta'
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

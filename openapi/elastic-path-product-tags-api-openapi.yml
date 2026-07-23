@@ -1,0 +1,290 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Product Tags API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Product Tags
+  description: '```mdx-code-block
+
+    import ProductTags from ''/docs/partials/pxm/products/tags.mdx'';
+
+
+    <ProductTags />
+
+    ```
+
+    '
+paths:
+  /pcm/tags:
+    get:
+      summary: Get All Product Tags
+      description: "Retrieves all product tags for a store. A store can view the tags associated with the organization to which the store belongs. However, an organization can only view the tags associated with the organization.\n \n"
+      operationId: getAllProductTags
+      tags:
+      - Product Tags
+      responses:
+        '200':
+          description: Returns all the product tags.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/multi_tag'
+              examples:
+                list-tags:
+                  summary: Get all tags
+                  $ref: '#/components/examples/resp_multi_tags'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+  /pcm/tags/{tagID}:
+    get:
+      summary: Get a Product Tag
+      description: Retrieves a product tag for a store. A store can view the tags associated with the organization to which the store belongs. However, an organization can only view the tags associated with the organization.
+      operationId: getProductTag
+      tags:
+      - Product Tags
+      parameters:
+      - $ref: '#/components/parameters/tag_id'
+      responses:
+        '200':
+          description: Returns a product tag with the following attributes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/single_tag'
+              examples:
+                get-tag:
+                  summary: Get a tag
+                  $ref: '#/components/examples/resp_single_tag'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+components:
+  responses:
+    bad_request:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            bad-request:
+              value:
+                errors:
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
+    not_found:
+      description: Bad Request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+    internal:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: '500'
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+  parameters:
+    tag_id:
+      name: tagID
+      in: path
+      schema:
+        type: string
+        example: 00000000-0000-0000-0000-000000000000
+      required: true
+      description: A unique identifier for the tag.
+  schemas:
+    multi_tag:
+      type: object
+      properties:
+        data:
+          description: An array of tags.
+          type: array
+          items:
+            $ref: '#/components/schemas/tag'
+        meta:
+          type: object
+          properties:
+            results:
+              description: Contains the results for the entire collection.
+              type: object
+              properties:
+                total:
+                  description: Total number of results for the entire collection.
+                  type: integer
+                  example: 2
+    error:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                example: '500'
+              title:
+                type: string
+                description: A brief summary of the error.
+                example: Internal server error
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                example: An internal error has occurred.
+              request_id:
+                type: string
+                description: Internal request ID.
+                example: 00000000-0000-0000-0000-000000000000
+              meta:
+                type: object
+                description: Additional supporting meta data for the error.
+                example:
+                  missing_ids:
+                  - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    tag:
+      type: object
+      properties:
+        id:
+          description: A unique identifier generated when a tag is created.
+          type: string
+        type:
+          description: This represents the type of resource object being returned. Always `tag`.
+          type: string
+          enum:
+          - tag
+        attributes:
+          type: object
+          properties:
+            value:
+              type: string
+              description: The text value of the tag.
+        meta:
+          type: object
+          properties:
+            x_request_id:
+              type: string
+              description: A unique request ID is generated when a tag is created.
+            created_at:
+              type: string
+              description: The date and time a tag is created.
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+            updated_at:
+              type: string
+              description: The date and time a tag is updated.
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+            owner:
+              description: The owner of a resource, either `organization` or `store`.
+              type: string
+              enum:
+              - store
+              - organization
+    single_tag:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/tag'
+  examples:
+    resp_multi_tags:
+      value:
+        data:
+        - type: tag
+          id: a88aac35-54de-40c2-bb4b-f1c57624db27
+          attributes:
+            value: shirts
+          meta:
+            created_at: '2024-03-20T15:56:40.014Z'
+            owner: store
+            updated_at: '2024-03-20T15:56:40.014Z'
+        - type: tag
+          id: 6782e020-fefd-431e-9dea-b59d249c2c5e
+          attributes:
+            value: shoes
+          meta:
+            created_at: '2024-03-20T15:56:40.014Z'
+            owner: store
+            updated_at: '2024-03-20T15:56:40.014Z'
+        meta:
+          results:
+            total: 2
+    resp_single_tag:
+      value:
+        data:
+          type: tag
+          id: 9879a8f5-0da2-4be6-91f6-a0f09d1c77a9
+          attributes:
+            value: tables
+          meta:
+            created_at: '2024-03-20T18:37:43.398Z'
+            owner: organization
+            updated_at: '2024-03-20T18:37:43.398Z'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

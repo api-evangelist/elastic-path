@@ -1,0 +1,541 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Synonym Sets API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Synonym Sets
+  description: 'Synonym Sets allow you to define groups of equivalent or related terms so that searches for one term also return results for its synonyms. This helps shoppers find products regardless of the specific terminology they use.
+
+
+    ### How Synonym Sets Work
+
+
+    A synonym set is a named container of synonym items. Each set belongs to an organization or store and is synced asynchronously. Once synced, a set can be attached to one or more search profiles; its synonym rules are then applied during searches that use those profiles to expand queries with matching terms.
+
+
+    ### Synonym Types
+
+
+    Each item within a synonym set can be either multi-way or one-way:
+
+
+    - **Multi-way synonyms**: All terms are treated as equivalent. Searching for any term in the list returns results for all of them. For example, `["sneakers", "trainers", "running shoes"]` means a search for "trainers" also returns results for "sneakers" and "running shoes".
+
+    - **One-way synonyms**: Searches for a `root` term also match the `synonyms`, but not vice versa. For example, with `root: "jacket"` and `synonyms: ["blazer", "coat"]`, searching for "jacket" also returns results for "blazer" and "coat", but searching for "blazer" does not return results for "jacket".
+
+
+    ### Synonym Item Configuration
+
+
+    Each item within a synonym set supports the following options:
+
+
+    | Option             | Required | Description                                                                                                  |
+
+    |--------------------|----------|--------------------------------------------------------------------------------------------------------------|
+
+    | `id`               | Yes      | Unique identifier for the item within the set. Alphanumeric characters, hyphens, and underscores only.       |
+
+    | `synonyms`         | Yes      | List of synonym terms. Minimum 1 if `root` is provided (one-way), minimum 2 if `root` is absent (multi-way). |
+
+    | `root`             | No       | Makes this a one-way synonym. Must not also appear in the `synonyms` array.                                  |
+
+    | `locale`           | No       | ISO 639 language code for this synonym item.                                                                 |
+
+    | `symbols_to_index` | No       | Special characters to preserve as part of tokens. Each element must be exactly one character.                |
+
+
+    ### Sync Status
+
+
+    Synonym sets are synced asynchronously. The sync status is tracked and exposed in API responses:
+
+
+    | Status           | Description                                                    |
+
+    |------------------|----------------------------------------------------------------|
+
+    | `pending_sync`   | Set has been created or updated in MongoDB but not yet synced  |
+
+    | `synced`         | Set has been successfully synced                               |
+
+    | `sync_failed`    | The last sync attempt failed                                   |
+
+    | `pending_delete` | Set is marked for deletion; a background worker will remove it |
+
+
+    ### Tenancy
+
+
+    Synonym sets follow the same tenancy model as other resources:
+
+
+    - **Organization-scoped sets**: Managed by the organization; apply across all stores
+
+    - **Store-scoped sets**: Managed by the store; apply only to that store
+
+
+    Stores cannot modify organization-scoped synonym sets.
+
+
+    ### Using Synonym Sets in Search Profiles
+
+
+    Synonym sets only take effect once they are attached to a [search profile](/docs/api/pxm/catalog-search/search-profiles) via its `synonym_sets` attribute. At search time, the synonym sets of the resolved search profile are applied to the query.
+
+
+    When attaching a synonym set to a search profile:
+
+
+    - The set must exist and be accessible by the calling tenant. Organization-level search profiles may only reference organization-level sets; store-level search profiles may reference organization-level and same-store sets.
+
+    - The set must have been synced at least once. A set in `pending_sync` or `sync_failed` state can still be used if it was previously synced — its last synced state continues to apply.
+
+
+    A synonym set cannot be deleted while it is referenced by any search profile; the delete request is rejected with a `409 Conflict` until the reference is removed.
+
+
+    ### Use Cases
+
+
+    - **Regional terminology**: Map British and American English terms (e.g., "trousers" ↔ "pants")
+
+    - **Brand equivalents**: Link product category names with common alternatives
+
+    - **Industry jargon**: Ensure technical terms match colloquial ones
+
+    - **Abbreviations**: Map abbreviations to their full forms (e.g., "tee" → "t-shirt")
+
+    '
+paths:
+  /pcm/catalogs/search/synonym-sets:
+    post:
+      tags:
+      - Synonym Sets
+      operationId: createSynonymSet
+      summary: Create synonym set
+      description: Create a new synonym set.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSynonymSetRequest'
+      responses:
+        '201':
+          description: Successfully created synonym set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynonymSetResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+      - Synonym Sets
+      operationId: listSynonymSets
+      summary: List synonym sets
+      description: List all synonym sets.
+      responses:
+        '200':
+          description: Successfully listed synonym sets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSynonymSetsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /pcm/catalogs/search/synonym-sets/{synonym_set_id}:
+    parameters:
+    - name: synonym_set_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The unique ID of the synonym set
+      example: 550e8400-e29b-41d4-a716-446655440000
+      x-go-name: SynonymSetID
+    get:
+      tags:
+      - Synonym Sets
+      operationId: getSynonymSet
+      summary: Get synonym set
+      description: Get a synonym set by ID.
+      responses:
+        '200':
+          description: Successfully retrieved synonym set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynonymSetResponse'
+        '404':
+          description: Synonym set not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Synonym Sets
+      operationId: updateSynonymSet
+      summary: Update synonym set
+      description: Update a synonym set by ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSynonymSetRequest'
+      responses:
+        '200':
+          description: Successfully updated synonym set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynonymSetResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Synonym set not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+      - Synonym Sets
+      operationId: deleteSynonymSet
+      summary: Delete synonym set
+      description: Delete a synonym set by ID. A synonym set cannot be deleted while it is being used by any search profile.
+      responses:
+        '204':
+          description: Synonym set marked for deletion
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - synonym set is referenced by a search profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
+    ListResponseMeta:
+      type: object
+      required:
+      - results
+      properties:
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
+    SynonymSetType:
+      type: string
+      description: Represents the type of object being returned. Always `catalog_search_synonym_set`.
+      example: catalog_search_synonym_set
+      enum:
+      - catalog_search_synonym_set
+    UpdateSynonymSetAttributes:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Human-readable name for the synonym set.
+          example: Apparel terms
+        items:
+          type: array
+          description: The synonym items in this set.
+          items:
+            $ref: '#/components/schemas/SynonymSetItem'
+          minItems: 1
+    SynonymSetResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/SynonymSet'
+    SynonymSetMeta:
+      type: object
+      required:
+      - created_at
+      - updated_at
+      - owner
+      - sync_status
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: The date and time the synonym set was created.
+          example: '2026-03-05T12:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: The date and time the synonym set was last updated.
+          example: '2026-03-05T12:00:00Z'
+        owner:
+          $ref: '#/components/schemas/ResourceOwner'
+        sync_status:
+          type: string
+          description: The sync status of the synonym set.
+          enum:
+          - pending_sync
+          - synced
+          - sync_failed
+          - pending_delete
+          example: pending_sync
+          x-go-type: model.SyncStatus
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/model
+        last_synced_at:
+          type: string
+          format: date-time
+          description: The date and time the synonym set was last successfully synced.
+          example: '2026-03-05T12:01:00Z'
+    ListResponseMetaResults:
+      description: Contains the results for the entire collection.
+      type: object
+      required:
+      - total
+      properties:
+        total:
+          description: Total number of results for the entire collection.
+          type: integer
+          example: 100
+    UpdateSynonymSetRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - id
+          - type
+          - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 8fccaa19-dba9-4621-8d11-31a222a68c7c
+              x-go-name: ID
+            type:
+              $ref: '#/components/schemas/SynonymSetType'
+            attributes:
+              $ref: '#/components/schemas/UpdateSynonymSetAttributes'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    SynonymSetItem:
+      type: object
+      required:
+      - id
+      - synonyms
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the synonym item within the set. Alphanumeric, hyphen, and underscore only.
+          pattern: ^[a-zA-Z0-9_-]+$
+          example: footwear-terms
+          x-go-name: ID
+        synonyms:
+          type: array
+          description: List of synonym terms.
+          items:
+            type: string
+          minItems: 1
+          example:
+          - sneakers
+          - trainers
+          - running shoes
+        root:
+          type: string
+          description: Makes this a one-way synonym. Searches for root also match synonyms, but not vice versa.
+          example: jacket
+        locale:
+          type: string
+          description: '[ISO 639 language code](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) for this synonym item.
+
+            '
+          example: en
+        symbols_to_index:
+          type: array
+          description: Symbols to index for this synonym item. Each element must be exactly one character.
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1
+          example:
+          - '-'
+          x-go-type-skip-optional-pointer: true
+    ListSynonymSetsResponse:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SynonymSet'
+        meta:
+          $ref: '#/components/schemas/ListResponseMeta'
+    SynonymSet:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: The unique identifier for the synonym set.
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/SynonymSetType'
+        attributes:
+          $ref: '#/components/schemas/SynonymSetAttributes'
+        meta:
+          $ref: '#/components/schemas/SynonymSetMeta'
+    SynonymSetAttributes:
+      type: object
+      required:
+      - name
+      - items
+      properties:
+        name:
+          type: string
+          description: Human-readable name for the synonym set.
+          example: Apparel terms
+        items:
+          type: array
+          description: The synonym items in this set.
+          items:
+            $ref: '#/components/schemas/SynonymSetItem'
+          minItems: 1
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    CreateSynonymSetRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - attributes
+          properties:
+            type:
+              $ref: '#/components/schemas/SynonymSetType'
+            attributes:
+              $ref: '#/components/schemas/SynonymSetAttributes'
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

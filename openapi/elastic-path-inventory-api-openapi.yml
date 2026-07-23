@@ -1,0 +1,599 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Inventory API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Inventory
+  description: "The Inventory API allows you to manage stock for products at both organization and store levels. Each product keeps a history of inventory transactions, enabling easier stock auditing.\n\nYou can specify an initial stock level when you create a product. The stock is set to `0` by default.\n\n:::caution \n\nYou cannot create multiple inventories of the same organization-level product in different stores because no unique stock ID, specific to each store, is currently generated. Hence, when you try to manage inventory of the same product for different stores, you get an invalid product identifier error. \n\n:::\n"
+paths:
+  /inventories:
+    get:
+      parameters:
+      - $ref: '#/components/parameters/PageOffset'
+      - $ref: '#/components/parameters/PageLimit'
+      summary: Get Stock for all Products
+      description: Returns all products and their associated stock.
+      tags:
+      - Inventory
+      operationId: GetStockForAllProducts
+      responses:
+        '200':
+          description: Success. All products and their stock values are returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Inventory'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Create Stock for Product
+      description: Sets the inventory quantity for the specified product.
+      tags:
+      - Inventory
+      operationId: CreateStock
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/StockCreate'
+              required:
+              - data
+      responses:
+        '201':
+          description: Success. Stock was successfully created for product
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/StockResponse'
+                required:
+                - data
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /inventories/multiple:
+    post:
+      summary: Get Stock for Multiple Products
+      description: Returns stock for all products matching the supplied unique identifiers.
+      tags:
+      - Inventory
+      operationId: GetStockForMultipleProducts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/MultipleProducts'
+            example:
+              data:
+              - id: ebc7652d-bb7d-4359-9a83-78f2998208d9
+              - id: 5334e697-a576-4ac5-8075-ab457dfcaddd
+      responses:
+        '200':
+          description: Success. Multiple products and their stock values are returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Inventory'
+              example:
+                data:
+                - id: ebc7652d-bb7d-4359-9a83-78f2998208d9
+                  type: stock
+                  total: 100
+                  available: 75
+                  allocated: 25
+                - id: 5334e697-a576-4ac5-8075-ab457dfcaddd
+                  type: stock
+                  total: 22
+                  available: 18
+                  allocated: 4
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /inventories/{product_uuid}:
+    parameters:
+    - name: product_uuid
+      in: path
+      description: The unique identifier of the product.
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    post:
+      summary: Create Stock for Product
+      description: Sets the inventory quantity for the specified product. When you take this action, you are choosing to manage the inventory for this product in Commerce.
+      tags:
+      - Inventory
+      operationId: CreateProductStock
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  $ref: '#/components/schemas/InventoryCreate'
+      responses:
+        '201':
+          description: Success. Stock was successfully created for product
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inventory'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      summary: Get Stock for Product
+      description: Gets the stock for the product matching the specified unique identifier.
+      tags:
+      - Inventory
+      operationId: GetProductStock
+      responses:
+        '200':
+          description: Success. Returns the stock for the given product UUID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inventory'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Delete Stock for Product
+      description: Deletes the inventory for the specified product. The product inventory is null and is no longer managed by Commerce. If you want to keep managing inventory but have none of the product in stock, set the inventory to `0` instead of deleting the inventory.
+      tags:
+      - Inventory
+      operationId: DeleteStock
+      responses:
+        '204':
+          description: Success. Removes the stock information about the product
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Update Stock for Product
+      description: Updates the inventory for the specified product.
+      tags:
+      - Inventory
+      operationId: UpdateStock
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  $ref: '#/components/schemas/StockUpdateRequest'
+      responses:
+        '200':
+          description: Success. The stock item was updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/StockResponse'
+                required:
+                - data
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError_2'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  parameters:
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [**page length**](https://elasticpath.dev/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int
+        minimum: 0
+        maximum: 10000
+        example: 10
+    PageLimit:
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the the [**page length**](https://elasticpath.dev/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      name: page[limit]
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int
+        minimum: 0
+        example: 100
+  schemas:
+    Timestamps_2:
+      required:
+      - created_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    StockCreate:
+      type: object
+      required:
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/StockType'
+        attributes:
+          $ref: '#/components/schemas/StockCreateAttributes'
+    Timestamps:
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    MultipleProducts:
+      type: object
+      required:
+      - id
+      properties:
+        type:
+          type: string
+          enum:
+          - stock
+          default: stock
+          example: stock
+        id:
+          description: The unique identifier of the product.
+          type: string
+          format: uuid
+          example: 3c78777a-cf09-4b2d-be91-a73acbf9166f
+    Meta:
+      allOf:
+      - $ref: '#/components/schemas/Timestamps'
+    Inventory:
+      required:
+      - type
+      - id
+      - total
+      - available
+      - allocated
+      properties:
+        id:
+          description: The unique identifier of the product.
+          type: string
+          example: f976dace-450f-4a5d-8877-d119c5a550a1
+        stock_id:
+          description: The Stock ID of a product, or empty if the product ID matches the Stock ID
+          type: string
+          example: ce9049af-bba2-4db2-8118-5df5268184c7
+        type:
+          description: The type represents the object being returned. Always `stock`.
+          type: string
+          example: stock
+          enum:
+          - stock
+          default: stock
+        total:
+          description: The total amount of stock we have.
+          type: integer
+          format: int64
+          example: 100
+        available:
+          description: The amount of stock available for purchase.
+          type: integer
+          format: int64
+          example: 75
+        allocated:
+          description: The amount of paid for stock, also known as **reserved**.
+          type: integer
+          format: int64
+          example: 25
+        meta:
+          $ref: '#/components/schemas/Meta'
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    StockResponseAttributes:
+      type: object
+      required:
+      - available
+      - total
+      - allocated
+      properties:
+        available:
+          type: integer
+          format: int64
+          example: 20
+        allocated:
+          type: integer
+          format: int64
+          example: 10
+        total:
+          type: integer
+          format: int64
+          example: 30
+        locations:
+          $ref: '#/components/schemas/StockLocations'
+    StockMeta:
+      type: object
+      required:
+      - stock_id
+      - timestamps
+      properties:
+        stock_id:
+          $ref: '#/components/schemas/UUID'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps_2'
+    StockUpdateAttributes:
+      properties:
+        locations:
+          $ref: '#/components/schemas/NullableLocations'
+    StockType:
+      type: string
+      enum:
+      - stock
+      default: stock
+      example: stock
+    StockLocations:
+      type: object
+      additionalProperties:
+        type: object
+        required:
+        - available
+        - total
+        - allocated
+        properties:
+          available:
+            type: integer
+            format: int64
+            example: 20
+          allocated:
+            type: integer
+            format: int64
+            example: 10
+          total:
+            type: integer
+            format: int64
+            example: 30
+    StockUpdateRequest:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/StockType'
+        attributes:
+          $ref: '#/components/schemas/StockUpdateAttributes'
+    StockCreateAttributes:
+      type: object
+      properties:
+        available:
+          type: integer
+          format: int64
+          example: 20
+        locations:
+          type: object
+          additionalProperties:
+            type: object
+            required:
+            - available
+            properties:
+              available:
+                type: integer
+                format: int64
+                example: 20
+          example:
+            york_warehouse:
+              available: 10
+            stevenage_warehouse:
+              available: 20
+    InventoryCreate:
+      properties:
+        quantity:
+          description: The amount of inventory available.
+          type: integer
+          example: 5
+    NullableLocations:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/NullableLocation'
+    NullableLocation:
+      type: object
+      required:
+      - available
+      properties:
+        available:
+          type: integer
+          format: int64
+          example: 20
+      nullable: true
+    UUID:
+      type: string
+      description: The unique identifier.
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 00000000-0000-0000-0000-000000000000
+    StockResponse:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/StockType'
+        attributes:
+          $ref: '#/components/schemas/StockResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/StockMeta'
+  responses:
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No stock found
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: Your request was invalid
+    NotFoundError_2:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No location found
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

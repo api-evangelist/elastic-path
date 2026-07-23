@@ -1,0 +1,2469 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Administrator Latest Releases Catalog API API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Administrator Latest Releases Catalog API
+  description: 'Use the Administrator Latest Releases Catalog View API to retrieve product, hierarchy and node information.
+
+
+    :::danger
+
+
+    The Administrator Latest Releases Catalog View API is for Administrator use only. Do not use these endpoints on your customer-facing frontends.
+
+
+    :::
+
+
+    Publishing a catalog creates a release of that catalog that you can use in an organization or in a specific store or other shopper experience. You can retrieve the hierarchies, nodes, and the `live` products associated with a catalog release. You can see which parent nodes a product is associated with. This is useful if want to improve how your shoppers search your store, for example.
+
+
+    Currently, published catalogs are limited to the current release and two releases prior to the current release.
+
+    '
+paths:
+  /catalogs/{catalog_id}/releases/{release_id}/hierarchies:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get all Hierarchies
+      description: "Returns the hierarchies from a published catalog.\n\n:::note\n\nCurrently, published catalogs are limited to the current release and two releases prior to the current release.\n\n:::\n\n### Filtering\n\nThis endpoint supports filtering. For general syntax, see [Filtering](/guides/Getting-Started/filtering).\n\n| Operator | Description | Supported Attributes | Example |\n|:--- |:--- |:--- |:--- |\n| `Eq` | Checks if the values of two operands are equal. If they are, the condition is true. | `name`, `slug`| `filter=eq(name,some-name)` |\n| `In` | Checks if the values are included in the specified string. If they are, the condition is true. | `id` | `filter=in(id,some-id)` | \n\n### Building breadcrumbs in a storefront\n\nIn a catalog, you can use the nodes directly attached to a product to build breadcrumbs in your storefront. This eliminates the need for additional queries to fetch hierarchy or parent node details. Each node contains all the necessary information in `breadcrumbs` metadata, such as its own details and the details of its parent hierarchy/node(s), to construct the complete breadcrumb path without requiring additional queries.\n\nAn example is shown below:\n\n`filter=in(id,c83bfe55-0d87-4302-a86d-ab19e7e323f1,6003d7ef-84f3-49bb-a8bd-4cbfa203dcbb)`\n\n- Specify the node IDs directly attached to the product in the filter expression.\n- You can include as many node IDs as required.\n- It does not matter what order you specify the node IDs. The nodes are returned in the order they were last updated.\n"
+      operationId: getAllHierarchies
+      parameters:
+      - $ref: '#/components/parameters/accept-language'
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/filter-hierarchy'
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: The hierarchies of a catalog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/hierarchy-list-data'
+        default:
+          description: An unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/hierarchies/{hierarchy_id}:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get a Hierarchy
+      description: 'Returns the specified hierarchy from a published catalog.
+
+
+        :::note
+
+
+        Currently, published catalogs are limited to the current release and two releases prior to the current release.
+
+
+        :::
+
+        '
+      operationId: getHierarchy
+      parameters:
+      - $ref: '#/components/parameters/accept-language'
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The catalog hierarchy ID.
+        name: hierarchy_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The catalog hierarchy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/hierarchy-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/hierarchies/{hierarchy_id}/nodes:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get a Hierarchy's Nodes
+      description: "Returns all nodes for the specified hierarchy from a published catalog.\n\n:::note\n\nCurrently, published catalogs are limited to the current release and two releases prior to the current release.\n\n:::\n\nIn the `breadcrumbs` metadata, you can identify the parent nodes that a node is associated with. This is useful if you want to improve how your shoppers search your store, for example. See [Product and Node Associations in Breadcrumb Metadata](/guides/How-To/Catalogs/breadcrumbs).\n\n### Filtering\n\nThis endpoint supports filtering. For general syntax, see [Filtering](/guides/Getting-Started/filtering).\n\n| Operator | Description | Supported Attributes | Example |\n|:--- |:--- |:--- |:--- |\n| `Eq` | Checks if the values of two operands are equal. If they are, the condition is true. | `name`, `slug`| `filter=eq(name,some-name)` |\n| `In` | Checks if the values are included in the specified string. If they are, the condition is true. | `id` | `filter=in(id,some-id)` | \n\n### Building breadcrumbs in a storefront\n\nIn a catalog, you can use the nodes directly attached to a product to build breadcrumbs in your storefront. This eliminates the need for additional queries to fetch hierarchy or parent node details. Each node contains all the necessary information in `breadcrumbs` metadata, such as its own details and the details of its parent hierarchy/node(s), to construct the complete breadcrumb path without requiring additional queries.\n\nAn example is shown below:\n\n`filter=in(id,c83bfe55-0d87-4302-a86d-ab19e7e323f1,6003d7ef-84f3-49bb-a8bd-4cbfa203dcbb)`\n\n- Specify the node IDs directly attached to the product in the filter expression.\n- You can include as many node IDs as required.\n- It does not matter what order you specify the node IDs. The nodes are returned in the order they were last updated.\n"
+      operationId: getHierarchyNodes
+      parameters:
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The catalog hierarchy ID.
+        name: hierarchy_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/filter-node'
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: The child nodes of a catalog hierarchy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/node-list-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/hierarchies/{hierarchy_id}/children:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get a Hierarchy's Children
+      description: "Returns the parent nodes for the specified hierarchy from a published catalog.\n\n![Parent Nodes](/assets/rootnodes.PNG)\n\n:::note\n\nCurrently, published catalogs are limited to the current release and two releases prior to the current release.\n\n:::\n\nIn the `breadcrumbs` metadata, you can identify the parent nodes that a node is associated with. This is useful if you want to improve how your shoppers search your store, for example. See [Product and Node Associations in Breadcrumb Metadata](/guides/How-To/Catalogs/breadcrumbs).\n\n### Filtering\n\nThis endpoint supports filtering. For general syntax, see [Filtering](/guides/Getting-Started/filtering).\n\n| Operator | Description | Supported Attributes | Example |\n|:--- |:--- |:--- |:--- |\n| `Eq` | Checks if the values of two operands are equal. If they are, the condition is true. | `name`, `slug`| `filter=eq(name,some-name)` |\n| `In` | Checks if the values are included in the specified string. If they are, the condition is true. | `id` | `filter=in(id,some-id)` | \n\n### Building breadcrumbs in a storefront\n\nIn a catalog, you can use the nodes directly attached to a product to build breadcrumbs in your storefront. This eliminates the need for additional queries to fetch hierarchy or parent node details. Each node contains all the necessary information in `breadcrumbs` metadata, such as its own details and the details of its parent hierarchy/node(s), to construct the complete breadcrumb path without requiring additional queries.\n\nAn example is shown below:\n\n`filter=in(id,c83bfe55-0d87-4302-a86d-ab19e7e323f1,6003d7ef-84f3-49bb-a8bd-4cbfa203dcbb)`\n\n- Specify the node IDs directly attached to the product in the filter expression.\n- You can include as many node IDs as required.\n- It does not matter what order you specify the node IDs. The nodes are returned in the order they were last updated.\n"
+      operationId: getHierarchyChildNodes
+      parameters:
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The catalog hierarchy ID.
+        name: hierarchy_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/filter-node'
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: The child nodes of a catalog hierarchy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/node-list-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/nodes:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get all Nodes
+      description: 'Returns the child nodes from a published catalog.
+
+
+        :::note
+
+
+        Currently, published catalogs are limited to the current release and two releases prior to the current release.
+
+
+        :::
+
+
+        You can see the parent nodes a node is associated with in the `breadcrumbs` metadata for each node. This is useful if you want to improve how your shoppers search your store, for example. See [Product and Node Associations in Breadcrumb Metadata](/guides/How-To/Catalogs/breadcrumbs).
+
+
+        In a catalog, you can use a filter to return a list of nodes in a hierarchy structure that a product belongs to. You can use this to build breadcrumbs in your storefront. See [Building breadcrumbs in a storefront](#building-breadcrumbs-in-a-storefront).
+
+
+        The response lists the products associated with the nodes. If products are [curated](/guides/How-To/Products/curating-products), they are displayed in `curated_products`. Product curation allows you to promote specific products within each of your hierarchies, enabling you to create unique product collections in your storefront.
+
+
+        - If you don''t provide any `curated_products`, products are listed by their `updated_at` time in descending order, with the most recently updated product first.
+
+        - If you configure `curated_products` for only a few products, the curated products are displayed first and the other products are displayed in the order of `updated_at` time.
+
+        - You can only curate 20 products or less. You cannot have more than 20 curated products.
+
+        - If a curated product is removed from a node, the product is also removed from the `curated_products` list.
+
+        - A product that is curated has the `"curated_product": true` attribute displayed.
+
+
+        ### Filtering
+
+
+        This endpoint supports filtering. For general syntax, see [Filtering](/guides/Getting-Started/filtering). The following operators and attributes are available.
+
+
+        | Operator  | Description | Attributes | Example |
+
+        | --- | --- | --- | --- |
+
+        | `Eq` | Checks if the values of two operands are equal. If they are, the condition is true. | `name`, `slug` | `filter=eq(name,some-name)` |
+
+        | `in`      | Checks if the values are included in the specified string. If they are, the condition is true.
+
+        | `Id` |  `filter=in(id,9214719b-17fe-4ea7-896c-d61e60fc0d05,e104d541-2c52-47fa-8a9a-c4382480d97c,65daaf68-ff2e-4632-8944-370de835967d)` |
+
+
+        ### Building breadcrumbs in a storefront
+
+
+        In a catalog, you can use the nodes directly attached to a product to build breadcrumbs in your storefront. This eliminates the need for additional queries to fetch hierarchy or parent node details. Each node contains all the necessary information in `breadcrumbs` metadata, such as its own details and the details of its parent hierarchy/node(s), to construct the complete breadcrumb path without requiring additional queries.
+
+
+        An example is shown below:
+
+
+        `filter=in(id,c83bfe55-0d87-4302-a86d-ab19e7e323f1,6003d7ef-84f3-49bb-a8bd-4cbfa203dcbb)`
+
+
+        - Specify the node IDs directly attached to the product in the filter expression.
+
+        - You can include as many node IDs as required.
+
+        - It does not matter what order you specify the node IDs. The nodes are returned in the order they were last updated.
+
+        '
+      operationId: getAllNodes
+      parameters:
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/filter-node'
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: The nodes of a catalog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/node-list-data'
+        default:
+          description: An unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/nodes/{node_id}:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get a Node
+      description: 'Returns a node from a published catalog.
+
+
+        :::note
+
+
+        Currently, published catalogs are limited to the current release and two releases prior to the current release.
+
+
+        :::
+
+
+        You can see the parent nodes a node is associated with in the `breadcrumbs` metadata for each node. This is useful if you want to improve how your shoppers search your store, for example. See [Product and Node Associations in Breadcrumb Metadata](/guides/How-To/Catalogs/breadcrumbs).
+
+
+        The response lists the products associated with the nodes. If products are [curated](/guides/How-To/Products/curating-products), they are displayed in `curated_products`. Product curation allows you to promote specific products within each of your hierarchies, enabling you to create unique product collections in your storefront.
+
+
+        - If you don''t provide any `curated_products`, products are listed by their `updated_at` time in descending order, with the most recently updated product first.
+
+        - If you configure `curated_products` for only a few products, the curated products are displayed first and the other products are displayed in the order of `updated_at` time.
+
+        - You can only curate 20 products or less. You cannot have more than 20 curated products.
+
+        - If a curated product is removed from a node, the product is also removed from the `curated_products` list.
+
+        - A product that is curated has the `"curated_product": true` attribute displayed.
+
+        '
+      operationId: getNode
+      parameters:
+      - $ref: '#/components/parameters/accept-language'
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The catalog node ID.
+        name: node_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The catalog node.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/node-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/nodes/{node_id}/relationships/children:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get a Node's Children
+      description: 'Returns the child nodes for a node from a published catalog.
+
+
+        :::note
+
+
+        Currently, published catalogs are limited to the current release and two releases prior to the current release.
+
+
+        :::
+
+
+        You can see the parent nodes a node is associated with in the `breadcrumbs` metadata for each node. This is useful if you want to improve how your shoppers search your store, for example. See [Product and Node Associations in Breadcrumb Metadata](/guides/How-To/Catalogs/breadcrumbs).
+
+
+        In a catalog, you can use a filter to return a list of nodes in a hierarchy structure that a product belongs to. You can use this to build breadcrumbs in your storefront. For more information, see [Building breadcrumbs in a storefront](#building-breadcrumbs-in-a-storefront).
+
+
+        The response lists the products associated with the nodes. If products are [curated](/guides/How-To/Products/curating-products), they are displayed in `curated_products`. Product curation allows you to promote specific products within each of your hierarchies, enabling you to create unique product collections in your storefront.
+
+
+        - If you don''t provide any `curated_products`, products are listed by their `updated_at` time in descending order, with the most recently updated product first.
+
+        - If you configure `curated_products` for only a few products, the curated products are displayed first and the other products are displayed in the order of `updated_at` time.
+
+        - You can only curate 20 products or less. You cannot have more than 20 curated products.
+
+        - If a curated product is removed from a node, the product is also removed from the `curated_products` list.
+
+        - A product that is curated has the `"curated_product": true` attribute displayed.
+
+
+        ### Filtering
+
+
+        This endpoint supports filtering. For general syntax, see [Filtering](/guides/Getting-Started/filtering). The following operators and attributes are available.
+
+
+        | Operator  | Description | Attributes | Example |
+
+        | --- | --- | --- | --- |
+
+        | `Eq` | Checks if the values of two operands are equal. If they are, the condition is true. | `name`, `slug` | `filter=eq(name,some-name)` |
+
+        | `in`      | Checks if the values are included in the specified string. If they are, the condition is true.
+
+        | `Id` |  `filter=in(id,9214719b-17fe-4ea7-896c-d61e60fc0d05,e104d541-2c52-47fa-8a9a-c4382480d97c,65daaf68-ff2e-4632-8944-370de835967d)` |
+
+
+        ### Building breadcrumbs in a storefront
+
+
+        In a catalog, you can use the nodes directly attached to a product to build breadcrumbs in your storefront. This eliminates the need for additional queries to fetch hierarchy or parent node details. Each node contains all the necessary information in `breadcrumbs` metadata, such as its own details and the details of its parent hierarchy/node(s), to construct the complete breadcrumb path without requiring additional queries.
+
+
+        An example is shown below:
+
+
+        `filter=in(id,c83bfe55-0d87-4302-a86d-ab19e7e323f1,6003d7ef-84f3-49bb-a8bd-4cbfa203dcbb)`
+
+
+        - Specify the node IDs directly attached to the product in the filter expression.
+
+        - You can include as many node IDs as required.
+
+        - It does not matter what order you specify the node IDs. The nodes are returned in the order they were last updated.
+
+        '
+      operationId: getChildNodes
+      parameters:
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The catalog node ID.
+        name: node_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/filter-node'
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: The child nodes of a catalog node.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/node-list-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/products:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get all Products
+      description: "Returns the products from a published catalog. Only the products in a `live` status are retrieved. Currently, published catalogs are limited to the current release and two releases prior to the current release.\n\nYou can see the parent nodes a product is associated with in the `bread_crumbs` and `bread_crumb_nodes` metadata for each product. This is useful if you want to improve how your shoppers search your store, for example. See [Product and Node Associations in Breadcrumb Metadata](/guides/How-To/Catalogs/breadcrumbs).\n\nThe `variations` object lists the variation IDs and variation option IDs and their corresponding product IDs that are generated when the variation and variation options are built with a product. The `variations` object can then be added to your catalogs. By default, variations and variation options are sorted randomly. You can use the `sort_order` attribute to sort the order of your variation and variation options in `variations`. Once a parent product is published in a catalog, the [Get a List of products in a catalog release](/docs/api/pxm/catalog/get-all-products) response displays the sorted variations and variation options. Variations and variation options are displayed in descending order according to their `sort_order` values.\n\n### Including Resources\n\nUsing the `include` parameter, you can retrieve top-level resources, such as, files or main image, bundle component products and product attributes, such as SKU or slug. \n\n| Parameter           | Required | Description                                                                                                                                                                                                           |\n|  :---------------------|:---------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n| `component_products` | Optional | The  component product data and key attribute data, such as SKU or slug, to return for component products in a product bundle.  |\n| `main_image`         | Optional | The main images associated with a product.                                                                                                           |\n| `files`              | Optional | Any files associated with a product. \n\nSee [**Including Resources**](/guides/Getting-Started/includes).\n\n### Filtering\n\nThis endpoint supports filtering. For general filtering syntax, see [Filtering](/guides/Getting-Started/filtering). The following operators and attributes are available when filtering on this endpoint.\n\n| Operator | Description                                                                                     | Supported Attributes                                     | Example |\n|:---|:------------------------------------------------------------------------------------------------|:---------------------------------------------------------|:--- |\n| `Eq` | Checks if the values of two operands are equal. If they are, the condition is true. For `product_types`, you can only specify one product type. For example, `filter=eq(product_types,child)`.            | `name`, `sku`, `slug`, `manufacturer_part_num`, `upc_ean`, `product_types`, `tags` | `filter=eq(name,some-name)` |\n| `In` | Checks if the values are included in the specified string. If they are, the condition is true. For `product_types`, you can specify more than one product type. For example, `filter=in(product_types,child,bundle)`. | `id`, `name`, `sku`, `slug`, `manufacturer_part_num`, `upc_ean`, `product_types`, `tags`          | `filter=in(id,some-id)` |\n\n### Building breadcrumbs in a storefront\n\nIn a catalog, you can use the nodes directly attached to a product to build breadcrumbs in your storefront. This eliminates the need for additional queries to fetch hierarchy or parent node details. Each node contains all the necessary information in `breadcrumbs` metadata, such as its own details and the details of its parent hierarchy/node(s), to construct the complete breadcrumb path without requiring additional queries.\n\nAn example is shown below:\n\n`filter=in(id,c83bfe55-0d87-4302-a86d-ab19e7e323f1,6003d7ef-84f3-49bb-a8bd-4cbfa203dcbb)`\n\n- Specify the node IDs directly attached to the product in the filter expression.\n- You can include as many node IDs as required.\n- It does not matter what order you specify the node IDs. The nodes are returned in the order they were last updated.\n"
+      operationId: getAllProducts
+      parameters:
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/include'
+      - $ref: '#/components/parameters/filter-product'
+      - $ref: '#/components/parameters/pricebook-ids-for-price-segmentation-preview'
+      - $ref: '#/components/parameters/pricebook-ids-of-available-prices-to-show'
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: The products of a catalog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/product-list-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/products/{product_id}:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get a Product
+      description: "Returns a product from a published catalog. The product must be in `live` status. Currently, published catalogs are limited to the current release and two releases prior to the current release.\n\n### Product and Node Associations in Breadcrumb Metadata\n\nYou can see the parent nodes a product is associated with in the `bread_crumbs` and `bread_crumb_nodes` metadata for each product. This is useful if you want to improve how your shoppers search your store, for example. See [Product and Node Associations in Breadcrumb Metadata](/guides/How-To/Catalogs/breadcrumbs).\n\n### Product Variations\n\nThe `variations` object lists the variation IDs and variation option IDs and their corresponding product IDs that are generated when the variation and variation options are built with a product. The `variations` object can then be added to your catalogs. By default, variations and variation options are sorted randomly. You can use the `sort_order`attribute to sort the order of your variation and variation options in `variations`. Once a parent product is published in a catalog, the get a product in a catalog release response displays the sorted variations and variation options. Variations and variation options are displayed in descending order according to their `sort_order` values.\n\n### Including Resources\n\nUsing the `include` parameter, you can retrieve top-level resources, such as, files or main image, bundle component products and product attributes, such as SKU or slug. \n\n| Parameter          | Required | Description                                                                                                                                                                                                           |\n|  :---------------------|:---------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n| `component_products` | Optional | The  component product data and key attribute data, such as SKU or slug, to return for component products in a product bundle.  |\n| `main_image`         | Optional | The main images associated with a product.                                                                                                           |\n| `files`              | Optional | Any files associated with a product. \n\nSee [**Including Resources**](/guides/Getting-Started/includes).\n"
+      operationId: getProduct
+      parameters:
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/include'
+      - $ref: '#/components/parameters/pricebook-ids-for-price-segmentation-preview'
+      - $ref: '#/components/parameters/pricebook-ids-of-available-prices-to-show'
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The product ID.
+        name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The product of a catalog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/product-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/products/{product_id}/relationships/{custom_relationship_slug}/products:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get all Related Products of a Product
+      description: 'Returns related products of the provided product ID from a published catalog.
+
+        '
+      operationId: getAllRelatedProducts
+      parameters:
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/filter-product'
+      - $ref: '#/components/parameters/pricebook-ids-for-price-segmentation-preview'
+      - $ref: '#/components/parameters/pricebook-ids-of-available-prices-to-show'
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The product ID.
+        name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The custom relationship slug.
+        name: custom_relationship_slug
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: The related products of a catalog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/product-list-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/products/{product_id}/relationships/component_products:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get a Bundle's Component Products
+      description: "With Product Experience Manager, you can [create](/docs/api/pxm/products/create-product) and manage bundles. A bundle is a purchasable product, comprising of one or more products that you want to sell together. \n\nYou can create multiple components within a bundle. Each component must have at least one or more options. Each option is a product and a quantity.\n\nThis endpoint returns a list of component product IDs for the specified bundle.\n\n### Including Resources\n\nUsing the `include` parameter, you can retrieve top-level resources, such as, files or main image, bundle component products and product attributes, such as SKU or slug. \n\n| Parameter | Required | Description                                                                                                                                                                                                    |\n|  :---------------------|:---------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n| `component_products` | Optional | The  component product data and key attribute data, such as SKU or slug, to return for component products in a product bundle.  |\n| `main_image`         | Optional | The main images associated with a product. |\n| `files`              | Optional | Any files associated with a product. |\n\nSee [**Including Resources**](/guides/Getting-Started/includes).\n"
+      operationId: getComponentProductIDs
+      parameters:
+      - $ref: '#/components/parameters/include'
+      - $ref: '#/components/parameters/pricebook-ids-for-price-segmentation-preview'
+      - $ref: '#/components/parameters/pricebook-ids-of-available-prices-to-show'
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The product ID.
+        name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: The list of component product IDs of a specific bundle product from a catalog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/product-reference-list-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/products/{product_id}/relationships/children:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get a Parent Product's Child Products
+      description: "For a specified product and catalog release, retrieves a list of child products from a parent product. Any product other than a base product results in a `422 Unprocessable Entity` response. Only the products in a `live` status are retrieved.\n\nIf you have multiple catalog rules defined, the rule that best matches the shoppers context is used to determine which catalog is retrieved. If no catalog rules are configured, the first catalog found is returned. For information about how rules are matched, see [Resolving Catalog Rules](/docs/api/pxm/catalog/rules#resolving-catalog-rules).\n\nYou can see the parent nodes a product is associated within the breadcrumbs metadata for each product. For example, this is useful if you want to improve how your shoppers search your store. See [Product and Node Associations in Breadcrumb Metadata](/guides/How-To/Catalogs/breadcrumbs).\n\n### Filtering\n\nThis endpoint supports filtering. For general filtering syntax, see [Filtering](/guides/Getting-Started/filtering). The following operators and attributes are available when filtering on this endpoint.\n\n| Operator | Description                                                                                     | Supported Attributes                                     | Example |\n|:---|:------------------------------------------------------------------------------------------------|:---------------------------------------------------------|:--- |\n| `Eq` | Checks if the values of two operands are equal. If they are, the condition is true. For `product_types`, you can only specify one product type. For example, `filter=eq(product_types,child)`.            | `name`, `sku`, `slug`, `manufacturer_part_num`, `upc_ean`, `product_types`, `tags` | `filter=eq(name,some-name)` |\n| `In` | Checks if the values are included in the specified string. If they are, the condition is true. For `product_types`, you can specify more than one product type. For example, `filter=in(product_types,child,bundle)`. | `id`, `name`, `sku`, `slug`, `manufacturer_part_num`, `upc_ean`, `product_types`, `tags`          | `filter=in(id,some-id)` |\n\n### Building breadcrumbs in a storefront\n\nIn a catalog, you can use the nodes directly attached to a product to build breadcrumbs in your storefront. This eliminates the need for additional queries to fetch hierarchy or parent node details. Each node contains all the necessary information in `breadcrumbs` metadata, such as its own details and the details of its parent hierarchy/node(s), to construct the complete breadcrumb path without requiring additional queries.\n\nAn example is shown below:\n\n`filter=in(id,c83bfe55-0d87-4302-a86d-ab19e7e323f1,6003d7ef-84f3-49bb-a8bd-4cbfa203dcbb)`\n\n- Specify the node IDs directly attached to the product in the filter expression.\n- You can include as many node IDs as required.\n- It does not matter what order you specify the node IDs. The nodes are returned in the order they were last updated.\n\n### Including Resources\n\nUsing the `include` parameter, you can retrieve top-level resources, such as, files or main image, bundle component products and product attributes, such as SKU or slug. \n\n| Parameter | Required | Description                                                                                                                                                                                                    |\n|  :---------------------|:---------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n| `component_products` | Optional | The  component product data and key attribute data, such as SKU or slug, to return for component products in a product bundle.  |\n| `main_image`         | Optional | The main images associated with a product. |\n| `files`              | Optional | Any files associated with a product. |\n\nSee [**Including Resources**](/guides/Getting-Started/includes).\n"
+      operationId: getChildProducts
+      parameters:
+      - $ref: '#/components/parameters/include'
+      - $ref: '#/components/parameters/pricebook-ids-for-price-segmentation-preview'
+      - $ref: '#/components/parameters/pricebook-ids-of-available-prices-to-show'
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The product ID.
+        name: product_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/filter-product'
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: The list of child products of a specific base product from a catalog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/product-list-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/hierarchies/{hierarchy_id}/products:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get a Hierarchy's Products
+      description: "Returns the products associated with the specified hierarchy in the catalog. The products must be in the `live` status.\n\nIf you have multiple catalog rules defined, the rule that best matches the shoppers context is used to determine which catalog is retrieved. See [Resolving catalog rules](/docs/api/pxm/catalog/rules#resolving-catalog-rules).\n\nYou can see the parent nodes a product is associated with in the `bread_crumbs` and `bread_crumb_nodes` metadata for each product. This is useful if you want to improve how your shoppers search your store, for example. See [Product and Node Associations in Breadcrumb Metadata](/guides/How-To/Catalogs/breadcrumbs).\n\nThe `variations` object lists the variation IDs and variation option IDs and their corresponding product IDs that are generated when the variation and variation options are built with a product. The variations object can then be added to your catalogs. By default, variations and variation options are sorted randomly. You can use the `sort_order` attribute to sort the order of your variation and variation options in variations. Once a parent product is published in a catalog, the [Get a List of products in a catalog](/docs/api/pxm/catalog/get-all-products) release response displays the sorted variations and variation options. Variations and variation options are displayed in descending order according to their `sort_order` values.\n\n### Filtering\n\nThis endpoint supports filtering. For general filtering syntax, see [Filtering](/guides/Getting-Started/filtering). The following operators and attributes are available when filtering on this endpoint.\n\n| Operator | Description                                                                                     | Supported Attributes                                     | Example |\n|:---|:------------------------------------------------------------------------------------------------|:---------------------------------------------------------|:--- |\n| `Eq` | Checks if the values of two operands are equal. If they are, the condition is true. For `product_types`, you can only specify one product type. For example, `filter=eq(product_types,child)`.          | `name`, `sku`, `slug`, `manufacturer_part_num`, `upc_ean`, `product_types`, `tags` | `filter=eq(name,some-name)` |\n| `In` | Checks if the values are included in the specified string. If they are, the condition is true. For `product_types`, you can specify more than one product type. For example, `filter=in(product_types,child,bundle)`. | `id`, `name`, `sku`, `slug`, `manufacturer_part_num`, `upc_ean`, `product_types`, `tags`          | `filter=in(id,some-id)` |\n\n### Building breadcrumbs in a storefront\n\nIn a catalog, you can use the nodes directly attached to a product to build breadcrumbs in your storefront. This eliminates the need for additional queries to fetch hierarchy or parent node details. Each node contains all the necessary information in `breadcrumbs` metadata, such as its own details and the details of its parent hierarchy/node(s), to construct the complete breadcrumb path without requiring additional queries.\n\nAn example is shown below:\n\n`filter=in(id,c83bfe55-0d87-4302-a86d-ab19e7e323f1,6003d7ef-84f3-49bb-a8bd-4cbfa203dcbb)`\n\n- Specify the node IDs directly attached to the product in the filter expression.\n- You can include as many node IDs as required.\n- It does not matter what order you specify the node IDs. The nodes are returned in the order they were last updated.\n\n### Including Resources\n\nUsing the `include` parameter, you can retrieve top-level resources, such as, files or main image, bundle component products and product attributes, such as SKU or slug. \n\n| Parameter | Required | Description                                                                                                                                                                                                    |\n|  :---------------------|:---------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n| `component_products` | Optional | The  component product data and key attribute data, such as SKU or slug, to return for component products in a product bundle.  |\n| `main_image`         | Optional | The main images associated with a product. |\n| `files`              | Optional | Any files associated with a product. |\n\nSee [**Including Resources**](/guides/Getting-Started/includes).\n"
+      operationId: getProductsForHierarchy
+      parameters:
+      - $ref: '#/components/parameters/include'
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/pricebook-ids-for-price-segmentation-preview'
+      - $ref: '#/components/parameters/pricebook-ids-of-available-prices-to-show'
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The catalog hierarchy ID.
+        name: hierarchy_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/filter-product'
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: The products of a catalog hierarchy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/product-list-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}/nodes/{node_id}/relationships/products:
+    get:
+      tags:
+      - Administrator Latest Releases Catalog API
+      summary: Get a Node's Products
+      description: "Returns the products associated with the specified hierarchy node in the catalog. The products must be in the `live` status. If the products have been curated, then the products are returned in the order specified in the `curated_products` attribute. A product that is curated has the `\"curated_product\": true` attribute displayed.\n\n:::note\n\nCurrently, published catalogs are limited to the current release and two releases prior to the current release.\n\n:::\n\nIf you have multiple catalog rules defined, the rule that best matches the shoppers context is used to determine which catalog is retrieved. See [Resolving catalog rules](/docs/api/pxm/catalog/rules#resolving-catalog-rules).\n\nYou can see the parent nodes a product is associated with in the `bread_crumbs` and `bread_crumb_nodes` metadata for each product. This is useful if you want to improve how your shoppers search your store, for example. See [Product and Node Associations in Breadcrumb Metadata](/guides/How-To/Catalogs/breadcrumbs).\n\nThe `variations` object lists the variation IDs and variation option IDs and their corresponding product IDs that are generated when the variation and variation options are built with a product. The `variations` object can then be added to your catalogs. By default, variations and variation options are sorted randomly. You can use the `sort_order` attribute to sort the order of your variation and variation options in `variations`. Once a parent product is published in a catalog, the [Get a List of products in a catalog release](/docs/api/pxm/catalog/get-all-products) response displays the sorted variations and variation options. Variations and variation options are displayed in descending order according to their `sort_order` values.\n\n### Filtering\n\nThis endpoint supports filtering. For general filtering syntax, see [Filtering](/guides/Getting-Started/filtering). The following operators and attributes are available when filtering on this endpoint.\n\n| Operator | Description                                                                                     | Supported Attributes                                     | Example |\n|:---|:------------------------------------------------------------------------------------------------|:---------------------------------------------------------|:--- |\n| `Eq` | Checks if the values of two operands are equal. If they are, the condition is true. For `product_types` and `tags`, you can only specify one. For example, `filter=eq(product_types,child)`.          | `name`, `sku`, `slug`, `manufacturer_part_num`, `upc_ean`, `product_types`, `tags` | `filter=eq(name,some-name)` |\n| `In` | Checks if the values are included in the specified string. If they are, the condition is true. For `product_types` and `tags`, you can specify more than one. For example, `filter=in(product_types,child,bundle)`. | `id`, `name`, `sku`, `slug`, `manufacturer_part_num`, `upc_ean`, `product_types`, `tags`          | `filter=in(id,some-id)` |\n\n### Building breadcrumbs in a storefront\n\nIn a catalog, you can use the nodes directly attached to a product to build breadcrumbs in your storefront. This eliminates the need for additional queries to fetch hierarchy or parent node details. Each node contains all the necessary information in `breadcrumbs` metadata, such as its own details and the details of its parent hierarchy/node(s), to construct the complete breadcrumb path without requiring additional queries.\n\nAn example is shown below:\n\n`filter=in(id,c83bfe55-0d87-4302-a86d-ab19e7e323f1,6003d7ef-84f3-49bb-a8bd-4cbfa203dcbb)`\n\n- Specify the node IDs directly attached to the product in the filter expression.\n- You can include as many node IDs as required.\n- It does not matter what order you specify the node IDs. The nodes are returned in the order they were last updated.\n\n### Including Resources\n\nUsing the `include` parameter, you can retrieve top-level resources, such as, files or main image, bundle component products and product attributes, such as SKU or slug. \n\n| Parameter | Required | Description                                                                                                                                                                                                    |\n|  :---------------------|:---------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n| `component_products` | Optional | The  component product data and key attribute data, such as SKU or slug, to return for component products in a product bundle.  |\n| `main_image`         | Optional | The main images associated with a product. |\n| `files`              | Optional | Any files associated with a product. |\n\nSee [**Including Resources**](/guides/Getting-Started/includes).\n"
+      operationId: getProductsForNode
+      parameters:
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/filter-product'
+      - $ref: '#/components/parameters/include'
+      - $ref: '#/components/parameters/pricebook-ids-for-price-segmentation-preview'
+      - $ref: '#/components/parameters/pricebook-ids-of-available-prices-to-show'
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The catalog node ID.
+        name: node_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: The products of a catalog node.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/product-list-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+components:
+  schemas:
+    file-reference:
+      description: In Product Experience Manager, products can have associated rich media assets, such as product images or a file containing additional product details.
+      type: object
+      properties:
+        type:
+          description: This represents the type of object being returned. Always `file`.
+          type: string
+          example: file
+          enum:
+          - file
+        id:
+          description: A unique identifier for a file.
+          type: string
+          format: uuid
+        created_at:
+          description: The date and time a file is created.
+          type: string
+          format: date-time
+          example: '1970-01-01T00:00:00.000'
+          x-go-name: CreatedAt
+      x-go-name: FileRelationship
+    hierarchy-meta:
+      type: object
+      title: HierarchyMeta
+      description: A hierarchy's metadata.
+      properties:
+        language:
+          description: Product Experience Manager supports localization of hierarchies. If your store supports multiple languages, you can localize hierarchy names and descriptions. This is [**three-letter language code**](https://www.iso.org/iso-639-language-code) that represents the name of the language you have used.
+          type: string
+          example: en-GB
+        breadcrumbs:
+          description: Hierarchy Breadcrumbs
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                description: The unique identifier of a hierarchy.
+                type: string
+                example: e871df93-c769-49a9-9394-a6fd555b8e8a
+                x-omitempty: true
+              name:
+                description: The name of the hierarchy.
+                type: string
+                example: Formal dresswear
+                x-omitempty: true
+              slug:
+                description: A slug for the hierarchy.
+                type: string
+                example: formal
+                x-omitempty: true
+            x-go-name: HierarchyBreadcrumb
+          x-omitempty: true
+        has_children:
+          description: Indicates whether a node has child nodes. `true` if the node has at least one child, `false` if it has none.
+          type: boolean
+          example: true
+          x-go-name: HasChildren
+          x-omitempty: true
+          nullable: true
+      x-go-name: HierarchyMeta
+      x-omitempty: true
+    self-link:
+      description: Links are used to allow you to move between requests.
+      type: object
+      properties:
+        self:
+          description: Single entities use a self parameter with a link to that specific resource.
+          type: string
+      required:
+      - self
+    custom-relationship:
+      description: A product can have custom relationships added that link to other products. These can be used for Parent/Child relationships as well as products that you want to Cross Sell/Promote.
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/product-references'
+        links:
+          $ref: '#/components/schemas/custom-relationship-links'
+      x-omitempty: true
+    page-meta:
+      type: object
+      description: Contains the results for the entire collection.
+      title: PageMeta
+      properties:
+        results:
+          description: Total number of results for the entire collection.
+          type: object
+          properties:
+            total:
+              description: Total number of results for the entire collection.
+              type: integer
+              format: int64
+        page:
+          type: object
+          properties:
+            limit:
+              description: The maximum number of records for all pages.
+              type: integer
+              format: int64
+            offset:
+              description: The current offset by number of pages.
+              type: integer
+              format: int64
+            current:
+              description: The current number of pages.
+              type: integer
+              format: int64
+            total:
+              description: The total number of records for the entire collection.
+              type: integer
+              format: int64
+    files-relationship:
+      description: In Product Experience Manager, products can have associated rich media assets, such as product images or a file containing additional product details.
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/file-reference'
+      x-omitempty: true
+    included-response:
+      type: object
+      description: Included is an array of resources that are included in the response.
+      properties:
+        main_images:
+          description: The main images associated with a product.
+          type: array
+          items:
+            $ref: '#/components/schemas/elastic-path-file'
+        component_products:
+          description: Returns a list of component products in a product bundle. If a bundle has no component products (in other words, is not a product bundle), an empty array is returned.
+          type: array
+          items:
+            $ref: '#/components/schemas/product'
+        files:
+          description: The files associated with a product.
+          type: array
+          items:
+            $ref: '#/components/schemas/elastic-path-file'
+    bundle-configuration:
+      type: object
+      title: BundleConfiguration
+      description: A bundle is a purchasable product, comprising of one or more products that you want to sell together. You can create multiple components within a bundle. Each component must have at least one or more options. Each option is a product and a quantity.
+      properties:
+        selected_options:
+          type: object
+          description: The product options included in a component. This can be the ID of another bundle.
+          example:
+            games:
+              p292e1db-c919-4d2f-984a-c2ddc79df024: 2
+            consoles:
+              759ce0d7-e248-4f57-8ee1-6fd81a1b3c0a: 1
+          additionalProperties:
+            description: The unique identifier of the component, for example, `games`.
+            type: object
+            example: 759ce0d7-e248-4f57-8ee1-6fd81a1b3c0a
+            additionalProperties:
+              description: The number of this product option that a shopper must purchase.
+              type: integer
+              format: int64
+              example: 1
+      required:
+      - selected_options
+      x-go-name: ProductBundleConfiguration
+    error-response:
+      type: object
+      title: ErrorResponse
+      description: ErrorResponse is a json-api style Error response.
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/error'
+          x-go-name: Errors
+      x-go-name: ErrorResponse
+    product:
+      type: object
+      title: Product
+      description: A product in a catalog with the following attributes.
+      properties:
+        attributes:
+          $ref: '#/components/schemas/product-attributes'
+        id:
+          description: A unique identifier for a product.
+          type: string
+          example: 8fccaa19-dba9-4621-8d11-31a222a68c7c
+          x-go-name: ID
+        relationships:
+          $ref: '#/components/schemas/product-relationships'
+        type:
+          description: This represents the type of object being returned. Always `product`.
+          type: string
+          example: product
+          x-go-name: Type
+        meta:
+          $ref: '#/components/schemas/product-meta'
+      x-go-name: Product
+    component-product-option:
+      type: object
+      title: Component Product Option
+      description: The product options included in a component. This can be the ID of another bundle.
+      properties:
+        id:
+          description: A unique identifier of the product you want to add to a component.
+          type: string
+          format: uuid
+          x-go-name: ID
+        type:
+          description: This represents the type of object being returned. Always `product`.
+          type: string
+          x-go-name: Type
+          default: product
+          example: product
+          enum:
+          - product
+        quantity:
+          description: The number of this product option that a shopper must purchase.
+          type: integer
+          example: 2
+          x-go-name: Quantity
+        min:
+          description: The minimum quantity of this product option that a shopper can select.
+          type: integer
+          x-go-name: Min
+          nullable: true
+        max:
+          description: The maximum quantity of this product option that a shopper can select.
+          type: integer
+          x-go-name: Max
+          nullable: true
+        sort_order:
+          description: The sort order of the options. The `create a bundle` and `update a bundle` endpoints do not sort the options. You can use the `sort_order` attribute when programming your storefront to display the options in the order that you want.
+          type: integer
+          example: 15
+          x-go-name: Sort Order
+          nullable: true
+        default:
+          description: The boolean indicates whether the current option is a default option for the component.
+          type: boolean
+          example: true
+          default: false
+          x-go-name: Default
+          nullable: true
+        product_should_be_substituted_with_child:
+          description: Indicates that the parent product added to a bundle is not directly purchasable. When set to true, the child products of the parent product should be displayed as options for selection in the bundle.
+          type: boolean
+          example: true
+          x-go-name: Is Parent Product
+          nullable: true
+        excluded_children:
+          description: Merchants can exclude specific child products from a parent product when configuring a bundle.
+          type: array
+          items:
+            type: string
+          example:
+          - 2d491d1c-729d-43d7-a2d2-e0a56edab43d
+          x-go-name: Excluded Children
+          x-omitempty: true
+    extension:
+      type: object
+      title: Extension
+      description: The name of the product template.
+      additionalProperties:
+        description: The product attributes available for this template.
+        type: object
+    display-price:
+      type: object
+      description: A price formatted for display.
+      x-omitempty: true
+      properties:
+        with_tax:
+          $ref: '#/components/schemas/formatted-price'
+        without_tax:
+          $ref: '#/components/schemas/formatted-price'
+    product-list-data:
+      type: object
+      title: ProductListData
+      description: Container for a list of products.
+      properties:
+        meta:
+          $ref: '#/components/schemas/page-meta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/product'
+          x-go-name: Data
+        included:
+          $ref: '#/components/schemas/included-response'
+        links:
+          $ref: '#/components/schemas/links'
+    components:
+      type: object
+      title: Components
+      description: A bundle is a purchasable product, comprising of one or more products that you want to sell together. You can create multiple components within a bundle. Each component must have at least one or more options. Each option is a product and a quantity.
+      additionalProperties:
+        $ref: '#/components/schemas/component-product'
+    extensions:
+      type: object
+      title: Extensions
+      description: With extension templates, you can attach a specific set of custom fields to your products in Product Experience Manager. For example, a **Book** template might contain the attributes, such as **ISBN**, **Author**, **Number of pages**, **Year Published**, or **Condition (New/Used)**.
+      additionalProperties:
+        $ref: '#/components/schemas/extension'
+    formatted-price:
+      type: object
+      title: FormattedPrice
+      x-omitempty: true
+      description: A price formatted for display.
+      properties:
+        amount:
+          description: The price in the lowest denomination for the specified currency. This is a product's list price.
+          type: integer
+          x-omitempty: false
+          example: '47500'
+        currency:
+          description: The three-letter ISO code of the currencies associated with this price and the amount.
+          type: string
+          example: USD
+        formatted:
+          description: The format of the price for display.
+          type: string
+          example: $475.00
+        float_price:
+          description: The price in displayable float format
+          type: number
+          x-omitempty: false
+          example: 475
+    node:
+      type: object
+      title: Node
+      description: A category node in a catalog. Nodes can have child nodes, as well as a list of attached products.
+      properties:
+        attributes:
+          $ref: '#/components/schemas/node-attributes'
+        id:
+          description: The unique identifier of a node.
+          type: string
+          example: e871df93-c769-49a9-9394-a6fd555b8e8a
+          x-go-name: ID
+        relationships:
+          $ref: '#/components/schemas/node-relationships'
+        type:
+          description: This represents the type of object being returned. Always `node`.
+          type: string
+          example: node
+          x-go-name: Type
+        meta:
+          $ref: '#/components/schemas/node-meta'
+      x-go-name: Node
+    node-relationships:
+      type: object
+      title: NodeRelationships
+      description: Relationships to parent and child nodes, and products.
+      properties:
+        products:
+          description: A URL to all products associated with a node.
+          type: object
+          properties:
+            data:
+              type: array
+              x-omitempty: true
+              items:
+                $ref: '#/components/schemas/product-reference'
+            links:
+              $ref: '#/components/schemas/related-link'
+        children:
+          description: A URL to all child nodes associated with a node.
+          type: object
+          properties:
+            links:
+              $ref: '#/components/schemas/related-link'
+          required:
+          - links
+        parent:
+          description: A URL to all parent nodes associated with a node.
+          type: object
+          properties:
+            data:
+              type: object
+              properties:
+                type:
+                  type: string
+                  example: node
+                  enum:
+                  - node
+                id:
+                  type: string
+                  example: 8fccaa19-dba9-4621-8d11-31a222a68c7c
+                  x-go-name: ID
+              required:
+              - id
+              - type
+            links:
+              $ref: '#/components/schemas/related-link'
+          required:
+          - data
+        hierarchy:
+          description: A URL to the hierarchies associated with a node.
+          type: object
+          properties:
+            data:
+              type: object
+              properties:
+                type:
+                  type: string
+                  example: hierarchy
+                  enum:
+                  - hierarchy
+                id:
+                  type: string
+                  example: 8fccaa19-dba9-4621-8d11-31a222a68c7c
+                  x-go-name: ID
+              required:
+              - id
+              - type
+            links:
+              $ref: '#/components/schemas/related-link'
+          required:
+          - data
+      x-go-name: NodeRelationships
+    amount:
+      type: object
+      description: The three-letter ISO code for the currency associated with this price.
+      title: Amount
+      properties:
+        amount:
+          description: The price in the lowest denomination for the specified currency. This is a product's list price.
+          type: integer
+          example: 100
+          format: int64
+          x-omitempty: false
+          x-go-name: Amount
+        includes_tax:
+          description: Whether this price includes tax.
+          type: boolean
+          example: false
+          default: false
+          x-go-name: IncludesTax
+      x-go-name: PriceAmount
+    sale:
+      type: object
+      description: A set of sale prices and a validity period.
+      properties:
+        schedule:
+          $ref: '#/components/schemas/schedule'
+        currencies:
+          $ref: '#/components/schemas/tiered-currencies'
+    currencies:
+      type: object
+      description: A collection of one or more currencies objects that consists of the [**three-letter ISO code**](https://www.iso.org/iso-3166-country-codes.html) of the currencies associated with this price and the amount. This is the product's price.
+      title: Currencies
+      additionalProperties:
+        $ref: '#/components/schemas/amount'
+    main-image-relationship:
+      type: object
+      description: In Product Experience Manager, products can also have associated product images.
+      properties:
+        data:
+          description: The images associated with a product.
+          type: object
+          x-nullable: 'true'
+          properties:
+            type:
+              description: This represents the type of object being returned. Always `main_image`.
+              type: string
+              example: main_image
+              enum:
+              - main_image
+            id:
+              description: A unique identifier for an image.
+              type: string
+              format: uuid
+      x-omitempty: true
+    custom-input-validation-rule:
+      type: object
+      title: Custom Input Validation Rule
+      description: The validation rules for the custom text.
+      x-go-name: CustomInputValidationRule
+      properties:
+        type:
+          description: This represents the type of object being returned. Must be `string`.
+          type: string
+          x-go-name: Type
+          default: string
+          example: string
+          enum:
+          - string
+        options:
+          $ref: '#/components/schemas/custom-input-validation-rule-options'
+    node-data:
+      type: object
+      title: NodeData
+      description: Container for nodes.
+      properties:
+        data:
+          $ref: '#/components/schemas/node'
+        links:
+          $ref: '#/components/schemas/links'
+    hierarchy-relationships:
+      type: object
+      title: HierarchyRelationships
+      description: Relationships to child nodes, and products.
+      properties:
+        products:
+          description: A URL to all the products associated with a hierarchy.
+          type: object
+          properties:
+            links:
+              $ref: '#/components/schemas/related-link'
+        children:
+          description: A URL to all the child products associated with a hierarchy.
+          type: object
+          properties:
+            links:
+              $ref: '#/components/schemas/related-link'
+          required:
+          - links
+        nodes:
+          description: A URL to all the nodes associated with a hierarchy.
+          type: object
+          properties:
+            links:
+              $ref: '#/components/schemas/related-link'
+          required:
+          - links
+      x-go-name: HierarchyRelationships
+    component-products-relationship:
+      description: A bundle is a purchasable product, comprising of one or more products that you want to sell together. You can create multiple components within a bundle. Each component must have at least one or more options. Each option is a product and a quantity. You can link to the products that make up your bundle components.
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/product-references'
+        links:
+          $ref: '#/components/schemas/self-link'
+      x-omitempty: true
+    component-product:
+      type: object
+      title: Component Product
+      description: The unique identifier of the component, for example, `games`.
+      properties:
+        name:
+          description: The component name is the name that is displayed in your storefront.
+          type: string
+          x-go-name: Name
+        min:
+          description: The minimum number of product options a shopper can select from this component.
+          type: integer
+          x-go-name: Min
+          nullable: true
+        max:
+          description: The maximum number of product options a shopper can select from this component.
+          type: integer
+          x-go-name: Max
+          nullable: true
+        sort_order:
+          description: The sort order of the components. The `create a bundle` and `update a bundle` endpoints do not sort the components. You can use the `sort_order` attribute when programming your storefront to display the components in the order that you want.
+          type: integer
+          x-go-name: Sort Order
+          nullable: true
+        options:
+          description: The product options included in a component. This can be the ID of another bundle.
+          type: array
+          items:
+            $ref: '#/components/schemas/component-product-option'
+          x-go-name: Options
+    node-meta:
+      type: object
+      title: NodeMeta
+      description: A node's metadata.
+      properties:
+        language:
+          description: The node details localized in the supported languages.
+          type: string
+          example: en-GB
+        bread_crumb:
+          description: Helps you understand the association of products with nodes. It explains how products are associated with parent nodes and the relationship among the array of nodes. This is useful if you want to improve how your shoppers search within you store.
+          type: array
+          items:
+            type: string
+            example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
+          x-omitempty: true
+          deprecated: true
+        breadcrumbs:
+          description: Node Breadcrumbs
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                description: The unique identifier of a hierarchy/node.
+                type: string
+                example: e871df93-c769-49a9-9394-a6fd555b8e8a
+                x-omitempty: true
+              name:
+                description: The name of the hierarchy/node.
+                type: string
+                example: Formal dresswear
+                x-omitempty: true
+              slug:
+                description: A slug for the hierarchy/node.
+                type: string
+                example: formal
+                x-omitempty: true
+            x-go-name: NodeBreadcrumb
+          x-omitempty: true
+        has_children:
+          description: Indicates whether a node has child nodes. `true` if the node has at least one child, `false` if it has none.
+          type: boolean
+          example: true
+          x-go-name: HasChildren
+          x-omitempty: true
+          nullable: true
+      x-go-name: NodeMeta
+      x-omitempty: true
+    shopper_attributes:
+      type: object
+      description: A collection of key-value string pairs, viewable by shoppers.
+      title: ShopperAttributes
+      additionalProperties:
+        type: string
+    product-relationships:
+      type: object
+      title: ProductRelationships
+      description: Relationships allow you to move between requests. Includes links to the parent and child products, bundle component products, files, and main images associated with a product.
+      properties:
+        parent:
+          description: The details of a `parent` product. A `parent` product is a product that has child products that have been built using the `Build Child Products` endpoint.
+          type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/product-reference'
+          x-go-name: Parent
+          x-omitempty: true
+        children:
+          description: The details of a `child` product. When you configure product variations and variation options for parent products, the child products derived from the parent products are automatically created in Commerce.
+          type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/product-references'
+            links:
+              $ref: '#/components/schemas/self-link'
+          x-go-name: Children
+          x-omitempty: true
+        files:
+          $ref: '#/components/schemas/files-relationship'
+        main_image:
+          $ref: '#/components/schemas/main-image-relationship'
+        component_products:
+          $ref: '#/components/schemas/component-products-relationship'
+        custom_relationships:
+          $ref: '#/components/schemas/custom-relationship'
+      x-go-name: ProductRelationships
+      x-omitempty: true
+    node-list-data:
+      type: object
+      title: NodeListData
+      description: Container for a list of nodes.
+      properties:
+        meta:
+          $ref: '#/components/schemas/page-meta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/node'
+        links:
+          $ref: '#/components/schemas/links'
+    tiers:
+      type: object
+      title: Tiers
+      description: The price tier that an item is eligible for based on the quantity purchased. You cannot have conflicting tiers within the same currencies block.
+      additionalProperties:
+        $ref: '#/components/schemas/tier'
+    hierarchy-data:
+      type: object
+      title: HierarchyData
+      description: Container for hierarchies.
+      properties:
+        data:
+          $ref: '#/components/schemas/hierarchy'
+        links:
+          $ref: '#/components/schemas/links'
+    hierarchy-list-data:
+      type: object
+      title: HierarchyListData
+      description: Container for a list of hierarchies.
+      properties:
+        meta:
+          $ref: '#/components/schemas/page-meta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/hierarchy'
+        links:
+          $ref: '#/components/schemas/links'
+    hierarchy:
+      type: object
+      title: Hierarchy
+      description: A category hierarchy in a catalog. Hierarchies can have parent nodes and child nodes, as well as a list of attached products.
+      properties:
+        attributes:
+          $ref: '#/components/schemas/hierarchy-attributes'
+        id:
+          description: A unique identifier of a hierarchy.
+          type: string
+          example: e871df93-c769-49a9-9394-a6fd555b8e8a
+          x-go-name: ID
+        relationships:
+          $ref: '#/components/schemas/hierarchy-relationships'
+        type:
+          description: This represents the type of object being returned. Always `hierarchy`.
+          type: string
+          example: hierarchy
+          x-go-name: Type
+        meta:
+          $ref: '#/components/schemas/hierarchy-meta'
+      x-go-name: Hierarchy
+    product-meta:
+      type: object
+      title: ProductMeta
+      description: A product's metadata contains information about products, for example, the nodes a product is associated with, any child products, bundle configurations, and so on.
+      properties:
+        bread_crumbs:
+          description: The relationship among the array of nodes a product is associated with, demonstrating the linking of the children nodes with the parent nodes. Up to 10 levels of parent nodes are displayed, depending on the number of levels of parent nodes you have.
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+              example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
+          x-omitempty: true
+        bread_crumb_nodes:
+          description: An array of parent node IDs that a product is associated with. Up to 10 levels of parent nodes are displayed, depending on the number of levels of parent nodes you have.
+          type: array
+          items:
+            type: string
+            example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
+          x-omitempty: true
+        catalog_id:
+          description: A unique identifier of the catalog a product is associated with.
+          type: string
+          example: 362a16dc-f7c6-4280-83d6-4fcc152af091
+          x-go-name: CatalogID
+        pricebook_id:
+          description: The unique identifier of the price book a product is associated with.
+          type: string
+          example: f5466169-0037-460c-b181-b02682b6f4de
+          x-go-name: PricebookID
+          nullable: true
+        display_price:
+          $ref: '#/components/schemas/display-price'
+        catalog_source:
+          description: The source of a catalog. Always `pim`.
+          type: string
+          example: pim
+          enum:
+          - pim
+          x-go-name: CatalogSource
+        sale_id:
+          description: With sales pricing, a store can optionally add a sale price to a product price. For example, a store can schedule seasonal pricing on products without creating a new price book and catalog ruleset. Optionally, a store can schedule the date ranges for the sale products. This is the unique identifier of a sale.
+          type: string
+          x-go-name: SaleID
+        sale_expires:
+          description: The expiration date and time of the sale, provided in UTC.
+          type: string
+          format: date-time
+          example: '2025-07-07T14:30:00Z'
+          x-go-name: SaleExpires
+          nullable: true
+        original_price:
+          $ref: '#/components/schemas/currencies'
+        original_display_price:
+          $ref: '#/components/schemas/display-price'
+        bundle_configuration:
+          $ref: '#/components/schemas/bundle-configuration'
+        component_products:
+          description: A bundle is a purchasable product, comprising of one or more products that you want to sell together. You can create multiple components within a bundle. Each component must have at least one or more options. Each option is a product and a quantity.
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              sale_id:
+                description: With sales pricing, a store can optionally add a sale price to a product price. For example, a store can schedule seasonal pricing on products without creating a new price book and catalog ruleset. Optionally, a store can schedule the date ranges for the sale products. This is the unique identifier of a sale.
+                type: string
+                x-go-name: SaleID
+              sale_expires:
+                description: The expiration date and time of the sale, provided in UTC.
+                type: string
+                format: date-time
+                example: '2025-07-07T14:30:00Z'
+                x-go-name: SaleExpires
+                nullable: true
+              price:
+                $ref: '#/components/schemas/currencies'
+              display_price:
+                $ref: '#/components/schemas/display-price'
+              original_price:
+                $ref: '#/components/schemas/currencies'
+              original_display_price:
+                $ref: '#/components/schemas/display-price'
+              pricebook_id:
+                type: string
+                example: f5466169-0037-460c-b181-b02682b6f4de
+                x-go-name: PricebookID
+                nullable: true
+              alternative_prices:
+                $ref: '#/components/schemas/alternative-prices'
+            x-go-name: ComponentProductMeta
+        component_product_data:
+          description: This will contain the component product details (with bundle specific pricing) in the configure bundle response for the selected options.
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/product'
+        price_modifiers:
+          type: object
+          description: You can use price modifiers to change the price property of child products. By default, child products inherit the same price as their base products. Using price modifiers, you can enable child products to inherit a different price.
+          additionalProperties:
+            description: A name for the modifier. The name must be unique and is case-sensitive.
+            type: object
+            properties:
+              modifier_type:
+                description: "There are three modifier types.\n\n - The `price_increment` type increases the prices of a product.\n - The `price_decrement` type decreases the price of a product.\n - The `price_equals` type sets the price of a product to an amount you specify.\n"
+                type: string
+                example: price_equals
+              currencies:
+                $ref: '#/components/schemas/currencies'
+            x-go-name: PriceModifierMeta
+        tiers:
+          description: You can use tiers to allow your store to offer different pricing for minimum quantities of items that your shoppers purchase.
+          type: object
+          additionalProperties:
+            description: The name of the tier, such as `Pencils`.
+            type: object
+            properties:
+              sale_id:
+                description: The unique identifier of a sale.
+                type: string
+                x-go-name: SaleID
+              sale_expires:
+                description: The expiration date and time of the sale, provided in UTC.
+                type: string
+                format: date-time
+                example: '2025-07-07T14:30:00Z'
+                x-go-name: SaleExpires
+                nullable: true
+              display_price:
+                $ref: '#/components/schemas/display-price'
+              original_price:
+                $ref: '#/components/schemas/currencies'
+              original_display_price:
+                $ref: '#/components/schemas/display-price'
+            x-go-name: ProductMetaTier
+          x-go-name: ProductMetaTiers
+        variation_matrix:
+          description: The `variation_matrix` object lists the variation IDs and variation option IDs and their corresponding product IDs that are generated when the variation and variation options are built with a product. If no variations are available, the `variation_matrix` is empty.
+          type: object
+        variations:
+          description: If you specified `build_rules` for a product, the `variations` object lists the variation option IDs that you specified to include when building your child products. If no `build_rules` are specified, all the variation and variation options available for a product are displayed. If a product does not have any variations, then the `variations` object is not displayed.
+          type: array
+          items:
+            $ref: '#/components/schemas/variation'
+          x-omitempty: true
+        child_option_ids:
+          description: An array of variation options IDs that a child product has.
+          type: array
+          items:
+            type: string
+            example:
+            - 8dbb35b2-ef04-477e-974d-e5f3abe6faae
+            - 6ddf2a66-d805-449c-a0e1-8e81335e31a6
+          x-omitempty: true
+          nullable: true
+        child_variations:
+          description: If this is a child product, the `child_variations` object lists the variation option IDs that define this child product.
+          type: array
+          items:
+            $ref: '#/components/schemas/variation'
+          x-omitempty: true
+          nullable: true
+        product_types:
+          description: "Commerce automatically assigns types to the products you create. In Commerce Manager, you can see at a glance the product types in a list of a products. In addition, you can filter on product types in both the API and Commerce Manager.\n\n Product types can also be used in catalogs. For example, in your catalog, you can filter on parent so that only your parent products are displayed in your storefront.\n\n Products have one of the following types:\n\n - **standard** - Standard products are a standalone products.\n - **parent** - A parent product is a product that has child products that have been built using the `Build Child Products` endpoint.\n  - **child** - When you configure product variations and variation options for parent products, the child products derived from the parent products are automatically created in Commerce.\n - **bundle** - A bundle is a purchasable product, comprising two or more standalone products (in other words, components) to be sold together. \n"
+          type: array
+          items:
+            type: string
+          x-omitempty: true
+          x-go-name: ProductTypes
+        language:
+          description: If you storefront supports multiple languages, your storefront's preferred language and locale.
+          type: string
+          example: en-GB
+        custom_relationships:
+          description: "In Commerce Manager you can define Custom Relationships for Products. These allow Merchandisers to set up Cross Sell/Parent Child Relationships between products for display to shoppers.\nThis field will list the slugs(identifiers) of Custom Relationships that have been associated with this product. This will allow conditional rendering of related product sections if needed \nand provides the slug(s) needed to list the related products for the Product\n"
+          type: array
+          items:
+            type: string
+            example:
+            - CRP-Cross-Sell-Products
+            - CRP-Frequently-Bought-Together-Products
+          x-omitempty: true
+          x-go-name: CustomRelationships
+        available_prices:
+          $ref: '#/components/schemas/available-prices'
+        alternative_prices:
+          $ref: '#/components/schemas/alternative-prices'
+        available_pricebook_ids:
+          description: An array of all pricebooks that have prices for this product
+          type: array
+          items:
+            type: string
+            example:
+            - 8dbb35b2-ef04-477e-974d-e5f3abe6faae
+            - 6ddf2a66-d805-449c-a0e1-8e81335e31a6
+          x-omitempty: true
+          nullable: true
+      x-go-name: ProductMeta
+      x-omitempty: true
+    variation_option:
+      description: The options available for a variation.
+      type: object
+      properties:
+        id:
+          description: A unique identifier for an option.
+          type: string
+          format: uuid
+          x-go-name: ID
+        name:
+          description: The name of the option.
+          type: string
+        sort_order:
+          description: If you specified a `sort_order` when creating your variations and variation options, then use the `sort_order` value to program your storefront to display the variations and variation options in the order that you want.
+          type: integer
+          x-go-name: Sort Order
+          nullable: true
+        description:
+          description: The option description to display to customers.
+          type: string
+      x-go-name: ProductVariationOption
+    product-reference-list-data:
+      type: object
+      title: ProductReferenceListData
+      description: Container for a list of product references.
+      properties:
+        meta:
+          $ref: '#/components/schemas/page-meta'
+        data:
+          $ref: '#/components/schemas/product-references'
+        links:
+          $ref: '#/components/schemas/links'
+    hierarchy-attributes:
+      type: object
+      title: HierarchyAttributes
+      description: Resource attributes of a catalog hierarchy.
+      properties:
+        created_at:
+          description: The date and time a hierarchy is created.
+          type: string
+          format: date-time
+          example: '1970-01-01T00:00:00.000'
+          x-go-name: CreatedAt
+        published_at:
+          description: The date and time a hierarchy is published in a catalog.
+          type: string
+          format: date-time
+          example: '1970-01-01T00:00:00.000'
+          nullable: true
+        description:
+          description: A description of a hierarchy.
+          type: string
+          example: Formal dresswear
+          x-go-name: Description
+        name:
+          description: The name of a hierarchy.
+          type: string
+          example: Formal dresswear
+          x-go-name: Name
+        slug:
+          description: A unique slug for a hierarchy.
+          type: string
+          example: formal
+          x-go-name: Slug
+        shopper_attributes:
+          $ref: '#/components/schemas/shopper_attributes'
+        updated_at:
+          description: The date and time a hierarchy was updated.
+          type: string
+          format: date-time
+          example: '1970-01-01T00:00:00.000'
+          x-go-name: UpdatedAt
+      x-go-name: HierarchyAttributes
+    product-references:
+      type: array
+      title: ProductReferences
+      description: A list of product identifiers.
+      items:
+        $ref: '#/components/schemas/product-reference'
+      x-go-name: ProductReferences
+    product-data:
+      type: object
+      title: ProductData
+      description: Container for products.
+      properties:
+        data:
+          $ref: '#/components/schemas/product'
+        included:
+          $ref: '#/components/schemas/included-response'
+        links:
+          $ref: '#/components/schemas/links'
+    node-attributes:
+      type: object
+      title: NodeAttributes
+      description: Resource attributes of a catalog node.
+      properties:
+        created_at:
+          description: The date and time a node was created.
+          type: string
+          format: date-time
+          example: '1970-01-01T00:00:00.000'
+          x-go-name: CreatedAt
+        published_at:
+          description: The date and time a node was published in a catalog.
+          type: string
+          format: date-time
+          example: '1970-01-01T00:00:00.000'
+          nullable: true
+        description:
+          type: string
+          description: A description of a node.
+          example: Formal dresswear
+          x-go-name: Description
+        label:
+          type: string
+          example: category
+          x-go-name: Label
+        name:
+          description: The name of a node. Names must be unique among sibling nodes in a hierarchy. Otherwise, a name can be non-unique within the hierarchy and across multiple hierarchies.
+          type: string
+          example: Formal dresswear
+          x-go-name: Name
+        slug:
+          description: A slug for the node. Slugs must be unique among sibling nodes in the hierarchy. Otherwise, a slug can be non-unique within the hierarchy and across multiple hierarchies.
+          type: string
+          example: formal
+          x-go-name: Slug
+        curated_products:
+          description: A list of curated products for a node. You can curate your products in your nodes product lists. Product curation allows you to promote specific products within each node in a hierarchy, enabling you to create unique product collections in your storefront.
+          type: array
+          items:
+            type: string
+            example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
+          x-omitempty: true
+        status:
+          type: string
+          example: live
+          x-go-name: Status
+        shopper_attributes:
+          $ref: '#/components/schemas/shopper_attributes'
+        updated_at:
+          description: The date and time a node was updated.
+          type: string
+          format: date-time
+          example: '1970-01-01T00:00:00.000'
+          x-go-name: UpdatedAt
+      x-go-name: NodeAttributes
+    tiered-amount:
+      type: object
+      title: TieredAmount
+      description: The three-letter ISO code for the currency associated with this price.
+      properties:
+        amount:
+          description: The price in the lowest denomination for the specified currency. This is a product's list price.
+          type: integer
+          example: 100
+          format: int64
+          x-omitempty: false
+          x-go-name: Amount
+        includes_tax:
+          description: Whether this price includes tax.
+          type: boolean
+          example: false
+          default: false
+          x-go-name: IncludesTax
+        tiers:
+          description: The price tier that an item is eligible for based on the quantity purchased. You cannot have conflicting tiers within the same currencies block.
+          type: object
+          additionalProperties:
+            description: The name of the tier, for example, `Pencils`.
+            type: object
+            properties:
+              minimum_quantity:
+                description: The minimum quantity of 1 or more defined for the specified price. If a minimum quantity is not specified, an error is returned.
+                type: integer
+                example: 5
+                x-go-name: MinimumQuantity
+              amount:
+                description: The price for each quantity.
+                type: integer
+                example: 100
+                format: int64
+                x-omitempty: false
+                x-go-name: Amount
+            x-go-name: TierAmount
+          x-go-name: Tiers
+      x-go-name: TieredAmount
+    variation:
+      type: object
+      properties:
+        id:
+          description: A unique identifier of a variation.
+          type: string
+          format: uuid
+          x-go-name: ID
+        name:
+          description: The name of a variation.
+          type: string
+        sort_order:
+          description: If you specified a `sort_order` when creating your variations and variation options, then use the `sort_order` value to program your storefront to display the variations and variation options in the order that you want.
+          type: integer
+          x-go-name: Sort Order
+          nullable: true
+        option:
+          $ref: '#/components/schemas/variation_option'
+        options:
+          description: The options available for this variation.
+          type: array
+          x-omitempty: true
+          items:
+            $ref: '#/components/schemas/variation_option'
+      x-go-name: ProductVariation
+    related-link:
+      description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+      type: object
+      properties:
+        related:
+          description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+          type: string
+      required:
+      - related
+    custom_inputs:
+      type: object
+      title: Custom Inputs
+      description: "You can allow your shoppers to add custom text to a product when adding product items to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized or you sell greetings cards that can be printed with your shoppers personalized messages.  You can do this using the `custom_inputs` attribute.\n\n - You can rename input to something more representative of the input that shoppers are adding, for example, `message` or `front`.\n - `name` is the name that is displayed in your storefront.\n - You can add validation rules. For example, the input field must be a string and/or up to 255 characters in length. The limit is 255 characters.\n"
+      additionalProperties:
+        $ref: '#/components/schemas/custom-input'
+    custom-input-validation-rule-options:
+      type: object
+      description: The length of the custom input text field.
+      x-go-name: CustomInputValidationRuleOptions
+      properties:
+        max_length:
+          description: The number of characters the custom text field can be. You can specify a maximum length up to 255 characters, as the limit is 255 characters.
+          type: integer
+          x-go-name: MaxLength
+          example: 255
+    elastic-path-file:
+      type: object
+      title: ElasticPathFile
+      properties:
+        id:
+          type: string
+          description: The unique identifier for this file.
+          format: uuid
+        type:
+          description: The type represents the object being returned.
+          type: string
+          example: file
+        file_name:
+          description: The name of the file.
+          type: string
+          example: file_name.jpg
+        mime_type:
+          description: The mime type of the file.
+          type: string
+          example: image/jpeg
+        file_size:
+          description: The size of the file. Required when uploading files.
+          type: integer
+          example: 36000
+        public:
+          description: DEPRECATED Whether the file public or not. Required when uploading files.
+          type: boolean
+          example: true
+        meta:
+          properties:
+            timestamps:
+              type: object
+              description: The date and time the file was created.
+              properties:
+                created_at:
+                  description: The date and time the file was created.
+                  type: string
+                  example: '2023-10-11T13:02:25.293Z'
+            dimensions:
+              description: The file dimensions.
+              type: object
+              properties:
+                width:
+                  description: The width of the file.
+                  type: integer
+                  example: 1800
+                height:
+                  description: The height of the file.
+                  type: integer
+                  example: 1000
+        links:
+          description: Links are used to allow you to move between requests.
+          type: object
+          properties:
+            self:
+              description: Single entities use a self parameter with a link to that specific resource.
+              type: string
+              example: https://useast.api.elasticpath.com/v2/files/ddc28c74-a7df-46be-b262-8fa69a6e7d52
+        link:
+          type: object
+          description: The publicly available URL for this file.
+          properties:
+            href:
+              description: The publicly available URL for this file.
+              type: string
+              example: https://files-eu.epusercontent.com/e8c53cb0-120d-4ea5-8941-ce74dec06038/f8cf26b3-6d38-4275-937a-624a83994702.png
+            meta:
+              type: object
+              properties:
+                results:
+                  description: Contains the results for the entire collection.
+                  type: object
+                  properties:
+                    total:
+                      description: Total number of results for the entire collection.
+                      type: integer
+                      example: 2
+    schedule:
+      type: object
+      description: A definition of the times at which a sale is valid
+      properties:
+        valid_from:
+          type: string
+          example: '2020-09-22T09:00:00'
+          format: date-time
+          x-go-name: ValidFrom
+          nullable: true
+        valid_to:
+          type: string
+          example: '2020-09-22T09:00:00'
+          format: date-time
+          x-go-name: ValidTo
+          nullable: true
+      x-go-name: Schedule
+    custom-input:
+      type: object
+      title: Custom Input
+      description: The name of the custom input. You can rename the input to something more representative of the input that shoppers are adding, for example, `message` or `front`.
+      properties:
+        name:
+          description: The name for the custom text field that is displayed in your storefront.
+          type: string
+          x-go-name: Name
+          example: Message
+        validation_rules:
+          description: The validation rules for the custom text.
+          type: array
+          x-go-name: ValidationRules
+          items:
+            $ref: '#/components/schemas/custom-input-validation-rule'
+        required:
+          description: This is `true` or `false` depending on whether the custom text is required.
+          type: boolean
+          x-go-name: Required
+          example: false
+          default: false
+          nullable: true
+    error:
+      type: object
+      title: APIError
+      description: APIError is a json-api style part of an error response.
+      properties:
+        detail:
+          type: string
+          example: not processable
+          x-go-name: Detail
+        status:
+          type: string
+          example: '422'
+          x-go-name: Status
+        title:
+          type: string
+          example: There was a problem processing your request.
+          x-go-name: Title
+      x-go-name: APIError
+    tiered-currencies:
+      type: object
+      title: TieredCurrencies
+      description: Collection of currency specific prices for a product.
+      additionalProperties:
+        $ref: '#/components/schemas/tiered-amount'
+    product-reference:
+      type: object
+      title: ProductReference
+      description: A product identifier.
+      x-nullable: 'true'
+      properties:
+        id:
+          description: A unique identifier for a product.
+          type: string
+          format: uuid
+          x-go-name: ID
+        type:
+          description: This represents the type of object being returned. Always `product`.
+          type: string
+          x-go-name: Type
+          example: product
+          enum:
+          - product
+      x-go-name: ProductReference
+    custom-relationship-links:
+      description: For each custom relationship in use on the product, there will be a link to follow.
+      type: object
+    product-attributes:
+      type: object
+      title: ProductAttributes
+      description: A product's attributes.
+      properties:
+        published_at:
+          description: The date and time a product was published in a catalog.
+          type: string
+          format: date-time
+          example: '1970-01-01T00:00:00.000'
+          nullable: true
+        base_product:
+          description: If this product is a `parent` product. A `parent` product is a product that has child products that have been built using the `build child products` endpoint.
+          type: boolean
+          example: false
+          default: false
+          x-go-name: BaseProduct
+        base_product_id:
+          description: The unique identifier of a `parent` product.
+          type: string
+          example: cdf574bc-e36e-48fc-9eac-01c87839b285
+          x-go-name: BaseProductID
+        commodity_type:
+          description: The commodity type, either `physical` or `digital`.
+          type: string
+          example: physical
+          x-go-name: CommodityType
+        curated_product:
+          description: If a product is curated, then the `curated_product` attribute with a value of `true` is displayed. If a product is not curated, the `curated_product` attribute is not displayed.
+          type: boolean
+          example: true
+          x-omitempty: true
+          x-go-name: CuratedProduct
+        upc_ean:
+          description: The universal product code or european article number of the product.
+          type: string
+          example: '0123456'
+          x-go-name: UpcEan
+        manufacturer_part_num:
+          description: The manufacturer part number of the product.
+          type: string
+          example: mfn1
+          x-go-name: ManufacturerPartNum
+        tags:
+          type: array
+          description: A list of tags associated with the product. A tag must be HTML compatible characters excluding commas and will be stored in lowercase letters.
+          items:
+            description: A tag associated with the product.
+            type: string
+            example: tag-a
+          x-go-name: Tags
+          x-omitempty: true
+        price_modifiers:
+          type: array
+          description: A list of price modifier names.
+          items:
+            description: A list of price modifier names.
+            type: string
+            example: modifier-1
+          x-go-name: PriceModifiers
+          x-omitempty: true
+        created_at:
+          description: The date and time a product was created.
+          type: string
+          format: date-time
+          example: '1970-01-01T00:00:00.000'
+          x-go-name: CreatedAt
+        description:
+          description: A description of the product.
+          type: string
+          example: This is a product
+          x-go-name: Description
+        name:
+          description: A name of a product.
+          type: string
+          example: Blue shirt
+          x-go-name: Name
+        price:
+          $ref: '#/components/schemas/currencies'
+        shopper_attributes:
+          $ref: '#/components/schemas/shopper_attributes'
+        tiers:
+          $ref: '#/components/schemas/tiers'
+        components:
+          $ref: '#/components/schemas/components'
+        custom_inputs:
+          $ref: '#/components/schemas/custom_inputs'
+        sku:
+          description: The unique stock keeping unit of the product.
+          type: string
+          example: blue-shirt
+          x-go-name: Sku
+        slug:
+          description: A label for the product that is used in the URL paths. A slug can contain A to Z, a to z, 0 to 9, hyphen, underscore, and period. Spaces or other special characters like ^, [], *, and $ are not allowed. By default, the product name is used as the slug.
+          type: string
+          example: blue-shirt
+          x-go-name: Slug
+        status:
+          description: The status of the product, either `live` or `draft`.
+          type: string
+          example: live
+          x-go-name: Status
+        external_ref:
+          description: The unique attribute associated with the product. This could be an external reference from a separate company system, for example.
+          type: string
+          x-go-name: ExternalRef
+          nullable: true
+        updated_at:
+          description: The date and time a product was updated.
+          type: string
+          example: '1970-01-01T00:00:00.000'
+          format: date-time
+          x-go-name: UpdatedAt
+        extensions:
+          $ref: '#/components/schemas/extensions'
+      x-go-name: ProductAttributes
+    available-prices:
+      description: If pricebook segmentation is enabled, this will show all the available prices for the product in the CV delta file and will show selected available prices via the admin api
+      type: array
+      items:
+        type: object
+        x-go-name: AvailablePrice
+        properties:
+          pricebook_id:
+            description: A unique identifier of a price book.
+            type: string
+          shopper_attributes:
+            $ref: '#/components/schemas/shopper_attributes'
+          sales:
+            type: object
+            title: Sales
+            description: A set of sale specifications
+            additionalProperties:
+              $ref: '#/components/schemas/sale'
+          price:
+            $ref: '#/components/schemas/currencies'
+          tiers:
+            $ref: '#/components/schemas/tiers'
+    tier:
+      type: object
+      title: Tier
+      description: The name of the tier, for example, `Pencils`.
+      properties:
+        minimum_quantity:
+          description: The minimum quantity of 1 or more defined for the specified price. If a minimum quantity is not specified, an error is returned.
+          type: integer
+          example: '5'
+        price:
+          $ref: '#/components/schemas/currencies'
+    links:
+      description: Links allow you to move between requests.
+      type: object
+      properties:
+        self:
+          description: Single entities use a `self` parameter with a link the specific resource.
+          type: string
+          format: uri
+          nullable: true
+        first:
+          description: Always the first page.
+          type: string
+          format: uri
+          nullable: true
+        last:
+          description: This is `null` if there is only one page.
+          type: string
+          format: uri
+          nullable: true
+        prev:
+          description: This is `null` if there is only one page.
+          type: string
+          format: uri
+          nullable: true
+        next:
+          description: This is `null` if there is only one page.
+          type: string
+          format: uri
+          nullable: true
+    alternative-prices:
+      description: If pricebook segmentation is enabled, this will show all the alternative prices for the product. Will just include 'List Price' initially
+      type: array
+      items:
+        type: object
+        x-go-name: alternativePrice
+        properties:
+          name:
+            description: A name to signify what the alternative price means to the shopper... i.e. 'List Price'
+            type: string
+          pricebook_id:
+            description: A unique identifier of a price book.
+            type: string
+          shopper_attributes:
+            $ref: '#/components/schemas/shopper_attributes'
+          sale_id:
+            description: The unique identifier of a sale.
+            type: string
+            x-go-name: SaleID
+          sale_expires:
+            description: The expiration date and time of the sale, provided in UTC.
+            type: string
+            format: date-time
+            example: '2025-07-07T14:30:00Z'
+            x-go-name: SaleExpires
+            nullable: true
+          price:
+            $ref: '#/components/schemas/currencies'
+          display_price:
+            $ref: '#/components/schemas/display-price'
+          original_display_price:
+            $ref: '#/components/schemas/display-price'
+          original_price:
+            $ref: '#/components/schemas/currencies'
+          tiers:
+            description: You can use tiers to allow your store to offer different pricing for minimum quantities of items that your shoppers purchase.
+            type: object
+            additionalProperties:
+              description: The name of the tier, such as `Pencils`.
+              type: object
+              properties:
+                original_price:
+                  $ref: '#/components/schemas/currencies'
+                price:
+                  $ref: '#/components/schemas/currencies'
+                display_price:
+                  $ref: '#/components/schemas/display-price'
+                original_display_price:
+                  $ref: '#/components/schemas/display-price'
+              x-go-name: AlternativePriceTier
+            x-go-name: AlternativePriceTiers
+  parameters:
+    pricebook-ids-for-price-segmentation-preview:
+      in: header
+      name: EP-Pricebook-IDs-For-Price-Segmentation-Preview
+      description: Supply a comma delimited list of pricebook ids to be used to lookup product prices from when the catalog supports price segmentation. The first pricebook will be highest priority (if more than one is supplied) and the rest in descending priority order. Used only for admin endpoints that dont support shopper context lookup.
+      style: simple
+      schema:
+        type: array
+        items:
+          type: string
+        maxItems: 5
+    filter-node:
+      name: filter
+      in: query
+      description: 'This endpoint supports filtering, see [Filtering](#filtering).
+
+        '
+      required: false
+      schema:
+        type: string
+    accept-language:
+      description: The language and locale your storefront prefers. See [Accept-Language](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
+      in: header
+      name: accept-language
+      required: false
+      schema:
+        type: string
+    offset:
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. You would normally increment the page offset by multiples of the page limit to paginate through the results.
+      name: page[offset]
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+    include:
+      name: include
+      in: query
+      description: 'Using the include parameter, you can retrieve top-level resources.
+
+
+        - Files or main image. For example, `include=files,main_image`.
+
+        - Component product data. For example, `include=component_products`.
+
+        - Key attribute data, such as SKU or slug.
+
+        '
+      required: false
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+          - files
+          - main_image
+          - component_products
+    filter-hierarchy:
+      name: filter
+      in: query
+      description: '
+
+        This endpoints supports filtering. See [Filtering](#filtering).
+
+        '
+      required: false
+      schema:
+        type: string
+    pricebook-ids-of-available-prices-to-show:
+      in: header
+      name: EP-Pricebook-IDs-Of-Available-Prices-To-Show
+      description: Supply a comma delimited list of pricebook ids to be listed in meta sections available prices . 'all' is a permitted value and will ensure all available prices for a product are shown. 'all' is not recommended if there are lots(10+) of available prices due the large response size.
+      style: simple
+      schema:
+        type: array
+        items:
+          type: string
+    filter-product:
+      name: filter
+      in: query
+      description: 'This endpoints support filtering. See [Filtering](#filtering).
+
+        '
+      required: false
+      schema:
+        type: string
+    limit:
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      name: page[limit]
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

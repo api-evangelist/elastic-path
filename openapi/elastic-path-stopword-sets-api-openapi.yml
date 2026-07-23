@@ -1,0 +1,453 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Stopword Sets API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Stopword Sets
+  description: 'Stopword Sets allow you to define sets of common words (such as "the", "a", "an", "is") that should be ignored during search queries. By removing these low-value terms from search processing, you can improve search relevance and reduce noise in results.
+
+
+    ### How Stopword Sets Work
+
+
+    A stopword set is a named container of stopword words. Each set belongs to an organization or store and is synced asynchronously. Once synced, the stopwords are applied during search query processing to filter out the specified terms.
+
+
+    ### Common Stopwords
+
+
+    Stopword sets contain a flat list of words to ignore:
+
+
+    - **Common articles**: "the", "a", "an"
+
+    - **Prepositions**: "in", "on", "at", "for"
+
+    - **Conjunctions**: "and", "or", "but"
+
+
+    ### Sync Status
+
+
+    Stopword sets are synced asynchronously. The sync status is tracked and exposed in API responses:
+
+
+    | Status           | Description                                                    |
+
+    |------------------|----------------------------------------------------------------|
+
+    | `pending_sync`   | Set has been created or updated in MongoDB but not yet synced  |
+
+    | `synced`         | Set has been successfully synced                               |
+
+    | `sync_failed`    | The last sync attempt failed                                   |
+
+    | `pending_delete` | Set is marked for deletion; a background worker will remove it |
+
+
+    ### Tenancy
+
+
+    Stopword sets follow the same tenancy model as other resources:
+
+
+    - **Organization-scoped sets**: Managed by the organization; apply across all stores
+
+    - **Store-scoped sets**: Managed by the store; apply only to that store
+
+
+    Stores cannot modify organization-scoped stopword sets.
+
+    '
+paths:
+  /pcm/catalogs/search/stopword-sets:
+    post:
+      tags:
+      - Stopword Sets
+      operationId: createStopwordSet
+      summary: Create stopword set
+      description: Create a new stopwords set.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStopwordSetRequest'
+      responses:
+        '201':
+          description: Successfully created stopword set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopwordSetResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - a stopwords set for the given locale already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+      - Stopword Sets
+      operationId: listStopwordSets
+      summary: List stopword sets
+      description: List all stopwords sets.
+      responses:
+        '200':
+          description: Successfully listed stopword sets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListStopwordSetsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /pcm/catalogs/search/stopword-sets/{stopword_set_id}:
+    parameters:
+    - name: stopword_set_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The unique ID of the stopword set
+      example: 550e8400-e29b-41d4-a716-446655440000
+      x-go-name: StopwordSetID
+    get:
+      tags:
+      - Stopword Sets
+      operationId: getStopwordSet
+      summary: Get stopword set
+      description: Get a stopwords set by ID.
+      responses:
+        '200':
+          description: Successfully retrieved stopword set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopwordSetResponse'
+        '404':
+          description: Stopword set not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Stopword Sets
+      operationId: updateStopwordSet
+      summary: Update stopword set
+      description: Update the stopwords in an existing stopwords set. The locale cannot be changed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStopwordSetRequest'
+      responses:
+        '200':
+          description: Successfully updated stopword set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopwordSetResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Stopword set not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+      - Stopword Sets
+      operationId: deleteStopwordSet
+      summary: Delete stopword set
+      description: Delete a stopword set by ID.
+      responses:
+        '204':
+          description: Stopword set marked for deletion
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
+    ListResponseMeta:
+      type: object
+      required:
+      - results
+      properties:
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
+    StopwordSetResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/StopwordSet'
+    UpdateStopwordSetAttributes:
+      type: object
+      required:
+      - stopwords
+      properties:
+        stopwords:
+          type: array
+          description: The replacement list of stopwords. Must contain at least one entry.
+          items:
+            type: string
+          minItems: 1
+          example:
+          - the
+          - a
+          - an
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    ListResponseMetaResults:
+      description: Contains the results for the entire collection.
+      type: object
+      required:
+      - total
+      properties:
+        total:
+          description: Total number of results for the entire collection.
+          type: integer
+          example: 100
+    ListStopwordSetsResponse:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StopwordSet'
+        meta:
+          $ref: '#/components/schemas/ListResponseMeta'
+    UpdateStopwordSetRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - id
+          - type
+          - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 550e8400-e29b-41d4-a716-446655440000
+              x-go-name: ID
+            type:
+              $ref: '#/components/schemas/StopwordSetType'
+            attributes:
+              $ref: '#/components/schemas/UpdateStopwordSetAttributes'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    CreateStopwordSetRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - attributes
+          properties:
+            type:
+              $ref: '#/components/schemas/StopwordSetType'
+            attributes:
+              $ref: '#/components/schemas/StopwordSetAttributes'
+    StopwordSetType:
+      type: string
+      description: Represents the type of object being returned. Always `catalog_search_stopword_set`.
+      example: catalog_search_stopword_set
+      enum:
+      - catalog_search_stopword_set
+    StopwordSet:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: The unique identifier for the stopword set.
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/StopwordSetType'
+        attributes:
+          $ref: '#/components/schemas/StopwordSetAttributes'
+        meta:
+          $ref: '#/components/schemas/StopwordSetMeta'
+    StopwordSetAttributes:
+      type: object
+      required:
+      - stopwords
+      properties:
+        locale:
+          type: string
+          description: '[ISO 639 language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) for the stopwords set. Omit or pass null for the default set. At most one stopwords set per locale is allowed.
+
+            '
+          example: en
+        stopwords:
+          type: array
+          description: The list of stopwords.
+          items:
+            type: string
+          minItems: 1
+          example:
+          - the
+          - a
+          - an
+          - is
+    StopwordSetMeta:
+      type: object
+      required:
+      - created_at
+      - updated_at
+      - owner
+      - sync_status
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: The date and time the stopword set was created.
+          example: '2026-03-05T12:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: The date and time the stopword set was last updated.
+          example: '2026-03-05T12:00:00Z'
+        owner:
+          $ref: '#/components/schemas/ResourceOwner'
+        sync_status:
+          type: string
+          description: The sync status of the stopword set.
+          enum:
+          - pending_sync
+          - synced
+          - sync_failed
+          - pending_delete
+          example: pending_sync
+          x-go-type: model.SyncStatus
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/model
+        last_synced_at:
+          type: string
+          format: date-time
+          description: The date and time the stopword set was last successfully synced.
+          example: '2026-03-05T12:01:00Z'
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

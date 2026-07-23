@@ -1,0 +1,1218 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Order Shipping Groups API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Order Shipping Groups
+paths:
+  /v2/orders/{orderID}/shipping-groups:
+    get:
+      operationId: getOrderShippingGroups
+      tags:
+      - Order Shipping Groups
+      summary: Retrieve all shipping groups for an order
+      description: Retrieve all shipping groups for an order
+      parameters:
+      - name: orderID
+        in: path
+        required: true
+        description: The ID of the order
+        schema:
+          type: string
+      responses:
+        '200':
+          description: A list of shipping groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ShippingGroupResponse'
+              example:
+                data:
+                - id: 96b1d104-0d2e-41fd-9543-6c3c5a698959
+                  type: shipping_group
+                  relation: order
+                  order_id: 96b1d104-0d2e-41fd-9543-6c3c5a698959
+                  shipping_type: standard
+                  tracking_reference: TRACK123
+                  meta:
+                    shipping_display_price:
+                      total:
+                        amount: 1000
+                        currency: USD
+                        formatted: $10.00
+                      base:
+                        amount: 800
+                        currency: USD
+                        formatted: $8.00
+                      tax:
+                        amount: 200
+                        currency: USD
+                        formatted: $2.00
+                      fees:
+                        amount: 0
+                        currency: USD
+                        formatted: $0.00
+                  address:
+                    first_name: John
+                    last_name: Doe
+                    phone_number: (555) 555-1234
+                    company_name: ACME Corp
+                    line_1: 123 Main St
+                    line_2: Suite 100
+                    city: Portland
+                    postcode: '97201'
+                    county: Multnomah
+                    country: US
+                    region: Oregon
+                    instructions: Leave at front door
+                  delivery_estimate:
+                    start: '2024-01-15T00:00:00Z'
+                    end: '2024-01-20T00:00:00Z'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+              example:
+                errors:
+                - status: 404
+                  title: Not Found
+                  detail: Order not found
+    post:
+      operationId: createOrderShippingGroup
+      tags:
+      - Order Shipping Groups
+      summary: Create a shipping group for an order
+      description: Create a new shipping group for an order
+      parameters:
+      - name: orderID
+        in: path
+        required: true
+        description: The ID of the order
+        schema:
+          type: string
+      requestBody:
+        description: Shipping group details
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  required:
+                  - type
+                  properties:
+                    type:
+                      type: string
+                      const: shipping_group
+                    shipping_type:
+                      type: string
+                      description: The shipping type for this group
+                    tracking_reference:
+                      type: string
+                      description: Tracking reference for the shipment
+                    address:
+                      type: object
+                      properties:
+                        first_name:
+                          type: string
+                        last_name:
+                          type: string
+                        phone_number:
+                          type: string
+                        company_name:
+                          type: string
+                        line_1:
+                          type: string
+                        line_2:
+                          type: string
+                        city:
+                          type: string
+                        postcode:
+                          type: string
+                        county:
+                          type: string
+                        country:
+                          type: string
+                        region:
+                          type: string
+                        instructions:
+                          type: string
+                    delivery_estimate:
+                      type: object
+                      properties:
+                        start:
+                          type: string
+                          format: date-time
+                        end:
+                          type: string
+                          format: date-time
+      responses:
+        '201':
+          description: Shipping group created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ShippingGroupResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+              example:
+                errors:
+                - status: 400
+                  title: Bad Request
+                  detail: Invalid request format
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+              example:
+                errors:
+                - status: 404
+                  title: Not Found
+                  detail: Order not found
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+              example:
+                errors:
+                - status: 422
+                  title: Unprocessable Entity
+                  detail: Cannot create shipping group for this order
+  /v2/orders/{orderID}/shipping-groups/{shippingGroupID}:
+    get:
+      operationId: getShippingGroupsById
+      tags:
+      - Order Shipping Groups
+      summary: Retrieve a specific shipping group for an order
+      description: Retrieve a specific shipping group for an order
+      parameters:
+      - name: orderID
+        in: path
+        required: true
+        description: The ID of the order
+        schema:
+          type: string
+      - name: shippingGroupID
+        in: path
+        required: true
+        description: The ID of the shipping group
+        schema:
+          type: string
+      - name: include
+        in: query
+        description: A comma-separated list of related resources to include in the response.
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: string
+          const: items
+      responses:
+        '200':
+          description: Shipping group details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingGroupEntityResponse'
+              example:
+                data:
+                  id: 7cfa5b07-092e-4dbe-bbad-55a771a34117
+                  type: shipping_group
+                  relation: order
+                  order_id: 96b1d104-0d2e-41fd-9543-6c3c5a698959
+                  shipping_type: standard
+                  tracking_reference: TRACK123
+                  address:
+                    first_name: John
+                    last_name: Doe
+                    phone_number: (555) 555-1234
+                    company_name: ACME Corp
+                    line_1: 123 Main St
+                    line_2: Suite 100
+                    city: Portland
+                    postcode: '97201'
+                    county: Multnomah
+                    country: US
+                    region: Oregon
+                    instructions: Leave at front door
+                  delivery_estimate:
+                    start: '2024-01-15T00:00:00Z'
+                    end: '2024-01-20T00:00:00Z'
+                  meta:
+                    shipping_display_price:
+                      total:
+                        amount: 1000
+                        currency: USD
+                        formatted: $10.00
+                      base:
+                        amount: 800
+                        currency: USD
+                        formatted: $8.00
+                      tax:
+                        amount: 200
+                        currency: USD
+                        formatted: $2.00
+                      fees:
+                        amount: 0
+                        currency: USD
+                        formatted: $0.00
+        '404':
+          description: Shipping group or order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+              examples:
+                order_not_found:
+                  value:
+                    errors:
+                    - status: 404
+                      title: Not Found
+                      detail: Order not found
+                shipping_group_not_found:
+                  value:
+                    errors:
+                    - status: 404
+                      title: Group not found
+                      detail: Group with ID [7cfa5b07-092e-4dbe-bbad-55a771a34117] not found for order [abc123]
+    put:
+      tags:
+      - Order Shipping Groups
+      summary: Update a shipping group for an order
+      description: Update a shipping group for an order
+      operationId: putShippingGroupById
+      parameters:
+      - name: orderID
+        in: path
+        required: true
+        description: The ID of the order
+        schema:
+          type: string
+      - name: shippingGroupID
+        in: path
+        required: true
+        description: The ID of the shipping group
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderShippingGroupRequest'
+            example:
+              data:
+                type: shipping_group
+                shipping_type: express
+                tracking_reference: TRACK456
+                address:
+                  first_name: John
+                  last_name: Doe
+                  phone_number: (555) 555-1234
+                  company_name: ACME Corp
+                  line_1: 123 Main St
+                  line_2: Suite 100
+                  city: Portland
+                  postcode: '97201'
+                  county: Multnomah
+                  country: US
+                  region: Oregon
+                  instructions: Leave at front door
+      responses:
+        '200':
+          description: Shipping group updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingGroupEntityResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+              examples:
+                invalid_dates:
+                  value:
+                    errors:
+                    - status: 400
+                      title: Date Logic Discrepancy
+                      detail: The start date cannot occur after the end date
+                fulfilled_order:
+                  value:
+                    errors:
+                    - status: 400
+                      title: Bad Request
+                      detail: Cannot update order shipping address because shipping status is fulfilled
+        '404':
+          description: Shipping group or order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+              example:
+                errors:
+                - status: 404
+                  title: Group not found
+                  detail: Group with ID [7cfa5b07-092e-4dbe-bbad-55a771a34117] not found for order [abc123]
+components:
+  schemas:
+    Money:
+      type: object
+      properties:
+        amount:
+          type: integer
+          description: Amount in minor currency units (e.g., cents).
+        currency:
+          type: string
+          description: ISO 4217 currency code (e.g., "USD").
+        includes_tax:
+          type: boolean
+          description: Whether the amount includes tax.
+      required:
+      - amount
+      - currency
+      - includes_tax
+    OrderPriceWrapperMeta:
+      description: Order pricing information.
+      type: object
+      properties:
+        with_tax:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        without_tax:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        tax:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        discount:
+          $ref: '#/components/schemas/DiscountFormattedPriceData'
+        balance_owing:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        paid:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        authorized:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        without_discount:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        shipping:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        shipping_discount:
+          $ref: '#/components/schemas/DiscountFormattedPriceData'
+      required:
+      - with_tax
+      - without_tax
+      - tax
+      - discount
+      - balance_owing
+      - paid
+      - authorized
+      - without_discount
+      - shipping
+      - shipping_discount
+    OrderItemResponse:
+      title: OrderItemResponse
+      type: object
+      properties:
+        type:
+          description: The type represents the object being returned.
+          type: string
+          examples:
+          - order_item
+        id:
+          description: The unique identifier for this order item.
+          type: string
+          format: uuid
+          readOnly: true
+          examples:
+          - 68bf8510-bebf-47b1-96ba-8a9930c7d928
+        quantity:
+          description: The quantity of this item were ordered.
+          type: number
+          examples:
+          - 1
+        product_id:
+          description: The unique identifier for this order item.
+          type: string
+          format: uuid
+          readOnly: true
+          examples:
+          - 4e9c6098-9701-4839-a69c-54d8256d9012
+        subscription_offering_id:
+          description: The unique identifier for the subscription offering for this order item.
+          type: string
+          format: uuid
+          readOnly: true
+          examples:
+          - 69a39623-e681-415e-83c0-e1281010c77d
+        name:
+          description: The name of this order item.
+          type: string
+          examples:
+          - Product 123
+        sku:
+          description: The SKU code for the order item.
+          type: string
+          examples:
+          - IFD-1
+        location:
+          description: The stock location for this order item.
+          type: string
+          readOnly: true
+        unit_price:
+          $ref: '#/components/schemas/OrderPriceData'
+        value:
+          $ref: '#/components/schemas/OrderPriceData'
+        discounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/DiscountData'
+        links:
+          type: object
+        meta:
+          type: object
+          properties:
+            display_price:
+              type: object
+              properties:
+                with_tax:
+                  $ref: '#/components/schemas/OrderItemFormattedUnitPriceData'
+                without_tax:
+                  $ref: '#/components/schemas/OrderItemFormattedUnitPriceData'
+                tax:
+                  $ref: '#/components/schemas/OrderItemFormattedUnitPriceData'
+                discount:
+                  $ref: '#/components/schemas/OrderItemFormattedUnitPriceData'
+                without_discount:
+                  $ref: '#/components/schemas/OrderItemFormattedUnitPriceData'
+                discounts:
+                  type: object
+                  additionalProperties:
+                    type: object
+                    properties:
+                      amount:
+                        type: number
+                        examples:
+                        - -1000
+                      currency:
+                        type: string
+                        examples:
+                        - USD
+                      formatted:
+                        type: string
+                        examples:
+                        - -$1.00
+                      constituents:
+                        type: object
+                        description: Detailed breakdown of discount constituents by ID
+                        additionalProperties:
+                          type: object
+                          properties:
+                            amount:
+                              type: number
+                              description: The discount amount
+                            currency:
+                              type: string
+                              description: The currency code
+                            formatted:
+                              type: string
+                              description: The formatted discount amount
+                original_price:
+                  description: The product's original catalog price before any catalog-level sales, tiered pricing adjustments, or cart/item level promotions are applied. This value is sourced from the product's `meta.original_display_price` field in the catalog response. See [Get a Product](/docs/api/pxm/catalog/get-by-context-product).
+                  $ref: '#/components/schemas/OrderItemFormattedUnitPriceData'
+            timestamps:
+              $ref: '#/components/schemas/Timestamps'
+        relationships:
+          type: object
+          properties:
+            cart_item:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    type:
+                      description: The type represents the object being returned.
+                      type: string
+                      examples:
+                      - order_item
+                    id:
+                      description: The unique identifier for this item.
+                      type: string
+                      format: uuid
+                      readOnly: true
+                      examples:
+                      - 5601a4b1-9d13-42d3-8fb7-03b35169d1b6
+            taxes:
+              description: Related tax items.
+              type: object
+              properties:
+                data:
+                  oneOf:
+                  - type: 'null'
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/RelationshipItem'
+            promotions:
+              description: Related promotions.
+              type: object
+              properties:
+                data:
+                  oneOf:
+                  - type: 'null'
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/RelationshipItem'
+        catalog_id:
+          description: The unique identifier of the catalog associated with the product is shown if `catalog_source=pim` is set.
+          type: string
+          examples:
+          - default
+        catalog_source:
+          description: The catalog source. Always `pim` or `legacy`.
+          type: string
+          examples:
+          - pim
+          - legacy
+        bundle_configuration:
+          description: Configuration for bundle products.
+          type: object
+          properties:
+            selected_options:
+              type: object
+              additionalProperties:
+                type: object
+                additionalProperties:
+                  type: number
+            component_products:
+              description: Array of component products for bundle configuration
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    description: Component product ID
+                    type: string
+                  type:
+                    description: Component product type
+                    type: string
+                  attributes:
+                    description: Product attributes as a generic object
+                    type: object
+                    additionalProperties: true
+                  meta:
+                    description: Product metadata as a generic object
+                    type: object
+                    additionalProperties: true
+                  price:
+                    description: Product price information as a generic object
+                    type: object
+                    additionalProperties: true
+                  relationships:
+                    description: Product relationships as a generic object
+                    type: object
+                    additionalProperties: true
+        components:
+          description: Components of the bundle product.
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              name:
+                type: string
+              options:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    quantity:
+                      type: number
+                    type:
+                      type: string
+        custom_inputs:
+          description: Custom inputs for the order item as a generic object
+          type: object
+          additionalProperties: true
+        custom_attributes:
+          description: Custom attributes attached to the order item.
+          readOnly: true
+          $ref: '#/components/schemas/CustomAttributes'
+        shipping_group_id:
+          description: The shipping group ID for the order item
+          type: string
+        promotion_source:
+          description: The promotion source for the order item
+          type: string
+        subscription_configuration:
+          description: Subscription configuration for the order item
+          type: object
+          properties:
+            plan:
+              description: Subscription plan details
+              type: string
+            pricing_option:
+              description: Pricing option for the subscription
+              type: string
+    DiscountFormattedPriceData:
+      title: DiscountFormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The discount amount. Must be non-positive (zero or negative).
+          type: number
+          maximum: 0
+          examples:
+          - -1000
+          - 0
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - -$10.00
+          - $0.00
+    FormattedPriceData:
+      title: FormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The raw total.
+          type: number
+          examples:
+          - 10000
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - $10.00
+    Response.ErrorItem:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type:
+          - string
+          - integer
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+        source:
+          type: string
+          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
+        meta:
+          type: object
+          description: Additional metadata associated with the error. May include arbitrary keys.
+          properties:
+            id:
+              type: string
+              description: The resource id associated with the error
+            ids:
+              type: array
+              items:
+                type: string
+                description: The resource ids associated with the error
+            item_ids:
+              type: array
+              items:
+                type: string
+                description: The cart_item ids associated with the error
+            shipping_group_id:
+              type: string
+              description: The shipping group id associated with the error
+            shipping_group_ids:
+              type: array
+              items:
+                type: string
+                description: The shipping group ids associated with the error
+            cart_id:
+              type: string
+              description: The cart id associated with the error
+            code:
+              type: string
+              description: The code associated with the error.
+            order_id:
+              type: string
+              description: The order id associated with the error.
+            sku:
+              type: string
+              description: The SKU associated with the error.
+            email:
+              type: string
+              format: email
+              description: The email address associated with the error.
+            component_product_id:
+              type: string
+              format: uuid
+              description: The component product ID associated with the error.
+            error-meta-key:
+              type: string
+              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
+            value:
+              description: The value associated with the error.
+              oneOf:
+              - type: string
+              - type: integer
+              - type: boolean
+              - type: object
+                additionalProperties: true
+              - type: array
+    Timestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this was created.
+          type: string
+        updated_at:
+          description: The date this was last updated.
+          type: string
+    ShippingAddress:
+      title: ShippingAddress
+      description: 'Shipping address information. You must specify at least one of region (state/province) or county.
+
+        '
+      allOf:
+      - anyOf:
+        - $ref: '#/components/schemas/AddressWithRegion'
+        - $ref: '#/components/schemas/AddressWithCounty'
+      - type: object
+        properties:
+          phone_number:
+            description: Phone number of the shipping recipient.
+            type: string
+          instructions:
+            description: Delivery instructions.
+            type: string
+      examples:
+      - first_name: John
+        last_name: Doe
+        line_1: 1 Sunny Street
+        line_2: Apartment 123
+        city: Los Angeles
+        postcode: '92802'
+        region: CA
+        country: US
+        instructions: Please leave on porch
+      - first_name: Jane
+        last_name: Smith
+        line_1: 123 Main Street
+        city: London
+        postcode: SW1A 1AA
+        county: Greater London
+        country: GB
+        phone_number: +44 20 7946 0958
+    RelationshipItem:
+      title: RelationshipItem
+      description: Relationship data entry
+      required:
+      - type
+      - id
+      type: object
+      properties:
+        type:
+          description: The type of related resource.
+          type: string
+        id:
+          description: The ID of the related resource.
+          type: string
+          format: uuid
+    AddressWithRegion:
+      title: Address with Region
+      allOf:
+      - $ref: '#/components/schemas/AddressCommon'
+      - type: object
+        required:
+        - region
+        properties:
+          region:
+            description: State, province, or region of the address.
+            type: string
+    DiscountData:
+      title: DiscountData
+      type: object
+      properties:
+        amount:
+          $ref: '#/components/schemas/OrderPriceData'
+        code:
+          type: string
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        promotion_source:
+          type: string
+          description: The source or origin of the promotion, if applicable.
+        is_cart_discount:
+          type: boolean
+          description: Indicates whether the discount applies to the entire cart.
+        ordinal:
+          type: integer
+          description: Order in which the discount was applied.
+    ShippingPriceResponse:
+      type: object
+      properties:
+        total:
+          $ref: '#/components/schemas/FormattedPriceData'
+        base:
+          $ref: '#/components/schemas/FormattedPriceData'
+        tax:
+          $ref: '#/components/schemas/FormattedPriceData'
+        fees:
+          $ref: '#/components/schemas/FormattedPriceData'
+        discount:
+          $ref: '#/components/schemas/FormattedPriceData'
+      required:
+      - total
+      - base
+    Discounts:
+      type: array
+      items:
+        $ref: '#/components/schemas/Discount'
+    AddressWithCounty:
+      title: Address with County
+      allOf:
+      - $ref: '#/components/schemas/AddressCommon'
+      - type: object
+        required:
+        - county
+        properties:
+          county:
+            description: County of the address.
+            type: string
+    SingleRelationship:
+      title: SingleRelationship
+      description: Single relationship
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/RelationshipItem'
+    Discount:
+      type: object
+      properties:
+        amount:
+          $ref: '#/components/schemas/Money'
+        code:
+          type: string
+          description: The discount code used, if applicable.
+        id:
+          type: string
+          description: Unique identifier for the discount.
+        promotion_source:
+          type: string
+          description: The source or origin of the promotion, if applicable.
+        is_cart_discount:
+          type: boolean
+          description: Indicates whether the discount applies to the entire cart.
+        ordinal:
+          type: integer
+          description: Order in which the discount was applied.
+      required:
+      - amount
+      - id
+    NonNegativeFormattedPriceData:
+      title: NonNegativeFormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The raw total. Must be non-negative.
+          type: number
+          minimum: 0
+          examples:
+          - 10000
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - $10.00
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    ShippingGroupEntityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/ShippingGroupResponse'
+        included:
+          type: object
+          description: Related objects that are included in the response when using the include query parameter.
+          properties:
+            items:
+              description: Array of order items associated with this shipping group.
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItemResponse'
+          additionalProperties: false
+        errors:
+          type: array
+          description: Array of validation or processing errors
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    ShippingGroupResponse:
+      title: Shipping Group Response
+      type: object
+      properties:
+        type:
+          type: string
+          const: shipping_group
+        id:
+          type: string
+        relation:
+          type: string
+        cart_id:
+          type: string
+        order_id:
+          type: string
+        shipping_type:
+          type: string
+        tracking_reference:
+          type: string
+        external_ref:
+          description: An optional external ID reference for a shipping group. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
+          type: string
+          maxLength: 64
+          examples:
+          - SG-12345
+        address:
+          $ref: '#/components/schemas/ShippingAddress'
+        delivery_estimate:
+          $ref: '#/components/schemas/DeliveryEstimate'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        relationships:
+          type: object
+          properties:
+            cart:
+              $ref: '#/components/schemas/SingleRelationship'
+            order:
+              $ref: '#/components/schemas/SingleRelationship'
+        discounts:
+          $ref: '#/components/schemas/Discounts'
+        meta:
+          $ref: '#/components/schemas/ShippingGroupMeta'
+    DeliveryEstimate:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+    ShippingGroupMeta:
+      type: object
+      properties:
+        shipping_display_price:
+          $ref: '#/components/schemas/ShippingPriceResponse'
+        total_display_price:
+          $ref: '#/components/schemas/OrderPriceWrapperMeta'
+    OrderItemFormattedUnitPriceData:
+      title: OrderItemFormattedUnitPriceData
+      type: object
+      properties:
+        unit:
+          $ref: '#/components/schemas/FormattedPriceData'
+        value:
+          $ref: '#/components/schemas/FormattedPriceData'
+    CustomAttributes:
+      title: CustomAttributes
+      type: object
+      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
+      additionalProperties:
+        type: object
+        required:
+        - type
+        - value
+        properties:
+          type:
+            type: string
+            description: The type of the custom attribute value.
+            enum:
+            - string
+            - integer
+            - boolean
+            - float
+          value:
+            description: The value of the custom attribute.
+            type:
+            - string
+            - boolean
+            - number
+    UpdateOrderShippingGroupRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              const: shipping_group
+            shipping_type:
+              type: string
+            tracking_reference:
+              type: string
+            external_ref:
+              description: An optional external ID reference for a shipping group. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters.
+              type: string
+              maxLength: 64
+            address:
+              $ref: '#/components/schemas/ShippingAddress'
+            delivery_estimate:
+              $ref: '#/components/schemas/DeliveryEstimate'
+    OrderPriceData:
+      title: OrderPriceData
+      type: object
+      properties:
+        amount:
+          description: The amount for this item.
+          type: number
+          examples:
+          - 10000
+        currency:
+          description: The currency this item.
+          type: string
+          examples:
+          - USD
+        includes_tax:
+          description: Whether this price is tax inclusive.
+          type: boolean
+          examples:
+          - false
+    AddressCommon:
+      type: object
+      required:
+      - first_name
+      - last_name
+      - line_1
+      - postcode
+      - country
+      properties:
+        first_name:
+          description: First name of the recipient.
+          type: string
+          examples:
+          - John
+        last_name:
+          description: Last name of the recipient.
+          type: string
+          examples:
+          - Doe
+        company_name:
+          description: Company of the recipient.
+          type: string
+          examples:
+          - John Doe Enterprises
+        line_1:
+          description: First line of the address.
+          type: string
+          examples:
+          - 1 Sunny Street
+        line_2:
+          description: Second line of the address.
+          type: string
+          examples:
+          - Apartment 123
+        city:
+          description: City of the address.
+          type: string
+          examples:
+          - Los Angeles
+        postcode:
+          description: Post code of the address.
+          type: string
+          examples:
+          - '92802'
+        county:
+          description: County of the address.
+          type: string
+          examples:
+          - Orange
+        country:
+          description: Country of the address.
+          type: string
+          examples:
+          - US
+        region:
+          description: State, province, or region of the address.
+          type: string
+          examples:
+          - CA
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

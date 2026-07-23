@@ -1,0 +1,946 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Tax Items API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Tax Items
+  description: "Taxes differ by country and can differ within the country by region, state, or province. Each jurisdiction has a unique tax code and rate. If your store serves many jurisdictions, integrate a third-party tax generator to manage taxes. If your store serves a few jurisdictions, you can use the API to define the tax codes and rates in Composable Commerce.\n\nTaxes are calculated after all promotional discounts have been applied. When calculating taxes on a cart or order, you can choose from the following methods for calculating taxes:\n\n  - Simple calculation method: Taxes are calculated at the unit level and are rounded to the nearest penny for the unit.\n  - Line calculation method: Default. Taxes are calculated at the line level and are rounded to the nearest penny for the line.\n    For more information about calculation methods, see [Calculate cart and order totals](/guides/How-To/Carts/calculate-totals).\n\nTax values can be either `rate` or `amount`.\n  - `rate` - Represents the tax as a percentage in decimal form.\n  - `amount` - Represents a tax amount.\n\n:::note\nTax items can be added and removed using [client_credentials access tokens](/docs/api/authentication/create-an-access-token). Only administrators with `client-credentials` access tokens are able to manage tax items.\n:::\n"
+paths:
+  /v2/carts/{cartID}/items/{cartitemID}/taxes:
+    parameters: []
+    post:
+      tags:
+      - Tax Items
+      summary: Add Tax Item to Cart
+      description: '
+
+        Use this endpoint to add a tax item to a cart.
+
+
+        :::note
+
+
+        There is a soft limit of 5 unique tax items per cart item at any one time.
+
+
+        :::
+
+        '
+      operationId: addTaxItemToCart
+      parameters:
+      - name: cartID
+        in: path
+        description: The unique identifier of the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: cartitemID
+        in: path
+        description: The unique identifier of the cart item.
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemTaxesEntityResponse'
+            examples:
+              rateTaxItem:
+                summary: Add a rate-based tax item
+                value:
+                  data:
+                    type: tax_item
+                    code: VAT
+                    jurisdiction: UK
+                    name: Value Added Tax
+                    rate: 0.2
+              amountTaxItem:
+                summary: Add an amount-based tax item
+                value:
+                  data:
+                    type: tax_item
+                    code: GST
+                    jurisdiction: AU
+                    name: Goods and Services Tax
+                    amount: 1000
+        required: true
+      responses:
+        '200':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItemTaxesEntityResponse'
+              examples:
+                rateTaxItem:
+                  summary: Rate-based tax item
+                  value:
+                    data:
+                      id: 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+                      type: tax_item
+                      code: VAT
+                      jurisdiction: UK
+                      name: Value Added Tax
+                      rate: 0.2
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItemTaxesEntityResponse'
+              examples:
+                amountTaxItem:
+                  summary: Amount-based tax item
+                  value:
+                    data:
+                      id: 3f3b5e26-7e7e-4d2d-a3a7-5e9b1f72fabc
+                      type: tax_item
+                      code: GST
+                      jurisdiction: AU
+                      name: Goods and Services Tax
+                      amount: 1000
+        '422':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+      deprecated: false
+  /v2/carts/{cartID}/items/{cartitemID}/components/{productID}/taxes:
+    parameters: []
+    post:
+      tags:
+      - Tax Items
+      summary: Add Tax Item to Bundle Component
+      description: '
+
+        Use this endpoint to add a tax item to a specific bundle component (component product) within a cart item.
+
+
+        :::note
+
+
+        There is a soft limit of 5 unique tax items per component product at any one time.
+
+
+        :::
+
+        '
+      operationId: addTaxItemToCartItemComponent
+      parameters:
+      - name: cartID
+        in: path
+        description: The unique identifier of the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: cartitemID
+        in: path
+        description: The unique identifier of the cart item.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: productID
+        in: path
+        description: The unique identifier of the component product within the bundle.
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemTaxesEntityResponse'
+            examples:
+              rateTaxItemComponent:
+                summary: Add a rate-based tax item to a bundle component
+                value:
+                  data:
+                    type: tax_item
+                    code: VAT
+                    jurisdiction: UK
+                    name: Value Added Tax
+                    rate: 0.2
+              amountTaxItemComponent:
+                summary: Add an amount-based tax item to a bundle component
+                value:
+                  data:
+                    type: tax_item
+                    code: PST
+                    jurisdiction: CA-BC
+                    name: Provincial Sales Tax
+                    amount: 250
+        required: true
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItemTaxesEntityResponse'
+              examples:
+                componentRateTaxItem:
+                  summary: Rate-based tax item on bundle component
+                  value:
+                    data:
+                      id: 4f4e6d37-8c8c-4a1a-b8a3-6cd2efab12de
+                      type: tax_item
+                      code: VAT
+                      jurisdiction: UK
+                      name: Value Added Tax
+                      rate: 0.2
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+      deprecated: false
+  /v2/carts/{cartID}/items/{cartitemID}/components/{productID}/taxes/{taxitemID}:
+    parameters: []
+    put:
+      tags:
+      - Tax Items
+      summary: Update Tax Item on Bundle Component
+      description: Use this endpoint to update a tax item on a specific bundle component (component product) within a cart item. To change tax value from `rate` to `amount`, set `rate` to `null`, then set `amount` value and vice versa.
+      operationId: updateTaxItemFromCartItemComponent
+      parameters:
+      - name: cartID
+        in: path
+        description: The unique identifier of the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: cartitemID
+        in: path
+        description: The unique identifier of the cart item.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: productID
+        in: path
+        description: The unique identifier of the component product within the bundle.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: taxitemID
+        in: path
+        description: The unique identifier of the tax item on the component product.
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemTaxesEntityResponse'
+            examples:
+              updateRateTaxItemComponent:
+                summary: Update a bundle component tax item using rate
+                value:
+                  data:
+                    type: tax_item
+                    code: VAT
+                    jurisdiction: UK
+                    name: Value Added Tax
+                    rate: 0.18
+              updateAmountTaxItemComponent:
+                summary: Update a bundle component tax item using amount
+                value:
+                  data:
+                    type: tax_item
+                    code: GST
+                    jurisdiction: AU
+                    name: Goods and Services Tax
+                    amount: 1200
+        required: false
+      responses:
+        '200':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItemTaxesEntityResponse'
+              examples:
+                componentUpdatedAmountTaxItem:
+                  summary: Updated bundle component tax item (amount)
+                  value:
+                    data:
+                      id: 7aa2ddad-2c5b-4d9b-9ce9-3e8cff778a10
+                      type: tax_item
+                      code: GST
+                      jurisdiction: AU
+                      name: Goods and Services Tax
+                      amount: 1200
+      deprecated: false
+    delete:
+      tags:
+      - Tax Items
+      summary: Delete Tax Item from Bundle Component
+      description: '
+
+        Use this endpoint to delete a tax item from a specific bundle component (component product) within a cart item.
+
+        '
+      operationId: deleteTaxItemFromCartItemComponent
+      parameters:
+      - name: cartID
+        in: path
+        description: The unique identifier of the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: cartitemID
+        in: path
+        description: The unique identifier of the cart item.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: productID
+        in: path
+        description: The unique identifier of the component product within the bundle.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: taxitemID
+        in: path
+        description: The unique identifier of the tax item on the component product.
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content
+          headers: {}
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+      deprecated: false
+  /v2/carts/{cartID}/taxes:
+    parameters: []
+    post:
+      tags:
+      - Tax Items
+      summary: Bulk Add Tax Items to Cart
+      description: "Use this endpoint to bulk add tax items to cart items and bundle component products.\n\n:::note\n\nA cart item can only have a maximum of five tax items.\nA bundle component product can only have a maximum of five tax items.\n\n:::\n\n### Bundle Component Taxes\n\nTo add tax items to bundle component products, include a `meta` object with `component_product_id` in each tax item:\n\n```json\n{\n  \"data\": [\n    {\n      \"type\": \"tax_item\",\n      \"code\": \"GST\",\n      \"name\": \"Goods and Services Tax\",\n      \"rate\": 0.1,\n      \"meta\": {\n        \"component_product_id\": \"12345678-1234-5678-9012-123456789012\"\n      },\n      \"relationships\": {\n        \"item\": {\n          \"data\": {\n            \"type\": \"cart_item\",\n            \"id\": \"cart-item-id\"\n          }\n        }\n      }\n    }\n  ]\n}\n```\n\n### Errors\n\n\n`422 Unprocessable Entity`\n\n\nIn this example, when `options.add_all_or_nothing` is set to `true` and if\none of cart items is not found or has reached its maximum tax item limit,\nthe following error response is returned:\n\n\n```json\n\n{\n            \"status\": 422,\n            \"title\": \"Add all or nothing.\",\n            \"detail\": \"Add all or nothing set to (true). Could not bulk add tax items to cart.\"\n        }\n\n```\n\n\nIn this example, if you add more than five tax items to the same cart item,\nthe following error response is returned:\n\n\n```json\n\n{\n            \"status\": 422,\n            \"title\": \"Tax item not added to cart item.\",\n            \"detail\": \"Cannot exceed tax item limit of (5) on cart item.\",\n            \"meta\": {\n                \"id\": \"f88e6370-cb35-40b2-a998-c759f31dec0a\"\n            }\n        }\n```\n\n\n`404`\n\n\nIn this example, if there is a mismatch between `cart_item`/`custom_item`\nand the `relationships.item.data.type` specified in the bulk add tax item,\nthe following error response is returned:\n\n\n```json\n\n{\n    \"data\": [],\n    \"errors\": [\n        {\n            \"status\": 404,\n            \"title\": \"Tax item not added to cart item.\",\n            \"detail\": \"Mismatch between bulk tax item type(cart_item) and cart item type(custom_item).\",\n            \"meta\": {\n                \"id\": \"56aab5d1-1dd4-45ed-88ed-4d0cc396b62d\"\n            }\n        },\n        {\n            \"status\": 404,\n            \"title\": \"Tax item not added to cart item.\",\n            \"detail\": \"Mismatch between bulk tax item type(cart_item) and cart item type(custom_item).\",\n            \"meta\": {\n                \"id\": \"56aab5d1-1dd4-45ed-88ed-4d0cc396b62d\"\n            }\n        }\n    ]\n}\n\n```\n"
+      operationId: bulkAddTaxItemsToCart
+      parameters:
+      - name: cartID
+        in: path
+        description: The unique identifier of the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/CartsBulkTaxes'
+            examples:
+              bulkRateTaxItems:
+                summary: Bulk add rate-based tax items to cart items
+                value:
+                  data:
+                  - type: tax_item
+                    code: VAT
+                    name: Value Added Tax
+                    jurisdiction: UK
+                    rate: 0.2
+                    relationships:
+                      item:
+                        data:
+                          type: cart_item
+                          id: 5601a4b1-9d13-42d3-8fb7-03b35169d1b6
+                  options:
+                    add_all_or_nothing: false
+              bulkAmountTaxItems:
+                summary: Bulk add amount-based tax items to cart and custom items
+                value:
+                  data:
+                  - type: tax_item
+                    code: GST
+                    name: Goods and Services Tax
+                    jurisdiction: AU
+                    amount: 1000
+                    relationships:
+                      item:
+                        data:
+                          type: cart_item
+                          id: 1a2b3c4d-5e6f-7a8b-9c0d-abcdefabcdef
+                  - type: tax_item
+                    code: PST
+                    name: Provincial Sales Tax
+                    jurisdiction: CA-BC
+                    amount: 250
+                    relationships:
+                      item:
+                        data:
+                          type: custom_item
+                          id: 9f8e7d6c-5b4a-3210-fedc-ba9876543210
+                  options:
+                    add_all_or_nothing: true
+              bulkBundleComponentTaxItems:
+                summary: Bulk add tax items to bundle component products using meta
+                value:
+                  data:
+                  - type: tax_item
+                    code: GST
+                    name: Goods and Services Tax
+                    jurisdiction: AU
+                    rate: 0.1
+                    meta:
+                      component_product_id: 12345678-1234-5678-9012-123456789012
+                    relationships:
+                      item:
+                        data:
+                          type: cart_item
+                          id: 22223333-4444-5555-6666-777788889999
+                  options:
+                    add_all_or_nothing: false
+        required: false
+      responses:
+        '200':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CartsBulkTaxes'
+              examples:
+                bulkAddedRateItems:
+                  summary: Bulk add response with generated IDs (rate)
+                  value:
+                    data:
+                    - id: 98c2b4de-7f33-4b3a-8f2e-8c1b2a3d4e5f
+                      type: tax_item
+                      code: VAT
+                      name: Value Added Tax
+                      jurisdiction: UK
+                      rate: 0.2
+                      relationships:
+                        item:
+                          data:
+                            type: cart_item
+                            id: 5601a4b1-9d13-42d3-8fb7-03b35169d1b6
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CartsBulkTaxes'
+              examples:
+                bulkAddedAmountAndComponentItems:
+                  summary: Bulk add response with amount and component taxes
+                  value:
+                    data:
+                    - id: 2b3c4d5e-6f70-4a8b-9c0d-1e2f3a4b5c6d
+                      type: tax_item
+                      code: GST
+                      name: Goods and Services Tax
+                      jurisdiction: AU
+                      amount: 1000
+                      relationships:
+                        item:
+                          data:
+                            type: cart_item
+                            id: 1a2b3c4d-5e6f-7a8b-9c0d-abcdefabcdef
+                    - id: 5e4d3c2b-1a0f-4b8a-9c0d-7f6e5d4c3b2a
+                      type: tax_item
+                      code: PST
+                      name: Provincial Sales Tax
+                      jurisdiction: CA-BC
+                      amount: 250
+                      relationships:
+                        item:
+                          data:
+                            type: custom_item
+                            id: 9f8e7d6c-5b4a-3210-fedc-ba9876543210
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+      deprecated: false
+    delete:
+      tags:
+      - Tax Items
+      summary: Bulk Delete Tax Items from Cart
+      description: "Use this endpoint to bulk delete all tax items from all cart items and bundle component products in the cart.\n\n:::warning\n\nThis operation will remove ALL tax items from:\n- All cart items in the cart\n- All bundle component products within bundle cart items\n\n:::\n\n### Behavior\n\n- Removes all tax items from every cart item\n- Removes all tax items from every component product in bundle cart items\n- If no tax items exist anywhere in the cart, returns a 404 error\n\n### Errors\n\n`404 Not Found`\n\nIf no tax items exist in the cart (on cart items or component products):\n\n```json\n{\n    \"status\": 404,\n    \"title\": \"Resource Not Found\",\n    \"detail\": \"No tax items exist in the cart\"\n}\n```\n"
+      operationId: bulkDeleteTaxItemsFromCart
+      parameters:
+      - name: cartID
+        in: path
+        description: The unique identifier of the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content
+          headers: {}
+          content: {}
+        '404':
+          description: Not Found - No tax items exist in the cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+      deprecated: false
+  /v2/carts/{cartID}/items/{cartitemID}/taxes/{taxitemID}:
+    parameters: []
+    put:
+      tags:
+      - Tax Items
+      summary: Update a Tax Item
+      description: Use this endpoint to update a tax item. To change tax value from `rate` to `amount`, set `rate` to `null`, then set `amount` value and vice versa.
+      operationId: updateATaxItem
+      parameters:
+      - name: cartID
+        in: path
+        description: The unique identifier of the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: cartitemID
+        in: path
+        description: The unique identifier of the cart item.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: taxitemID
+        in: path
+        description: The unique identifier of the tax item.
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemTaxesEntityResponse'
+            examples:
+              updateRateTaxItem:
+                summary: Update a tax item using rate
+                value:
+                  data:
+                    type: tax_item
+                    code: VAT
+                    jurisdiction: UK
+                    name: Value Added Tax
+                    rate: 0.15
+              updateAmountTaxItem:
+                summary: Update a tax item using amount
+                value:
+                  data:
+                    type: tax_item
+                    code: GST
+                    jurisdiction: AU
+                    name: Goods and Services Tax
+                    amount: 1500
+        required: false
+      responses:
+        '200':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItemTaxesEntityResponse'
+              examples:
+                updatedRateTaxItem:
+                  summary: Updated tax item (rate)
+                  value:
+                    data:
+                      id: 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+                      type: tax_item
+                      code: VAT
+                      jurisdiction: UK
+                      name: Value Added Tax
+                      rate: 0.15
+      deprecated: false
+    delete:
+      tags:
+      - Tax Items
+      summary: Delete a Tax Item
+      description: Use this endpoint to delete a tax item.
+      operationId: deleteATaxItem
+      parameters:
+      - name: cartID
+        in: path
+        description: The unique identifier of the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: cartitemID
+        in: path
+        description: The unique identifier of the cart item.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: taxitemID
+        in: path
+        description: The unique identifier of the tax item.
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content
+          headers: {}
+          content: {}
+      deprecated: false
+components:
+  schemas:
+    CartsItemsTaxesWithRate:
+      title: Tax Object (With Rate)
+      allOf:
+      - $ref: '#/components/schemas/CartsItemsTaxesCommon'
+      - type: object
+        required:
+        - rate
+        properties:
+          rate:
+            description: 'The tax rate as a decimal (12.5% -> 0.125). Required when using rate-based taxation.
+
+              '
+            type: number
+            examples:
+            - 0.2
+          amount:
+            description: 'The tax as an absolute amount. Not allowed when rate is specified.
+
+              '
+            type: number
+            examples:
+            - 1000
+        not:
+          type: object
+          required:
+          - amount
+          properties:
+            amount:
+              type: number
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    CartsItemsTaxesWithAmount:
+      title: Tax Object (With Amount)
+      allOf:
+      - $ref: '#/components/schemas/CartsItemsTaxesCommon'
+      - type: object
+        required:
+        - amount
+        properties:
+          amount:
+            description: 'The tax as an absolute amount in the smallest currency unit (e.g., $10 -> 1000). Required when using amount-based taxation.
+
+              '
+            type: number
+            examples:
+            - 1000
+          rate:
+            description: 'The tax rate as a decimal. Not allowed when amount is specified.
+
+              '
+            type: number
+            examples:
+            - 0.2
+        not:
+          type: object
+          required:
+          - rate
+          properties:
+            rate:
+              type: number
+    Response.ErrorItem:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type:
+          - string
+          - integer
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+        source:
+          type: string
+          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
+        meta:
+          type: object
+          description: Additional metadata associated with the error. May include arbitrary keys.
+          properties:
+            id:
+              type: string
+              description: The resource id associated with the error
+            ids:
+              type: array
+              items:
+                type: string
+                description: The resource ids associated with the error
+            item_ids:
+              type: array
+              items:
+                type: string
+                description: The cart_item ids associated with the error
+            shipping_group_id:
+              type: string
+              description: The shipping group id associated with the error
+            shipping_group_ids:
+              type: array
+              items:
+                type: string
+                description: The shipping group ids associated with the error
+            cart_id:
+              type: string
+              description: The cart id associated with the error
+            code:
+              type: string
+              description: The code associated with the error.
+            order_id:
+              type: string
+              description: The order id associated with the error.
+            sku:
+              type: string
+              description: The SKU associated with the error.
+            email:
+              type: string
+              format: email
+              description: The email address associated with the error.
+            component_product_id:
+              type: string
+              format: uuid
+              description: The component product ID associated with the error.
+            error-meta-key:
+              type: string
+              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
+            value:
+              description: The value associated with the error.
+              oneOf:
+              - type: string
+              - type: integer
+              - type: boolean
+              - type: object
+                additionalProperties: true
+              - type: array
+    CartItemRelationship:
+      title: CartItemRelationship
+      type: object
+      properties:
+        relationships:
+          type: object
+          required:
+          - item
+          properties:
+            item:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  type: object
+                  required:
+                  - type
+                  - id
+                  properties:
+                    type:
+                      description: Specifies the type of item. For example, `custom_item` or `cart_item`.
+                      type: string
+                      examples:
+                      - cart_item
+                    id:
+                      description: Specifies the unique identifier of the `cart_item` or `custom_item` in the cart.
+                      type: string
+                      format: uuid
+                      examples:
+                      - 5601a4b1-9d13-42d3-8fb7-03b35169d1b6
+    AddAllOrNothingOptionsObject:
+      title: Add All Or Nothing Options Object
+      type: object
+      properties:
+        add_all_or_nothing:
+          description: When `true`, if an error occurs for any item, no items are added to the cart. When `false`, valid items are added to the cart and the items with errors are reported in the response. Default is `false`.
+          type: boolean
+          examples:
+          - false
+    CartsItemsTaxesCommon:
+      type: object
+      required:
+      - type
+      properties:
+        code:
+          description: A unique tax code in this jurisdiction.
+          type: string
+        jurisdiction:
+          description: The relevant tax jurisdiction.
+          type: string
+        name:
+          description: The name of the tax item.
+          type: string
+        rate:
+          description: 'The tax rate as a decimal (12.5% -> 0.125). You must specify either `rate` or `amount`, but not both.
+
+            '
+          type: number
+        amount:
+          description: 'The tax as an absolute amount in the smallest currency unit (e.g., $10 -> 1000). You must specify either `rate` or `amount`, but not both.
+
+            '
+          type: number
+        type:
+          description: The type of object being returned. Use `tax_item`.
+          type: string
+          const: tax_item
+        id:
+          description: The unique identifier for this tax item.
+          type: string
+          format: uuid
+          readOnly: true
+    CartItemTaxesEntityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/CartsItemsTaxesObject'
+      required:
+      - data
+    CartsBulkTaxes:
+      title: CartsBulkTaxes
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/CartsItemsTaxesObject'
+            - $ref: '#/components/schemas/CartItemRelationship'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+        options:
+          $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
+    CartsItemsTaxesObject:
+      title: Carts Items Taxes Object
+      description: 'A tax item that can be applied to cart items or bundle components. You must specify either a rate (percentage) or an amount (fixed value), but not both.
+
+        '
+      oneOf:
+      - $ref: '#/components/schemas/CartsItemsTaxesWithRate'
+      - $ref: '#/components/schemas/CartsItemsTaxesWithAmount'
+      examples:
+      - type: tax_item
+        code: VAT
+        jurisdiction: UK
+        name: Value Added Tax
+        rate: 0.2
+      - type: tax_item
+        code: EXCISE
+        jurisdiction: US
+        name: Excise Tax
+        amount: 500
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

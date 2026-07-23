@@ -1,0 +1,487 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Schedules API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Schedules
+  description: "You can schedule your billing, tax, and payment runs. By scheduling billing, tax, and payment runs, you automate the process, reducing manual intervention and ensuring the jobs are run in a timely manner.  You can define a schedule in the format (`* * * * *`) which is a set of five fields in a line, indicating when a job should be executed. For example, you can define a schedule so that your job runs multiple times a day, or runs on specific days and months.\n\nSubscriptions runs on Coordinated Universal Time (UTC) time and conforms to [**RFC 3339**](https://www.rfc-editor.org/rfc/rfc3339). \n\n### Unrestricted fields\n\nSetting a field to an asterisk (`*`) is sometimes referred to as leaving a field unrestricted because it is not restricted to a specific value.\n\nYou can use the asterisk (`*`) to indicate the range of all values for the field. When you use the asterisk, the first value in the range is: 0 for the minute, hour, and day of the week (Sunday) fields, and 1 for day of the month and the month fields.\n\n### Configuring fields\n\nThe time fields have the following format and possible values and must be specified in the following order:\n\n| Field | Format | Description  |                                                                                                    \n| --- | --- | -----|\n| Minute | 0-59 | Indicates how far past the top of the hour your job runs, in minutes. For example if a minute is set to 0, then the job runs at the top of the hour because it is 0 minutes after the hour. This means if the hour is 8.00 AM, the job runs at 8.00 AM. |\n| Hour | 0-23 | Indicates how far past midnight your job runs, in hours. This is rounded down to the nearest hours. This is because minutes are indicated by the minute field. |\n| Day of the month | 0-31 | Indicates the calendar date of the month. For example, 1 for the first day of the month. |\n| Month | 1-12 or JAN to DEC | Indicates the month. Specify the month number or the first three letters of the month name in uppercase. For example, 1 or JAN for January.  |\n| Day of the week | 0-6 (or SUN to SAT, or 7 for Sunday) | Indicates the day of the week. Monday is 1, Tuesday is 2, and so on. Either 0 or 7 indicates Sunday. Alternatively, specify the day of the week using the first three letters of the weekday name in uppercase. For example SUN for Sunday. If you use this field with the day of the month field, then this field is evaluated as an inclusive OR. For example, if the day of the month is set to 1 and the day of the week is set to SAT, the job runs on the first day of the month and on every Saturday of the month, even if the first day of the month is not a Saturday. If the day of the week is marked by an asterisk (*) then the field is marked as unrestricted. This means the job only runs on the first day of the month. |\n\n### Matching all values\n\nTo match all values for a field, set the field to an asterisk (`*`). When a field is set to an asterisk, the field matches all valid values for that field whenever the other field conditions are satisfied. \n\n Here are some examples.\n\n - `* 0 1 1 1`: the job runs every minute of the midnight hour on January 1st and Mondays.\n - `* * * * *`: the job runs every minute (of every hour, of every day of the month, of every month, every day of the week, because each of these is unrestricted).\n\n ### Matching a range\n\n To match a range of values, specify your start and stop values, separated by a hyphen (`-`). Do not include spaces in the range. Ranges are inclusive. The first number must be less than the second number. If you are using abbreviated names for the month or weekday (for example, JAN instead of 1 for the first month of the year), the first value must come earlier in the month or week than the second value.\n\nThe following equivalent examples run at midnight on Mondays, Tuesdays, Wednesdays, Thursdays, and Fridays (for all months):\n\n - `0 0 * * 1-5`\n - `0 0 * * MON-FRI`\n\n### Matching a list\n\nLists can contain any valid value for the field, including ranges. Specify your values, separated by a comma (,). Do not include spaces in the list.\n\nExamples:\n\n- `0 0,12 * * *`: the job runs at midnight and noon.\n- `0-5,30-35 * * * *`: the job runs in each of the first five minutes of every half hour (at the top of the hour and at half past the hour).\n\n### Skipping values in a range\n\nYou can skip values in a range by specifying a rate at which to step through the range. To do this, specify the range, followed by the forward slash (`/`) and the rate at which you want to skip through the range.\n\nThe step value cannot be larger than the largest possible value for the field. The default step is 1, so the step function `/1` is the same as not using a step function at all.\n\nExample ranges that use step functions:\n\n- `*/2`: this is a valid step function for any field. \n    - For the minute field, it matches 0, 2, 4, ... , 58. \n    - For the hour, it matches 0, 2, 4, ... , 22. \n    - For the day of the month, it matches 1, 3, 5, ... , 31 (for a month with 31 days). \n    - For the month, it matches 1, 3, 5, ... , 11. \n    - For the day of the week, it matches 0, 2, 4, 6.\n\n- `0-12/2`: this is a valid step function for the minute and hour fields. It matches 0, 2, 4, ... , 12.\n\nExample schedules using step functions:\n\n- `*/2 * * * *`: the job runs every two minutes.\n- `0 0-12/2 * * *`: the job runs every two hours, on the hour. The first run is at midnight. The last run is at noon.\n"
+paths:
+  /v2/subscriptions/schedules:
+    parameters:
+    - $ref: '#/components/parameters/Filter'
+    get:
+      tags:
+      - Schedules
+      summary: List schedules
+      description: "Retrieves a list of all schedules.\n\n### Filtering\n\nThis endpoint supports filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering).\n\nThe following attributes and operators are supported.\n\n| Operator | Attribute | Description |\n| --- | --- | --- | \n| `eq` | `external_ref` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. |\n| `in` | `external_ref` | In. Checks if the value is in the specified list. If it is, the condition is true. |\n"
+      parameters:
+      - $ref: '#/components/parameters/PageOffset'
+      - $ref: '#/components/parameters/PageLimit'
+      operationId: ListSchedules
+      responses:
+        '200':
+          description: Success. A list of schedules is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Schedule'
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+      - Schedules
+      summary: Create a schedule
+      operationId: CreateSchedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  $ref: '#/components/schemas/ScheduleCreate'
+      responses:
+        '201':
+          description: Success. The schedule is created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Schedule'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/subscriptions/schedules/{schedule_uuid}:
+    parameters:
+    - name: schedule_uuid
+      in: path
+      description: The unique identifier of the schedule.
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    get:
+      tags:
+      - Schedules
+      summary: Get a schedule
+      operationId: GetSchedule
+      responses:
+        '200':
+          description: Success. A schedule is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Schedule'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Schedules
+      summary: Update a schedule
+      operationId: UpdateSchedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  $ref: '#/components/schemas/ScheduleUpdate'
+      responses:
+        '200':
+          description: Success. The schedule details are returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Schedule'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/WriteConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+      - Schedules
+      summary: Delete schedule
+      operationId: DeleteSchedule
+      responses:
+        '204':
+          description: Success. The schedule is removed.
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  parameters:
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+    Filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(name,Alan Turing)
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
+  responses:
+    ForbiddenError:
+      description: Forbidden. The operation is forbidden on this entity.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Permission denied
+                  status: '404'
+                  detail: 'Permission denied: plan tenancy mismatch'
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No plan found
+    WriteConflictError:
+      description: Write conflict. Unable to perform the operation at this time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - title: Write Conflict
+              status: '409'
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: 'data.attributes.name: "name" is required'
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+  schemas:
+    Timestamps:
+      required:
+      - created_at
+      - updated_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    SubscriptionScheduleType:
+      type: string
+      example: subscription_schedule
+      enum:
+      - subscription_schedule
+    ScheduleJob:
+      required:
+      - job_type
+      properties:
+        job_type:
+          $ref: '#/components/schemas/ScheduleJobType'
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    ScheduleCreate:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/SubscriptionScheduleType'
+        attributes:
+          $ref: '#/components/schemas/ScheduleAttributes'
+    ScheduleUpdate:
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionScheduleType'
+        attributes:
+          $ref: '#/components/schemas/ScheduleUpdateAttributes'
+    ScheduleAttributes:
+      required:
+      - specification
+      - location
+      - job
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+        name:
+          type: string
+          description: The name of the schedule.
+          minLength: 3
+          maxLength: 1024
+          example: Daily billing run.
+        specification:
+          type: string
+          description: A cron-style specification of when the jobs should be created. See [**Schedules**](/docs/api/subscriptions/schedules).
+          maxLength: 1024
+          example: 30 0 * * *
+        location:
+          type: string
+          description: The location of the time zone that the schedule operates in. Subscriptions runs on Coordinated Universal Time (UTC) time and conforms to [**RFC 3339**](https://www.rfc-editor.org/rfc/rfc3339).
+          maxLength: 1024
+          example: Europe/London
+        job:
+          $ref: '#/components/schemas/ScheduleJob'
+    ScheduleResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/ScheduleAttributes'
+      - $ref: '#/components/schemas/Timestamps'
+    ScheduleMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      properties:
+        scheduled_for:
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    LinkURI:
+      type: string
+      format: uri
+      example: http://example.com/articles/1/comments
+      nullable: true
+    Schedule:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionScheduleType'
+        attributes:
+          $ref: '#/components/schemas/ScheduleResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/ScheduleMeta'
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
+    ExternalRefUpdate:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
+      nullable: true
+    ScheduleUpdateAttributes:
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRefUpdate'
+        name:
+          type: string
+          description: The name of the schedule.
+          minLength: 3
+          maxLength: 1024
+          example: Daily billing run.
+          nullable: true
+        specification:
+          type: string
+          description: A cron-style specification of when the jobs should be created.
+          maxLength: 1024
+          example: 30 0 * * *
+        location:
+          type: string
+          description: The location of the time zone that the schedule operates in.
+          maxLength: 1024
+          example: Europe/London
+        job:
+          $ref: '#/components/schemas/ScheduleJob'
+    ExternalRef:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
+    ScheduleJobType:
+      type: string
+      description: "The type of job. One of the following:\n - `billing-run` - a billing run job.\n - `payment-run` - a payment run job.\n - `notification-run` - a notification run job.\n"
+      enum:
+      - billing-run
+      - payment-run
+      - notification-run
+      example: billing-run
+      x-go-type: model.JobType
+      x-go-type-import:
+        name: model
+        path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

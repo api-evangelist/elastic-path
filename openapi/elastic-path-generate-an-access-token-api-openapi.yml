@@ -1,0 +1,209 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Generate an Access Token API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Generate an Access Token
+paths:
+  /oauth/access_token:
+    post:
+      tags:
+      - Generate an Access Token
+      summary: Create an Access Token
+      operationId: CreateAnAccessToken
+      description: '
+
+        ### Client Credentials
+
+
+        A `client_credentials` token is used when the credentials are not publicly exposed, usually a server-side language such as PHP or Node.js. This type of authentication enables `CRUD` access to all resources.
+
+
+        `client_id` and `client_secret` are created and managed via [Application Keys](/docs/api/application-keys/create-an-application-key).
+
+
+        To see the access granted by a `client_credentials` token, refer to [Permissions](/docs/authentication/tokens/permissions).
+
+
+
+        ### Implicit
+
+
+        An `implicit` token is typically used for situations where you are requesting data on the client side and you are exposing your public key. When authenticated implicitly, you can only fetch (`GET`) data with live status (products, categories, brands, etc).
+
+
+        The `implicit` token is most appropriate for use inside client-side applications, such as JavaScript.
+
+
+        :::caution
+
+        An `implicit` token can be thought of as a **Read only** token.
+
+        :::
+
+        '
+      requestBody:
+        $ref: '#/components/requestBodies/CreateAccessToken'
+      responses:
+        '200':
+          $ref: '#/components/responses/AccessToken'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  responses:
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            bad-request-error:
+              summary: Bad Request
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Bad Request\",\n      \"status\": \"400\",\n      \"detail\": \"The field 'name' is required\"\n    }\n  ]\n}\n"
+    AccessToken:
+      description: Access Token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              access_token:
+                type: string
+                description: The access token you use to authenticate requests to the API.
+              token_type:
+                type: string
+                description: Right now this is only `Bearer`.
+              identifier:
+                type: string
+                description: The type of token requested. This can be a `client_credentials` or `implicit`.
+              expires_in:
+                type: integer
+                description: The duration in seconds after which the token expires.
+              expires:
+                type: integer
+                description: The epoch time that this token expires at.
+          examples:
+            Client Credentials:
+              summary: Access token from Client Credentials
+              value:
+                access_token: xa3521ca621113e44eeed9232fa3e54571cb08bc
+                token_type: Bearer
+                expires_in: 3600
+                expires: 1524486008
+                identifier: client_credentials
+            Implicit:
+              summary: Access token from Implicit
+              value:
+                access_token: xa3521ca621113e44eeed9232fa3e54571cb08bc
+                token_type: Bearer
+                expires_in: 3600
+                expires: 1524486008
+                identifier: implicit
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            unauthorized-error:
+              summary: Unauthorized
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Unauthorized\",\n      \"status\": \"401\",\n      \"detail\": \"Unauthorized\"\n    }\n  ]\n}\n"
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
+  schemas:
+    Errors:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                format: string
+                examples:
+                - '400'
+              title:
+                type: string
+                description: A brief summary of the error.
+                examples:
+                - Bad Request
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                examples:
+                - The field 'name' is required
+  requestBodies:
+    CreateAccessToken:
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required:
+            - grant_type
+            - client_id
+            properties:
+              grant_type:
+                type: string
+                description: The grant type.
+                enum:
+                - client_credentials
+                - implicit
+              client_id:
+                type: string
+                description: Your `client_id`
+              client_secret:
+                type: string
+                description: Your `client_secret`. Only required for client credentials.
+          examples:
+            Create Example:
+              summary: Create an Access Token using Client Credentials
+              value:
+                grant_type: client_credentials
+                client_id: jJBrLb0q1Q7bZ5GiGttD5T1471b0IeXAVgNyOlw19q
+                client_secret: mzr6gnvdQODSgT3mSxxWIv3y8pAp8cUzDELXa3g4fB
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

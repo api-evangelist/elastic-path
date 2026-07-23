@@ -1,0 +1,478 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Account Tags API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Account Tags
+  description: 'Account Tags are custom labels or metadata that can be attached to accounts to help organize and filter them based on specific attributes or criteria.
+
+    '
+paths:
+  /v2/account-tags:
+    post:
+      tags:
+      - Account Tags
+      summary: Create an Account Tag
+      operationId: CreateAnAccountTag
+      description: Create an Account Tag
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/AccountTag'
+              required:
+              - data
+            examples:
+              Create Example:
+                summary: Create an Account Tag
+                value:
+                  data:
+                    type: account_tag
+                    name: Account Name
+                    description: Account Description
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AccountTagResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+      - Account Tags
+      summary: List Account Tags
+      operationId: ListAccountTags
+      description: 'Retrieves a list of Account Tags
+
+
+        ## Filtering
+
+        The following operators and attributes are available for [filtering](/guides/Getting-Started/filtering) Account Tags:
+
+
+        | Attribute        | Operators                     | Example                                       |
+
+        |------------------|-------------------------------|-----------------------------------------------|
+
+        | `id`             | `lt`,`le`,`eq`,`gt`,`ge`,`in` | `eq(id,3fa85f64-5717-4562-b3fc-2c963f66afa6)` |
+
+        | `created_at`     | `lt`,`le`,`eq`,`gt`,`ge`      | `ge(created_at,2024-04-29T00:00:00.000Z)`     |
+
+        | `updated_at`     | `lt`,`le`,`eq`,`gt`,`ge`      | `le(updated_at,2024-04-29T00:00:00.000Z)`     |
+
+        | `name`           | `eq`,`like`                   | `eq(name,AccountName)`                        |
+
+
+        ## Sorting
+
+        The following attributes are available for sorting. When specified, the results are sorted in ascending order based on the value of the field. To sort in descending order, prefix the attribute with `-`, for example, `-updated_at`. The default sort order is `created_at` in descending order.
+
+        - `id`
+
+        - `created_at`
+
+        - `updated_at`
+
+        - `name`
+
+        '
+      parameters:
+      - $ref: '#/components/parameters/filter'
+      - $ref: '#/components/parameters/page-limit'
+      - $ref: '#/components/parameters/page-offset'
+      - name: sort
+        in: query
+        description: Specifies the order in which account tags will be returned. For more information, see [Sorting](/guides/Getting-Started/sorting).
+        required: false
+        schema:
+          type:
+          - string
+          enum:
+          - created_at
+          - -created_at
+          - id
+          - -id
+          - updated_at
+          - -updated_at
+          x-enumDescriptions:
+            created_at: Sort in increasing order of creation
+            -created_at: Sort in decreasing order of creation
+            id: Sort in increasing order of ID
+            -id: Sort in decreasing order of ID
+            updated_at: Sort in increasing order of last update
+            -updated_at: Sort in decreasing order of last update
+          example: id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AccountTagResponse'
+                  meta:
+                    $ref: '#/components/schemas/MetaList'
+                  links:
+                    type: object
+                    properties:
+                      current:
+                        description: Always the current page.
+                        type: string
+                        format: uri
+                        example: https://useast.api.elasticpath.com/v2/accounts?page[offset]=0&page[limit]=25
+                      first:
+                        description: Always the first page.
+                        type: string
+                        format: uri
+                        example: https://useast.api.elasticpath.com/v2/accounts?page[offset]=0&page[limit]=25
+                      last:
+                        description: Always `null` if there is only one page.
+                        type: string
+                        format: uri
+                        example: https://useast.api.elasticpath.com/v2/accounts?page[offset]=0&page[limit]=25
+                      next:
+                        description: Always `null` if there is only one page.
+                        type: string
+                        example: null
+                      prev:
+                        description: Always `null` if the user is on the first page.
+                        type: string
+                        example: null
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/account-tags/{tag_id}:
+    parameters:
+    - $ref: '#/components/parameters/AccountTagId'
+    get:
+      tags:
+      - Account Tags
+      summary: Get an Account Tag
+      operationId: GetAnAccountTag
+      description: Get an Account Tag
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AccountTagResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Account Tags
+      summary: Update an Account Tag
+      operationId: UpdateAnAccountTag
+      description: Update an Account Tag
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/AccountTag'
+              required:
+              - data
+            examples:
+              Update Example:
+                summary: Update an Account Tag
+                value:
+                  data:
+                    type: account_tag
+                    name: Account Name
+                    description: Account Description
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AccountTagResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+      - Account Tags
+      summary: Delete an Account Tag
+      operationId: DeleteAnAccountTag
+      description: Delete an Account Tag
+      responses:
+        '204':
+          description: No Content
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    MetaTimestamps:
+      type: object
+      properties:
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              description: The date the resource is created.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+            updated_at:
+              description: The date the resource is updated.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
+    MetaList:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/MetaListPage'
+        results:
+          $ref: '#/components/schemas/MetaListResults'
+    AccountTag:
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the resource object, use `account_tag` for Account Tags.
+          type: string
+          const: account_tag
+        name:
+          type: string
+          description: Specifies the name of the account tag.
+          example: account-name-tag
+        description:
+          type: string
+          description: Describes the account tag.
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    MetaListPage:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
+        total:
+          type: integer
+          description: The total page count.
+          example: 1
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    AccountTagResponse:
+      allOf:
+      - $ref: '#/components/schemas/AccountTag'
+      - type: object
+        properties:
+          id:
+            $ref: '#/components/schemas/UUID'
+            description: The unique identifier for the account tag.
+          meta:
+            $ref: '#/components/schemas/MetaTimestamps'
+            description: Additional information for this resource.
+          links:
+            type: object
+            properties:
+              self:
+                description: A URL to the specific resource.
+                type: string
+                example: https://useast.api.elasticpath.com/v2/account-tags/deb6b25f-8451-4211-9a22-95610333df23
+  parameters:
+    page-limit:
+      name: page[limit]
+      in: query
+      description: The number of records per page.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 25
+    filter:
+      name: filter
+      in: query
+      description: Specifies the filter attributes.
+      required: false
+      schema:
+        type: string
+        format: string
+        example: ilike(name,"*swan*")
+    page-offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+    AccountTagId:
+      name: tag_id
+      description: The ID of the Account Tag.
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+  responses:
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: account not found
+    ConflictError:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            conflict-error:
+              value:
+                errors:
+                - title: Conflict
+                  status: '409'
+                  detail: account membership with the given account id and account member id already exists
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

@@ -1,0 +1,1815 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Custom Fields API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Custom Fields
+  description: "A Custom Field represents a single field of data (for example a Product Rating). A Custom API is composed of one or more Custom Fields.\n\nHere is a comparison of different types and validation available in Custom APIs vs Non-Core Flows.\n\n| Feature                                       | Non-Core Flows | Commerce Extensions                        |\n|-----------------------------------------------|----------------|--------------------------------------------|\n| Data Type: String                             | ✅              | ✅                                          |\n| Data Type: Integer                            | ✅              | ✅                                          |\n| Data Type: Float                              | ✅              | ✅                                          |\n| Data Type: Boolean                            | ✅              | ✅                                          |\n| Data Type: List                               | ⛔              | ✅                                          |\n| Data Type: Any                                | ⛔              | ✅                                          |\n| Data Type: Date & Time                        | ✅              | ✅ Replaced by Regex Validation (See Below) |\n| Data Type: One To Many                        | ✅              | Planned                                    |\n| Validation: Regular Expression                | ⛔️             | ✅                                          |\n| Validation: Slug/Email                        | ✅              | ✅ Replaced by Regex Validation (See Below) |\n| Validation: Min/Max Value                     | ✅              | ✅                                          |\n| Validation: Enum(String)                      | ✅              | ✅ Replaced by Regex validation (See Below) |\n| Validation: Enum(Float/Integer)               | ✅              | ⛔️                                         |\n| Validation: Allow null values                 | ⛔              | ✅                                          |\n| Validation: Unique(String)                    | ⛔              | ✅                                          |\n| Validation: Unique Case Insensitivity(String) | ⛔              | ✅                                          |\n| Validation: Immutable                         | ⛔              | ✅                                          |\n\n## Validation\n\nWhen [creating](/docs/api/commerce-extensions/create-a-custom-field#request) or [updating](/docs/api/commerce-extensions/update-a-custom-field#request) a Custom Field, `validation` can be used to limit the values that may be stored in the corresponding Custom API Entry.\n\n:::note\n\nAll validation changes, such as those to `allow_null_values` and any type specific rules, apply to new entries only. Existing Custom API Entry records are unaffected until updated.\n\n:::\n\n### Integer Validation\n- `min_value`: Specifies the minimum whole number that can be stored. If set, it must be less than `max_value`.\n- `max_value`: Specifies the maximum whole number that can be stored. If set, it must be greater than `min_value`.\n\nsample integer validation object:\n\n```json\n{\n  \"validation\": {\n    \"integer\": {\n      \"min_value\": 0,\n      \"max_value\": 32\n    }\n  }\n}\n```\nEven if no validation is set, field_type `integer` only supports values between -2^53+1 and 2^53+1. This is because the JSON format doesn't guarantee that values outside this range are portable ([Source](https://datatracker.ietf.org/doc/html/rfc7159#section-6)).\n\n\n\n### Float Validation\n- `min_value`: Specifies the minimum number that can be stored. If set, it must be less than `max_value`.\n- `max_value`: Specifies the maximum number that can be stored. If set, it must be greater than `min_value`.\n\nsample float validation object:\n\n```json\n{\n  \"validation\": {\n    \"float\": {\n      \"min_value\": 0.01,\n      \"max_value\": 32.01\n    }\n  }\n}\n```\n\nThe `float` field_type cannot accurately represent some numbers and so using very small or large numbers might lose precision. We recommend that API clients use either the `integer` field_type if applicable , or the `string` data type if perfect precision or recall is required.\n\n### String Validation\n- `min_length`: Specifies the minimum number of characters that can be stored. If set, it must be greater than 0 and less than `max_length`.\n- `max_length`: Specifies the maximum number of characters that can be stored. If set, it must be greater than 0 and `min_length`.\n- `regex`: An [RE2](https://github.com/google/re2/wiki/Syntax) regular expression used to restrict the specific characters that can be stored. It must be less than 1024 characters.\n- `unique`: Specifies whether the field must have unique constraint or not. It must be `yes` or `no`.\n- `unique_case_insensitivity`: Applies when `unique` is set to `yes`. It controls whether values with different cases (for example, `ABC` and `abc`) should conflict. It must be `true` or `false`.\n  sample string validation object:\n\n```json\n{\n  \"validation\": {\n    \"string\": {\n      \"min_length\": 0,\n      \"max_length\": 64,\n      \"regex\": \"^.+\\\\.(jpg|jpeg|png|gif|pdf)$\",\n      \"unique\": \"yes\"\n      \"unique_case_insensitivity\": true\n    }\n  }\n}\n```\nEven if no validation is set, field_type `string` only supports values that are up to `65535` characters long.\n\n#### Date & Time Values With Regular Expressions\n\nWhile Commerce Extensions does not have a native date or time type, you can none-the-less use these values in Commerce Extensions, by using the `string` field type and `regex` validation. To ensure that\nordering is handled properly you should follow the guidance in [RFC 3339 - Section 5.1 Ordering](https://www.rfc-editor.org/rfc/rfc3339.html#section-5.1), namely store the fields in order of least to most precise,\nand in the same timezone, this will ensure that comparison operators (e.g., `gt`) and sorting, work as expected, for example the following regex will force all values to be in seconds in UTC: `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$`\n\nOne thing to keep in mind is that some libraries, especially when dealing with sub-seconds might only display them if they are non-zero, and you will want to ensure that they are fully padded to the same length.\n\n#### Enum Values with Regular Expressions\n\nYou can ensure that only some values are allowed using the regular expression `^(alpha|bravo|charlie)$`.\n\n#### Slug Values with Regular Expressions\n\nSlugs can be replaced with the regular expression `^[a-z][a-z0-9-]*$`, this will ensure that the field starts with a lower case letter, and then has lower case letters, numbers or hyphens. You can tweak this regular expression as needed to suit your needs.\n\n### Email Validation with Regular Expressions\n\nE-mails can be tricky to validate properly, especially because many services _accept_ e-mails that are not valid, and reject e-mail addresses that are technically valid. Additionally, your own capabilities and purposes might inform your decision (e.g., if you support [i18n addresses](https://datatracker.ietf.org/doc/html/rfc6530) or don't then the set of allowed e-mails changes).\n\n### List Validation\n- `min_length`: Specifies the minimum number of elements that must be in the list.\n- `max_length`: Specifies the maximum number of elements allowed in the list. The maximum supported value is 1000.\n- `allowed_type`: Specifies the primitive type that all elements in the list must be. Valid values are `string`, `integer`, `boolean`, `float`, or `any`. The default is `any`, which allows mixed types. This value cannot be changed after the field is created.\n\nsample list validation object:\n\n```json\n{\n  \"validation\": {\n    \"list\": {\n      \"min_length\": 1,\n      \"max_length\": 100,\n      \"allowed_type\": \"string\"\n    }\n  }\n}\n```\n\n### Any Validation\n\nThe `any` field type allows storing arbitrary JSON values including objects, arrays, strings, numbers, booleans, and null. When updating an entry, the `any` field value is completely replaced, not merged. Filtering is not supported on `any` fields.\n\nsample any validation object:\n\n```json\n{\n  \"validation\": {\n    \"any\": {\n      \"allow_null_values\": true,\n      \"immutable\": false\n    }\n  }\n}\n```\n\n### Null Values\n\nAll Custom Fields can be configured to restrict the storage of `null` values for that field on a Custom API Entry. By default, this is `true`.\n\nsample validation object :\n\n```json\n{\n  \"validation\": {\n    \"boolean\": {\n      \"allow_null_values\": false,\n      \"immutable\": false\n    }\n  }\n}\n```\n\n### Immutable\n\nWhen [creating](/docs/api/commerce-extensions/create-a-custom-field#request) a Custom Field, it can be configured to be `immutable`. When set to true, the value of this field can be specified only during POST requests and cannot be modified during PUT requests. By default, this is `false`.\n\nsample validation object :\n\n```json\n{\n  \"validation\": {\n    \"boolean\": {\n      \"immutable\": false\n    }\n  }\n}\n```\n\n## Presentation\n\nWhen [creating](/docs/api/commerce-extensions/create-a-custom-field#request) or [updating](/docs/api/commerce-extensions/update-a-custom-field#request) a Custom Field, `presentation` can be used to influence the layout and order of fields within Commerce Manager. It does not affect the order of keys within JSON, nor influence any behaviour outside of Commerce Manager.\n\n## Reserved Slugs\n\nThe following values cannot be used as a `slug` in a Custom Field.\n\n- slug\n- type\n- id\n- meta\n- created_at\n- updated_at\n- links\n- relationships\n- attributes\n- attribute\n- dimension\n- dimensions\n- weight\n- weights\n"
+paths:
+  /v2/settings/extensions/custom-apis/{custom-api-id}/fields:
+    parameters:
+    - $ref: '#/components/parameters/CustomAPIID'
+    post:
+      tags:
+      - Custom Fields
+      summary: Create a Custom Field
+      operationId: CreateACustomField
+      description: Create a Custom Field
+      requestBody:
+        $ref: '#/components/requestBodies/CreateCustomField'
+      responses:
+        '201':
+          $ref: '#/components/responses/CustomField'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+      - Custom Fields
+      summary: List Custom Fields
+      operationId: ListCustomFields
+      description: 'Retrieves a list of Custom Fields
+
+
+        ## Filtering
+
+        The following operators and attributes are available for [filtering](/guides/Getting-Started/filtering) Custom Fields:
+
+
+        | Attribute     | Operators                     | Example                                       |
+
+        |---------------|-------------------------------|-----------------------------------------------|
+
+        | `id`          | `lt`,`le`,`eq`,`gt`,`ge`,`in` | `eq(id,859aeba1-03c2-4822-bd4c-89afce93d7eb)` |
+
+        | `created_at`  | `lt`,`le`,`eq`,`gt`,`ge`      | `ge(created_at,2024-04-29T00:00:00.000Z)`     |
+
+        | `updated_at`  | `lt`,`le`,`eq`,`gt`,`ge`      | `le(updated_at,2024-04-29T00:00:00.000Z)`     |
+
+        | `description` | `eq`,`like`                   | `like(description,*confidential*)`            |
+
+        | `field_type`  | `eq`,`in`                     | `eq(field_type,string)`                       |
+
+        | `name`        | `eq`,`like`                   | `eq(name,"Last Name")`                        |
+
+        | `slug`        | `eq`,`like`,`in`              | `like(slug,*private*)`                        |
+
+
+        ## Sorting
+
+        The following attributes are available for sorting. When specified, the results are sorted in ascending order based on the value of the field. To sort in descending order, prefix the attribute with `-`, for example, `-updated_at`. The default sort order is `created_at` in descending order.
+
+        - `id`
+
+        - `created_at`
+
+        - `updated_at`
+
+        - `field_type`
+
+        - `name`
+
+        - `slug`
+
+        '
+      parameters:
+      - $ref: '#/components/parameters/PageOffset'
+      - $ref: '#/components/parameters/PageLimit'
+      - $ref: '#/components/parameters/Filter'
+      - $ref: '#/components/parameters/CustomFieldSort'
+      responses:
+        '200':
+          $ref: '#/components/responses/ListOfCustomFields'
+        '400':
+          $ref: '#/components/responses/BadFilterError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/settings/extensions/custom-apis/{custom-api-id}/fields/{custom-field-id}:
+    parameters:
+    - $ref: '#/components/parameters/CustomAPIID'
+    - $ref: '#/components/parameters/CustomFieldID'
+    get:
+      tags:
+      - Custom Fields
+      summary: Get a Custom Field
+      operationId: GetACustomField
+      description: Get a Custom Field
+      responses:
+        '200':
+          $ref: '#/components/responses/CustomField'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Custom Fields
+      summary: Update a Custom Field
+      operationId: UpdateACustomField
+      description: Update a Custom Field
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateCustomField'
+      responses:
+        '200':
+          $ref: '#/components/responses/CustomField'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+      - Custom Fields
+      summary: Delete a Custom Field
+      operationId: DeleteACustomField
+      description: Delete a Custom Field
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    IntegerUpdateCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseUpdateCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              integer:
+                type: object
+                properties:
+                  min_value:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the minimum whole number that can be stored.
+                  max_value:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the maximum whole number that can be stored.
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: When set to `true`, prevents changing the field.
+                    default: false
+    IntegerCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              integer:
+                type: object
+                properties:
+                  min_value:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the minimum whole number that can be stored.
+                  max_value:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the maximum whole number that can be stored.
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: When set to `true`, prevents changing the field.
+                    default: false
+    ListCreateCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseCreateCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              list:
+                type: object
+                properties:
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values as elements in the list. When set to `false`, storing `null` values in the list is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, prevents changing the field.
+
+                      '
+                    default: false
+                  min_length:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the minimum number of elements that must be in the list.
+                    minimum: 0
+                    maximum: 1000
+                  max_length:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the maximum number of elements allowed in the list.
+                    minimum: 0
+                    maximum: 1000
+                  allowed_type:
+                    type: string
+                    enum:
+                    - any
+                    - string
+                    - integer
+                    - boolean
+                    - float
+                    description: 'Specifies the primitive type that all elements in the list must be. Use "any" to allow mixed types.
+
+
+                      **Important:** This value cannot be changed after the field is created.
+
+                      '
+                    default: any
+                    example: string
+                  json_schema:
+                    $ref: '#/components/schemas/JSONSchemaValidation'
+    AnyCreateCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseCreateCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              any:
+                type: object
+                properties:
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: When set to `true`, prevents changing the field.
+                    default: false
+                  json_schema:
+                    $ref: '#/components/schemas/JSONSchemaValidation'
+    AnyCustomField:
+      description: 'The `any` field type allows storing arbitrary JSON values including objects, arrays, strings, numbers, booleans, and null. This provides maximum flexibility for storing complex or varying data structures.
+
+
+        **Important:** When updating an entry, the `any` field value is completely replaced, not merged. For example, if a field contains `{"a": 1, "b": 2}` and you update it with `{"a": 99}`, the result will be `{"a": 99}` (not `{"a": 99, "b": 2}`). Standard partial update behavior still applies at the entry level: if you omit the field entirely from an update request, the existing value is preserved.
+
+
+        **Note:** Filtering is not supported on `any` fields.
+
+        '
+      allOf:
+      - $ref: '#/components/schemas/BaseCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              any:
+                type: object
+                properties:
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: When set to `true`, prevents changing the field.
+                    default: false
+                  json_schema:
+                    $ref: '#/components/schemas/JSONSchemaValidation'
+    Timestamps:
+      type: object
+      properties:
+        created_at:
+          type: string
+          description: Specifies the date the entity is created.
+          example: '2017-01-10T11:41:19.244Z'
+        updated_at:
+          type: string
+          description: Specifies the date the entity is last updated.
+          example: '2017-01-10T11:41:19.244Z'
+    Meta:
+      type: object
+      properties:
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    FloatCreateCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseCreateCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              float:
+                type: object
+                properties:
+                  min_value:
+                    type:
+                    - number
+                    - 'null'
+                    description: Specifies the minimum number that can be stored.
+                  max_value:
+                    type:
+                    - number
+                    - 'null'
+                    description: Specifies the maximum number that can be stored.
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: When set to `true`, prevents changing the field.
+                    default: false
+    BooleanCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              boolean:
+                type: object
+                properties:
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: When set to `true`, prevents changing the field.
+                    default: false
+    CustomField:
+      oneOf:
+      - $ref: '#/components/schemas/BooleanCustomField'
+      - $ref: '#/components/schemas/FloatCustomField'
+      - $ref: '#/components/schemas/IntegerCustomField'
+      - $ref: '#/components/schemas/StringCustomField'
+      - $ref: '#/components/schemas/AnyCustomField'
+      - $ref: '#/components/schemas/ListCustomField'
+      discriminator:
+        propertyName: field_type
+        mapping:
+          boolean: '#/components/schemas/BooleanCustomField'
+          float: '#/components/schemas/FloatCustomField'
+          integer: '#/components/schemas/IntegerCustomField'
+          string: '#/components/schemas/StringCustomField'
+          any: '#/components/schemas/AnyCustomField'
+          list: '#/components/schemas/ListCustomField'
+    Errors:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                format: string
+                examples:
+                - '400'
+              title:
+                type: string
+                description: A brief summary of the error.
+                examples:
+                - Bad Request
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                examples:
+                - The field 'name' is required
+    BooleanCreateCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseCreateCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              boolean:
+                type: object
+                properties:
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: When set to `true`, prevents changing the field.
+                    default: false
+    StringCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              string:
+                type: object
+                properties:
+                  min_length:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the minimum number of characters that can be stored.
+                    minimum: 0
+                    maximum: 65535
+                    example: 1
+                  max_length:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the minimum number of characters that can be stored.
+                    minimum: 0
+                    maximum: 65535
+                  regex:
+                    type:
+                    - string
+                    - 'null'
+                    description: 'An [RE2](https://github.com/google/re2/wiki/Syntax) regular expression that used to restrict the specific characters that can be stored.
+
+                      '
+                    minLength: 0
+                    maxLength: 1024
+                    example: ^.+\\.(jpg|jpeg|png|gif|pdf)$
+                  allow_null_values:
+                    type: boolean
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  unique:
+                    type: string
+                    description: 'If `yes`, this prevents two Custom API entries from having the same value for this field within the Custom API. When set to `no` (the default), multiple Custom API entries may have the same value.
+
+                      '
+                    enum:
+                    - 'yes'
+                    - 'no'
+                    default: 'no'
+                  unique_case_insensitivity:
+                    type: boolean
+                    description: 'Controls case-insensitive uniqueness for this field. Can only be set to `true` if `unique` is set to `yes`.
+
+                      If `true`, prevents two Custom API entries from having the same value for this field within the Custom API, ignoring case differences.
+
+                      When set to `false` (the default), case is considered when checking for uniqueness.
+
+                      This value can only be set during field creation and cannot be modified afterwards.
+
+                      '
+                    default: false
+                  immutable:
+                    type: boolean
+                    description: 'When set to true, the value of this field can be specified only during POST requests and cannot be modified during PUT requests.
+
+                      '
+                    default: false
+    BaseCreateCustomField:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Specifies the type of the resource object, use `custom_field` for Custom Field.
+          const: custom_field
+        name:
+          type: string
+          description: Specifies the name of this Custom Field.
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          description: Specifies the description for this Custom Field.
+          minLength: 0
+          maxLength: 255
+        slug:
+          type: string
+          description: 'Specifies a slug that must be unique within the scope of the Custom API. This slug will be value as the key in the JSON Object in all entries.
+
+            '
+          minLength: 1
+          maxLength: 63
+        field_type:
+          type: string
+          description: Specifies the type of the field. This field cannot be updated.
+          enum:
+          - string
+          - integer
+          - boolean
+          - float
+          - any
+          - list
+        use_as_url_slug:
+          type: boolean
+          description: 'Enabling this field will mean Custom API Entries created in this Custom API will use this value in the URL instead of the `id` attribute. In order to set this field, the field must be a string, and unique, not allow null values, no entries have been created yet, and this field cannot be set to true on another custom field. This field cannot be updated. In addition to any validation rules you create, the values must be [Unreserved URL Characters](https://datatracker.ietf.org/doc/html/rfc3986#section-2.3) (i.e., be alpha-numeric, or one of `-`, `.`, `_` or `~`).
+
+            '
+        presentation:
+          type: object
+          properties:
+            sort_order:
+              type: integer
+              description: Specifies the order of the field in the User Interface.
+              minimum: 0
+              maximum: 1000
+              default: 0
+              example: 10
+    AnyUpdateCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseUpdateCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              any:
+                type: object
+                properties:
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: When set to `true`, prevents changing the field.
+                    default: false
+                  json_schema:
+                    $ref: '#/components/schemas/JSONSchemaValidation'
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+    FloatCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              float:
+                type: object
+                properties:
+                  min_value:
+                    type:
+                    - number
+                    - 'null'
+                    description: Specifies the minimum number that can be stored.
+                  max_value:
+                    type:
+                    - number
+                    - 'null'
+                    description: Specifies the maximum number that can be stored.
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: When set to `true`, prevents changing the field.
+                    default: false
+    ListCustomField:
+      description: 'The `list` field type allows storing an array of primitive values (strings, integers, booleans, floats, or null). The list can contain up to 1000 elements.
+
+
+        ### Filtering
+
+
+        List fields support the following filter operators:
+
+
+        **List Content Operators** (operate on the entire list):
+
+        - `contains(field, value)` - matches entries where the list contains the specified value
+
+        - `contains_any(field, value1, value2, ...)` - matches entries where the list contains any of the specified values
+
+        - `contains_all(field, value1, value2, ...)` - matches entries where the list contains all of the specified values (**requires `allowed_type` to not be `any`**)
+
+        - `is_null(field)` - matches entries where the list field is null
+
+
+        **Index-Based Access** (access specific elements by position):
+
+        - `eq(field[index], value)` - matches entries where the element at the specified index equals the value
+
+        - `like(field[index], pattern)` - matches entries where the string element at the index matches the pattern
+
+        - `in(field[index], value1, value2, ...)` - matches entries where the element at the index is one of the specified values
+
+        - `is_null(field[index])` - matches entries where the element at the index is null
+
+        - `lt`, `le`, `gt`, `ge(field[index], value)` - relational comparisons (**requires `allowed_type` to not be `any`**)
+
+
+        Index must be a non-negative integer from 0 to 999. Negative indices are not supported.
+
+
+        **Length Access** (filter by array length):
+
+        - `eq(field.length, value)` - matches entries where the list has exactly the specified length
+
+        - `lt(field.length, value)`, `le(field.length, value)` - matches entries where the list length is less than (or equal to) the value
+
+        - `gt(field.length, value)`, `ge(field.length, value)` - matches entries where the list length is greater than (or equal to) the value
+
+        - `in(field.length, value1, value2, ...)` - matches entries where the list length is one of the specified values
+
+
+        ### Typed Lists vs Untyped Lists
+
+
+        When `allowed_type` is set to a specific type (e.g., `"string"`, `"integer"`), additional operators become available:
+
+        - `contains_all` - efficiently matches all specified values using exact type comparison
+
+        - Relational operators (`lt`, `le`, `gt`, `ge`) on index access - compare values with proper type handling
+
+
+        When `allowed_type` is `"any"` (the default), these operators are not available because type coercion would make comparisons unreliable.
+
+
+        ### Type Coercion (Untyped Lists)
+
+
+        For lists with `allowed_type: "any"`, filter operators use type coercion to match values:
+
+        - `contains(field, 1)` matches both integer `1` and string `"1"`
+
+        - `contains(field, true)` matches both boolean `true` and string `"true"`
+
+        - `eq(field[0], 1)` matches both integer `1` and string `"1"` at index 0
+
+
+        ### Type Mismatch Behavior (Typed Lists)
+
+
+        For operators that require exact type matching (`contains_all`, `in` on typed fields), filtering with a value that cannot be converted to the `allowed_type` returns a 400 error. For example, `contains_all(field, "foo")` on an integer list returns an error because `"foo"` cannot be converted to an integer.
+
+
+        For operators that use type coercion (`contains`, `contains_any`), filtering with a non-matching type returns zero results. For example, `contains(field, "foo")` on an integer list returns no matches because the string `"foo"` doesn''t match any integers in the list.
+
+
+        **Note:** Float elements in lists are not reliably filterable with `eq()` due to floating-point precision issues.
+
+
+        **Note:** If a field slug matches the index access pattern (e.g., `myfield[0]`) or length access pattern (e.g., `myfield.length`), filtering on that field may not work as expected. To avoid conflicts, use only lowercase letters, numbers, underscores, and hyphens in field slugs.
+
+        '
+      allOf:
+      - $ref: '#/components/schemas/BaseCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              list:
+                type: object
+                properties:
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values as elements in the list. When set to `false`, storing `null` values in the list is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, prevents changing the field.
+
+                      '
+                    default: false
+                  min_length:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the minimum number of elements that must be in the list.
+                    minimum: 0
+                    maximum: 1000
+                  max_length:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the maximum number of elements allowed in the list.
+                    minimum: 0
+                    maximum: 1000
+                  allowed_type:
+                    type: string
+                    enum:
+                    - any
+                    - string
+                    - integer
+                    - boolean
+                    - float
+                    description: 'Specifies the primitive type that all elements in the list must be. Use "any" to allow mixed types.
+
+
+                      **Important:** This value cannot be changed after the field is created.
+
+                      '
+                    default: any
+                    example: string
+                  json_schema:
+                    $ref: '#/components/schemas/JSONSchemaValidation'
+    StringUpdateCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseUpdateCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              string:
+                type: object
+                properties:
+                  min_length:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the minimum number of characters that can be stored.
+                    minimum: 0
+                    maximum: 65535
+                    example: 1
+                  max_length:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the minimum number of characters that can be stored.
+                    minimum: 0
+                    maximum: 65535
+                  regex:
+                    type:
+                    - string
+                    - 'null'
+                    description: 'An [RE2](https://github.com/google/re2/wiki/Syntax) regular expression that used to restrict the specific characters that can be stored.
+
+                      '
+                    minLength: 0
+                    maxLength: 1024
+                    example: 1
+                  allow_null_values:
+                    type: boolean
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type: boolean
+                    description: 'When set to true, the value of this field can be specified only during POST requests and cannot be modified during PUT requests.
+
+                      '
+                    default: false
+    ListUpdateCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseUpdateCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              list:
+                type: object
+                properties:
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values as elements in the list. When set to `false`, storing `null` values in the list is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, prevents changing the field.
+
+                      '
+                    default: false
+                  min_length:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the minimum number of elements that must be in the list.
+                    minimum: 0
+                    maximum: 1000
+                  max_length:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the maximum number of elements allowed in the list.
+                    minimum: 0
+                    maximum: 1000
+                  json_schema:
+                    $ref: '#/components/schemas/JSONSchemaValidation'
+    BaseUpdateCustomField:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Specifies the type of the resource object, use `custom_field` for Custom Field.
+          const: custom_field
+        name:
+          type: string
+          description: Specifies the name of this Custom Field.
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          description: Specifies the description for this Custom Field.
+          minLength: 0
+          maxLength: 255
+        slug:
+          type: string
+          description: 'Specifies a slug that must be unique within the scope of the Custom API. This slug will be value as the key in the JSON Object in all entries.
+
+            '
+          minLength: 1
+          maxLength: 63
+        presentation:
+          type: object
+          properties:
+            sort_order:
+              type: integer
+              description: Specifies the order of the field in the User Interface.
+              minimum: 0
+              maximum: 1000
+              default: 0
+              example: 10
+    FloatUpdateCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseUpdateCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              float:
+                type: object
+                properties:
+                  min_value:
+                    type:
+                    - number
+                    - 'null'
+                    description: Specifies the minimum number that can be stored.
+                  max_value:
+                    type:
+                    - number
+                    - 'null'
+                    description: Specifies the maximum number that can be stored.
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: When set to `true`, prevents changing the field.
+                    default: false
+    BaseCustomField:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the Custom Field.
+          format: uuid
+        type:
+          type: string
+          description: Specifies the type of the resource object, use `custom_field` for Custom Field.
+          const: custom_field
+        name:
+          type: string
+          description: Specifies the name of this Custom Field.
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          description: Specifies the description for this Custom Field.
+          minLength: 0
+          maxLength: 255
+        slug:
+          type: string
+          description: 'Specifies a slug that must be unique within the scope of the Custom API. This slug will be the key in the JSON Object in all entries.
+
+
+            **Recommended characters:** Use only lowercase letters, numbers, underscores, and hyphens (`[a-z0-9_-]+`). Using other characters (such as brackets `[]` or periods `.`) may cause conflicts with filter syntax and prevent filtering on the field.
+
+            '
+          minLength: 1
+          maxLength: 63
+        field_type:
+          type: string
+          description: Specifies the type of the field. This field cannot be updated.
+          enum:
+          - string
+          - integer
+          - boolean
+          - float
+          - any
+          - list
+        use_as_url_slug:
+          type: boolean
+          description: 'Enabling this field will mean Custom API Entries created in this Custom API will use this value in the URL instead of the `id` attribute. In order to set this field, the field must be a string, and unique, not allow null values, no entries have been created yet, and this field cannot be set to true on another custom field. This field cannot be updated. In addition to any validation rules you create, the values must be [Unreserved URL Characters](https://datatracker.ietf.org/doc/html/rfc3986#section-2.3) (i.e., be alpha-numeric, or one of `-`, `.`, `_` or `~`).
+
+            '
+        presentation:
+          type: object
+          properties:
+            sort_order:
+              type: integer
+              description: Specifies the order of the field in the User Interface.
+              minimum: 0
+              maximum: 1000
+              default: 0
+              example: 10
+        links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/LinkURI'
+              description: Specifies the URI of the Custom Field.
+              example: /v2/settings/extensions/custom-apis/3fa85f64-5717-4562-b3fc-2c963f66afa6/fields/859aeba1-03c2-4822-bd4c-89afce93d7eb
+        meta:
+          $ref: '#/components/schemas/Meta'
+    BooleanUpdateCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseUpdateCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              boolean:
+                type: object
+                properties:
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: When set to `true`, prevents changing the field.
+                    default: false
+    JSONSchemaValidation:
+      type:
+      - object
+      - 'null'
+      description: 'An optional JSON Schema used to validate entry values for this field.
+
+        '
+      properties:
+        version:
+          type: string
+          description: The JSON Schema draft version. Must be "2020-12".
+          const: 2020-12
+        schema:
+          type: string
+          description: 'A JSON-encoded string containing a valid JSON Schema Draft 2020-12 object.
+
+            The schema must not exceed 8 KiB in size.
+
+            External `$ref` references (e.g., HTTP URLs, file paths) are not supported and will be rejected.
+
+            '
+          maxLength: 8192
+    IntegerCreateCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseCreateCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              integer:
+                type: object
+                properties:
+                  min_value:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the minimum whole number that can be stored.
+                  max_value:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the maximum whole number that can be stored.
+                  allow_null_values:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  immutable:
+                    type:
+                    - boolean
+                    - 'null'
+                    description: When set to `true`, prevents changing the field.
+                    default: false
+    PaginationMeta:
+      type: object
+      properties:
+        results:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total number of results for the entire collection.
+            total_method:
+              type: string
+              description: The method used to calculate the total number results.
+              enum:
+              - exact
+              - lower_bound
+              - observed
+              x-enumDescriptions:
+                exact: Indicates that the total is an exact count of results
+                lower_bound: When there are more than 10,000 results, we stop counting at 10,000 and report that the count is a lower_bound.
+                observed: Will indicate if there is at least one more result past the current page, this is the highest performing option as it doesn't require an extra call.
+        page:
+          type: object
+          properties:
+            limit:
+              type: integer
+              description: The maximum number of records for all pages.
+              example: 100
+            offset:
+              type: integer
+              description: The current offset by number of pages.
+              example: 0
+            current:
+              type: integer
+              description: The current number of pages.
+              example: 1
+            total:
+              type: integer
+              description: The total number of pages.
+              example: 1
+    PaginationLinks:
+      type: object
+      properties:
+        current:
+          $ref: '#/components/schemas/LinkURI'
+          description: Always the current page.
+          example: /v2/settings/custom-apis?page[offset]=0&page[limit]=100
+        first:
+          $ref: '#/components/schemas/LinkURI'
+          description: Always the first page.
+          example: /v2/settings/custom-apis?page[offset]=0&page[limit]=100
+        last:
+          $ref: '#/components/schemas/LinkURI'
+          description: Always `null` if there is only one page.
+          example: /v2/settings/custom-apis?page[offset]=0&page[limit]=100
+        next:
+          $ref: '#/components/schemas/LinkURI'
+          description: Always `null` if there is only one page.
+          example: null
+        prev:
+          $ref: '#/components/schemas/LinkURI'
+          description: Always `null` if on the first page.
+          example: null
+    StringCreateCustomField:
+      allOf:
+      - $ref: '#/components/schemas/BaseCreateCustomField'
+      - type: object
+        properties:
+          validation:
+            type: object
+            additionalProperties: false
+            properties:
+              string:
+                type: object
+                properties:
+                  min_length:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the minimum number of characters that can be stored.
+                    minimum: 0
+                    maximum: 65535
+                    example: 1
+                  max_length:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Specifies the minimum number of characters that can be stored.
+                    minimum: 0
+                    maximum: 65535
+                  regex:
+                    type:
+                    - string
+                    - 'null'
+                    description: 'An [RE2](https://github.com/google/re2/wiki/Syntax) regular expression that used to restrict the specific characters that can be stored.
+
+                      '
+                    minLength: 0
+                    maxLength: 1024
+                    example: ^.+\\.(jpg|jpeg|png|gif|pdf)$
+                  allow_null_values:
+                    type: boolean
+                    description: 'When set to `true`, this allows `null` values for that field on Custom API Entries. When set to `false`, storing `null` values is not permitted.
+
+                      '
+                    default: true
+                  unique:
+                    type: string
+                    description: 'If `yes`, this prevents two Custom API entries from having the same value for this field within the Custom API. When set to `no` (the default), multiple Custom API entries may have the same value.
+
+                      '
+                    enum:
+                    - 'yes'
+                    - 'no'
+                    default: 'no'
+                  unique_case_insensitivity:
+                    type: boolean
+                    description: 'Controls case-insensitive uniqueness for this field. Can only be set to `true` if `unique` is set to `yes`.
+
+                      If `true`, prevents two Custom API entries from having the same value for this field within the Custom API, ignoring case differences.
+
+                      When set to `false` (the default), case is considered when checking for uniqueness.
+
+                      This value can only be set during field creation and cannot be modified afterwards.
+
+                      '
+                    default: false
+                  immutable:
+                    type: boolean
+                    description: 'When set to true, the value of this field can be specified only during POST requests and cannot be modified during PUT requests.
+
+                      '
+                    default: false
+  parameters:
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 0
+    Filter:
+      name: filter
+      in: query
+      required: false
+      description: Filter attributes. For more information, see the [Filtering](/guides/Getting-Started/filtering) section.
+      schema:
+        type: string
+        format: string
+        example: eq(name,"My Wishlist")
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
+    CustomFieldSort:
+      name: sort
+      in: query
+      description: 'Specifies the order in which Custom Fields will be returned. For more information, see [Sorting](/guides/Getting-Started/sorting).
+
+        '
+      required: false
+      schema:
+        type: string
+        default: -created_at
+        enum:
+        - id
+        - -id
+        - created_at
+        - -created_at
+        - updated_at
+        - -updated_at
+        - field_type
+        - -field_type
+        - name
+        - -name
+        - slug
+        - -slug
+        example: id
+        x-enumDescriptions:
+          id: Sort by UUID string in ascending order
+          -id: Sort by UUID string in descending order
+          created_at: Sort chronologically from oldest to newest creation date
+          -created_at: Sort chronologically from newest to oldest creation date
+          updated_at: Sort chronologically from oldest to newest update date
+          -updated_at: Sort chronologically from newest to oldest update date
+          field_type: Sort field types alphabetically (A-Z)
+          -field_type: Sort field types reverse alphabetically (Z-A)
+          name: Sort names alphabetically (A-Z)
+          -name: Sort names reverse alphabetically (Z-A)
+          slug: Sort slugs alphabetically (A-Z)
+          -slug: Sort slugs reverse alphabetically (Z-A)
+    CustomAPIID:
+      name: custom-api-id
+      description: The unique identifier of the Custom API.
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+    CustomFieldID:
+      name: custom-field-id
+      description: The unique identifier of the Custom Field.
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 859aeba1-03c2-4822-bd4c-89afce93d7eb
+  requestBodies:
+    CreateCustomField:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - data
+            properties:
+              data:
+                required:
+                - type
+                - name
+                - slug
+                - field_type
+                oneOf:
+                - $ref: '#/components/schemas/BooleanCreateCustomField'
+                - $ref: '#/components/schemas/FloatCreateCustomField'
+                - $ref: '#/components/schemas/IntegerCreateCustomField'
+                - $ref: '#/components/schemas/StringCreateCustomField'
+                - $ref: '#/components/schemas/AnyCreateCustomField'
+                - $ref: '#/components/schemas/ListCreateCustomField'
+                discriminator:
+                  propertyName: field_type
+                  mapping:
+                    boolean: '#/components/schemas/BooleanCreateCustomField'
+                    float: '#/components/schemas/FloatCreateCustomField'
+                    integer: '#/components/schemas/IntegerCreateCustomField'
+                    string: '#/components/schemas/StringCreateCustomField'
+                    any: '#/components/schemas/AnyCreateCustomField'
+                    list: '#/components/schemas/ListCreateCustomField'
+          examples:
+            Create Boolean Field:
+              summary: Create a Boolean Field
+              value:
+                data:
+                  type: custom_field
+                  name: Keep Purchased Items
+                  description: This field stores whether or not to keep purchased items on the wishlist.
+                  slug: keep_purchased
+                  field_type: boolean
+                  validation:
+                    boolean:
+                      allow_null_values: true
+                      immutable: false
+            Create Float Field:
+              summary: Create a Float Field
+              value:
+                data:
+                  type: custom_field
+                  name: Items Weight
+                  description: This field stores the total weight (in kilograms) of the items in the wishlist.
+                  slug: items_weight
+                  field_type: float
+                  validation:
+                    float:
+                      min_value: 0
+                      max_value: null
+                      allow_null_values: true
+                      immutable: false
+            Create Integer Field:
+              summary: Create a Integer Field
+              value:
+                data:
+                  type: custom_field
+                  name: Items Count
+                  description: This field stores the total count of items in the wishlist.
+                  slug: items_count
+                  field_type: integer
+                  validation:
+                    integer:
+                      min_value: 0
+                      max_value: null
+                      allow_null_values: true
+                      immutable: false
+            Create String Field:
+              summary: Create a String Field
+              value:
+                data:
+                  type: custom_field
+                  name: Name
+                  description: This field stores the name of the wishlist.
+                  slug: name
+                  field_type: string
+                  validation:
+                    string:
+                      min_length: 3
+                      max_length: 128
+                      regex: null
+                      allow_null_values: true
+                      immutable: false
+                      unique: 'no'
+                      unique_case_insensitivity: false
+            Create Any Field:
+              summary: Create an Any Field
+              value:
+                data:
+                  type: custom_field
+                  name: Metadata
+                  description: This field stores arbitrary metadata as a JSON object.
+                  slug: metadata
+                  field_type: any
+                  validation:
+                    any:
+                      allow_null_values: true
+                      immutable: false
+            Create List Field:
+              summary: Create a List Field
+              value:
+                data:
+                  type: custom_field
+                  name: Tags
+                  description: This field stores a list of tags for the wishlist.
+                  slug: tags
+                  field_type: list
+                  validation:
+                    list:
+                      allow_null_values: true
+                      immutable: false
+                      min_length: 0
+                      max_length: 100
+                      allowed_type: string
+    UpdateCustomField:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - data
+            properties:
+              data:
+                required:
+                - type
+                oneOf:
+                - $ref: '#/components/schemas/BooleanUpdateCustomField'
+                - $ref: '#/components/schemas/FloatUpdateCustomField'
+                - $ref: '#/components/schemas/IntegerUpdateCustomField'
+                - $ref: '#/components/schemas/StringUpdateCustomField'
+                - $ref: '#/components/schemas/AnyUpdateCustomField'
+                - $ref: '#/components/schemas/ListUpdateCustomField'
+          examples:
+            Update Boolean Field:
+              summary: Update a Boolean Field
+              value:
+                data:
+                  type: custom_field
+                  name: Keep Purchased Items
+                  description: This field stores whether or not to keep purchased items on the wishlist.
+                  slug: keep_purchased
+                  validation:
+                    boolean:
+                      allow_null_values: true
+                      immutable: false
+            Update Float Field:
+              summary: Update a Float Field
+              value:
+                data:
+                  type: custom_field
+                  name: Items Weight
+                  description: This field stores the total weight (in kilograms) of the items in the wishlist.
+                  slug: items_weight
+                  validation:
+                    float:
+                      min_value: 0
+                      max_value: null
+                      allow_null_values: true
+                      immutable: false
+            Update Integer Field:
+              summary: Update a Integer Field
+              value:
+                data:
+                  type: custom_field
+                  name: Items Count
+                  description: This field stores the total count of items in the wishlist.
+                  slug: items_count
+                  validation:
+                    integer:
+                      min_value: 0
+                      max_value: null
+                      allow_null_values: true
+                      immutable: false
+            Update String Field:
+              summary: Update a String Field
+              value:
+                data:
+                  type: custom_field
+                  name: Name
+                  description: This field stores the name of the wishlist.
+                  slug: name
+                  validation:
+                    string:
+                      min_length: 3
+                      max_length: 128
+                      regex: null
+                      allow_null_values: true
+                      immutable: false
+            Update Any Field:
+              summary: Update an Any Field
+              value:
+                data:
+                  type: custom_field
+                  name: Metadata
+                  description: This field stores arbitrary metadata as a JSON object.
+                  validation:
+                    any:
+                      allow_null_values: true
+                      immutable: false
+            Update List Field:
+              summary: Update a List Field
+              value:
+                data:
+                  type: custom_field
+                  name: Tags
+                  description: This field stores a list of tags for the wishlist.
+                  validation:
+                    list:
+                      allow_null_values: true
+                      immutable: false
+                      min_length: 0
+                      max_length: 100
+  responses:
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            Not Found:
+              summary: Requested entity not found
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Not Found\",\n      \"status\": \"404\",\n      \"detail\": \"Not found\"\n    }\n  ]\n}\n"
+    ListOfCustomFields:
+      description: List of Custom Fields
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomField'
+              meta:
+                $ref: '#/components/schemas/PaginationMeta'
+              links:
+                $ref: '#/components/schemas/PaginationLinks'
+    ConflictError:
+      description: Unable to perform the operation at this time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            Duplicate Custom API:
+              summary: Duplicate Custom API
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Conflict\",\n      \"status\": \"409\",\n      \"detail\": \"custom_api with the given api_type already exists\"\n    }\n  ]\n}\n"
+            Duplicate Custom Field:
+              summary: Duplicate Custom Field
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Conflict\",\n      \"status\": \"409\",\n      \"detail\": \"custom_field with the given slug already exists\"\n    }\n  ]\n}\n"
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            Missing Name:
+              summary: Required field missing
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Bad Request\",\n      \"status\": \"400\",\n      \"detail\": \"The field 'name' is required.\"\n    }\n  ]\n}\n"
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            Internal Server Error:
+              summary: Internal server error
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
+    BadFilterError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            Bad Filter:
+              summary: Invalid field specified for filter
+              value: "{\n  \"errors\": [\n    {\n      \"detail\": \"Invalid filter: unknown field [version] specified in search filter, allowed fields are [api_type created_at description id name slug updated_at]\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}\n"
+    CustomField:
+      description: A Custom Field
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/CustomField'
+          examples:
+            Boolean Field:
+              summary: Boolean Field
+              value:
+                data:
+                  id: 859aeba1-03c2-4822-bd4c-89afce93d7eb
+                  type: custom_field
+                  name: Keep Purchased Items
+                  description: This field stores whether or not to keep purchased items on the wishlist.
+                  slug: keep_purchased
+                  field_type: boolean
+                  validation:
+                    boolean:
+                      allow_null_values: true
+                      immutable: false
+                  links:
+                    self: /v2/settings/extensions/custom-apis/3fa85f64-5717-4562-b3fc-2c963f66afa6/fields/859aeba1-03c2-4822-bd4c-89afce93d7eb
+                  meta:
+                    timestamps:
+                      created_at: '2017-01-10T11:41:19.244Z'
+                      updated_at: '2017-01-10T11:41:19.244Z'
+            Float Field:
+              summary: Float Field
+              value:
+                data:
+                  id: 859aeba1-03c2-4822-bd4c-89afce93d7eb
+                  type: custom_field
+                  name: Items Weight
+                  description: This field stores the total weight (in kilograms) of the items in the wishlist.
+                  slug: items_weight
+                  field_type: float
+                  validation:
+                    float:
+                      min_value: 0
+                      max_value: null
+                      allow_null_values: true
+                      immutable: false
+                  links:
+                    self: /v2/settings/extensions/custom-apis/3fa85f64-5717-4562-b3fc-2c963f66afa6/fields/859aeba1-03c2-4822-bd4c-89afce93d7eb
+                  meta:
+                    timestamps:
+                      created_at: '2017-01-10T11:41:19.244Z'
+                      updated_at: '2017-01-10T11:41:19.244Z'
+            Integer Field:
+              summary: Integer Field
+              value:
+                data:
+                  id: 859aeba1-03c2-4822-bd4c-89afce93d7eb
+                  type: custom_field
+                  name: Items Count
+                  description: This field stores the total count of items in the wishlist.
+                  slug: items_count
+                  field_type: integer
+                  validation:
+                    integer:
+                      min_value: null
+                      max_value: null
+                      allow_null_values: true
+                      immutable: false
+                  links:
+                    self: /v2/settings/extensions/custom-apis/3fa85f64-5717-4562-b3fc-2c963f66afa6/fields/859aeba1-03c2-4822-bd4c-89afce93d7eb
+                  meta:
+                    timestamps:
+                      created_at: '2017-01-10T11:41:19.244Z'
+                      updated_at: '2017-01-10T11:41:19.244Z'
+            String Field:
+              summary: String Field
+              value:
+                data:
+                  id: 859aeba1-03c2-4822-bd4c-89afce93d7eb
+                  type: custom_field
+                  name: Name
+                  description: This field stores the name of the wishlist.
+                  slug: name
+                  field_type: string
+                  validation:
+                    string:
+                      min_length: 3
+                      max_length: 128
+                      regex: null
+                      allow_null_values: true
+                      immutable: false
+                      unique: 'no'
+                      unique_case_insensitivity: false
+                  links:
+                    self: /v2/settings/extensions/custom-apis/3fa85f64-5717-4562-b3fc-2c963f66afa6/fields/859aeba1-03c2-4822-bd4c-89afce93d7eb
+                  meta:
+                    timestamps:
+                      created_at: '2017-01-10T11:41:19.244Z'
+                      updated_at: '2017-01-10T11:41:19.244Z'
+            Any Field:
+              summary: Any Field
+              value:
+                data:
+                  id: 859aeba1-03c2-4822-bd4c-89afce93d7eb
+                  type: custom_field
+                  name: Metadata
+                  description: This field stores arbitrary metadata as a JSON object.
+                  slug: metadata
+                  field_type: any
+                  validation:
+                    any:
+                      allow_null_values: true
+                      immutable: false
+                  links:
+                    self: /v2/settings/extensions/custom-apis/3fa85f64-5717-4562-b3fc-2c963f66afa6/fields/859aeba1-03c2-4822-bd4c-89afce93d7eb
+                  meta:
+                    timestamps:
+                      created_at: '2017-01-10T11:41:19.244Z'
+                      updated_at: '2017-01-10T11:41:19.244Z'
+            List Field:
+              summary: List Field
+              value:
+                data:
+                  id: 859aeba1-03c2-4822-bd4c-89afce93d7eb
+                  type: custom_field
+                  name: Tags
+                  description: This field stores a list of tags for the wishlist.
+                  slug: tags
+                  field_type: list
+                  validation:
+                    list:
+                      allow_null_values: true
+                      immutable: false
+                      min_length: null
+                      max_length: null
+                      allowed_type: string
+                  links:
+                    self: /v2/settings/extensions/custom-apis/3fa85f64-5717-4562-b3fc-2c963f66afa6/fields/859aeba1-03c2-4822-bd4c-89afce93d7eb
+                  meta:
+                    timestamps:
+                      created_at: '2017-01-10T11:41:19.244Z'
+                      updated_at: '2017-01-10T11:41:19.244Z'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

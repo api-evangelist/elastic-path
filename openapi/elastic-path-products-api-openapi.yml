@@ -1,0 +1,3014 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Products API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Products
+  description: '```mdx-code-block
+
+    import ProductsOverview from ''/docs/partials/pxm/products/productsoverview.mdx'';
+
+    import ProductTypes from ''/docs/partials/pxm/products/types.mdx'';
+
+    import ProductTags from ''/docs/partials/pxm/products/tags.mdx'';
+
+    import PersonalProducts from ''/docs/partials/pxm/products/personalizing.mdx'';
+
+    import ProductCatalogs from ''/docs/partials/pxm/products/catalogs.mdx'';
+
+    import Overview from "/docs/partials/pxm/bundles/bundles.mdx";
+
+    import ComponentOptions from "/docs/partials/pxm/bundles/components.mdx";
+
+    import BundlePricing from "/docs/partials/pxm/bundles/bundlepricing.mdx";
+
+    import DynamicBundles from "/docs/partials/pxm/bundles/dynamic.mdx";
+
+    import BundlesBundles from "/docs/partials/pxm/bundles/bundlesof.mdx";
+
+
+    <ProductsOverview />
+
+
+    ### Product Types
+
+
+    <ProductTypes />
+
+
+    ### Personalizing Products
+
+
+    <PersonalProducts />
+
+
+    ### Products and Catalog Releases
+
+
+    <ProductCatalogs />
+
+
+    ### Bundles
+
+
+    <Overview></Overview>
+
+
+    ### Bundle Components and Options
+
+
+    <ComponentOptions></ComponentOptions>
+
+
+    ### Bundle Pricing
+
+
+    <BundlePricing></BundlePricing>
+
+
+    ### Dynamic Bundles
+
+
+    <DynamicBundles></DynamicBundles>
+
+
+    #### Creating Dynamic Bundles: An Overview
+
+
+    The following steps are an overview of how to use dynamic bundles.
+
+
+    1. Create your products using [**create a product**](/docs/api/pxm/products/create-product).
+
+    1. Create a bundle using [**create a bundle**](/docs/api/pxm/products/create-product).
+
+    1. Specify minimum and/or maximum values for the number of product options that can be selected within the bundle. For example, if you want the shopper to select exactly 4 out of 10 options, set both the minimum and maximum values to 4 for each of the 10 product options.
+
+    1. For each product option in the bundle, specify if it is a default option by adding `"default": true` to the product options that you want to be pre-selected for the shopper.
+
+    1. Publish the bundle to your catalog using the [Publish a catalog](/docs/api/pxm/catalog/publish-release) endpoint so you can display the products to your shoppers in your storefront.
+
+    1. When a shopper interacts with the bundle on your storefront, they can select the products they want from the list of options. Use the [configure a shopper bundle](/docs/api/pxm/catalog/configure-by-context-product) endpoint to capture the shoppers selections. This updates the `bundle_configuration` with the product options chosen by a shopper.
+
+    1. Once a shopper has configured their bundle, use the add a product to a cart endpoint to add the selected bundle to the shopper’s cart.
+
+    1. When the shopper proceeds to checkout, the selected product options from the bundle are included in the order.
+
+
+    ### Bundles of Bundles
+
+
+    <BundlesBundles></BundlesBundles>
+
+
+    #### Creating Bundles of Bundles: An Overview
+
+
+    To create a bundle of bundles, simply add a bundle as a component to another bundle.
+
+
+    1. Create your products using [**create a product**](/docs/api/pxm/products/create-product).
+
+    1. Create all your child bundles using [**create a bundle**](/docs/api/pxm/products/create-product).
+
+    1. [**Create a parent bundle**](/docs/api/pxm/products/create-product) and specify the product ID of your child bundle as an option of a component in your bundle. You cannot have more than 1500 options in a bundle.
+
+    ```
+
+    '
+paths:
+  /pcm/products:
+    post:
+      summary: Create a product or bundle
+      description: "Creates a product or bundle with the attributes that are defined in the body.\n\n#### Product Types\n\nProduct Experience Manager automatically assigns types to the products you create. You can filter on product types. Product types can also be used in catalogs. For example, in your catalog, you can filter on `parent` so that only your parent products are displayed in your storefront. \n\nSee [**Product Types**](/docs/api/pxm/products/products#product-types).\n\n#### Product Tags\n\nYou can use product tags to store or assign a key word against a product or service that you sell in your store. The product tag can then be used to describe or label that product. Product tags represent similarities between products who do not share the same attributes. Using product tags means that you can group your products together, for example, by brand, category, subcategory, colors, types, industries, and so on. \n\nSee [**Product Tags**](/docs/api/pxm/products/product-tags).\n\n#### Personalizing Products\n\nYou can allow your shoppers to add custom text to a product when adding product items to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized, or you sell greetings cards that can be printed with your shoppers personalized messages. You can do this by configuring the `custom_inputs` attribute.\n\nWhen configuring the `custom_inputs` attribute:\n\n- You can rename `input` to something more representative of the input that shoppers are adding, for example, `message` or `front`.\n- `name` is the name that is displayed in your storefront.\n- You can add validation rules. For example, the input field must be a `string` and/or up to 255 characters in length. The limit is 255 characters.\n- You can specify if the input field is required.\n\n#### Curating Products\n\nYou can curate the products in a node. Product curation allows you to promote specific products within each node of your hierarchies, enabling you to create unique product collections in your storefront. For example, you may find you have an abundance of cotton T-Shirts and you want to promote these products to the top of the product list. When a shopper navigates to T-shirts, the cotton T-Shirts are displayed first. See [**Update a node**](/docs/api/pxm/products/update-node).\n\n#### Bundles\n\nWith Product Experience Manager, you can use the products API to create and manage bundles. A bundle is a purchasable product, consisting of one or more products that you want to sell together. \n\nSee [**Bundles**](/docs/api/pxm/products/products#bundles).\n"
+      operationId: createProduct
+      tags:
+      - Products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/create_product_request'
+            examples:
+              create-product:
+                summary: Create a base product
+                $ref: '#/components/examples/product_request'
+              build-rules:
+                summary: Create a base product, associate variations, configure build rules
+                $ref: '#/components/examples/build_rules_request'
+              sku-bundles:
+                summary: SKU-based bundles
+                $ref: '#/components/examples/bundle_sku_based_request'
+              sku-less-bundles:
+                summary: SKU-less bundles
+                $ref: '#/components/examples/bundle_sku_less_request'
+              bundle-quantity-config:
+                summary: Create Bundle with Quantity Configuration
+                description: Create a bundle where each selected option can have a configurable quantity. In this example, syrup is optional (0-2 types) with up to 3 pumps per syrup, and exactly one coffee type must be selected.
+                $ref: '#/components/examples/create_bundle_with_quantity_config'
+      responses:
+        '201':
+          description: Creates a product with the following attributes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/single_product_response'
+              examples:
+                created-product:
+                  summary: Create a base product
+                  $ref: '#/components/examples/create_single_product_response'
+                build-rules:
+                  summary: Create a base product, associate variations, configure build rules
+                  $ref: '#/components/examples/create_build_rules_response'
+                bundle-quantity-config:
+                  summary: Create Bundle with Quantity Configuration
+                  description: A bundle where each selected option can have a configurable quantity. In this example, syrup is optional (0-2 types) with up to 3 pumps per syrup, and exactly one coffee type must be selected.
+                  $ref: '#/components/examples/bundle_with_quantity_config_response'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+    get:
+      summary: Get all products
+      description: "Retrieves a list of all your products in the Product Experience Manager system.\n\nYou can also use `include` to retrieve top-level resources, such as files or images, and key attribute data, such as SKU or slug for component products in a product bundle. With this option, you can get more information about the products in a product bundle in your store front, improving the buying experience for your shoppers.\n\n#### Pagination\n\nThis endpoint supports offset-based pagination using `page[offset]` and `page[limit]` query parameters.\n\n:::caution Planned pagination changes — on or after 1 September 2026\n\nThe pagination links returned by this endpoint currently differ from the Elastic Path Commerce Cloud platform standard. Specifically, the `current` link is not returned, `first`/`last` are not always present, `prev` is incorrectly omitted on the second page, and `next` is incorrectly omitted on the second-to-last page.\n\nOn or after **1 September 2026**, this endpoint will be updated so that `current` and `first` are always present, `last` is present on every page except the final page, `next` is present on every page except the last, and `prev` is present on every page except the first. See the [links](/docs/api/pxm/products/get-all-products#links) schema for full details.\n\nIf your integration iterates through pages using these links, please verify that it will handle the updated behaviour correctly before this date.\n\n:::\n\n#### Filtering\n\n Many Commerce API endpoints support filtering. The general syntax is described in [**Filtering**](/guides/Getting-Started/filtering).\n\n The following attributes and operators are supported.\n\n| Operator                  | Attribute                                                                                                                                               | Description                                                                                                                                                                                                                                             | Example                                          |\n| :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------- |\n| `eq`                      | `id`, `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `name`, `templates`, `commodity_type`, `owner`, `product_types`, `parent_id`, `component_option_id`, `tags`, `status`, `has_nodes (false only)`, `created_at`, `updated_at`, `external_ref`, `description` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. For `product_types`, you can only specify one product type. **Note:** `has_nodes` can only be filtered as `false`. **Note:** `component_option_id` matches when a bundle includes that product id as a component option. | `?filter=eq(name,some-name)` |\n| `like`                    | `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `name`, `tags`, `description`, `external_ref`                                                        | Like. Checks if the operand contains the specified string. Wildcards are supported.                                                                                                                                                                     | `?filter=like(name,*some-name*)`                 |\n| `in`                      | `id`, `name`, `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `product_types`, `parent_id`, `component_option_id`, `tags`, `external_ref`                                   | Checks if the values are included in the specified list. If they are, the condition is true. For `product_types`, you can specify more than one product type.                                                                                           | `?filter=in(id,some-id)`                         |\n| `gt`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Greater than. Checks if the value of the field is greater than the given value.                                                                                                                                                                         | `?filter=gt(updated_at,2024-01-01T00:00:00Z)`    |\n| `ge`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Greater than or equal to. Checks if the value of the field is greater than or equal to the given value.                                                                                                                                                 | `?filter=ge(created_at,2023-01-01T00:00:00Z)`    |\n| `lt`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Less than. Checks if the value of the field is less than the given value.                                                                                                                                                                               | `?filter=lt(updated_at,2025-01-01T00:00:00Z)`    |\n| `le`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Less than or equal to. Checks if the value of the field is less than or equal to the given value.                                                                                                                                                       | `?filter=le(created_at,2022-01-01T00:00:00Z)`    |\n| `eq` (extensions)         | `extensions.book.isbn`                                                                                                                                  | Filters using a nested extension field.                                                                                                                                                                                                                 | `?filter=eq(extensions.book.isbn,1765426)`       |\n| `eq` (shopper_attributes) | `shopper_attributes.color`                                                                                                                              | Filters using a shopper custom attribute field.                                                                                                                                                                                                         | `?filter=eq(shopper_attributes.color,red)`       |\n| `eq` (admin_attributes)   | `admin_attributes.warehouse`                                                                                                                            | Filters using an admin custom attribute field.                                                                                                                                                                                                          | `?filter=eq(admin_attributes.warehouse,US-EAST)` |\n"
+      operationId: getAllProducts
+      tags:
+      - Products
+      parameters:
+      - $ref: '#/components/parameters/page_offset'
+      - $ref: '#/components/parameters/page_limit'
+      - $ref: '#/components/parameters/filterproduct'
+      - $ref: '#/components/parameters/include'
+      responses:
+        '200':
+          description: Returns a list of all products.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/multi_product_response'
+              examples:
+                list-products:
+                  $ref: '#/components/examples/multi_product_response'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '500':
+          $ref: '#/components/responses/internal'
+  /pcm/products/{productID}:
+    get:
+      summary: Get a product
+      description: "Returns a product by its identifier. \n\nYou can also use `include=component_products` to retrieve top-level resources, such as files or images, and key attribute data, such as SKU or slug for component products in a product bundle. With this option, you can get more information about the products in a product bundle in your store front, improving the buying experience for your shoppers.\n"
+      operationId: getProduct
+      parameters:
+      - $ref: '#/components/parameters/product_id'
+      - $ref: '#/components/parameters/include'
+      tags:
+      - Products
+      responses:
+        '200':
+          description: Returns a product by its identifier.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/single_product_response'
+              examples:
+                get-product:
+                  summary: Product
+                  $ref: '#/components/examples/get_single_product_response'
+                get-product-bundle:
+                  summary: Bundle
+                  $ref: '#/components/examples/get_bundle_response'
+                get-product-bundle-quantity-config:
+                  summary: Bundle with Quantity Configuration
+                  description: Retrieve a bundle where each selected option can have a configurable quantity. In this example, syrup is optional (0-2 types) with up to 3 pumps per syrup, and exactly one coffee type must be selected.
+                  $ref: '#/components/examples/bundle_with_quantity_config_response'
+                get-product-component-parent:
+                  summary: Parent Product
+                  $ref: '#/components/examples/get_parent_product_response'
+                get-product-component-child:
+                  summary: Child Product
+                  $ref: '#/components/examples/get_child_product_response'
+                get-product-component-products:
+                  summary: Component Product
+                  $ref: '#/components/examples/get_component_product_response'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '500':
+          $ref: '#/components/responses/internal'
+    put:
+      summary: Update a product or bundle
+      description: Specify whichever attributes you want to change. The values of the other attributes remain the same. If the attributes section is empty, the product or bundle is not updated.
+      operationId: updateProduct
+      parameters:
+      - $ref: '#/components/parameters/product_id'
+      tags:
+      - Products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/update_product_request'
+            examples:
+              update-product:
+                summary: Update a base product
+                $ref: '#/components/examples/update_product_request'
+              update-product-build-rules:
+                summary: Update a base product and build rules
+                $ref: '#/components/examples/update_build_rules_request'
+              update-product-custom-inputs:
+                summary: Update using custom_inputs
+                description: You can allow your shoppers to add custom text to a product when checking out their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized. You can do this using the custom_inputs attribute when creating your products.
+                $ref: '#/components/examples/update_custom_inputs_request'
+              update-product-bundle:
+                summary: Update a bundle
+                $ref: '#/components/examples/update_bundle_request'
+              update-product-bundle-quantity-config:
+                summary: Update Bundle with Quantity Configuration
+                description: Update a bundle where each selected option can have a configurable quantity. In this example, syrup is optional (0-2 types) with up to 3 pumps per syrup, and exactly one coffee type must be selected.
+                $ref: '#/components/examples/update_bundle_with_quantity_config'
+      responses:
+        '200':
+          description: Updates a product with the following attributes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/single_product_response'
+              examples:
+                updated-product:
+                  summary: Update a base product
+                  $ref: '#/components/examples/update_single_product_response'
+                build-rules:
+                  summary: Update a base product, configure build rules
+                  $ref: '#/components/examples/update_build_rules_response'
+                update-product-custom-inputs:
+                  summary: Update using custom_inputs
+                  $ref: '#/components/examples/update_custom_inputs_response'
+                update-product-bundle:
+                  summary: Update a bundle
+                  $ref: '#/components/examples/update_bundle_response'
+                update-product-bundle-quantity-config:
+                  summary: Update Bundle with Quantity Configuration
+                  description: A bundle where each selected option can have a configurable quantity. In this example, syrup is optional (0-2 types) with up to 3 pumps per syrup, and exactly one coffee type must be selected.
+                  $ref: '#/components/examples/bundle_with_quantity_config_response'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '409':
+          $ref: '#/components/responses/write_conflict'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+    delete:
+      summary: Delete a product
+      description: 'Deletes the specified product.
+
+
+        You cannot delete a product if it is part of a bundle. You must first delete the bundle before you delete the product.
+
+        '
+      operationId: deleteProduct
+      parameters:
+      - $ref: '#/components/parameters/product_id'
+      tags:
+      - Products
+      responses:
+        '204':
+          description: Deletes the specified product.
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+  /pcm/products/attach_nodes:
+    post:
+      summary: Attach multiple nodes
+      description: "Assigns products to multiple hierarchies and their children nodes. You can apply a filter to search for the appropriate products to attach to a node. For general filtering syntax, see [**Filtering**](/guides/Getting-Started/filtering).\n \n The following attributes and operators are supported.\n \n | Operator                  | Attribute                                                                                                                                               | Description                                                                                                                                                                                                                                             | Example                                          |\n | :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------- |\n | `eq`                      | `id`, `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `name`, `templates`, `commodity_type`, `owner`, `product_types`, `parent_id`, `component_option_id`, `tags`, `status`, `has_nodes (false only)`, `created_at`, `updated_at`, `external_ref`, `description` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. For `product_types`, you can only specify one product type. **Note:** `has_nodes` can only be filtered as `false`. **Note:** `component_option_id` matches when a bundle includes that product id as a component option. | `?filter=eq(name,some-name)` |\n | `like`                    | `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `name`, `tags`, `description`, `external_ref`                                                        | Like. Checks if the operand contains the specified string. Wildcards are supported.                                                                                                                                                                     | `?filter=like(name,*some-name*)`                 |\n | `in`                      | `id`, `name`, `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `product_types`, `parent_id`, `component_option_id`, `tags`, `external_ref`                                   | Checks if the values are included in the specified list. If they are, the condition is true. For `product_types`, you can specify more than one product type.                                                                                           | `?filter=in(id,some-id)`                         |\n | `gt`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Greater than. Checks if the value of the field is greater than the given value.                                                                                                                                                                         | `?filter=gt(updated_at,2024-01-01T00:00:00Z)`    |\n | `ge`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Greater than or equal to. Checks if the value of the field is greater than or equal to the given value.                                                                                                                                                 | `?filter=ge(created_at,2023-01-01T00:00:00Z)`    |\n | `lt`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Less than. Checks if the value of the field is less than the given value.                                                                                                                                                                               | `?filter=lt(updated_at,2025-01-01T00:00:00Z)`    |\n | `le`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Less than or equal to. Checks if the value of the field is less than or equal to the given value.                                                                                                                                                       | `?filter=le(created_at,2022-01-01T00:00:00Z)`    |\n | `eq` (extensions)         | `extensions.book.isbn`                                                                                                                                  | Filters using a nested extension field.                                                                                                                                                                                                                 | `?filter=eq(extensions.book.isbn,1765426)`       |\n | `eq` (shopper_attributes) | `shopper_attributes.color`                                                                                                                              | Filters using a shopper custom attribute field.                                                                                                                                                                                                         | `?filter=eq(shopper_attributes.color,red)`       |\n | `eq` (admin_attributes)   | `admin_attributes.warehouse`                                                                                                                            | Filters using an admin custom attribute field.                                                                                                                                                                                                          | `?filter=eq(admin_attributes.warehouse,US-EAST)` |\n"
+      operationId: attachNodes
+      tags:
+      - Products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  type: object
+                  required:
+                  - filter
+                  - node_ids
+                  properties:
+                    filter:
+                      type: string
+                      description: 'Filters applied to search for appropriate products to attach to a node. See [Attach multiple nodes](/docs/api/pxm/products/attach-nodes).
+
+                        '
+                      example: eq(sku,book)
+                    node_ids:
+                      type: array
+                      description: A list of node unique identifiers that you want to assign to the products.
+                      example:
+                      - '123'
+                      items:
+                        type: string
+            examples:
+              product-attach-nodes:
+                summary: Attach multiple nodes
+                value:
+                  data:
+                    filter: eq(sku,book)
+                    node_ids:
+                    - '123'
+      responses:
+        '200':
+          description: This request assigns the products that you have selected to multiple hierarchies and their children nodes and returns the following.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      nodes_attached:
+                        description: Number of nodes assigned to the products.
+                        type: integer
+                      nodes_not_found:
+                        type: array
+                        description: A list of node unique identifiers that could not be identified.
+                        example:
+                        - '123'
+                        items:
+                          type: string
+              examples:
+                created-product:
+                  summary: Attach multiple nodes
+                  value:
+                    meta:
+                      nodes_attached: 3
+                      nodes_not_found: []
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+  /pcm/products/detach_nodes:
+    post:
+      summary: Detach multiple nodes
+      description: "Dissociates products from multiple hierarchies and their children nodes. You can apply filters to search for the appropriate products to detach. For general filtering syntax, see [**Filtering**](/guides/Getting-Started/filtering).\n \nThe following attributes and operators are supported.\n \n | Operator                  | Attribute                                                                                                                                               | Description                                                                                                                                                                                                                                             | Example                                          |\n | :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------- |\n | `eq`                      | `id`, `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `name`, `templates`, `commodity_type`, `owner`, `product_types`, `parent_id`, `component_option_id`, `tags`, `status`, `has_nodes (false only)`, `created_at`, `updated_at`, `external_ref`, `description` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. For `product_types`, you can only specify one product type. **Note:** `has_nodes` can only be filtered as `false`. **Note:** `component_option_id` matches when a bundle includes that product id as a component option. | `?filter=eq(name,some-name)` |\n | `like`                    | `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `name`, `tags`, `description`, `external_ref`                                                        | Like. Checks if the operand contains the specified string. Wildcards are supported.                                                                                                                                                                     | `?filter=like(name,*some-name*)`                 |\n | `in`                      | `id`, `name`, `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `product_types`, `parent_id`, `component_option_id`, `tags`, `external_ref`                                   | Checks if the values are included in the specified list. If they are, the condition is true. For `product_types`, you can specify more than one product type.                                                                                           | `?filter=in(id,some-id)`                         |\n | `gt`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Greater than. Checks if the value of the field is greater than the given value.                                                                                                                                                                         | `?filter=gt(updated_at,2024-01-01T00:00:00Z)`    |\n | `ge`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Greater than or equal to. Checks if the value of the field is greater than or equal to the given value.                                                                                                                                                 | `?filter=ge(created_at,2023-01-01T00:00:00Z)`    |\n | `lt`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Less than. Checks if the value of the field is less than the given value.                                                                                                                                                                               | `?filter=lt(updated_at,2025-01-01T00:00:00Z)`    |\n | `le`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Less than or equal to. Checks if the value of the field is less than or equal to the given value.                                                                                                                                                       | `?filter=le(created_at,2022-01-01T00:00:00Z)`    |\n | `eq` (extensions)         | `extensions.book.isbn`                                                                                                                                  | Filters using a nested extension field.                                                                                                                                                                                                                 | `?filter=eq(extensions.book.isbn,1765426)`       |\n | `eq` (shopper_attributes) | `shopper_attributes.color`                                                                                                                              | Filters using a shopper custom attribute field.                                                                                                                                                                                                         | `?filter=eq(shopper_attributes.color,red)`       |\n | `eq` (admin_attributes)   | `admin_attributes.warehouse`                                                                                                                            | Filters using an admin custom attribute field.                                                                                                                                                                                                          | `?filter=eq(admin_attributes.warehouse,US-EAST)` |\n"
+      operationId: detachNodes
+      tags:
+      - Products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  type: object
+                  required:
+                  - filter
+                  - node_ids
+                  properties:
+                    filter:
+                      type: string
+                      description: 'You can apply filters to search for the appropriate products to detach. See [Detach multiple nodes](/docs/api/pxm/products/detach-nodes).
+
+                        '
+                      example: eq(sku,book)
+                    node_ids:
+                      type: array
+                      description: A list of node unique identifiers that you want to assign to the products.
+                      example:
+                      - '123'
+                      items:
+                        type: string
+            examples:
+              product-attach-nodes:
+                summary: Attach multiple nodes
+                value:
+                  data:
+                    filter: eq(sku,book)
+                    node_ids:
+                    - '123'
+      responses:
+        '200':
+          description: The request dissociates the products that you have selected from multiple hierarchies and their children and returns the following.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      nodes_detached:
+                        description: Number of nodes dissociated from the products.
+                        type: integer
+                      nodes_not_found:
+                        type: array
+                        description: A list of node unique identifiers that could not be identified.
+                        example:
+                        - '123'
+                        items:
+                          type: string
+              examples:
+                created-product:
+                  summary: Detach multiple nodes
+                  value:
+                    meta:
+                      nodes_detached: 1
+                      nodes_not_found: []
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+  /pcm/products/{productID}/nodes:
+    get:
+      summary: Get a product's nodes
+      description: Returns the nodes associated with the product. Products must be in a `live` status.
+      operationId: getProductsNodes
+      tags:
+      - Products
+      responses:
+        '200':
+          description: Successfully returns the product's nodes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/multi_nodes'
+              examples:
+                get-product-nodes:
+                  $ref: '#/components/examples/resp_multi_nodes'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '500':
+          $ref: '#/components/responses/internal'
+      parameters:
+      - $ref: '#/components/parameters/page_offset'
+      - $ref: '#/components/parameters/page_limit'
+      - $ref: '#/components/parameters/product_id'
+components:
+  schemas:
+    product_build_rules:
+      type: object
+      description: You can build a combination of child products associated with a product, based on build rules that you specify. This is useful, for example, if you have a variation option that you do not sell. This makes managing and building your child products quick and easy. See [Using Build Rules](/docs/api/pxm/products/build-child-products#using-build-rules).
+      properties:
+        default:
+          description: Specifies the default behaviour, either `include` or `exclude`.
+          type: string
+          enum:
+          - include
+          - exclude
+        include:
+          description: An array of option IDs to include when child products are built. Each combination consists of a nested array of option IDs from one or more variations. Combinations of option IDs in the nested arrays must come from different variations.
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        exclude:
+          description: An array of option IDs to exclude when child products are built. Each combination consists of a nested array of option IDs from one or more variations. Combinations of option IDs in the nested arrays must come from different variations.
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+    error:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                example: '500'
+              title:
+                type: string
+                description: A brief summary of the error.
+                example: Internal server error
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                example: An internal error has occurred.
+              request_id:
+                type: string
+                description: Internal request ID.
+                example: 00000000-0000-0000-0000-000000000000
+              meta:
+                type: object
+                description: Additional supporting meta data for the error.
+                example:
+                  missing_ids:
+                  - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    node:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - relationships
+      - meta
+      properties:
+        id:
+          description: The unique identifier of a node.
+          type: string
+        type:
+          description: This represents the type of resource object being returned. Always `node`.
+          type: string
+          enum:
+          - node
+        attributes:
+          $ref: '#/components/schemas/attributes'
+        relationships:
+          $ref: '#/components/schemas/relationships'
+        meta:
+          type: object
+          properties:
+            sort_order:
+              description: The sort order value. The node with the highest value of `sort_order` is displayed first. For example, a node with a `sort_order` value of `3` appears before a node with a `sort_order` value of `2`. See [Sorting Nodes in a hierarchy](/docs/api/pxm/products/create-node#sorting-nodes-in-a-hierarchy).
+              type: integer
+            created_at:
+              description: The date and time a node is created.
+              type: string
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+            updated_at:
+              description: The date and time a node was updated.
+              type: string
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+            parent_name:
+              description: The name of the parent of the node if one exists.
+              type: string
+            owner:
+              description: The node owner, either `organization` or `store`.
+              type: string
+              enum:
+              - store
+              - organization
+            has_children:
+              description: Whether the node has child nodes.
+              type: boolean
+            hierarchy_id:
+              description: The unique identifier of hierarchy
+              type: string
+            breadcrumbs:
+              type: array
+              description: Breadcrumbs
+              items:
+                type: object
+                properties:
+                  id:
+                    description: The unique identifier of a hierarchy/node.
+                    type: string
+                  name:
+                    description: The name of the hierarchy/node.
+                    type: string
+                  slug:
+                    description: A slug for the hierarchy/node.
+                    type: string
+                  locales:
+                    description: Product Experience Manager supports localization of hierarchies and nodes. If you store supports multiple languages, you can localize hierarchy and node names and descriptions.
+                    type: object
+                    additionalProperties:
+                      description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        name:
+                          description: A localized hierarchy or node name.
+                          type: string
+    multi_meta:
+      type: object
+      properties:
+        results:
+          description: Contains the results for the entire collection.
+          type: object
+          properties:
+            total:
+              description: Total number of results for the entire collection.
+              type: integer
+              example: 30
+              minimum: 0
+    admin_attributes:
+      type: object
+      description: "`admin_attributes` are not displayed in catalogs. This means `admin_attributes` can only be viewed by administrators. If you want a custom attribute to be displayed in a catalog, you must add it to `shopper_attributes`. \n\n`admin_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
+      example:
+        cost_of_goods: '42.0'
+        charge_type: credit card
+      additionalProperties:
+        nullable: true
+        type: string
+    elastic_path_file:
+      type: object
+      title: ElasticPathFile
+      properties:
+        id:
+          type: string
+          description: The unique identifier for this file.
+          format: uuid
+        type:
+          description: The type represents the object being returned.
+          type: string
+          example: file
+        file_name:
+          description: The name of the file.
+          type: string
+          example: file_name.jpg
+        mime_type:
+          description: The mime type of the file.
+          type: string
+          example: image/jpeg
+        file_size:
+          description: The size of the file. Required when uploading files.
+          type: integer
+          example: 36000
+        public:
+          description: DEPRECATED Whether the file public or not. Required when uploading files.
+          type: boolean
+          example: true
+        meta:
+          properties:
+            timestamps:
+              type: object
+              description: The date and time the file was created.
+              properties:
+                created_at:
+                  description: The date and time the file was created.
+                  type: string
+                  example: '2023-10-11T13:02:25.293Z'
+            dimensions:
+              description: The file dimensions.
+              type: object
+              properties:
+                width:
+                  description: The width of the file.
+                  type: integer
+                  example: 1800
+                height:
+                  description: The height of the file.
+                  type: integer
+                  example: 1000
+        links:
+          description: Links are used to allow you to move between requests.
+          type: object
+          properties:
+            self:
+              description: Single entities use a self parameter with a link to that specific resource.
+              type: string
+              example: https://useast.api.elasticpath.com/v2/files/ddc28c74-a7df-46be-b262-8fa69a6e7d52
+        link:
+          type: object
+          description: The publicly available URL for this file.
+          properties:
+            href:
+              description: The publicly available URL for this file.
+              type: string
+              example: https://files-eu.epusercontent.com/e8c53cb0-120d-4ea5-8941-ce74dec06038/f8cf26b3-6d38-4275-937a-624a83994702.png
+            meta:
+              type: object
+              properties:
+                results:
+                  description: Contains the results for the entire collection.
+                  type: object
+                  properties:
+                    total:
+                      description: Total number of results for the entire collection.
+                      type: integer
+                      example: 2
+    multi_links:
+      type: object
+      description: 'Links allow you to navigate between pages of results.
+
+
+        :::caution Planned pagination changes — on or after 1 September 2026
+
+
+        The pagination behaviour of PIM list endpoints (for example, `GET /pcm/products` and `GET /pcm/hierarchies`) currently differs from the rest of the Elastic Path Commerce Cloud platform. We plan to align PIM pagination with the platform standard on or after **1 September 2026**. Please review the details below and check that your integration code will handle the new behaviour correctly.
+
+
+        :::
+
+
+        #### Current behaviour
+
+
+        The current pagination link behaviour in PIM has the following known issues:
+
+
+        - The `current` link is **not returned**.
+
+        - The `first` and `last` links are **not always returned**.
+
+        - The `prev` link is omitted on both the first **and** second pages. It should only be omitted on the first page.
+
+        - The `next` link is omitted on both the last **and** second-to-last pages. It should only be omitted on the last page.
+
+
+        #### Planned behaviour (on or after 1 September 2026)
+
+
+        On or after 1 September 2026, PIM list endpoints will adopt the following pagination link behaviour, aligning with the rest of the platform:
+
+
+        - `current` — always present, pointing to the current page.
+
+        - `first` — always present.
+
+        - `last` — present on all pages **except the final page**. Omitting `last` on the final page is intentional, to avoid triggering infinite‑loop bugs in integration code that uses the presence of `last` to detect whether more pages remain.
+
+        - `next` — present on all pages except the last page.
+
+        - `prev` — present on all pages except the first page.
+
+        '
+      properties:
+        current:
+          description: 'A link to the current page of results. **Note:** this link is not currently returned by PIM endpoints. It will be introduced on or after 1 September 2026.
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=10&page[limit]=10
+        first:
+          description: 'A link to the first page of results. Currently this may not always be present. After the planned changes it will always be present.
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=0&page[limit]=10
+        last:
+          description: 'A link to the last page of results. Currently this may not always be present. After the planned changes it will be present on all pages except the final page (where it is intentionally omitted).
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=20&page[limit]=10
+        next:
+          description: 'A link to the next page of results. Should be absent on the last page. Currently this is incorrectly absent on the second-to-last page as well; this will be fixed on or after 1 September 2026.
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=10&page[limit]=10
+        prev:
+          description: 'A link to the previous page of results. Should be absent on the first page. Currently this is incorrectly absent on the second page as well; this will be fixed on or after 1 September 2026.
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=8&page[limit]=10
+    single_product_response:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/product_response'
+        included:
+          $ref: '#/components/schemas/included_response'
+    multi_product_response:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/product_response'
+        included:
+          $ref: '#/components/schemas/included_response'
+        links:
+          $ref: '#/components/schemas/multi_links'
+        meta:
+          type: object
+          properties:
+            results:
+              description: Contains the results for the entire collection.
+              type: object
+              properties:
+                total:
+                  description: Total number of results for the entire collection.
+                  type: integer
+                  example: 2
+    multi_nodes:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          description: An array of nodes.
+          type: array
+          items:
+            $ref: '#/components/schemas/node'
+        meta:
+          $ref: '#/components/schemas/multi_meta'
+        links:
+          $ref: '#/components/schemas/multi_links'
+    create_product_request:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - attributes
+          properties:
+            type:
+              description: This represents the type of resource being returned. Always `product`.
+              type: string
+              enum:
+              - product
+              example: product
+            attributes:
+              $ref: '#/components/schemas/product_attributes'
+            relationships:
+              description: Relationships are established between different product entities.
+              type: object
+              properties:
+                variations:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            description: A unique identifier for a resource.
+                            type: string
+                          type:
+                            description: This represents the type of resource object being returned.
+                            type: string
+    update_product_request:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - attributes
+          - id
+          properties:
+            type:
+              description: This represents the type of resource object being returned. Always `product`.
+              type: string
+              enum:
+              - product
+              example: product
+            id:
+              type: string
+              description: The unique identifier of the product. Must match the product ID specified in the request path.
+              example: 00000000-0000-0000-0000-000000000000
+            attributes:
+              $ref: '#/components/schemas/product_attributes'
+    shopper_attributes:
+      type: object
+      description: "`shopper_attributes` are displayed in catalogs. This means `shopper_attributes` can be viewed by both shoppers and administrators. If you do not want a custom attribute to be displayed in a catalog, you must add it to `admin_attributes`. \n\n`shopper_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
+      example:
+        cost_of_goods: '42.0'
+        charge_type: credit card
+      additionalProperties:
+        nullable: true
+        type: string
+    product_attributes:
+      type: object
+      additionalProperties: false
+      properties:
+        external_ref:
+          type: string
+          description: The unique attribute associated with the product. This could be an external reference from a separate company system, for example. The maximum length is 2048 characters.
+        name:
+          type: string
+          description: The product name to display to customers.
+        description:
+          description: A description for the product.
+          type: string
+        slug:
+          type: string
+          description: The unique slug of the product. A slug can contain A to Z, a to z, 0 to 9, hyphen, underscore, and period. Spaces or other special characters like ^, [], *, and $ are not allowed.
+        sku:
+          type: string
+          description: The unique stock keeping unit of the product.
+        status:
+          type: string
+          enum:
+          - live
+          - draft
+          description: The status for the product, either `draft` or `live`. Default is `draft`.  For a product to appear in a catalog it must be in a `live` status.
+        commodity_type:
+          description: The commodity type, either `physical` or `digital`.
+          type: string
+          enum:
+          - physical
+          - digital
+        upc_ean:
+          type: string
+          description: The universal product code or european article number of the product.
+        mpn:
+          type: string
+          description: The manufacturer part number of the product.
+        tags:
+          type: array
+          description: You can use product tags to store or assign a key word against a product. The product tag can then be used to describe or label that product. Using product tags means that you can group your products together, for example, by brand, category, subcategory, colors, types, industries, and so on. A product can have up to 20 tags. A product tag can be up to 255 characters. Product tags must not contain any spaces or commas. See [Product Tags](/docs/api/pxm/products/product-tags).
+          items:
+            type: string
+        build_rules:
+          $ref: '#/components/schemas/product_build_rules'
+        locales:
+          $ref: '#/components/schemas/product_locales'
+        custom_inputs:
+          $ref: '#/components/schemas/product_custom_inputs'
+        components:
+          $ref: '#/components/schemas/product_bundle_components'
+    relationships:
+      type: object
+      description: Relationships allow you to move between requests. Includes links to the child nodes and products associated with a hierarchy or node.
+      properties:
+        children:
+          description: The child nodes related to the resource.
+          type: object
+          properties:
+            data:
+              description: An array of child nodes.
+              type: array
+              items: {}
+            links:
+              description: Links allow you to move between requests.
+              type: object
+              properties:
+                related:
+                  description: A link to a related resource.
+                  type: string
+        parent:
+          description: The parent node related to the resource
+          type: object
+          properties:
+            data:
+              description: The parent node
+              type: object
+              required:
+              - id
+              - type
+              properties:
+                type:
+                  description: This represents the type of resource object being returned. Always `node`.
+                  type: string
+                  enum:
+                  - node
+                id:
+                  description: The unique identifier of a node.
+                  type: string
+        products:
+          type: object
+          description: The products related to the resource.
+          properties:
+            data:
+              description: An array of products.
+              type: array
+              items: {}
+            links:
+              type: object
+              description: Links allow you to move between requests.
+              properties:
+                related:
+                  description: A link to a related resource.
+                  type: string
+    included_response:
+      type: object
+      description: Included is an array of resources that are included in the response.
+      properties:
+        main_images:
+          description: The main images associated with a product.
+          type: array
+          items:
+            $ref: '#/components/schemas/elastic_path_file'
+        component_products:
+          description: Returns a list of component products in a product bundle. If a bundle has no component products (in other words, is not a product bundle), an empty array is returned.
+          type: array
+          items:
+            $ref: '#/components/schemas/product_response'
+        files:
+          description: The files associated with a product.
+          type: array
+          items:
+            $ref: '#/components/schemas/elastic_path_file'
+    product_locales:
+      type: object
+      description: Product Experience Manager supports localization of products and hierarchies. If your store supports multiple languages, you can localize product names and descriptions. You can have as many locales as you want.
+      additionalProperties:
+        description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+        type: object
+        required:
+        - name
+        properties:
+          name:
+            type: string
+            description: A localized name for the product.
+          description:
+            type: string
+            description: A localized description for the product.
+    attributes:
+      type: object
+      properties:
+        name:
+          description: The name of the node, such as `Ranges` or `Refrigerators`. Names must be unique among sibling nodes in the hierarchy. Otherwise, a name can be non-unique within the hierarchy and across multiple hierarchies.
+          type: string
+        description:
+          description: A description for a node.
+          type: string
+        slug:
+          description: A slug for the node. Slugs must be unique among sibling nodes in the hierarchy. Otherwise, a slug can be non-unique within the hierarchy and across multiple hierarchies.
+          type: string
+        curated_products:
+          description: You can curate your products in your nodes product lists. Product curation allows you to promote specific products within each node in a hierarchy, enabling you to create unique product collections in your storefront.
+          type: array
+          items:
+            description: A list of product IDs whose products you want to curate.
+            type: string
+        admin_attributes:
+          $ref: '#/components/schemas/admin_attributes'
+        shopper_attributes:
+          $ref: '#/components/schemas/shopper_attributes'
+        locales:
+          description: Product Experience Manager supports localization of hierarchies and nodes. If you store supports multiple languages, you can localize hierarchy and node names and descriptions.
+          type: object
+          additionalProperties:
+            description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                description: A localized hierarchy or node name.
+                type: string
+              description:
+                description: A localized hierarchy or node description.
+                type: string
+    product_response:
+      type: object
+      properties:
+        id:
+          description: A unique product ID that is generated when you create the product.
+          type: string
+        type:
+          description: This represents the type of resource object being returned. Always `product`.
+          type: string
+          enum:
+          - product
+        attributes:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              description: A name for the product.
+              type: string
+            description:
+              description: A description for the product.
+              type: string
+            slug:
+              description: A label for the product that is used in the URL paths. A slug can contain A to Z, a to z, 0 to 9, hyphen, underscore, and period. Spaces or other special characters like ^, [], *, and $ are not allowed. By default, the product name is used as the slug.
+              type: string
+            sku:
+              description: The unique stock keeping unit of the product.
+              type: string
+            status:
+              description: The status for the product, either `draft` or `live`.
+              type: string
+              enum:
+              - live
+              - draft
+            commodity_type:
+              description: The commodity type, either `physical` or `digital`.
+              type: string
+              enum:
+              - physical
+              - digital
+            upc_ean:
+              description: The universal product code or european article number of the product.
+              type: string
+            mpn:
+              description: The manufacturer part number of the product.
+              type: string
+            external_ref:
+              description: The unique attribute associated with the product. This could be an external reference from a separate company system, for example. The maximum length is 2048 characters.
+              type: string
+            locales:
+              $ref: '#/components/schemas/product_locales'
+            tags:
+              description: You can use product tags to store or assign a key word against a product. The product tag can then be used to describe or label that product. Using product tags means that you can group your products together, for example, by brand, category, subcategory, colors, types, industries, and so on. A product can have up to 20 tags. A product tag can be up to 255 characters. Product tags must not contain any spaces or commas.
+              type: array
+              items:
+                type: string
+            shopper_attributes:
+              $ref: '#/components/schemas/shopper_attributes'
+            admin_attributes:
+              $ref: '#/components/schemas/admin_attributes'
+            extensions:
+              type: object
+              additionalProperties:
+                type: object
+                additionalProperties:
+                  oneOf:
+                  - type: string
+                    nullable: true
+                  - type: number
+                  - type: boolean
+            custom_inputs:
+              $ref: '#/components/schemas/product_custom_inputs'
+            build_rules:
+              $ref: '#/components/schemas/product_build_rules'
+            components:
+              $ref: '#/components/schemas/product_bundle_components'
+        meta:
+          type: object
+          properties:
+            created_at:
+              description: The date and time a product is created.
+              type: string
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+            updated_at:
+              description: The date and time a product is updated.
+              type: string
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+            owner:
+              description: The resource owner, either `organization` or `store`.
+              type: string
+              enum:
+              - organization
+              - store
+            variations:
+              description: A product's variations and the options defined for each variation. If you have specified `build_rules`, only the child products included in the `build_rules` are specified.
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: A unique ID generated when a variation is created.
+                  name:
+                    type: string
+                    description: The name of a variation.
+                  sort_order:
+                    type: integer
+                    description: The sort order of the variation.
+                  options:
+                    type: array
+                    items:
+                      type: object
+                      description: The options available for this variation.
+                      properties:
+                        id:
+                          type: string
+                          description: A unique ID that is generated an option is created.
+                        name:
+                          type: string
+                          description: The name of an option.
+                        description:
+                          type: string
+                          description: A description of an option.
+                        sort_order:
+                          type: integer
+                          description: The sort order of the option.
+            custom_relationships:
+              description: Custom relationship slugs that are attached to the product.
+              type: array
+            child_variations:
+              description: A child product's variations and the option defined for each variation. This details the variation and options specific to a child product.
+              type: array
+              nullable: true
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: A unique ID generated when a variation is created.
+                  name:
+                    type: string
+                    description: The name of a variation.
+                  sort_order:
+                    description: The sort order value is visible when you add the variations and variation options to your catalogs. You can then use the `sort_order` value to program your storefront to display the variation options in the order that you want. The variation with the highest value of `sort_order` is displayed first. For example, a variation with a `sort_order` value of 3 appears before a variation with a `sort_order` value of 2. You can specify any numbers that you want. You can use 1, 2, 3, or 100, 90, 80, including, zero or negative numbers. You can set `sort_order` to either `null` or omit it entirely from the request if you wish to remove an existing `sort_order` attribute.
+                    type: integer
+                  options:
+                    type: array
+                    nullable: true
+                    description: This will be unset for child product variations.
+                    items:
+                      type: object
+                      description: The options available for this variation.
+                      properties:
+                        id:
+                          type: string
+                          description: A unique ID that is generated an option is created.
+                        name:
+                          type: string
+                          description: The name of an option.
+                        description:
+                          type: string
+                          description: A description of an option.
+                        sort_order:
+                          type: integer
+                          description: The sort order of the option.
+                  option:
+                    type: object
+                    description: The options available for this variation.
+                    properties:
+                      id:
+                        type: string
+                        description: A unique ID that is generated an option is created.
+                      name:
+                        type: string
+                        description: The name of an option.
+                      description:
+                        type: string
+                        description: A description of an option.
+                      sort_order:
+                        type: integer
+                        description: The sort order of the option.
+            product_types:
+              description: "One of the following product types: \n\n- `standard` - A `standard` product is a standalone product.\n- `parent` - A `parent` product is a product that has child products that have been built using the `Build Child Products` endpoint. \n- `child` - When you configure product variations and variation options for `parent` products, the `child` products derived from the `parent` products are automatically created in Commerce.\n- `bundle` - A `bundle` is a purchasable product, comprising one or more standalone products (in other words, components) to be sold together.\n"
+              type: array
+              items:
+                type: string
+                enum:
+                - parent
+                - child
+                - bundle
+                - standard
+            variation_matrix:
+              description: The child products defined for a product. The order of the variations in the `variation_matrix` is the order of the variations in the array when the variations were linked to the product. For example, the first variation in the `variation_matrix` corresponds to the first variation in the array, and so on. You can use the `sort_order`attribute to sort the order of your variation and variation options in the `variation_matrix` object. See [Sorting the Order of Variations and Options](/docs/api/pxm/products/variations#sorting-the-order-of-variations-and-options) If no variations are defined for a product, the `variation_matrix` is empty.
+              type: object
+              additionalProperties: true
+        relationships:
+          description: Relationships are established between different product entities. For example, a `bundle` product and a `child` product are related to a `parent` product, as both are associated with it.
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              data:
+                oneOf:
+                - type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        description: A unique identifier for a resource.
+                        type: string
+                      type:
+                        description: This represents the type of resource object being returned.
+                        type: string
+                - type: object
+                  nullable: true
+                  properties:
+                    id:
+                      description: A unique identifier for a resource.
+                      type: string
+                    type:
+                      description: This represents the type of resource object being returned.
+                      type: string
+              links:
+                description: "Links are used to allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Sometimes, there are not enough entities for a project to fill multiple pages. In this situation, we return some defaults.\n\n | Property | Description |\n | :--- | :--- |\n | `current` | Always the current page. |\n | `first` | Always the first page. |\n | `last` | `null` if there is only one page. |\n | `prev` | `null` if the user is on the first page. |\n | `next` | `null` if there is only one page. |\n"
+                type: object
+                additionalProperties:
+                  type: string
+    product_custom_inputs:
+      type: object
+      description: You use the `custom_inputs` attribute to allow your shoppers to add custom text to a product when adding product items to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized or you sell greetings cards that can be printed with your shoppers personalized messages. See [Personalizing Products](/docs/api/pxm/products/create-product#personalizing-products).
+      additionalProperties:
+        description: A name for the custom text field. You can rename this to something more representative of the input that shoppers are adding, for example, `message` or `front`.
+        type: object
+        properties:
+          name:
+            type: string
+            description: A name for the custom text field.
+          validation_rules:
+            type: array
+            description: The validation rules for the custom text.
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: The type of validation rule. For example, `string`.
+                options:
+                  type: object
+                  description: The options for the validation rule.
+                  properties:
+                    max_length:
+                      type: integer
+                      description: The number of characters the custom text field can be. You can specify a maximum length up to 255 characters, as the limit is 255 characters.
+          required:
+            type: boolean
+            description: '`true` or `false` depending on whether the custom text is required.'
+    product_bundle_components:
+      type: object
+      description: With Product Experience Manager, you can create and manage bundles. A bundle is a purchasable product, consisting of one or more products that you want to sell together. You can create multiple components within a bundle. Each component must have at least one or more options. Each option is a product and a quantity. See [Bundles](/docs/api/pxm/products/products#bundles).
+      additionalProperties:
+        description: The name of the component, such as `games`. The `bundle_configuration` uses the component name to reference a component. A component name should be relatively short and must not contain any special characters.
+        type: object
+        properties:
+          name:
+            type: string
+            description: The component name. The component name is the name that is displayed in your storefront.
+          options:
+            type: array
+            description: The product options included in a component. This can be the ID of another bundle.
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: The unique ID of the product you want to add to a component.
+                type:
+                  type: string
+                  description: This represents the type of object being returned. Always `product`.
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: The number of this product option that a shopper must purchase.
+                min:
+                  type: integer
+                  minimum: 1
+                  description: The minimum quantity of this product option that a shopper can select. Must be 1 or greater. If specified, max must also be specified.
+                max:
+                  type: integer
+                  minimum: 1
+                  description: The maximum quantity of this product option that a shopper can select. Must be 1 or greater and greater than or equal to min. If specified, min must also be specified.
+                sort_order:
+                  type: integer
+                  description: The sort order of the options. The `create a bundle` and `update a bundle` endpoints do not sort the options. You can use the `sort_order` attribute when programming your storefront to display the options in the order that you want.
+                default:
+                  description: Whether the product option is a default option in a bundle. Shoppers can select a bundle that specifies a default list of product options. See [Dynamic Bundles](/docs/api/pxm/products/products#dynamic-bundles).
+                  type: boolean
+                product_should_be_substituted_with_child:
+                  description: Whether the product option should be substituted with a child product.
+                  type: boolean
+                excluded_children:
+                  description: The IDs of child products that are excluded from the bundle option.
+                  type: array
+                  items:
+                    type: string
+          min:
+            type: integer
+            description: The minimum number of product options a shopper can select from this component.
+          max:
+            type: integer
+            description: The maximum number of product options a shopper can select from this component.
+          sort_order:
+            type: integer
+            description: The sort order of the components. The `create a bundle` and `update a bundle` endpoints do not sort the components. You can use the `sort_order` attribute when programming your storefront to display the components in the order that you want.
+  responses:
+    write_conflict:
+      description: Write conflict detected
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Conflict
+                  status: '409'
+                  detail: write conflict detected
+    bad_request:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            bad-request:
+              value:
+                errors:
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
+    internal:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: '500'
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+    forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Forbidden
+                  status: '403'
+                  detail: entity owned by organization
+    not_found:
+      description: Bad Request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+  examples:
+    update_bundle_response:
+      value:
+        data:
+          type: product
+          id: 8a0072c0-cedf-4e53-bdc4-a14a5d6389d5
+          attributes:
+            commodity_type: digital
+            components:
+              List 1:
+                name: PS5
+                options:
+                - id: c7cf43f3-24c6-4523-8a24-3663b49b81aa
+                  type: product
+                  quantity: 1
+                  default: true
+                sort_order: 1
+              List 2:
+                name: Controller
+                options:
+                - id: e59ca559-37c7-4dc9-8a91-df94cd5700d3
+                  type: product
+                  quantity: 1
+                  default: true
+                sort_order: 2
+              List 3:
+                name: PS+
+                options:
+                - id: 8ae2a7ea-f767-4af0-8486-ae203947ecc4
+                  type: product
+                  quantity: 1
+                  default: true
+                sort_order: 3
+              List 4:
+                options:
+                - id: 549a291f-669c-47d0-bc04-60a3f18fc55c
+                  type: product
+                  quantity: 1
+                  default: true
+                - id: 071e461c-22a2-42e0-9604-c345bbc9b85c
+                  type: product
+                  quantity: 1
+                  default: false
+                - id: 633b8172-8aa9-4dbd-aa07-0dcefca3de74
+                  type: product
+                  quantity: 1
+                  default: false
+                - id: 549a291f-669c-47d0-bc04-60a3f18fc55c
+                  type: product
+                  quantity: 1
+                  default: false
+                min: 1
+                max: 1
+                sort_order: 4
+              headsets:
+                name: Headsets
+                options:
+                - id: 8ae2a7ea-f767-4af0-8486-ae203947ecc4
+                  type: product
+                  quantity: 5
+                  default: true
+            description: Favourite DOOM games in one bundle - Select one from four choices
+            mpn: 1234-5678-ABCD00
+            name: Favourite games bundle
+            sku: fav23455
+            slug: PGH69345-B
+            status: live
+            upc_ean: '123456'
+          relationships:
+            children:
+              data: []
+              links:
+                self: /products/8a0072c0-cedf-4e53-bdc4-a14a5d6389d5/children
+            component_products:
+              data: []
+              links:
+                self: /products/8a0072c0-cedf-4e53-bdc4-a14a5d6389d5/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/8a0072c0-cedf-4e53-bdc4-a14a5d6389d5/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/8a0072c0-cedf-4e53-bdc4-a14a5d6389d5/relationships/templates
+            variations:
+              data: []
+              links:
+                self: /products/8a0072c0-cedf-4e53-bdc4-a14a5d6389d5/relationships/variations
+          meta:
+            created_at: '2022-02-03T19:38:00.602Z'
+            owner: store
+            updated_at: '2022-02-03T19:43:21.487Z'
+            variation_matrix: {}
+    update_build_rules_response:
+      value:
+        data:
+          type: product
+          id: 9214719b-17fe-4ea7-896c-d61e60fc0d05
+          attributes:
+            build_rules:
+              default: include
+              exclude:
+              - - cbde9096-e0e1-43d8-a1aa-cb66cf1d299f
+                - 0b261f7d-753d-4af6-b9f4-62b436cca37d
+                - 994c2029-519c-43d9-9c54-14f3af4e3efd
+            commodity_type: physical
+            description: T-shirt.
+            locales:
+              fr-FR:
+                name: Shirt
+                description: T-Shirt.
+            mpn: 1234-5678-SSSS
+            name: Shirt
+            sku: '978055216732567'
+            slug: '978055216732567'
+            status: live
+            upc_ean: '135623456'
+          relationships:
+            children:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/children
+            component_products:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/relationships/templates
+            variations:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/relationships/variations
+          meta:
+            created_at: '2022-08-18T12:14:52.782Z'
+            owner: store
+            product_types:
+            - standard
+            updated_at: '2022-08-18T12:40:13.484Z'
+            variation_matrix: {}
+            variations:
+            - id: 6c4b5caa-3819-4366-a14e-c5b85009544b
+              name: Shirt Size
+              options:
+              - id: cbde9096-e0e1-43d8-a1aa-cb66cf1d299f
+                name: Small
+                description: Size Small
+              - id: da9d88d0-8ea6-434c-a0dd-059caf595687
+                name: Medium
+                description: Size Medium
+              - id: 07493fea-74b0-40a2-972a-cd7e1d6561bd
+                name: Large
+                description: Size Large
+            - id: b1ae545e-3375-455f-b5ea-09669b60996f
+              name: Shirt Material
+              options:
+              - id: 994c2029-519c-43d9-9c54-14f3af4e3efd
+                name: Cotton
+                description: Material Cotton
+              - id: 7951f3d9-f628-49f8-8a43-7749d28153d6
+                name: Denim
+                description: Material Denim
+              - id: 58115bff-589a-4287-98d8-373112102617
+                name: Wool
+                description: Material Wool
+            - id: f192e114-9f8a-4284-99d0-4d9ccd8a0275
+              name: Shirt Color
+              options:
+              - id: 0b261f7d-753d-4af6-b9f4-62b436cca37d
+                name: Red
+                description: Color Red
+              - id: 55d6d785-cc52-453a-bff6-2cf9add8a580
+                name: Green
+                description: Color Green
+              - id: a43d8b6f-b411-49aa-adaa-36a1a025051e
+                name: Blue
+                description: Color Blue
+    get_parent_product_response:
+      value:
+        data:
+          type: product
+          id: 571e366f-17e6-4e51-8239-b3cc8ee1144d
+          attributes:
+            commodity_type: physical
+            name: Jeans
+            sku: jeans
+            slug: jeans
+            status: live
+          relationships:
+            children:
+              data: []
+              links:
+                self: /products/571e366f-17e6-4e51-8239-b3cc8ee1144d/children
+            component_products:
+              data: []
+              links:
+                self: /products/571e366f-17e6-4e51-8239-b3cc8ee1144d/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/571e366f-17e6-4e51-8239-b3cc8ee1144d/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/571e366f-17e6-4e51-8239-b3cc8ee1144d/relationships/templates
+            variations:
+              data: []
+              links:
+                self: /products/571e366f-17e6-4e51-8239-b3cc8ee1144d/relationships/variations
+          meta:
+            created_at: '2024-01-05T10:29:44.214Z'
+            owner: store
+            product_types:
+            - parent
+            updated_at: '2024-01-05T10:29:45.212Z'
+            variation_matrix:
+              46fff1c9-668b-461a-9344-e7a8cbbbf931: 4d32b816-4397-4a71-b875-4e4ea3ce6745
+              843868fc-2440-44d1-8ce7-dc474f79ad1c: cf501150-f02d-49ad-b7d7-33ed15417b76
+            variations:
+            - id: ec2bcebd-f42e-4725-8715-c338589e33ea
+              name: Paint colour
+              options:
+              - id: 843868fc-2440-44d1-8ce7-dc474f79ad1c
+                name: Blue
+                description: This is a colour.
+              - id: 46fff1c9-668b-461a-9344-e7a8cbbbf931
+                name: Red
+                description: This is a colour.
+    update_single_product_response:
+      value:
+        data:
+          type: product
+          id: 60afe403-a191-455e-b771-c510c928a308
+          attributes:
+            commodity_type: physical
+            description: The 30 inch version of this popular electric range.
+            mpn: BE-R-1111-aaaa-1a1a-30
+            name: UPDATED BestEver Range 30 inch, Model 1a1a-30
+            sku: BE-Range-1a1a-30
+            slug: bestever-range-1a1a-30
+            status: draft
+            upc_ean: '111130303030'
+            locales:
+              fr-FR:
+                name: MISE À JOUR de la gamme BestEver 30 pouces, modèle 1a1a-30
+                description: La version 30 pouces de cette cuisinière électrique populaire
+            tags:
+            - tag1
+            - tag2
+          relationships:
+            files:
+              data: []
+              links:
+                self: /products/60afe403-a191-455e-b771-c510c928a308/relationships/files
+            templates:
+              data: []
+              links:
+                self: /products/60afe403-a191-455e-b771-c510c928a308/relationships/templates
+          meta:
+            created_at: '2023-09-28T10:43:41.72Z'
+            owner: organization
+            product_types:
+            - standard
+            updated_at: '2023-09-28T10:43:41.72Z'
+    update_build_rules_request:
+      value:
+        data:
+          type: product
+          id: 9214719b-17fe-4ea7-896c-d61e60fc0d05
+          attributes:
+            build_rules:
+              default: include
+              exclude:
+              - - cbde9096-e0e1-43d8-a1aa-cb66cf1d299f
+                - 0b261f7d-753d-4af6-b9f4-62b436cca37d
+                - 994c2029-519c-43d9-9c54-14f3af4e3efd
+    build_rules_request:
+      value:
+        data:
+          type: product
+          attributes:
+            name: Shirt
+            sku: '978055216732567'
+            slug: '978055216732567'
+            description: T-shirt.
+            status: live
+            commodity_type: physical
+            mpn: 1234-5678-SSSS
+            upc_ean: '135623456'
+            build_rules:
+              default: include
+              exclude:
+              - - cbde9096-e0e1-43d8-a1aa-cb66cf1d299f
+                - 0b261f7d-753d-4af6-b9f4-62b436cca37d
+              include:
+              - - cf9e99f1-33dc-4991-88a1-3718678e9453
+                - 1592377e-ced8-452e-a025-e50272488b11
+          relationships:
+            variations:
+              data:
+              - type: product-variation
+                id: 6c4b5caa-3819-4366-a14e-c5b85009544b
+              - type: product-variation
+                id: f192e114-9f8a-4284-99d0-4d9ccd8a0275
+              - type: product-variation
+                id: b1ae545e-3375-455f-b5ea-09669b60996f
+    product_request:
+      value:
+        data:
+          type: product
+          attributes:
+            external_ref: d0ddf10c-402c-4e0f-b421-94e7f682c603
+            name: T-Shirt
+            sku: '97805'
+            slug: '97805'
+            description: T-shirt.
+            status: live
+            commodity_type: physical
+            mpn: 1234-5678-TTTT
+            upc_ean: '12345656'
+            tags:
+            - tag1
+            - tag2
+            custom_inputs:
+              front:
+                name: T-Shirt Front
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+              back:
+                name: T-Shirt Back
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+            locales:
+              fr-FR:
+                name: T_Shirt
+                description: T-Shirt.
+    create_single_product_response:
+      value:
+        data:
+          type: product
+          id: 9c85b276-09b4-488e-a59c-c561bae14c9e
+          attributes:
+            commodity_type: physical
+            custom_inputs:
+              back:
+                name: T-Shirt Back
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+              front:
+                name: T-Shirt Front
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+            description: T-shirt.
+            external_ref: d0ddf10c-402c-4e0f-b421-94e7f682c603
+            locales:
+              fr-FR:
+                name: T-Shirt
+                description: T-Shirt.
+            mpn: 1234-5678-TTTT
+            name: T-Shirt
+            sku: '97805'
+            slug: '97805'
+            status: live
+            upc_ean: '12345656'
+            tags:
+            - tag1
+            - tag2
+          relationships:
+            children:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/children
+            component_products:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/templates
+            variations:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/variations
+          meta:
+            created_at: '2022-08-18T14:25:57.391Z'
+            owner: store
+            product_types:
+            - standard
+            updated_at: '2022-08-18T14:25:57.391Z'
+    update_custom_inputs_request:
+      value:
+        data:
+          type: product
+          id: 9214719b-17fe-4ea7-896c-d61e60fc0d05
+          attributes:
+            custom_inputs:
+              front:
+                name: T-Shirt Front
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+              back:
+                name: T-Shirt Back
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+    get_child_product_response:
+      value:
+        data:
+          type: product
+          id: 4d32b816-4397-4a71-b875-4e4ea3ce6745
+          attributes:
+            commodity_type: physical
+            name: Jeans
+            sku: jeansRed
+            slug: jeansRed
+            status: live
+          relationships:
+            base_product:
+              data:
+                type: product
+                id: 571e366f-17e6-4e51-8239-b3cc8ee1144d
+            children:
+              data: []
+            component_products:
+              data: []
+              links:
+                self: /products/4d32b816-4397-4a71-b875-4e4ea3ce6745/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/4d32b816-4397-4a71-b875-4e4ea3ce6745/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/4d32b816-4397-4a71-b875-4e4ea3ce6745/relationships/templates
+            variations:
+              data: []
+              links:
+                self: /products/4d32b816-4397-4a71-b875-4e4ea3ce6745/relationships/variations
+          meta:
+            created_at: '2024-01-05T10:29:44.603Z'
+            owner: store
+            product_types:
+            - child
+            updated_at: '2024-01-05T10:29:45.155Z'
+            variation_matrix: {}
+            child_variations:
+            - id: 119b2b76-0014-4077-826e-ae80ff207393
+              name: Size
+              options: null
+              option:
+                id: fad253ad-4485-4b35-8e3b-b475ad28e78d
+                name: Medium
+                description: Medium
+            - id: 10ceafef-7ac9-4352-9797-4825a1671482
+              name: Colour
+              options: null
+              option:
+                id: b8128e51-1b0a-4b16-9eda-bb783b17026b
+                name: Red
+                description: '#EE2238'
+    bundle_sku_based_request:
+      value:
+        data:
+          type: product
+          attributes:
+            name: Favourite games bundle
+            description: All of your favourite DOOM games in one bundle
+            sku: doom-franchise
+            mpn: 1234-5678-ABCD
+            upc_ean: '123456'
+            commodity_type: digital
+            components:
+              games:
+                name: Game 1
+                max: 1
+                min: 1
+                sort_order: 5
+                options:
+                - id: 7c0aa6df-0bd3-4d1f-b6f9-fd9358868869
+                  type: product
+                  quantity: 1
+                  default: true
+              posters:
+                name: Game 2
+                max: 1
+                min: 1
+                sort_order: 4
+                options:
+                - id: f0ec8088-13e1-4a53-8b5d-3f4d973e05c9
+                  type: product
+                  quantity: 1
+                  default: false
+    multi_product_response:
+      value:
+        data:
+        - type: product
+          id: 9c85b276-09b4-488e-a59c-c561bae14c9e
+          attributes:
+            commodity_type: physical
+            custom_inputs:
+              back:
+                name: T-Shirt Back
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+              front:
+                name: T-Shirt Front
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+            description: T-shirt.
+            mpn: 1234-5678-TTTT
+            name: T-Shirt
+            sku: '97805'
+            slug: '97805'
+            status: live
+            upc_ean: '12345656'
+            tags:
+            - tag1
+            - tag2
+            extensions:
+              products(size):
+                widthMM: 600
+                fuelType: electric
+                hasUKPlug: true
+                online: null
+          relationships:
+            children:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/children
+            component_products:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/templates
+            variations:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/variations
+          meta:
+            created_at: '2022-08-18T14:25:57.391Z'
+            owner: store
+            product_types:
+            - standard
+            updated_at: '2022-08-18T14:25:57.391Z'
+        meta:
+          results:
+            total: 1
+    get_component_product_response:
+      value:
+        data:
+          type: product
+          id: 4ca7de77-994d-4e7c-b834-4cb2ae156f57
+          attributes:
+            commodity_type: physical
+            components:
+              Apples:
+                name: Apples
+                options:
+                - id: f809fe4f-83f7-4db4-8175-e467a0d1974a
+                  type: product
+                  quantity: 12
+              Oranges:
+                name: Oranges
+                options:
+                - id: 7f8f596a-2dc0-4e78-ba0d-3810eac6f86a
+                  type: product
+                  quantity: 12
+            description: fruit
+            name: fruit Bundle
+            slug: 45-b
+            status: live
+          relationships:
+            children:
+              data: []
+              links:
+                self: /products/4ca7de77-994d-4e7c-b834-4cb2ae156f57/children
+            component_products:
+              data: []
+              links:
+                self: /products/4ca7de77-994d-4e7c-b834-4cb2ae156f57/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/4ca7de77-994d-4e7c-b834-4cb2ae156f57/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/4ca7de77-994d-4e7c-b834-4cb2ae156f57/relationships/templates
+            variations:
+              data: []
+              links:
+                self: /products/4ca7de77-994d-4e7c-b834-4cb2ae156f57/relationships/variations
+          meta:
+            created_at: '2022-02-01T12:51:51.132Z'
+            owner: store
+            product_types:
+            - bundle
+            updated_at: '2022-02-01T12:51:51.132Z'
+            variation_matrix: {}
+        included:
+          component_products:
+          - type: product
+            id: f809fe4f-83f7-4db4-8175-e467a0d1974a
+            attributes:
+              commodity_type: physical
+              description: fruit
+              name: Apples
+              sku: '45'
+              status: live
+            relationships:
+              children:
+                data: []
+                links:
+                  self: /products/f809fe4f-83f7-4db4-8175-e467a0d1974a/children
+              component_products:
+                data: []
+                links:
+                  self: /products/f809fe4f-83f7-4db4-8175-e467a0d1974a/relationships/component_products
+              files:
+                data: []
+                links:
+                  self: /products/f809fe4f-83f7-4db4-8175-e467a0d1974a/relationships/files
+              main_image:
+                data: null
+              templates:
+                data: []
+                links:
+                  self: /products/f809fe4f-83f7-4db4-8175-e467a0d1974a/relationships/templates
+              variations:
+                data: []
+                links:
+                  self: /products/f809fe4f-83f7-4db4-8175-e467a0d1974a/relationships/variations
+            meta:
+              created_at: '2022-02-01T12:50:33.347Z'
+              owner: store
+              product_types:
+              - standard
+              updated_at: '2022-02-01T12:50:33.347Z'
+              variation_matrix: {}
+          - type: product
+            id: 7f8f596a-2dc0-4e78-ba0d-3810eac6f86a
+            attributes:
+              commodity_type: physical
+              description: fruit
+              name: Oranges
+              sku: '46'
+              status: live
+            relationships:
+              children:
+                data: []
+                links:
+                  self: /products/7f8f596a-2dc0-4e78-ba0d-3810eac6f86a/children
+              component_products:
+                data: []
+                links:
+                  self: /products/7f8f596a-2dc0-4e78-ba0d-3810eac6f86a/relationships/component_products
+              files:
+                data: []
+                links:
+                  self: /products/7f8f596a-2dc0-4e78-ba0d-3810eac6f86a/relationships/files
+              main_image:
+                data: null
+              templates:
+                data: []
+                links:
+                  self: /products/7f8f596a-2dc0-4e78-ba0d-3810eac6f86a/relationships/templates
+              variations:
+                data: []
+                links:
+                  self: /products/7f8f596a-2dc0-4e78-ba0d-3810eac6f86a/relationships/variations
+            meta:
+              created_at: '2022-02-01T12:49:19.298Z'
+              owner: store
+              product_types:
+              - standard
+              updated_at: '2022-02-01T12:49:19.298Z'
+              variation_matrix: {}
+    update_bundle_with_quantity_config:
+      value:
+        data:
+          id: 143e9ded-b549-4631-831c-d27f5fb2fe2e
+          type: product
+          attributes:
+            name: Coffee Bundle
+            description: A customizable coffee bundle with optional syrups and coffee options
+            sku: COFFEE-BUNDLE-001
+            commodity_type: physical
+            status: live
+            components:
+              syrup:
+                name: Syrup Selection
+                min: 0
+                max: 2
+                options:
+                - id: vanilla-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                  default: true
+                - id: salted-caramel-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                - id: hazelnut-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                - id: caramel-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                - id: toffee-nut-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                - id: pumpkin-spice-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+              coffee:
+                name: Coffee Selection
+                min: 1
+                max: 1
+                options:
+                - id: cappuccino-id
+                  type: product
+                  quantity: 1
+                  default: true
+                - id: espresso-id
+                  type: product
+                  quantity: 1
+                - id: latte-id
+                  type: product
+                  quantity: 1
+    get_single_product_response:
+      value:
+        data:
+          type: product
+          id: f5bd4e59-a95f-4bda-bfe6-0f34f47ac94b
+          attributes:
+            commodity_type: physical
+            description: This electric model offers an induction heating element and convection oven.
+            mpn: BE-R-1111-aaaa-1a1a
+            name: BestEver Range, Model 1a1a
+            sku: BE-Range-1a1a
+            slug: bestever-range-1a1a
+            status: draft
+            upc_ean: '111122223333'
+            tags:
+            - tag1
+            - tag2
+            extensions:
+              products(size):
+                widthMM: 600
+                fuelType: electric
+                hasUKPlug: true
+                online: null
+          relationships:
+            custom_relationships:
+              data: []
+              links:
+                self: /products/f5bd4e59-a95f-4bda-bfe6-0f34f47ac94b/custom-relationships
+                CRP_summer_session: /products/f5bd4e59-a95f-4bda-bfe6-0f34f47ac94b/custom-relationships/CRP_summer_session/products
+                CRP_winter_session: /products/f5bd4e59-a95f-4bda-bfe6-0f34f47ac94b/custom-relationships/CRP_winter_session/products
+            files:
+              data: []
+              links:
+                self: /products/f5bd4e59-a95f-4bda-bfe6-0f34f47ac94b/relationships/files
+            templates:
+              data: []
+              links:
+                self: /products/f5bd4e59-a95f-4bda-bfe6-0f34f47ac94b/relationships/templates
+          meta:
+            created_at: '2023-09-28T10:43:41.72Z'
+            owner: organization
+            product_types:
+            - standard
+            updated_at: '2023-09-28T10:43:41.72Z'
+            variation_matrix: {}
+            custom_relationships:
+            - CRP_summer_session
+            - CRP_winter_session
+    get_bundle_response:
+      value:
+        data:
+          type: product
+          id: 495f5c48-c747-4540-86fd-40380bf2df91
+          attributes:
+            commodity_type: physical
+            components:
+              games:
+                name: Games
+                options:
+                - id: 1a499918-2ec0-468d-b7b9-f09eab2f6ad8
+                  type: product
+                  quantity: 2
+                  sort_order: 15
+                  default: true
+                sort_order: 10
+            name: DOOM Bundle
+            status: draft
+          relationships:
+            children:
+              data: []
+              links:
+                self: /products/495f5c48-c747-4540-86fd-40380bf2df91/children
+            component_products:
+              data: []
+              links:
+                self: /products/495f5c48-c747-4540-86fd-40380bf2df91/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/495f5c48-c747-4540-86fd-40380bf2df91/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/495f5c48-c747-4540-86fd-40380bf2df91/relationships/templates
+            variations:
+              data: []
+              links:
+                self: /products/495f5c48-c747-4540-86fd-40380bf2df91/relationships/variations
+          meta:
+            created_at: '2024-01-08T13:36:53.658Z'
+            owner: organization
+            product_types:
+            - bundle
+            updated_at: '2024-01-08T13:36:53.658Z'
+            variation_matrix: {}
+    bundle_with_quantity_config_response:
+      summary: Bundle with Quantity Configuration
+      description: A bundle with configurable quantities for options
+      value:
+        data:
+          type: product
+          id: 143e9ded-b549-4631-831c-d27f5fb2fe2e
+          attributes:
+            name: Coffee Bundle
+            description: A customizable coffee bundle with optional syrups and coffee options
+            sku: COFFEE-BUNDLE-001
+            commodity_type: physical
+            status: live
+            components:
+              syrup:
+                name: Syrup Selection
+                min: 0
+                max: 2
+                options:
+                - id: vanilla-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                  default: true
+                - id: salted-caramel-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                - id: hazelnut-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                - id: caramel-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                - id: toffee-nut-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                - id: pumpkin-spice-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+              coffee:
+                name: Coffee Selection
+                min: 1
+                max: 1
+                options:
+                - id: cappuccino-id
+                  type: product
+                  quantity: 1
+                  default: true
+                - id: espresso-id
+                  type: product
+                  quantity: 1
+                - id: latte-id
+                  type: product
+                  quantity: 1
+          relationships:
+            children:
+              data: []
+              links:
+                self: /products/143e9ded-b549-4631-831c-d27f5fb2fe2e/children
+            component_products:
+              data: []
+              links:
+                self: /products/143e9ded-b549-4631-831c-d27f5fb2fe2e/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/143e9ded-b549-4631-831c-d27f5fb2fe2e/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/143e9ded-b549-4631-831c-d27f5fb2fe2e/templates
+            variations:
+              data: []
+              links:
+                self: /products/143e9ded-b549-4631-831c-d27f5fb2fe2e/relationships/variations
+          meta:
+            created_at: '2024-04-14T10:34:00.000Z'
+            owner: organization
+            product_types:
+            - bundle
+            updated_at: '2024-04-14T10:34:00.000Z'
+            variation_matrix: {}
+        included:
+          main_images: []
+          files: []
+    bundle_sku_less_request:
+      value:
+        data:
+          type: product
+          attributes:
+            name: Shower bundle
+            description: A bundle of shower products
+            commodity_type: physical
+            components:
+              shampoo:
+                name: Shampoo
+                max: 1
+                min: 1
+                sort_order: 1
+                options:
+                - id: shampooProductID
+                  type: product
+                  quantity: 1
+                  default: true
+              conditioner:
+                name: Conditioner
+                max: 1
+                min: 1
+                sort_order: 2
+                options:
+                - id: conditionerProductID
+                  type: product
+                  quantity: 1
+                  default: false
+    update_product_request:
+      value:
+        data:
+          type: product
+          id: 60afe403-a191-455e-b771-c510c928a308
+          attributes:
+            name: UPDATED BestEver Range, Model 1a1a
+    resp_multi_nodes:
+      value:
+        data:
+        - id: 9ea0de15-3347-43dd-8faa-cd32f44a04c7
+          type: node
+          attributes:
+            description: Latest Ballet Shoes
+            locales:
+              fr-FR:
+                name: Chaussons de ballet
+                description: Dernières chaussures de ballet
+            name: Ballet Shoes
+            slug: ballet-shoes
+          relationships:
+            children:
+              data: []
+              links:
+                related: /hierarchies/6183d10c-94b5-4caa-9f12-2f14cb738d41/nodes/9ea0de15-3347-43dd-8faa-cd32f44a04c7/children
+            products:
+              data: []
+              links:
+                related: /hierarchies/6183d10c-94b5-4caa-9f12-2f14cb738d41/nodes/9ea0de15-3347-43dd-8faa-cd32f44a04c7/products
+          meta:
+            created_at: '2024-01-11T19:19:50.087Z'
+            owner: store
+            sort_order: 5
+            updated_at: '2024-01-11T19:56:53.695Z'
+            hierarchy_id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
+            breadcrumbs:
+            - id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
+              name: Shoes
+              slug: shoes
+              locales:
+                fr-FR:
+                  name: hierarchy 1 in French
+            - id: 9ea0de15-3347-43dd-8faa-cd32f44a04c7
+              name: Ballet Shoes
+              slug: ballet-shoes
+              locales:
+                fr-FR:
+                  name: Node 1 in French
+        - type: node
+          id: b2f5e53e-de3c-4548-98da-120f8b185d34
+          attributes:
+            description: All Dress Shoes
+            locales:
+              fr-FR:
+                name: Chaussures habillées
+                description: Toutes les chaussures habillées
+            name: Dress Shoes
+            slug: dress-shoes
+          relationships:
+            children:
+              data: []
+              links:
+                related: /hierarchies/6183d10c-94b5-4caa-9f12-2f14cb738d41/nodes/b2f5e53e-de3c-4548-98da-120f8b185d34/children
+            products:
+              data: []
+              links:
+                related: /hierarchies/6183d10c-94b5-4caa-9f12-2f14cb738d41/nodes/b2f5e53e-de3c-4548-98da-120f8b185d34/products
+          meta:
+            created_at: '2024-01-11T19:50:21.729Z'
+            owner: store
+            sort_order: 3
+            updated_at: '2024-01-11T19:50:21.729Z'
+            hierarchy_id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
+            breadcrumbs:
+            - id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
+              name: Shoes
+              slug: shoes
+              locales:
+                fr-FR:
+                  name: hierarchy 1 in French
+            - id: b2f5e53e-de3c-4548-98da-120f8b185d34
+              name: Dress Shoes
+              slug: dress-shoes
+              locales:
+                fr-FR:
+                  name: Node 2 in French
+        meta:
+          results:
+            total: 2
+    update_bundle_request:
+      value:
+        data:
+          id: 8a0072c0-cedf-4e53-bdc4-a14a5d6389d5
+          type: product
+          attributes:
+            name: Favourite games bundle
+            description: Favourite DOOM games in one bundle - Select one from four choices
+            sku: fav23455
+            mpn: 1234-5678-ABCD00
+            upc_ean: '123456'
+            commodity_type: digital
+            status: live
+            components:
+              List 1:
+                name: PS5
+                sort_order: 1
+                options:
+                - id: c7cf43f3-24c6-4523-8a24-3663b49b81aa
+                  type: product
+                  quantity: 1
+                  default: true
+              List 2:
+                name: Controller
+                sort_order: 2
+                options:
+                - id: e59ca559-37c7-4dc9-8a91-df94cd5700d3
+                  type: product
+                  quantity: 1
+                  default: true
+              List 3:
+                name: PS+
+                sort_order: 3
+                options:
+                - id: 8ae2a7ea-f767-4af0-8486-ae203947ecc4
+                  type: product
+                  quantity: 1
+                  default: true
+              List 4:
+                min: 1
+                max: 1
+                sort_order: 4
+                options:
+                - id: 549a291f-669c-47d0-bc04-60a3f18fc55c
+                  type: product
+                  quantity: 1
+                  default: true
+                  sort_order: 2
+                - id: 071e461c-22a2-42e0-9604-c345bbc9b85c
+                  type: product
+                  quantity: 1
+                  default: false
+                  sort_order: 1
+                - id: 633b8172-8aa9-4dbd-aa07-0dcefca3de74
+                  type: product
+                  quantity: 1
+                  default: false
+                - id: 549a291f-669c-47d0-bc04-60a3f18fc55c
+                  type: product
+                  quantity: 1
+                  default: false
+                  sort_order: 3
+    create_bundle_with_quantity_config:
+      value:
+        data:
+          type: product
+          attributes:
+            name: Coffee Bundle
+            description: A customizable coffee bundle with optional syrups and coffee options
+            sku: COFFEE-BUNDLE-001
+            commodity_type: physical
+            status: draft
+            components:
+              syrup:
+                name: Syrup Selection
+                min: 0
+                max: 2
+                options:
+                - id: vanilla-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                  default: true
+                - id: salted-caramel-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                - id: hazelnut-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                - id: caramel-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                - id: toffee-nut-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+                - id: pumpkin-spice-id
+                  type: product
+                  quantity: 1
+                  min: 1
+                  max: 3
+              coffee:
+                name: Coffee Selection
+                min: 1
+                max: 1
+                options:
+                - id: cappuccino-id
+                  type: product
+                  quantity: 1
+                  default: true
+                - id: espresso-id
+                  type: product
+                  quantity: 1
+                - id: latte-id
+                  type: product
+                  quantity: 1
+    update_custom_inputs_response:
+      value:
+        data:
+          type: product
+          id: 9214719b-17fe-4ea7-896c-d61e60fc0d05
+          attributes:
+            commodity_type: physical
+            custom_inputs:
+              back:
+                name: T-Shirt Back
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+              front:
+                name: T-Shirt Front
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+            description: T-shirt.
+            locales:
+              fr-FR:
+                name: T-Shirt
+                description: T-Shirt.
+            mpn: 1234-5678-SSSS
+            name: Shirt
+            sku: '978055216732567'
+            slug: '978055216732567'
+            status: live
+          relationships:
+            children:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/children
+            component_products:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/relationships/templates
+            variations:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/relationships/variations
+          meta:
+            created_at: '2022-08-18T12:14:52.782Z'
+            updated_at: '2022-08-19T12:28:26.343Z'
+            variation_matrix: {}
+            variations:
+            - id: 6c4b5caa-3819-4366-a14e-c5b85009544b
+              name: Shirt Size
+              options:
+              - id: cbde9096-e0e1-43d8-a1aa-cb66cf1d299f
+                name: Small
+                description: Size Small
+              - id: da9d88d0-8ea6-434c-a0dd-059caf595687
+                name: Medium
+                description: Size Medium
+              - id: 07493fea-74b0-40a2-972a-cd7e1d6561bd
+                name: Large
+                description: Size Large
+            - id: b1ae545e-3375-455f-b5ea-09669b60996f
+              name: Shirt Material
+              options:
+              - id: 994c2029-519c-43d9-9c54-14f3af4e3efd
+                name: Cotton
+                description: Material Cotton
+              - id: 7951f3d9-f628-49f8-8a43-7749d28153d6
+                name: Denim
+                description: Material Denim
+              - id: 58115bff-589a-4287-98d8-373112102617
+                name: Wool
+                description: Material Wool
+            - id: f192e114-9f8a-4284-99d0-4d9ccd8a0275
+              name: Shirt Color
+              options:
+              - id: 0b261f7d-753d-4af6-b9f4-62b436cca37d
+                name: Red
+                description: Color Red
+              - id: 55d6d785-cc52-453a-bff6-2cf9add8a580
+                name: Green
+                description: Color Green
+              - id: a43d8b6f-b411-49aa-adaa-36a1a025051e
+                name: Blue
+                description: Color Blue
+    create_build_rules_response:
+      value:
+        data:
+          type: product
+          id: 9214719b-17fe-4ea7-896c-d61e60fc0d05
+          attributes:
+            build_rules:
+              default: include
+              exclude:
+              - - cbde9096-e0e1-43d8-a1aa-cb66cf1d299f
+                - 0b261f7d-753d-4af6-b9f4-62b436cca37d
+            commodity_type: physical
+            description: T-shirt.
+            locales:
+              fr-FR:
+                name: shirt
+                description: T-shirt.
+            mpn: 1234-5678-SSSS
+            name: Shirt
+            sku: '978055216732567'
+            slug: '978055216732567'
+            status: live
+            upc_ean: '135623456'
+          relationships:
+            children:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/children
+            component_products:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/relationships/templates
+            variations:
+              data: []
+              links:
+                self: /products/9214719b-17fe-4ea7-896c-d61e60fc0d05/relationships/variations
+          meta:
+            created_at: '2022-08-18T12:14:52.782Z'
+            owner: store
+            product_types:
+            - standard
+            updated_at: '2022-08-18T12:14:52.782Z'
+            variations:
+            - id: 6c4b5caa-3819-4366-a14e-c5b85009544b
+              name: Shirt Size
+              options:
+              - id: cbde9096-e0e1-43d8-a1aa-cb66cf1d299f
+                name: Small
+                description: Size Small
+              - id: da9d88d0-8ea6-434c-a0dd-059caf595687
+                name: Medium
+                description: Size Medium
+              - id: 07493fea-74b0-40a2-972a-cd7e1d6561bd
+                name: Large
+                description: Size Large
+            - id: b1ae545e-3375-455f-b5ea-09669b60996f
+              name: Shirt Material
+              options:
+              - id: 994c2029-519c-43d9-9c54-14f3af4e3efd
+                name: Cotton
+                description: Material Cotton
+              - id: 7951f3d9-f628-49f8-8a43-7749d28153d6
+                name: Denim
+                description: Material Denim
+              - id: 58115bff-589a-4287-98d8-373112102617
+                name: Wool
+                description: Material Wool
+            - id: f192e114-9f8a-4284-99d0-4d9ccd8a0275
+              name: Shirt Color
+              options:
+              - id: 0b261f7d-753d-4af6-b9f4-62b436cca37d
+                name: Red
+                description: Color Red
+              - id: 55d6d785-cc52-453a-bff6-2cf9add8a580
+                name: Green
+                description: Color Green
+              - id: a43d8b6f-b411-49aa-adaa-36a1a025051e
+                name: Blue
+                description: Color Blue
+  parameters:
+    page_offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 10000
+        format: int64
+        example: 0
+    filterproduct:
+      name: filter
+      in: query
+      description: 'Many Commerce API endpoints support filtering. The general syntax is described [**here**](/guides/Getting-Started/filtering).
+
+
+        For more information about the attributes and operators that are supported, see [Get all products](/docs/api/pxm/products/get-all-products).
+
+        '
+      style: form
+      explode: true
+      schema:
+        type: string
+      examples:
+        eq:
+          value: eq(name,some-name)
+        like:
+          value: like(name,*some-name*)
+        in:
+          value: in(id,some-id)
+    include:
+      name: include
+      in: query
+      description: 'Using the include parameter, you can retrieve top-level resources.
+
+
+        - Files or main image. For example, `include=files,main_image`.
+
+        - Component product data. For example, `include=component_products`.
+
+        - Key attribute data, such as SKU or slug.
+
+        '
+      required: false
+      style: form
+      explode: false
+      schema:
+        items:
+          type: string
+          enum:
+          - files
+          - main_image
+          - component_products
+    product_id:
+      name: productID
+      in: path
+      schema:
+        type: string
+        example: 00000000-0000-0000-0000-000000000000
+        x-postman-example: '{{productID}}'
+      required: true
+      description: A unique identifier for the product.
+    page_limit:
+      name: page[limit]
+      in: query
+      description: The number of records per page. The maximum limit is 100.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 10000
+        format: int64
+        example: 10
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

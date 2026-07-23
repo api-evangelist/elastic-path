@@ -1,0 +1,692 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Custom Discounts API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Custom Discounts
+  description: 'With custom discounts, you can allow your shoppers to apply discounts from external services to their purchases. To apply custom discounts to carts and cart items, you need to set `custom_discounts_enabled` field to `true` in your [Cart Settings](/docs/api/carts/put-v-2-settings-cart).
+
+
+    You cannot add custom discounts to an empty cart.
+
+
+    :::caution
+
+
+    - You can apply up to five custom discounts to cart and cart item.
+
+    - The stores that use [simple calculation method](/guides/How-To/Carts/calculate-totals) do not support custom discounts.
+
+
+    :::
+
+    '
+paths:
+  /v2/carts/{cartID}/custom-discounts:
+    parameters: []
+    post:
+      tags:
+      - Custom Discounts
+      summary: Bulk Add Custom Discounts to Cart
+      description: 'The default value for custom discounts on both the cart and cart items is set to 5 if this parameter is not configured in the store. To verify the custom discount limit value, call [Get all settings](/docs/api/settings/get-v-2-settings) endpoint.
+
+
+        To increase the custom discount value, contact [Elastic Path Support team](https://support.elasticpath.com/hc/en-us).
+
+        '
+      operationId: bulkAddCustomDiscountsToCart
+      parameters:
+      - name: cartID
+        in: path
+        description: Specifies the system generated ID for the cart that the shopper created.
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartsBulkCustomDiscounts'
+        required: false
+      responses:
+        '201':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/CartsBulkCustomDiscountsResponse'
+                - $ref: '#/components/schemas/CartsBulkCustomDiscountsCollectionResponse'
+        '400':
+          description: Could not apply custom discount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+                examples:
+                  summary: Custom discounts not enabled for this cart
+                  value:
+                    errors:
+                    - detail: Custom discounts not enabled for this cart
+                      status: 400
+                      title: Bad Request
+        '422':
+          description: Could not apply custom discount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+                examples:
+                  summary: Exceeded custom discount limit
+                  value:
+                    errors:
+                    - detail: Cannot exceed custom discount limit of (1) at the cart level.
+                      status: 422
+                      title: Custom discount not added to cart
+      deprecated: false
+    delete:
+      tags:
+      - Custom Discounts
+      summary: Bulk Delete Custom Discounts From Cart
+      description: Use this endpoint to bulk delete custom discounts from cart.
+      operationId: bulkDeleteCustomDiscountsFromCart
+      parameters:
+      - name: cartID
+        in: path
+        description: Specifies the unique ID for the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content
+          headers: {}
+          content: {}
+      deprecated: false
+  /v2/carts/{cartID}/custom-discounts/{customdiscountID}:
+    parameters: []
+    put:
+      tags:
+      - Custom Discounts
+      summary: Update Custom Discount For Cart
+      description: Use this endpoint to update a custom discount in your cart.
+      operationId: updateCustomDiscountForCart
+      parameters:
+      - name: cartID
+        in: path
+        description: Specifies the unique ID for the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: customdiscountID
+        in: path
+        description: Specifies the ID for the custom discount to be updated.
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartsCustomDiscountsEntityRequest'
+        required: false
+      responses:
+        '200':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartsCustomDiscountsEntityResponse'
+      deprecated: false
+    delete:
+      tags:
+      - Custom Discounts
+      summary: Delete Custom Discount From Cart
+      description: Use this endpoint to delete custom discount from cart.
+      operationId: deleteCustomDiscountFromCart
+      parameters:
+      - name: cartID
+        in: path
+        description: Specifies the unique ID for the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: customdiscountID
+        in: path
+        description: Specifies the ID for the custom discount to be deleted.
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content
+          headers: {}
+          content: {}
+      deprecated: false
+  /v2/carts/{cartID}/items/{cartitemID}/custom-discounts:
+    parameters: []
+    post:
+      tags:
+      - Custom Discounts
+      summary: Add Custom Discount To Cart Item
+      description: Use this endpoint to add a custom discount to cart item.
+      operationId: addCustomDiscountToCartItem
+      parameters:
+      - name: cartID
+        in: path
+        description: Specifies the ID for the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: cartitemID
+        in: path
+        description: Specifies the unique identifier for the cart item.
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/CartsCustomDiscountsObject'
+      responses:
+        '201':
+          description: Successful request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/CartsCustomDiscountsCollectionResponse'
+                - $ref: '#/components/schemas/CartsCustomDiscountsEntityResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+              examples:
+                default:
+                  summary: Required field missing
+                  value:
+                    errors:
+                    - detail: Custom discounts not enabled for this cart
+                      status: 400
+                      title: Bad Request
+        '422':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+              examples:
+                default:
+                  summary: Discount Limit Reached
+                  value:
+                    errors:
+                    - detail: Custom discount limit reached for this cart item
+                      status: 422
+                      title: Limit Reached
+      deprecated: false
+  /v2/carts/{cartID}/items/{cartitemID}/custom-discounts/{customdiscountID}:
+    parameters: []
+    put:
+      tags:
+      - Custom Discounts
+      summary: Update Custom Discount For Cart Item
+      description: Use this endpoint to update a custom discount in your cart item.
+      operationId: updateCustomDiscountForCartItem
+      parameters:
+      - name: cartID
+        in: path
+        description: Specifies the ID for the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: cartitemID
+        in: path
+        description: Specifies the ID for the cart item.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: customdiscountID
+        in: path
+        description: Specifies the ID for the custom discount to be updated.
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartsCustomDiscountsEntityRequest'
+      responses:
+        '200':
+          description: ''
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartsCustomDiscountsEntityResponse'
+      deprecated: false
+    delete:
+      tags:
+      - Custom Discounts
+      summary: Delete Custom Discount From Cart Item
+      description: Use this endpoint to delete custom discount from cart item.
+      operationId: deleteCustomDiscountFromCartItem
+      parameters:
+      - name: cartID
+        in: path
+        description: Specifies the ID for the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: cartitemID
+        in: path
+        description: Specifies the ID for the cart item.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: customdiscountID
+        in: path
+        description: Specifies the ID for the custom discount to be deleted.
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content
+          headers: {}
+          content: {}
+      deprecated: false
+components:
+  schemas:
+    CartsCustomDiscountsEntityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/CartsCustomDiscountsObject'
+    CartsCustomDiscountsResponseObject:
+      title: CartsCustomDiscountsResponse
+      type: object
+      properties:
+        amount:
+          type: object
+          properties:
+            amount:
+              description: Specifies an amount to be applied for the custom discount. It must be less than zero.
+              type: number
+              examples:
+              - -1000
+            currency:
+              description: The currency set for the custom discount.
+              type: string
+              examples:
+              - USD
+            formatted:
+              description: The formatted value for the custom discount.
+              type: string
+              examples:
+              - -$10.00
+        description:
+          description: Specifies a description for the custom discount.
+          type: string
+          examples:
+          - Custom discount description
+        discount_code:
+          description: Specifies the discount code used for the custom discount.
+          type: string
+          examples:
+          - cart-custom-promo-code
+        discount_engine:
+          description: Specifies from where the custom discount is applied. For example, Talon.one.
+          type: string
+          examples:
+          - Custom Discount Engine
+        external_id:
+          description: Specifies an external id for the custom discount.
+          type: string
+          examples:
+          - custom-discount-external-id
+        type:
+          description: Specifies the type of the resource. Always `custom_discount`.
+          type: string
+          const: custom_discount
+        id:
+          description: Specifies the UUID of the custom discount.
+          type: string
+          format: uuid
+          readOnly: true
+          examples:
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        relationships:
+          description: Relationships to other resources like cart items
+          type: object
+          properties:
+            item:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: The item ID this discount is related to
+                    type:
+                      type: string
+                      enum:
+                      - cart_item
+                      - custom_item
+    CartsBulkCustomDiscountsResponse:
+      title: CartsBulkCustomDiscountsResponse
+      type: object
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/CartsCustomDiscountsObject'
+        errors:
+          type: array
+          description: Array of validation or processing errors
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    CustomDiscountRelationshipsCartItemRequest:
+      title: CustomDiscountRelationshipsCartItemRequest
+      type: object
+      properties:
+        relationships:
+          type: object
+          properties:
+            item:
+              type: object
+              properties:
+                data:
+                  type: object
+                  required:
+                  - type
+                  - id
+                  properties:
+                    type:
+                      description: Specifies the type of item. For example, `custom_item` or `cart_item`.
+                      type: string
+                      examples:
+                      - cart_item
+                    id:
+                      description: Specifies the unique identifier of the `cart_item` or `custom_item` in the cart.
+                      type: string
+                      format: uuid
+                      examples:
+                      - 5601a4b1-9d13-42d3-8fb7-03b35169d1b6
+    CartsCustomDiscountsObject:
+      title: CartsCustomDiscountsObject
+      type: object
+      required:
+      - amount
+      - description
+      - discount_code
+      - discount_engine
+      - external_id
+      - type
+      properties:
+        amount:
+          type: object
+          oneOf:
+          - type: number
+            examples:
+            - -1000
+          - type: object
+            properties:
+              amount:
+                type: number
+                examples:
+                - -1000
+              currency:
+                type: string
+                examples:
+                - USD
+              formatted:
+                type: string
+                examples:
+                - -$10.00
+        description:
+          description: Specifies a description for the custom discount.
+          type: string
+          examples:
+          - Custom discount description
+        discount_code:
+          description: Specifies the discount code used for the custom discount.
+          type: string
+          examples:
+          - cart-custom-promo-code
+        discount_engine:
+          description: Specifies from where the custom discount is applied. For example, Talon.one.
+          type: string
+          examples:
+          - Custom Discount Engine
+        external_id:
+          description: Specifies an external id for the custom discount.
+          type: string
+          examples:
+          - custom-discount-external-id
+        type:
+          description: Specifies the type of the resource. Always `custom_discount`.
+          type: string
+          const: custom_discount
+        id:
+          description: Specifies the UUID of the custom discount.
+          type: string
+          format: uuid
+        relationships:
+          description: Relationships to other resources like cart items
+          type: object
+          properties:
+            item:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: The item ID this discount is related to
+                    type:
+                      type: string
+                      enum:
+                      - cart_item
+                      - custom_item
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    CartsCustomDiscountsCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/CartsCustomDiscountsObject'
+    CartsCustomDiscountsEntityRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/CartsCustomDiscountsResponseObject'
+    Response.ErrorItem:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type:
+          - string
+          - integer
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+        source:
+          type: string
+          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
+        meta:
+          type: object
+          description: Additional metadata associated with the error. May include arbitrary keys.
+          properties:
+            id:
+              type: string
+              description: The resource id associated with the error
+            ids:
+              type: array
+              items:
+                type: string
+                description: The resource ids associated with the error
+            item_ids:
+              type: array
+              items:
+                type: string
+                description: The cart_item ids associated with the error
+            shipping_group_id:
+              type: string
+              description: The shipping group id associated with the error
+            shipping_group_ids:
+              type: array
+              items:
+                type: string
+                description: The shipping group ids associated with the error
+            cart_id:
+              type: string
+              description: The cart id associated with the error
+            code:
+              type: string
+              description: The code associated with the error.
+            order_id:
+              type: string
+              description: The order id associated with the error.
+            sku:
+              type: string
+              description: The SKU associated with the error.
+            email:
+              type: string
+              format: email
+              description: The email address associated with the error.
+            component_product_id:
+              type: string
+              format: uuid
+              description: The component product ID associated with the error.
+            error-meta-key:
+              type: string
+              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
+            value:
+              description: The value associated with the error.
+              oneOf:
+              - type: string
+              - type: integer
+              - type: boolean
+              - type: object
+                additionalProperties: true
+              - type: array
+    CartsBulkCustomDiscounts:
+      title: CartsBulkCustomDiscounts
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/CartsCustomDiscountsObject'
+            - $ref: '#/components/schemas/CartItemBulkCustomDiscountObject'
+        options:
+          $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
+    AddAllOrNothingOptionsObject:
+      title: Add All Or Nothing Options Object
+      type: object
+      properties:
+        add_all_or_nothing:
+          description: When `true`, if an error occurs for any item, no items are added to the cart. When `false`, valid items are added to the cart and the items with errors are reported in the response. Default is `false`.
+          type: boolean
+          examples:
+          - false
+    CartsBulkCustomDiscountsCollectionResponse:
+      title: CartsBulkCustomDiscountsCollectionResponse
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/CartsCustomDiscountsObject'
+        errors:
+          type: array
+          description: Array of validation or processing errors
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    CartItemBulkCustomDiscountObject:
+      title: CartItemBulkCustomDiscountObject
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/CartsCustomDiscountsObject'
+      - $ref: '#/components/schemas/CustomDiscountRelationshipsCartItemRequest'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

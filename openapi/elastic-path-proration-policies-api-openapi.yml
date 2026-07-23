@@ -1,0 +1,479 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Proration Policies API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Proration Policies
+  description: "Proration is the adjustment of charges or credits on a subscriber's account based on the amount of time a service is used. Proration ensures that subscribers are only charged for the actual time they use the service, whether they upgrade, downgrade, start, or cancel their subscription partway through a billing cycle. This means fair billing for your subscribers and provides you with the flexibility to change your subscribers subscriptions at any time. \n\n::: note\n\nSubscriptions use client credentials to enable changes to subscriptions, so if you want your shoppers to have the ability to make changes, you can implement a BFF layer using this approach.\n\n:::\n\nProration occurs for:\n\n- Pricing option upgrades/downgrades:  If a subscriber changes their pricing option in the middle of a billing cycle, proration adjusts the charges to reflect the time spent on each pricing option.\n- Service cancellation: If a subscriber cancels a subscription before the end of a billing cycle, they may receive a prorated invoice for the used portion of the subscription.\n- Mid-cycle subscription: If a subscriber starts a subscription in the middle of a billing cycle, they are charged a prorated amount for the remaining days in the billing cycle.\n\nThere are several scenarios when implementing proration policies.\n\n1. You may want one policy for multiple offerings because only some subscriptions need prorating.\n2. You may want a default proration policy for your store.\n3. You may want several policies for different offerings. \n\nIn Subscriptions, charges only prorate by day. As soon as a subscriber changes their subscription, a manual billing run is triggered and an invoice is generated with the new price on the next billing run and the difference in price is prorated over days.  \n\nBy default, proration is not enabled for Subscriptions. Once you have attached a proration policy to an offering, proration is enabled automatically.\n\n### End dates when switching pricing options\n\nSubscriptions manages the subscription end date when shoppers switch from one pricing option to another. Whether or not an end date is configured depends on the end behavior of the pricing options you are switching between.\n\n| Current Subscription | New Subscription | Proration Behavior | End date |\n| --- | --- | --- | --- |\n| `close` | `roll` | The subscription switches from a pricing option with a fixed end date to a rolling pricing option so no end date is set after proration. | No end date is configured. |\n| `roll` | `close` | The subscription switches to a fixed pricing option, and the end date is configured based on the duration of the pricing option. | An end date is configured. |\n| `close` | `close` | The remaining time on the current pricing option is not carried over to the new pricing option. For example, if your current pricing option has 3 months remaining and you switch to a new pricing option that has a fixed length of 6 months, the new end date is calculated as 6 months from the day you switch pricing options, effectively resetting the subscription length to the new pricing option. | New end date calculated from the day you switched pricing option. |\n"
+paths:
+  /v2/subscriptions/proration-policies:
+    post:
+      tags:
+      - Proration Policies
+      summary: Create a Proration Policy
+      description: 'In Subscriptions, you configure proration by creating a proration policy and attaching it to an offering. Once you have [attached](/docs/api/subscriptions/update-offering) the policy, the proration policy applies to all subscriptions that use the offering.
+
+        '
+      operationId: CreateProrationPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  $ref: '#/components/schemas/ProrationPolicyCreate'
+      responses:
+        '201':
+          description: Success. The proration policy is created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ProrationPolicy'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+      - Proration Policies
+      parameters:
+      - $ref: '#/components/parameters/PageOffset'
+      - $ref: '#/components/parameters/PageLimit'
+      summary: List proration policies
+      description: 'Retrieves a list of all proration policies.
+
+        '
+      operationId: ListProrationPolicies
+      responses:
+        '200':
+          description: Success. A list of proration policies is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProrationPolicy'
+                  links:
+                    $ref: '#/components/schemas/Links'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/subscriptions/proration-policies/{proration_policy_uuid}:
+    parameters:
+    - name: proration_policy_uuid
+      in: path
+      description: The unique identifier of a proration policy.
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    get:
+      tags:
+      - Proration Policies
+      summary: Get proration policy
+      operationId: GetProrationPolicy
+      responses:
+        '200':
+          description: Success. The proration policy details are returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ProrationPolicy'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Proration Policies
+      summary: Update proration policy
+      description: 'You can update a proration policy at any time. For any subscriptions that are using the updated proration policy, the changes are also applied. Specify whichever attributes you want to change. The values of the other attributes remain the same. If the attributes section is empty, the proration policy is not updated.
+
+
+        When updating proration policies:
+
+
+        - You can change the name of an existing policy.
+
+        - You can update `rounding`.
+
+        - You can update `external_ref` as long as `external_ref` is still unique in  your store.
+
+        - You can remove `external_ref` as this attribute is optional.
+
+        - You cannot remove any required attributes, such as `name` or `rounding`.
+
+        '
+      operationId: UpdateProrationPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  $ref: '#/components/schemas/ProrationPolicyUpdate'
+      responses:
+        '200':
+          description: Success. The proration policy details are updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ProrationPolicy'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/WriteConflictError'
+    delete:
+      tags:
+      - Proration Policies
+      summary: Delete proration policy
+      description: A proration policy cannot be deleted if it is being used by any subscriptions. This means you must detach a proration policy that you want to delete from any offerings using that policy before deleting the policy. See [Remove a proration policy from an offering](/docs/api/subscriptions/update-offering).
+      operationId: DeleteProrationPolicy
+      responses:
+        '204':
+          description: Success. The proration policy details are removed.
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  parameters:
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
+  schemas:
+    ProrationPolicyType:
+      type: string
+      example: subscription_proration_policy
+      enum:
+      - subscription_proration_policy
+    ProrationPolicyResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/ProrationPolicyAttributes'
+    Timestamps:
+      required:
+      - created_at
+      - updated_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    ProrationPolicyMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      properties:
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    ProrationPolicyUpdate:
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/ProrationPolicyType'
+        attributes:
+          $ref: '#/components/schemas/ProrationPolicyUpdateAttributes'
+    ProrationPolicy:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/ProrationPolicyType'
+        attributes:
+          $ref: '#/components/schemas/ProrationPolicyResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/ProrationPolicyMeta'
+    ProrationPolicyUpdateAttributes:
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRefUpdate'
+        name:
+          type: string
+          description: The name of the proration policy.
+          minLength: 3
+          maxLength: 1024
+          example: Main Policy
+        rounding:
+          type: string
+          description: Whether to round up or down
+          enum:
+          - up
+          - down
+          - nearest
+          example: up
+          x-go-type: model.ProrationPolicyRounding
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    LinkURI:
+      type: string
+      format: uri
+      example: http://example.com/articles/1/comments
+      nullable: true
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
+    ExternalRefUpdate:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
+      nullable: true
+    ProrationPolicyCreate:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/ProrationPolicyType'
+        attributes:
+          $ref: '#/components/schemas/ProrationPolicyAttributes'
+    ProrationPolicyAttributes:
+      required:
+      - name
+      - rounding
+      properties:
+        name:
+          type: string
+          description: A name for the proration policy.
+          example: Main Policy
+          minLength: 3
+          maxLength: 1024
+        rounding:
+          type: string
+          description: 'When rounding in proration, you must decide how to round the units of time used to calculate the charges.
+
+
+            - round up to the next unit, ensuring subscribers are charged slightly more to cover any partial use.
+
+            - round down to the previous whole unit, providing subscribers with a slight benefit by not charging for partial use.
+
+            - round to the nearest whole unit, whether up or down, based on standard rounding rules. For example, rounding 0.5 up and rounding 0.5 down.
+
+            '
+          enum:
+          - up
+          - down
+          - nearest
+          example: up
+          x-go-type: model.ProrationPolicyRounding
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+    ExternalRef:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
+  responses:
+    ForbiddenError:
+      description: Forbidden. The operation is forbidden on this entity.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Permission denied
+                  status: '404'
+                  detail: 'Permission denied: plan tenancy mismatch'
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No plan found
+    WriteConflictError:
+      description: Write conflict. Unable to perform the operation at this time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - title: Write Conflict
+              status: '409'
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: 'data.attributes.name: "name" is required'
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

@@ -1,0 +1,319 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Account Cart Associations API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Account Cart Associations
+  description: 'You can create associations between an account and one or more carts. After cart associations exist for an account, those carts are accessible across any device. You can delete associations as required.
+
+
+    There are two ways to access the cart: with an [Account Management Authentication Tokens](/docs/api/accounts/post-v-2-account-members-tokens) and without one.
+
+
+    ### With an `Account Management Authentication` token
+
+
+    These endpoints are for users who authenticated implicitly and require an Account Management Authentication token in the header to access the account cart associations APIs. For more information, see the [Account Token](/docs/api/accounts/post-v-2-account-members-tokens) documentation.
+
+
+    #### Cart creation
+
+
+    Shoppers create carts and can use any of the carts that they created to check out an order.
+
+
+    :::note
+
+
+    You can create a cart id, name, and description for the cart. The cart requires a name. Ensure that the string length is greater than or equal to one. Use any symbol in the name and description. For cart id, ensure that you follow the guidelines for safe characters. For more information about cart id naming requirements, see [Safe Characters](/guides/Getting-Started/safe-characters).
+
+
+    :::
+
+
+    ### Without an `Account Management Authentication` token
+
+
+    These endpoints are for users who use the Client Credentials Token and do not require an account management authentication token in the header to access the account cart associations APIs. For more information, see the [Authentication](/docs/authentication/security) documentation.
+
+
+    This user acts as a system administrator and can call any account cart association operations for any account and cart.
+
+
+    ### Error Codes
+
+
+    You might encounter the following response codes, depending on the scenario:
+
+
+    * `400` - `The type does not exist or is not listed as account` - Ensure that the type is `account` and is present.
+
+
+    * `403` - `Cannot associate more than one account`.
+
+
+    * `403` - `Account does not have the required permissions to fulfill this request`.
+
+
+    * `403` - `Invalid json payload` - Check JSON input. The request body must be an array `[]`. If the request body is an object, the error is generated.
+
+    '
+paths:
+  /v2/carts/{cartID}/relationships/accounts:
+    parameters: []
+    post:
+      tags:
+      - Account Cart Associations
+      summary: Create an Account Cart Association
+      description: You can create associations between an account and one or more carts. After cart associations exist for an account, the account can access those carts across any device.
+      operationId: createAccountCartAssociation
+      parameters:
+      - name: cartID
+        in: path
+        description: The ID for the cart created by the account. Ensure that you follow the guidelines for [Safe Characters](/guides/Getting-Started/safe-characters).
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: EP-Account-Management-Authentication-Token
+        in: header
+        description: An Account Management Authentication token to access a specific account's carts.
+        style: simple
+        schema:
+          type: string
+          examples:
+          - '{{accountToken}}'
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/CartsRelationshipsAccountsData'
+        required: false
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CartsRelationshipsAccountsData'
+        '204':
+          description: No Content is sent back in case the account has already been associated to the cart.
+          headers: {}
+          content: {}
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+                examples:
+                  default:
+                    summary: Invalid Association
+                    value:
+                      errors:
+                      - detail: Unable to associate accounts to carts with contact emails attached.
+                        status: 400
+                        title: Cannot associate accounts to carts with contact emails
+      deprecated: false
+    delete:
+      tags:
+      - Account Cart Associations
+      summary: Delete Account Cart Association
+      description: You can delete an association between an account and a cart.
+      operationId: deleteAccountCartAssociation
+      parameters:
+      - name: cartID
+        in: path
+        description: The ID for the cart created by the account.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: EP-Account-Management-Authentication-Token
+        in: header
+        description: An Account Management Authentication token to access a specific account's carts.
+        style: simple
+        schema:
+          type: string
+          examples:
+          - '{{accountToken}}'
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/CartsRelationshipsAccountsData'
+        required: false
+      responses:
+        '204':
+          description: No Content
+          headers: {}
+          content: {}
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.ErrorResponse'
+      deprecated: false
+components:
+  schemas:
+    CartsRelationshipsAccountsData:
+      title: Carts Relationships Accounts Data
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                description: The ID of the account.
+                type: string
+                examples:
+                - '{{accountID}}'
+              type:
+                description: The type of related object. Ensure that it is account.
+                type: string
+                examples:
+                - account
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    Response.ErrorItem:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type:
+          - string
+          - integer
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+        source:
+          type: string
+          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
+        meta:
+          type: object
+          description: Additional metadata associated with the error. May include arbitrary keys.
+          properties:
+            id:
+              type: string
+              description: The resource id associated with the error
+            ids:
+              type: array
+              items:
+                type: string
+                description: The resource ids associated with the error
+            item_ids:
+              type: array
+              items:
+                type: string
+                description: The cart_item ids associated with the error
+            shipping_group_id:
+              type: string
+              description: The shipping group id associated with the error
+            shipping_group_ids:
+              type: array
+              items:
+                type: string
+                description: The shipping group ids associated with the error
+            cart_id:
+              type: string
+              description: The cart id associated with the error
+            code:
+              type: string
+              description: The code associated with the error.
+            order_id:
+              type: string
+              description: The order id associated with the error.
+            sku:
+              type: string
+              description: The SKU associated with the error.
+            email:
+              type: string
+              format: email
+              description: The email address associated with the error.
+            component_product_id:
+              type: string
+              format: uuid
+              description: The component product ID associated with the error.
+            error-meta-key:
+              type: string
+              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
+            value:
+              description: The value associated with the error.
+              oneOf:
+              - type: string
+              - type: integer
+              - type: boolean
+              - type: object
+                additionalProperties: true
+              - type: array
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

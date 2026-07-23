@@ -1,0 +1,526 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Entries API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Entries
+  description: '### Entries in Commerce
+
+
+    Entries hold the pieces of data collected within the fields. If your flow has more than one field related to it, you see multiple field slugs.
+
+
+    ### Entries in Product Experience Manager
+
+
+    Entries hold the pieces of data collected within the attributes. If your template has more than one attribute related to it, you see multiple attribute slugs.
+
+    '
+paths:
+  /v2/flows/{flowSlug}/entries:
+    get:
+      tags:
+      - Entries
+      summary: Get all Entries
+      description: '- For Commerce, this endpoint retrieves all entries for a flow.
+
+        - For Product Experience Manager, this endpoint retrieves all entries for a template.
+
+        '
+      operationId: getAllEntries
+      parameters:
+      - name: flowSlug
+        in: path
+        required: true
+        description: The slug for the flow/template you want to create an entry for.
+        style: simple
+        schema:
+          type: string
+      - $ref: '#/components/parameters/page-limit'
+      - $ref: '#/components/parameters/page-offset'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Entry'
+              examples:
+                default:
+                  value:
+                    data:
+                    - id: ce1f0b19-23c3-487b-aa2a-552b77abdf0c
+                      type: entry
+                      brand-image: https://files-eu.epusercontent.com/e8c53cb0-120d-4ea5-8941-ce74dec06038/61118f21-14a2-466c-a84b-c30b1f900cf9.png
+                      meta:
+                        owner: organization
+                        timestamps:
+                          created_at: '2018-06-05T20:58:25.596Z'
+                          updated_at: '2018-06-05T20:58:25.596Z'
+                      links:
+                        self: https://useast.api.elasticpath.com/v2/flows/brands/entries/ce1f0b19-23c3-487b-aa2a-552b77abdf0c
+                    - id: a5fcf6bc-233f-44d7-a3b0-0961eed3df9d
+                      type: entry
+                      brand-image: some image for brand x
+                      meta:
+                        owner: organization
+                        timestamps:
+                          created_at: '2018-06-06T14:48:59.006Z'
+                          updated_at: '2018-06-06T14:48:59.006Z'
+                      links:
+                        self: https://useast.api.elasticpath.com/v2/flows/brands/entries/a5fcf6bc-233f-44d7-a3b0-0961eed3df9d
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+      - Entries
+      summary: Create an Entry
+      description: '- For Commerce, this endpoint creates an entry for a flow.
+
+        - For Product Experience Manager, this endpoint creates an entry for a template.
+
+        '
+      operationId: createAnEntry
+      parameters:
+      - name: flowSlug
+        in: path
+        required: true
+        description: The slug for the flow/template you want to create an entry for.
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/FlowsEntriesRequest'
+              contentMediaType: application/json
+            examples:
+              default:
+                value:
+                  data:
+                    FIELD_SLUG: a value
+                    type: entry
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Entry'
+              examples:
+                default:
+                  value:
+                    data:
+                      id: 10fe2aca-09fb-42fe-a1d4-081134320641
+                      type: entry
+                      meta:
+                        owner: organization
+                        timestamps:
+                          created_at: '2021-10-26T17:10:56.329Z'
+                          updated_at: '2021-10-26T17:10:56.329Z'
+                      links:
+                        self: https://epcc-integration.global.ssl.fastly.net/v2/flows/products/entries/10fe2aca-09fb-42fe-a1d4-081134320641
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/flows/{flowSlug}/entries/{flowEntryID}:
+    get:
+      tags:
+      - Entries
+      summary: Get an Entry
+      description: '- For Commerce, this endpoint retrieves an entry from a flow.
+
+        - For Product Experience Manager, this endpoint retrieves an entry from a template.
+
+        '
+      operationId: getAnEntry
+      parameters:
+      - name: flowSlug
+        in: path
+        required: true
+        description: The slug for the flow/template.
+        style: simple
+        schema:
+          type: string
+      - name: flowEntryID
+        in: path
+        required: true
+        description: The ID of the entry.
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Entry'
+              examples:
+                default:
+                  value:
+                    data:
+                      id: 4abb8316-d0a2-4c91-bf29-4d19ba932227
+                      type: entry
+                      meta:
+                        owner: organization
+                        timestamps:
+                          created_at: '2018-05-10T15:28:59.192Z'
+                          updated_at: '2018-05-10T15:28:59.192Z'
+                      links:
+                        self: https://useast.api.elasticpath.com/v2/flows/products/entries/4abb8316-d0a2-4c91-bf29-4d19ba932227
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+      - Entries
+      summary: Delete an Entry
+      description: '- For Commerce, this endpoint deletes an entry from a flow.
+
+        - For Product Experience Manager, this endpoint deletes an entry from a template.
+
+        '
+      operationId: deleteAnEntry
+      parameters:
+      - name: flowSlug
+        in: path
+        required: true
+        description: The slug for the flow/template.
+        style: simple
+        schema:
+          type: string
+      - name: flowEntryID
+        in: path
+        required: true
+        description: The ID of the entry.
+        style: simple
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Entries
+      summary: Update an Entry
+      description: '- For Commerce, this endpoint updates an entry for a flow.
+
+        - For Product Experience Manager, this endpoint updates an entry for a template.
+
+        '
+      operationId: updateAnEntry
+      parameters:
+      - name: flowSlug
+        in: path
+        required: true
+        description: The slug for the flow/template.
+        style: simple
+        schema:
+          type: string
+      - name: flowEntryID
+        in: path
+        required: true
+        description: The ID of the entry.
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/FlowsEntriesUpdateRequest'
+              contentMediaType: application/json
+            examples:
+              default:
+                value:
+                  data:
+                    FIELD1_SLUG: value1
+                    FIELD2_SLUG: value2
+                    id: '{{entryID}}'
+                    type: entry
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Entry'
+              examples:
+                default:
+                  value:
+                    data:
+                      id: 03224af8-da41-4761-99fb-a125fa81ed99
+                      type: entry
+                      brand-image: a new image
+                      meta:
+                        owner: organization
+                        timestamps:
+                          created_at: '2018-06-06T14:42:39.312Z'
+                          updated_at: '2018-06-06T14:42:39.312Z'
+                      links:
+                        self: https://useast.api.elasticpath.com/v2/flows/brands/entries/03224af8-da41-4761-99fb-a125fa81ed99
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      deprecated: false
+components:
+  schemas:
+    UUID:
+      type: string
+      description: A unique identifier for a resource.
+      format: uuid
+      example: 00000000-0000-0000-0000-000000000000
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: integer
+          format: int
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        request_id:
+          type: string
+          description: Internal request ID.
+          example: 00000000-0000-0000-0000-000000000000
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    Meta:
+      type: object
+      properties:
+        owner:
+          type: string
+          description: The resource owner, either `organization` or `store`.
+          example: enum
+          enum:
+          - store
+          - organization
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              type: string
+              description: The date and time a resource is created.
+              example: '2023-10-11T13:02:25.293Z'
+            updated_at:
+              type: string
+              description: The date and time a resource is updated.
+              example: '2023-10-11T13:02:25.293Z'
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Entry:
+      title: Entry
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          type: string
+          description: Represents the type of object being returned.
+          example: entry
+        links:
+          $ref: '#/components/schemas/FlowsLinks'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      additionalProperties:
+        type: string
+        description: There can be a `:fieldSlug` attribute for each field/attribute attached to a flow/template. The type depends on the field type.
+    FlowsEntriesUpdateRequest:
+      title: FlowsEntriesUpdateRequest
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            FIELD1_SLUG:
+              type: string
+              description: The field slug for each field/attribute in a flow/template and the corresponding value for the entry. You can have multiple field slugs if they are related to the flow/template.
+              examples:
+              - value1
+            FIELD2_SLUG:
+              type: string
+              description: The field slug for each field/attribute in a flow/template and the corresponding value for the entry. You can have multiple field slugs if they are related to the flow/template.
+              examples:
+              - value2
+            id:
+              $ref: '#/components/schemas/UUID'
+            type:
+              type: string
+              description: Represents the type of the resource object.
+              examples:
+              - entry
+    FlowsEntriesRequest:
+      title: FlowsEntriesRequest
+      type: object
+      properties:
+        data:
+          type: object
+          description: Specifies the type of the resource object.
+          properties:
+            FIELD_SLUG:
+              type: string
+              description: Where **FIELD_SLUG** is the slug for each field/attribute on this flow/template along with the corresponding value. You must provide a field slug and a value for the entry. You can have multiple field slugs if they are related to the flow/template.
+              examples:
+              - a value
+            type:
+              type: string
+              description: Represents the type of object being returned.
+              examples:
+              - entry
+    FlowsLinks:
+      type: object
+      description: "Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:\n \n | Property | Description |\n | --- | --- |\n | `current` | Always the current page |\n | `first` | Always the first page |\n | `last` | `null` if there is only one page. |\n | `prev` | `null` if you are on the first page. |\n | `next` | `null` if there is only one page. |\n"
+      properties:
+        self:
+          type: string
+          example: https://euwest.api.elasticpath.com/v2/flows/d2a9b22a-b4b0-456b-bbc7-d8723aaffa84
+  parameters:
+    page-limit:
+      name: page[limit]
+      description: 'The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+
+        '
+      in: query
+      style: form
+      explode: true
+      schema:
+        type: string
+        examples:
+        - '10'
+    page-offset:
+      name: page[offset]
+      description: 'The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+
+        '
+      in: query
+      style: form
+      explode: true
+      schema:
+        type: string
+        examples:
+        - '0'
+  responses:
+    NotFound:
+      description: Bad request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: 404
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: 400
+                  detail: 'data.attributes.name: "name" is required'
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: 500
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

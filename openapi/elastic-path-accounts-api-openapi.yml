@@ -1,0 +1,837 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Accounts API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Accounts
+  description: 'An Account represents the entity that participates in a Commerce transaction. Accounts can have Carts, Orders, Subscriptions, and Addresses.
+
+    '
+  externalDocs:
+    url: https://elasticpath.dev/docs/commerce-cloud/accounts/using-account-management-api/account-management-api-overview
+paths:
+  /v2/accounts:
+    post:
+      tags:
+      - Accounts
+      summary: Create an Account
+      description: With the account creation endpoint, you have the ability to create accounts which can optionally have another account as a parent.
+      operationId: post-v2-accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  allOf:
+                  - $ref: '#/components/schemas/Account'
+                  - $ref: '#/components/schemas/WritableParentId'
+              required:
+              - data
+            examples:
+              Create an account:
+                value:
+                  data:
+                    type: account
+                    name: acc-name
+                    legal_name: acc-legal-name
+                    registration_id: reg-id
+                    external_ref: ext-ref
+              Create a subaccount:
+                value:
+                  data:
+                    type: account
+                    name: acc-sub-name
+                    legal_name: acc-legal-name, ltd
+                    registration_id: reg-id
+                    external_ref: ext-ref
+                    parent_id: 96b1f750-55d3-4768-a3f8-adffba694a2c
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AccountResponse'
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        description: A URL to the specific resource.
+                        type: string
+                        example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+      - BearerToken: []
+    get:
+      tags:
+      - Accounts
+      summary: Get All Accounts
+      description: 'Use this endpoint to Get all accounts.
+
+
+        You can use pagination with this resource. For more information, see [pagination](/guides/Getting-Started/pagination).
+
+
+        ### Filtering
+
+        The following operators and attributes are available for [filtering](/guides/Getting-Started/filtering) accounts:
+
+
+        | Attribute         | Operators                     | Example                                                       |
+
+        |-------------------|-------------------------------|---------------------------------------------------------------|
+
+        | `id`              | `lt`,`le`,`eq`,`gt`,`ge`,`in` | `eq(id,3fa85f64-5717-4562-b3fc-2c963f66afa6)`                 |
+
+        | `created_at`      | `lt`,`le`,`eq`,`gt`,`ge`      | `ge(created_at,2024-04-29T00:00:00.000Z)`                     |
+
+        | `updated_at`      | `lt`,`le`,`eq`,`gt`,`ge`      | `le(updated_at,2024-04-29T00:00:00.000Z)`                     |
+
+        | `name`            | `eq`,`like`                   | `like(name,*swan*)`                                           |
+
+        | `legal_name`      | `eq`,`like`                   | `like(legal_name,*swan*)`                                     |
+
+        | `registration_id` | `eq`,`like`                   | `like(registration_id,00000000-0000-1000-8000-*)`             |
+
+        | `external_ref`    | `eq`,`like`,`in`              | `like(external_ref,16be*)`                                    |
+
+        | `account_tags`    | `contains`                    | `contains(account_tags,26beb787-be6e-40c3-bbae-9c645820b075)` |
+
+        '
+      operationId: get-v2-accounts
+      parameters:
+      - $ref: '#/components/parameters/filter'
+      - $ref: '#/components/parameters/page-limit'
+      - $ref: '#/components/parameters/page-offset'
+      - name: sort
+        in: query
+        description: Specifies the order in which accounts will be returned. For more information, see [Sorting](/guides/Getting-Started/sorting).
+        required: false
+        schema:
+          type: string
+          enum:
+          - created_at
+          - -created_at
+          - id
+          - -id
+          - name
+          - -name
+          - updated_at
+          - -updated_at
+          example: id
+          x-enumDescriptions:
+            created_at: Sort in increasing order of creation
+            -created_at: Sort in decreasing order of creation
+            id: Sort in increasing order of ID
+            -id: Sort in decreasing order of ID
+            name: Sort in increasing order of name
+            -name: Sort in decreasing order of name
+            updated_at: Sort in increasing order of last update
+            -updated_at: Sort in decreasing order of last update
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                      - $ref: '#/components/schemas/AccountResponse'
+                      - type: object
+                        properties:
+                          links:
+                            type: object
+                            properties:
+                              self:
+                                description: A URL to the specific resource.
+                                type: string
+                                example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23
+                  meta:
+                    $ref: '#/components/schemas/MetaList'
+                  links:
+                    type: object
+                    properties:
+                      current:
+                        description: Always the current page.
+                        type: string
+                        format: uri
+                        example: https://useast.api.elasticpath.com/v2/accounts?page[offset]=0&page[limit]=25
+                      first:
+                        description: Always the first page.
+                        type: string
+                        format: uri
+                        example: https://useast.api.elasticpath.com/v2/accounts?page[offset]=0&page[limit]=25
+                      last:
+                        description: Always `null` if there is only one page.
+                        type: string
+                        format: uri
+                        example: https://useast.api.elasticpath.com/v2/accounts?page[offset]=0&page[limit]=25
+                      next:
+                        description: Always `null` if there is only one page.
+                        type: string
+                        example: null
+                      prev:
+                        description: Always `null` if the user is on the first page.
+                        type: string
+                        example: null
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/accounts/{accountID}:
+    get:
+      tags:
+      - Accounts
+      summary: Get an Account
+      description: View a specific account contained within your store
+      operationId: get-v2-accounts-accountID
+      parameters:
+      - name: accountID
+        in: path
+        description: The ID of the account you want to retrieve.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AccountResponse'
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        description: A URL to the specific resource.
+                        type: string
+                        example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Accounts
+      summary: Update an Account
+      description: Update the information contained on an account.
+      operationId: put-v2-accounts-accountID
+      parameters:
+      - name: accountID
+        in: path
+        description: The ID of the account you want to retrieve.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  allOf:
+                  - $ref: '#/components/schemas/Account'
+                  - $ref: '#/components/schemas/ReadOnlyParentId'
+              required:
+              - data
+            examples:
+              Update an Account:
+                value:
+                  data:
+                    type: account
+                    name: acc-name
+                    legal_name: acc-legal-name
+                    registration_id: reg-id
+                    external_ref: ext-ref
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AccountResponse'
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        description: A URL to the specific resource.
+                        type: string
+                        format: uri
+                        example: /v2/accounts/deb6b25f-8451-4211-9a22-95610333df23
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        detail:
+                          type: string
+                          example: 'Validation failed: field ''Name'' on the ''min'' tag.'
+                        status:
+                          type: string
+                          example: '400'
+                        title:
+                          type: string
+                          example: Bad Request
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        detail:
+                          type: string
+                          example: account not found
+                        status:
+                          type: string
+                          example: '404'
+                        title:
+                          type: string
+                          example: Not Found
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+      - Accounts
+      summary: Delete an Account
+      description: Delete a specific account within a store
+      operationId: delete-v2-accounts-accountID
+      parameters:
+      - name: accountID
+        in: path
+        description: The ID of the account you want to retrieve.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: No Content
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/accounts/{accountID}/relationships/account-tags:
+    get:
+      tags:
+      - Accounts
+      summary: Get an Account's Tags Relationship
+      operationId: GetAnAccountTagsRelationship
+      description: Get a list of Account Tags on an Account
+      parameters:
+      - name: accountID
+        in: path
+        description: The ID of the account you want to retrieve.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountTagsRelationshipResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+      - Accounts
+      summary: Add Account Tags
+      operationId: AddAccountTagsOnAccount
+      description: Add Account Tags onto an Account. Please note that after adding a tag to an account, the account member token should be regenerated to reflect the updated account status, allowing other services to react accordingly. See [Account Management Authentication Token](/docs/api/accounts/post-v-2-account-members-tokens).
+      parameters:
+      - name: accountID
+        in: path
+        description: The ID of the account you want to retrieve.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddAccountTagsOnAccount'
+            examples:
+              Add Example:
+                summary: Add an Account Tag
+                value:
+                  data:
+                  - type: account_tag
+                    id: 030693ce-39ad-4f4c-9941-d2d596478e94
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountTagsRelationshipResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+      - Accounts
+      summary: Remove Account Tags
+      operationId: RemoveAccountTagsOnAccount
+      description: Remove Account Tags from an Account. Please note that after removing a tag from an account, the account member token should be regenerated to reflect the updated status, allowing other services to react accordingly. See [Account Management Authentication Token](/docs/api/accounts/post-v-2-account-members-tokens).
+      parameters:
+      - name: accountID
+        in: path
+        description: The ID of the account you want to retrieve.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveAccountTagsOnAccount'
+            examples:
+              Remove Example:
+                summary: Remove an Account Tag
+                value:
+                  data:
+                  - type: account_tag
+                    id: 030693ce-39ad-4f4c-9941-d2d596478e94
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountTagsRelationshipResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    ReadOnlyParentId:
+      type: object
+      properties:
+        parent_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          readOnly: true
+          description: Specifies the ID of the parent account.
+          example: 96b1f750-55d3-4768-a3f8-adffba694a2c
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    MetaListPage:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
+        total:
+          type: integer
+          description: The total page count.
+          example: 1
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    MetaTimestamps:
+      type: object
+      properties:
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              description: The date the resource is created.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+            updated_at:
+              description: The date the resource is updated.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+    RemoveAccountTagsOnAccount:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountTagsRelationshipIdentifier'
+    WritableParentId:
+      type: object
+      properties:
+        parent_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: Specifies the ID of the parent account, this field cannot be changed after creation.
+          example: 96b1f750-55d3-4768-a3f8-adffba694a2c
+    AccountResponse:
+      allOf:
+      - $ref: '#/components/schemas/Account'
+      - $ref: '#/components/schemas/ReadOnlyParentId'
+      - type: object
+        properties:
+          id:
+            $ref: '#/components/schemas/UUID'
+            description: The unique identifier for an Account.
+          meta:
+            $ref: '#/components/schemas/MetaTimestamps'
+            description: Additional information for this realm. For more information, see [The meta object](https://elasticpath.dev/docs/commerce-cloud/accounts/using-account-management-api/account-management-api-overview#the-meta-object) section.
+          relationships:
+            type: object
+            properties:
+              account_tags:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          $ref: '#/components/schemas/UUID'
+                          description: The unique identifier for an Account Tag.
+                        type:
+                          type: string
+                          const: account_tag
+                description: Tags associated with the account.
+              ancestors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          $ref: '#/components/schemas/UUID'
+                          description: The unique identifier for an Account.
+                        type:
+                          type: string
+                          const: account
+                  description: All parent accounts in the hierarchy in sorted order (root first).
+              parent:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        const: account
+                      id:
+                        $ref: '#/components/schemas/UUID'
+                        description: The unique identifier for an Account.
+    AddAccountTagsOnAccount:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountTagsRelationshipIdentifier'
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
+    MetaList:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/MetaListPage'
+        results:
+          $ref: '#/components/schemas/MetaListResults'
+    AccountTagsRelationshipIdentifier:
+      type: object
+      properties:
+        id:
+          description: The unique identifier for the related Account Tag.
+          type: string
+          example: 652e39d8-d613-493e-8c20-fef99ad6327a
+        type:
+          description: Specifies the type of the resource object.
+          type: string
+          const: account_tag
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
+    Account:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Specifies the type of object. Set this value to `account`.
+          const: account
+        name:
+          type: string
+          description: Specifies the name of the account.
+          example: acc-name
+        legal_name:
+          type:
+          - string
+          - 'null'
+          description: Specifies the legal name of the account.
+          example: acc-legal-name
+        registration_id:
+          type:
+          - string
+          - 'null'
+          description: Specifies the registration ID. If specified, this field is checked for uniqueness.
+          example: reg-id
+        external_ref:
+          type:
+          - string
+          - 'null'
+          description: The unique attribute associated with the account. For example, this could be an external reference from a separate company system. The maximum length is 2048 characters. Default is `null`.
+          example: ext-ref
+      required:
+      - type
+      - name
+    AccountTagsRelationshipResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountTagsRelationshipIdentifier'
+        links:
+          type: object
+          properties:
+            self:
+              description: A URL to the specific resource.
+              type: string
+              example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/relationships/account-tags
+  responses:
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: account not found
+    ConflictError:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            conflict-error:
+              value:
+                errors:
+                - title: Conflict
+                  status: '409'
+                  detail: account membership with the given account id and account member id already exists
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unprocessable-entity:
+              value:
+                errors:
+                - title: Unprocessable Entity
+                  status: '422'
+                  detail: store id mismatch
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value:
+                errors:
+                - title: Unauthorized
+                  status: '401'
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+  parameters:
+    filter:
+      name: filter
+      in: query
+      description: Specifies the filter attributes.
+      required: false
+      schema:
+        type: string
+        format: string
+        example: ilike(name,"*swan*")
+    page-limit:
+      name: page[limit]
+      in: query
+      description: The number of records per page.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 25
+    page-offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

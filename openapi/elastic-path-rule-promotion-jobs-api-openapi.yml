@@ -1,0 +1,554 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Rule Promotion Jobs API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Rule Promotion Jobs
+paths:
+  /v2/rule-promotions/{uuid}/jobs:
+    post:
+      operationId: createRulePromotionJob
+      summary: Create a Rule Promotion Job
+      description: 'Creates an asynchronous job for a specific Rule Promotion. Jobs are used to generate or export promotion codes in bulk.
+
+
+        The following job types are supported:
+
+        - **`code_generate`**: Generates a batch of unique promotion codes.
+
+        - **`code_export`**: Exports all existing promotion codes as a downloadable CSV file.
+
+
+        Job processing occurs asynchronously. The job request is queued, and its status must be checked separately.
+
+
+        ### Job Processing Status
+
+        Jobs can have the following statuses:
+
+        - `pending`: Job is in the queue, waiting to be processed.
+
+        - `processing`: Job is actively being processed.
+
+        - `completed`: Job completed successfully.
+
+        - `failed`: Job encountered an error and did not complete.
+
+        - `cancelling`: Cancellation in progress (for long-running jobs).
+
+        - `cancelled`: Job was successfully cancelled.
+
+
+        Please refer to the **OpenAPI examples** section on this page for sample job creation requests.
+
+        '
+      tags:
+      - Rule Promotion Jobs
+      parameters:
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the rule promotion.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/PromotionJob'
+            examples:
+              GenerateBulkPromotionCodes:
+                summary: Create a Job to Generate 100 Bulk Promotion Codes
+                description: "Create an asynchronous job to generate **100 unique promotion codes** with specific parameters.\n\n- The `job_type` is `\"code_generate\"`, meaning this job will generate new promotion codes.\n- The `parameters` field defines:\n  - `number_of_codes: 100`, meaning **100 unique codes will be generated**.\n  - `max_uses_per_code: 1`, restricting **each code to a single use**.\n  - `consume_unit: per_checkout`, meaning **each code is consumed once per successful checkout**.\n  - `code_prefix: \"summer-\"`, ensuring that **each generated code starts with \"summer-\"**.\n  - `code_length: 8`, specifying that **each code will have 8 characters after the prefix**.\n\n**Job Processing:**\n- The job will run asynchronously, and the status must be checked separately.\n- You can retrieve the job's status and results using the **Get Rule Promotion Jobs** endpoint.\n"
+                value:
+                  data:
+                    type: promotion_job
+                    job_type: code_generate
+                    name: Demo bulk code generate
+                    parameters:
+                      number_of_codes: 100
+                      max_uses_per_code: 1
+                      consume_unit: per_checkout
+                      code_prefix: summer-
+                      code_length: 8
+              ExportPromotionCodes:
+                summary: Create a Rule Promotion Job to Export All Promotion Codes
+                description: 'Create an asynchronous job to export all **existing promotion codes** as a downloadable CSV file.
+
+
+                  **Job Processing:**
+
+                  - The job runs asynchronously, and its status must be checked separately.
+
+                  - Once the job completes, the exported file will be available for download.
+
+                  - You can track the job''s status using the **Get Rule Promotion Jobs** endpoint.
+
+                  '
+                value:
+                  data:
+                    type: promotion_job
+                    job_type: code_export
+                    name: Demo export codes
+      responses:
+        '201':
+          description: Promotion job created
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Promotion job response
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromotionJobResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: '400'
+                        title:
+                          type: string
+                          example: Too many jobs
+                        detail:
+                          type: string
+                          example: Only 1 pending or processing job is allowed per promotion.
+              examples:
+                TooManyJobsError:
+                  summary: Error When Attempting to Create a Job While Another Job is Still Processing
+                  description: 'This error occurs when a **new job is requested while another job is still pending or processing** for the same promotion.
+
+                    '
+                  value:
+                    errors:
+                    - status: '400'
+                      title: Too many jobs
+                      detail: Only 1 pending or processing job is allowed per promotion.
+      security:
+      - bearerAuth: []
+    get:
+      operationId: getRulePromotionJobs
+      summary: Get Rule Promotion Jobs
+      description: 'Retrieves a list of jobs associated with a specific rule promotion. Each job represents an asynchronous operation such as promotion code generation or export.
+
+
+        The response includes details such as:
+
+        - **Job type** (`code_generate` or `code_export`)
+
+        - **Job status** (`pending`, `processing`, `completed`, `failed`, `cancelling`, or `cancelled`)
+
+        - **Parameters used** (such as number of codes generated)
+
+        - **Results** (such as number of codes successfully generated or deleted)
+
+
+        ### Filtering
+
+        You can filter jobs by:
+
+        - **Job Type** (`eq(job_type, code_export)`)
+
+        - **Status** (`eq(status, complete)`)
+
+        '
+      tags:
+      - Rule Promotion Jobs
+      parameters:
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of a rule promotion.
+      - name: filter
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Specifies filter attributes.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromotionJobsListResponse'
+      security:
+      - bearerAuth: []
+  /v2/rule-promotions/{uuid}/jobs/{job-uuid}/file:
+    get:
+      operationId: getRulePromotionJobFile
+      summary: Get Rule Promotion Code Exported File
+      description: 'Retrieves the exported promotion codes for a rule promotion job in a CSV format.
+
+
+        - The file contains the generated codes along with relevant metadata.
+
+        - This endpoint is applicable only for jobs of type `code_export`.
+
+        - The job must be in a `completed` state before the file can be retrieved.
+
+        '
+      tags:
+      - Rule Promotion Jobs
+      parameters:
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the rule promotion.
+      - name: job-uuid
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the job associated with the file.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromotionCodeExportedFileResponse'
+      security:
+      - bearerAuth: []
+  /v2/rule-promotions/{uuid}/jobs/{job-uuid}/cancel:
+    post:
+      operationId: cancelRulePromotionJob
+      summary: Cancel a Rule Promotion Job
+      description: 'Cancels an asynchronous job for a rule promotion if its status is `pending` or `processing`.
+
+
+        - Only jobs that have not yet completed can be canceled.
+
+        - Once canceled, no further processing occurs, and partially completed results may be deleted.
+
+        '
+      tags:
+      - Rule Promotion Jobs
+      parameters:
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the rule promotion.
+      - name: job-uuid
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the job to be canceled.
+      responses:
+        '200':
+          description: Successfully Canceled the Rule Promotion Job
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Promotion job response
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PromotionJobResponse'
+              examples:
+                PromotionJobCancellingResponse:
+                  summary: Successful Cancellation Request for a Rule Promotion Job
+                  description: 'This response indicates that the **job cancellation request was successfully submitted**, and the job is now in the `"cancelling"` state.
+
+
+                    - The job has entered the **cancelling state**, meaning the system is stopping it.
+
+                    - To check the job''s final status, use the **Get Rule Promotion Jobs** endpoint.
+
+                    - If the job successfully cancels, it will transition to `"cancelled"`.
+
+                    - If cancellation fails (e.g., the job completes before being stopped), it may remain `"completed"`.
+
+                    '
+                  value:
+                    data:
+                      type: promotion_job
+                      id: 9bc1391c-1b65-419e-940e-66ed86c07001
+                      rule_promotion_id: 8c150382-b258-4c88-a2d4-b9ea0be74a07
+                      job_type: code_generate
+                      name: Demo bulk code generate
+                      parameters:
+                        number_of_codes: 100
+                        max_uses_per_code: 1
+                        consume_unit: per_checkout
+                        code_prefix: summer-
+                        code_length: 8
+                      status: cancelling
+                      meta:
+                        timestamps:
+                          created_at: '2024-12-03T23:31:40.962680423Z'
+                          updated_at: '2024-12-03T23:31:40.962680423Z'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: '422'
+                        title:
+                          type: string
+                          example: Unprocessable Entity
+                        detail:
+                          type: string
+                          example: Only pending or processing jobs can be cancelled.
+              examples:
+                CannotCancelCompletedJobError:
+                  summary: Error When Attempting to Cancel a Job That Is Not Pending or Processing
+                  description: 'This error occurs when a **job cancellation request** is made for a job that **is not in a `pending` or `processing` state**.
+
+
+                    **Possible Causes:**
+
+                    - Attempting to cancel a job that has already **completed**, **failed**, or was **previously cancelled**.
+
+                    - The job may have already transitioned out of `pending` or `processing` by the time the request was made.
+
+                    '
+                  value:
+                    errors:
+                    - status: '422'
+                      title: Unprocessable Entity
+                      detail: Only pending or processing jobs can be cancelled.
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    PromotionJobsListResponse:
+      type: object
+      description: Successful response
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionJobResponse'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    PromotionJobResponse:
+      allOf:
+      - $ref: '#/components/schemas/PromotionJob'
+      - type: object
+        properties:
+          status:
+            description: The status of the job.
+            type: string
+            enum:
+            - pending
+            - processing
+            - completed
+            - failed
+            - cancelling
+            - cancelled
+            x-enumDescriptions:
+              pending: Commerce Cloud has received the request but is currently busy processing other requests.
+              processing: Commerce Cloud has initiated processing the job.
+              completed: The job is successfully completed.
+              failed: The job has failed.
+              cancelling: The job is currently in the process of being canceled. You need to wait for the cancellation process to complete.
+              cancelled: The job request is canceled.
+          error:
+            description: The error encountered during job execution, if applicable.
+            type: string
+          meta:
+            type: object
+            properties:
+              timestamps:
+                type: object
+                properties:
+                  created_at:
+                    description: The creation date of the job.
+                    type: string
+                    format: date-time
+                  updated_at:
+                    description: The last updated date of the job.
+                    type: string
+                    format: date-time
+          result:
+            $ref: '#/components/schemas/GenerateResult'
+    GenerateResult:
+      type: object
+      description: 'Represents the result of a promotion job, including the number of generated and deleted promotion codes.
+
+
+        - `generated`: Total number of successfully generated codes.
+
+        - `deleted`: Number of codes that were deleted during job cancellation, if applicable.
+
+        '
+      properties:
+        generated:
+          type: integer
+          description: Number of successfully generated promotion codes.
+          example: 1000
+        deleted:
+          type:
+          - integer
+          - 'null'
+          description: Number of codes deleted due to job cancellation.
+          example: 50
+    PromotionJob:
+      type: object
+      properties:
+        job_type:
+          description: The type of job to run. For example, `code_generate` to generate codes or `code_export` to export codes.
+          type: string
+          enum:
+          - code_generate
+          - code_export
+          x-enumDescriptions:
+            code_generate: Generates a batch of unique promotion codes with specified parameters such as code length, prefix, and usage limits.
+            code_export: Exports all existing promotion codes for the promotion as a downloadable CSV file.
+        name:
+          type: string
+          description: Represents the name of the job. The maximum allowed length is 50 characters.
+          maxLength: 50
+        parameters:
+          type: object
+          properties:
+            number_of_codes:
+              type: integer
+              description: Specifies the number of codes to be generated.
+              maximum: 1000
+            max_uses_per_code:
+              type: integer
+              description: Specifies the maximum number of usages per code. If set to zero, you cannot use this promotion. If no value is set, it can be used unlimited times.
+            consume_unit:
+              type: string
+              enum:
+              - per_application
+              - per_checkout
+              description: 'Specifies whether the promotion code is consumed per application or per checkout. This determines how usage limits are applied when a code is used multiple times.
+
+                '
+              x-enumDescriptions:
+                per_application: The code is consumed per application. For cart discounts, each application counts as one usage. For item discounts, each application to either a single quantity or a bundle is counted as one usage.
+                per_checkout: The code is consumed once per checkout, regardless of the number of items in the cart or how many times the promotion is applied within that checkout.
+            code_prefix:
+              type: string
+              description: Prefix for generated promotion codes (e.g., `SUMMER-`).
+            code_length:
+              type: integer
+              description: Code length.
+              maximum: 16
+              minimum: 8
+              default: 8
+        id:
+          type: string
+          description: A unique ID generated when a job is created.
+        type:
+          type: string
+          const: promotion_job
+        rule_promotion_id:
+          description: A unique ID of a promotion.
+          type: string
+    PromotionCodeExportedFileResponse:
+      type: object
+      description: Successful response
+      properties:
+        href:
+          type: string
+          description: URL to download the CSV file.
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: object
+          properties:
+            current:
+              type: integer
+              description: Current page number
+            limit:
+              type: integer
+              description: Number of items per page
+            offset:
+              type: integer
+              description: Offset from the first result
+            total:
+              type: integer
+              description: Total number of pages
+        results:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total number of results
+            total_method:
+              type: string
+              description: Method used to calculate the total (e.g., 'exact')
+    PaginationLinks:
+      type: object
+      properties:
+        current:
+          type: string
+          format: uri
+          description: URL for the current page of results
+        first:
+          type: string
+          format: uri
+          description: URL for the first page of results
+        last:
+          type: string
+          format: uri
+          description: URL for the last page of results
+        next:
+          type: string
+          format: uri
+          description: URL for the next page of results
+        prev:
+          type: string
+          format: uri
+          description: URL for the previous page of results
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

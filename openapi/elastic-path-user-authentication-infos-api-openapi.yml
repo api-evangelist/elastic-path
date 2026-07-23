@@ -1,0 +1,588 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses User Authentication Infos API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: User Authentication Infos
+  description: '
+
+    A `user-authentication-info` represents a user. This object contains information, such as the name and email address, and has sub-resources for each mechanism that the user can use to log in./single-sign-on/authentication-realm-api/authentication-realm-api-overview) and the user is configured to authenticate through that profile, then the `user-authentication-info` object is associated with a [User Authentication OpenID Connect Profile Info](/docs/api/single-sign-on/user-authentication-oidc-profile-infos) subresource.
+
+
+    [Account Members](/docs/api/accounts/get-v-2-account-members-account-member-id) reference User Authentication Infos directly (i.e., for every account member there is an user authentication info with the same id) and the User Authentication Info API is how you manage and configure the authentication options for that user.
+
+
+    [Customers (that login via OIDC)](/docs/customer-management/customer-management-api/get-a-customer) also use the User Authentication Info.
+
+    '
+paths:
+  /v2/authentication-realms/{realmId}/user-authentication-info:
+    get:
+      tags:
+      - User Authentication Infos
+      summary: Get User Authentication Info List
+      description: "Retrieve user authentication information for the specified authentication realm.\n### Filtering\n\n\n    The following operators and attributes are available for\n    [filtering](/guides/Getting-Started/filtering) unassigned account members.\n\n\n    | Operator | Description   |\n    | :------- |:--------------------------------------------------------------------------------------------------- |\n    | `eq`     | Matches record where the field matches the value (case insensitive) |\n    | `ge`  | Matches results where the value is greater than or equal to the operand |\n    | `gt`  | Matches results where the value is greater than the operand |\n    | `le`  | Matches results where the value is less than or equal to the operand |\n    | `lt`  | Matches results where the value is less than the operand |\n    | `in`  | Matches results where the value is in one of a set of values |\n    | `ilike`  | Checks whether the operand contains the specified string. You can use wildcard characters at the start or end. (Case Insensitive) |\n    | `is_null`  | Matches records where the field is null. |\n\n\n    | Attribute | Type     | Operator      | Example\n    | :-------- | :------- | :------------ | :---------------------------------   |\n    | `email`   | `string` | `eq`,`ilike` | `eq(email,ronswanson@example.com)`   |\n    | `name`    | `string` | `eq`,`ilike` | `ilike(name,*swan*)`       |\n    | `created_at`    | `string` | `lt`, `le`, `eq`, `gt`, `ge` | `lt(created_at,\"2025-09-10T22:08:47.992Z\")`       |\n    | `updated_at`    | `string` | `lt`, `le`, `eq`, `gt`, `ge` | `gt(updated_at,\"2025-09-10T22:08:47.992Z\")`       |\n    | `given_name`    | `string` | `eq`,`ilike`,`is_null`  | `is_null('given_name')`       |\n    | `middle_name`    | `string` | `eq`,`ilike`,`is_null`  | `is_null('middle_name')`       |\n    | `family_name`    | `string` | `eq`,`ilike`,`is_null`  | `is_null('family_name')`       |"
+      operationId: get-v2-authentication-realms-realmId-user-authentication-info
+      parameters:
+      - name: realmId
+        in: path
+        description: The ID of the authentication realm.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: '#/components/parameters/page-limit'
+      - $ref: '#/components/parameters/page-offset'
+      - $ref: '#/components/parameters/filter'
+      - name: sort
+        in: query
+        description: Specifies the order in which account members will be returned. For more information, see [Sorting](/guides/Getting-Started/sorting).
+        required: false
+        schema:
+          type: string
+          enum:
+          - created_at
+          - -created_at
+          - id
+          - -id
+          - updated_at
+          - -updated_at
+          x-enumDescriptions:
+            created_at: Sort in increasing order of creation
+            -created_at: Sort in decreasing order of creation
+            id: Sort in increasing order of ID
+            -id: Sort in decreasing order of ID
+            updated_at: Sort in increasing order of last update
+            -updated_at: Sort in decreasing order of last update
+          example: id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserAuthenticationInfoResponse'
+                  meta:
+                    $ref: '#/components/schemas/MetaList'
+                  links:
+                    type: object
+                    properties:
+                      current:
+                        description: Always the current page.
+                        type: string
+                        format: uri
+                        example: https://euwest.api.elasticpath.com/v2/authentication-realms/{realmId}/user-authentication-info?page[offset]=0&page[limit]=25
+                      first:
+                        description: Always the first page.
+                        type: string
+                        format: uri
+                        example: https://euwest.api.elasticpath.com/v2/authentication-realms/{realmId}/user-authentication-info?page[offset]=0&page[limit]=25
+                      last:
+                        description: Always null if there is only one page.
+                        type:
+                        - string
+                        - 'null'
+                        format: uri
+                        example: https://euwest.api.elasticpath.com/v2/authentication-realms/{realmId}/user-authentication-info?page[offset]=0&page[limit]=25
+                      next:
+                        description: Always null if there is only one page.
+                        type:
+                        - string
+                        - 'null'
+                        format: uri
+                        example: null
+                      prev:
+                        description: Always null if the user is on the first page.
+                        type:
+                        - string
+                        - 'null'
+                        format: uri
+                        example: null
+              examples:
+                list_user_authentication_info:
+                  summary: List of user authentication info
+                  value:
+                    data:
+                    - id: 40c8ecfa-0d1a-43b2-8d62-2bbbb6c4207c
+                      type: user_authentication_info
+                      name: Jane Doe
+                      email: jane.doe@example.com
+                    - id: ddb47241-2c69-42cd-b65f-32717cdcf9c1
+                      type: user_authentication_info
+                      name: John Smith
+                      email: john.smith@example.com
+                    meta:
+                      results:
+                        total: 2
+                      page:
+                        limit: 25
+                        offset: 0
+                    links:
+                      current: https://euwest.api.elasticpath.com/v2/authentication-realms/45928070-44a6-448b-8246-a85aa35320af/user-authentication-info?page%5Boffset%5D=0&page%5Blimit%5D=25
+                      first: https://euwest.api.elasticpath.com/v2/authentication-realms/45928070-44a6-448b-8246-a85aa35320af/user-authentication-info?page%5Boffset%5D=0&page%5Blimit%5D=25
+                      last: null
+                      next: null
+                      prev: null
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+      - User Authentication Infos
+      summary: Create User Authentication Info
+      description: Create user authentication information for the specified authentication realm.
+      operationId: post-v2-authentication-realms-realmId-user-authentication-info
+      parameters:
+      - name: realmId
+        in: path
+        description: The ID of the authentication realm.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/UserAuthenticationInfo'
+              required:
+              - data
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserAuthenticationInfoResponse'
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        description: A URL to the specific resource.
+                        type: string
+                        format: uri
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v2/authentication-realms/{realmId}/user-authentication-info/{userAuthInfoId}:
+    get:
+      tags:
+      - User Authentication Infos
+      summary: Get User Authentication Info
+      description: Retrieve specific user authentication information by ID.
+      operationId: get-v2-authentication-realms-realmId-user-authentication-info-userAuthInfoId
+      parameters:
+      - name: realmId
+        in: path
+        description: The ID of the authentication realm.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: userAuthInfoId
+        in: path
+        description: The ID of the user authentication info.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserAuthenticationInfoResponse'
+                  links:
+                    $ref: '#/components/schemas/SelfLink'
+              examples:
+                get_user_authentication_info:
+                  summary: User authentication info
+                  value:
+                    data:
+                      id: 40c8ecfa-0d1a-43b2-8d62-2bbbb6c4207c
+                      type: user_authentication_info
+                      name: Jane Doe
+                      email: jane.doe@example.com
+                    links:
+                      self: https://euwest.api.elasticpath.com/v2/authentication-realms/45928070-44a6-448b-8246-a85aa35320af/user-authentication-info/40c8ecfa-0d1a-43b2-8d62-2bbbb6c4207c
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - User Authentication Infos
+      summary: Update User Authentication Info
+      description: Update specific user authentication information by ID.
+      operationId: put-v2-authentication-realms-realmId-user-authentication-info-userAuthInfoId
+      parameters:
+      - name: realmId
+        in: path
+        description: The ID of the authentication realm.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: userAuthInfoId
+        in: path
+        description: The ID of the user authentication info.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/UserAuthenticationInfo'
+              required:
+              - data
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserAuthenticationInfoResponse'
+                  links:
+                    $ref: '#/components/schemas/SelfLink'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+      - User Authentication Infos
+      summary: Delete User Authentication Info
+      description: Delete specific user authentication information by ID.
+      operationId: delete-v2-authentication-realms-realmId-user-authentication-info-userAuthInfoId
+      parameters:
+      - name: realmId
+        in: path
+        description: The ID of the authentication realm.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: userAuthInfoId
+        in: path
+        description: The ID of the user authentication info.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: No Content
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
+    MetaList:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/MetaListPage'
+        results:
+          $ref: '#/components/schemas/MetaListResults'
+    UserAuthenticationInfo:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Specifies the type of object. Set this value to `user_authentication_info`.
+          const: user_authentication_info
+        name:
+          type: string
+          description: Specifies the name of the user.
+          example: Ron Swanson
+        given_name:
+          type:
+          - string
+          - 'null'
+          description: Specifies the given name of the user.
+          example: Ron
+        family_name:
+          type:
+          - string
+          - 'null'
+          description: Specifies the family name of the user.
+          example: Swanson
+        middle_name:
+          type:
+          - string
+          - 'null'
+          description: Specifies the given name of the user.
+          example: Ulysses
+        email:
+          type: string
+          description: Specifies the email address of the user.
+          format: email
+          example: ron@swanson.com
+      required:
+      - type
+      - name
+      - email
+    UserAuthenticationInfoResponse:
+      allOf:
+      - $ref: '#/components/schemas/UserAuthenticationInfo'
+      - type: object
+        properties:
+          id:
+            $ref: '#/components/schemas/UUID'
+            description: The unique identifier for User Authentication Info.
+          meta:
+            type: object
+            properties:
+              created_at:
+                description: The date the resource is created.
+                type: string
+                format: date-time
+                example: '2025-09-08T20:29:42.282Z'
+              updated_at:
+                description: The last updated date of this `user-authentication-info` object. This value also changes if subresources such as the `user-authentication-oidc-profile-info`, or `user-authentication-password-profile-info` change.The last updated date of this `user-authentication-info` object. This value also changes if subresources such as the `user-authentication-oidc-profile-info`, or `user-authentication-password-profile-info` change.
+                type: string
+                format: date-time
+                example: '2025-09-08T20:29:42.282Z'
+              creation_status:
+                description: The creation status of the user authentication info.
+                type: string
+                enum:
+                - COMPLETE
+                - IN_PROGRESS
+                x-enumDescriptions:
+                  COMPLETED: The user authentication info has been created successfully.
+                  IN_PROGRESS: The creation of the user authentication info is in progress (this can happen in some edge cases, if for instance the user presses refresh while signing in for the first time). Occasionally these users may be rolled back by the system.
+                example: COMPLETE
+          links:
+            type: object
+            properties:
+              self:
+                description: A URL to the specific resource.
+                type: string
+                format: uri
+                example: https://useast.api.elasticpath.com/v2/authentication-realms/deb6b25f-8451-4211-9a22-95610333df23/user-authentication-info/abc123
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    SelfLink:
+      type: object
+      properties:
+        self:
+          description: A URL to the specific resource.
+          type: string
+          format: uri
+    MetaListPage:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
+        total:
+          type: integer
+          description: The total page count.
+          example: 1
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+        links:
+          $ref: '#/components/schemas/SelfLink'
+  parameters:
+    page-limit:
+      name: page[limit]
+      in: query
+      description: The number of records per page.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+        maximum: 100
+        default: 25
+    filter:
+      name: filter
+      in: query
+      description: Specifies the filter attributes.
+      required: false
+      schema:
+        type: string
+    page-offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        default: 0
+  responses:
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: Resource not found
+    UnprocessableEntityError:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unprocessable-entity-error:
+              value:
+                errors:
+                - title: Unprocessable Entity
+                  status: '422'
+                  detail: Constraint violation
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

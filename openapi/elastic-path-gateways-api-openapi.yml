@@ -1,0 +1,1054 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Gateways API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Gateways
+paths:
+  /v2/gateways:
+    get:
+      tags:
+      - Gateways
+      summary: Get all Gateways
+      description: Retrieves all gateways.
+      operationId: getAllGateways
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Response.Data'
+                - properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Response.Gateway'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                  status: 401
+                  title: Unauthorized
+      deprecated: false
+  /v2/gateways/{gatewaySlug}:
+    get:
+      tags:
+      - Gateways
+      summary: Get a Gateway
+      description: Retrieves the specified gateway.
+      operationId: getAGateway
+      parameters:
+      - name: gatewaySlug
+        in: path
+        description: The slug of the gateway.
+        required: true
+        schema:
+          type: string
+          enum:
+          - manual
+          - braintree
+          - stripe
+          - stripe_payment_intents
+          - elastic_path_payments_stripe
+          - paypal_express_checkout
+          - adyen
+          - authorize_net
+          - card_connect
+          - cyber_source
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Response.Data'
+                - properties:
+                    data:
+                      $ref: '#/components/schemas/Response.Gateway'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                  status: 401
+                  title: Unauthorized
+      deprecated: false
+  /v2/gateways/manual:
+    put:
+      tags:
+      - Gateways
+      summary: Update Manual Gateway
+      description: This endpoint allows you update the manual gateway.
+      operationId: updateManualGateway
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - $ref: '#/components/schemas/Request.UpdateManualGateway'
+              contentMediaType: application/json
+            examples:
+              default:
+                value:
+                  data:
+                    enabled: true
+        required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Response.Data'
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        enabled:
+                          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+                          example: true
+                          type: boolean
+                        name:
+                          description: Specifies the nme of the gateway.
+                          example: Manual
+                          type: string
+                        slug:
+                          description: Specifies the slug of the gateway.
+                          example: manual
+                          type: string
+                        type:
+                          description: Specifies the type of object being returned.
+                          example: gateway
+                          type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                  status: 401
+                  title: Unauthorized
+      deprecated: false
+  /v2/gateways/braintree:
+    put:
+      tags:
+      - Gateways
+      summary: Update Braintree Gateway
+      description: Use this endpoint to configure Braintree.
+      operationId: updateBraintreeGateway
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/Request.UpdateBraintreeGateway'
+              contentMediaType: application/json
+            examples:
+              default:
+                value:
+                  data:
+                    enabled: true
+                    environment: sandbox
+                    merchant_id: '{{braintreeMerchantId}}'
+                    private_key: '{{braintreePrivateKey}}'
+                    public_key: '{{braintreePublicKey}}'
+        required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Response.Data'
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        enabled:
+                          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+                          example: true
+                          type: boolean
+                        name:
+                          description: Specifies the name of the gateway.
+                          example: Braintree
+                          type: string
+                        environment:
+                          description: Specifies production or sandbox environment.
+                          example: sandbox
+                          type: string
+                        merchant_id:
+                          description: Specifies Your Braintree merchant ID.
+                          example: '{{braintreeMerchantId}}'
+                          type: string
+                        private_key:
+                          description: Represents Your Braintree private key.
+                          example: '{{braintreePrivateKey}}'
+                          type: string
+                        public_key:
+                          description: Indicates Your Braintree public key.
+                          example: '{{braintreePublicKey}}'
+                          type: string
+                        slug:
+                          description: Represents the slug of the gateway.
+                          example: braintree
+                          type: string
+                        type:
+                          description: Specifies the type of object being returned.
+                          example: gateway
+                          type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                  status: 401
+                  title: Unauthorized
+      deprecated: false
+  /v2/gateways/stripe:
+    put:
+      tags:
+      - Gateways
+      summary: Update Stripe Gateway
+      description: Use this endpoint to configure Stripe.
+      operationId: updateStripeGateway
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/Request.UpdateStripeGateway'
+              contentMediaType: application/json
+            examples:
+              default:
+                value:
+                  data:
+                    enabled: true
+                    login: '{{stripeToken}}'
+        required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Response.Data'
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        enabled:
+                          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+                          example: true
+                          type: boolean
+                        login:
+                          description: Represents Stripe test or live secret key.
+                          example: '{{stripeToken}}'
+                          type: string
+                        name:
+                          description: Specifies the name of the gateway.
+                          example: Stripe
+                          type: string
+                        slug:
+                          description: Represents the slug of the gateway.
+                          example: stripe
+                          type: string
+                        type:
+                          description: Specifies the type of object being returned.
+                          example: gateway
+                          type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                  status: 401
+                  title: Unauthorized
+      deprecated: false
+  /v2/gateways/stripe_payment_intents:
+    put:
+      tags:
+      - Gateways
+      summary: Update Stripe Payment Intents Gateway
+      description: Use this endpoint to configure Stripe Payment Intents.
+      operationId: updateStripeIntentsGateway
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/Request.UpdateStripeGateway'
+              contentMediaType: application/json
+            examples:
+              default:
+                value:
+                  data:
+                    enabled: true
+                    login: '{{stripeLoginToken}}'
+        required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Response.Data'
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        enabled:
+                          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+                          example: true
+                          type: boolean
+                        login:
+                          description: Specifies the Stripe secret key for your account that is in live or test mode.
+                          example: '{{stripeLoginToken}}'
+                          type: string
+                        name:
+                          description: Specifies the name of the gateway.
+                          example: Stripe Payment Intents
+                          type: string
+                        slug:
+                          description: Represents the slug of the gateway.
+                          example: stripe_payment_intents
+                          type: string
+                        type:
+                          description: Specifies the type of object being returned.
+                          example: gateway
+                          type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                  status: 401
+                  title: Unauthorized
+      deprecated: false
+  /v2/gateways/elastic_path_payments_stripe:
+    put:
+      tags:
+      - Gateways
+      summary: Update Elastic Path Payments Powered by Stripe
+      description: "Use this endpoint to configure Elastic Path Payments Powered by Stripe in Commerce. \n\n:::note\n\nYou can contact Elastic Path sales or [customer success team](mailto:customersuccess@elasticpath.com) to get more information about Elastic Path Payments Powered by Stripe and to check whether it will work for you.\n\n:::\n"
+      operationId: updateEpPaymentsStripe
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/Request.UpdateElasticPathPaymentsStripeGateway'
+              contentMediaType: application/json
+            examples:
+              default:
+                value:
+                  data:
+                    enabled: true
+                    stripe_account: '{{stripeAccountId}}'
+                    test: true
+        required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Response.Data'
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        enabled:
+                          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+                          example: true
+                          type: boolean
+                        stripe_account:
+                          description: Specifies the Stripe account ID.
+                          example: '{{stripeAccountId}}'
+                          type: string
+                        name:
+                          description: Specifies the name of the gateway.
+                          example: Elastic Path Payments powered by Stripe
+                          type: string
+                        test:
+                          description: Specifies whether the test mode is enabled. Set `true` to enable test mode and `false` to disable the test mode. Default is `false`.
+                          example: true
+                          type: boolean
+                        slug:
+                          description: Represents the slug of the gateway.
+                          example: elastic_path_payments_stripe
+                          type: string
+                        type:
+                          description: Specifies the type of object being returned.
+                          example: gateway
+                          type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                  status: 401
+                  title: Unauthorized
+      deprecated: false
+  /v2/gateways/paypal_express_checkout:
+    put:
+      tags:
+      - Gateways
+      summary: Update PayPal Express Checkout
+      description: "Use this endpoint to configure PayPal Express Checkout. \n:::note\n\nTo learn more about PayPal Express Checkout and check whether it will work for you, contact your sales or [customer success team](mailto:customersuccess@elasticpath.com).\n\n:::\n"
+      operationId: updatePaypalExpressCheckoutGateway
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/Request.UpdatePaypalExpressCheckoutGateway'
+              contentMediaType: application/json
+            examples:
+              default:
+                value:
+                  data:
+                    enabled: true
+                    payer_id: '{{merchant account id}}'
+                    test: true
+        required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Response.Data'
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        enabled:
+                          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+                          example: true
+                          type: boolean
+                        payer_id:
+                          description: Specifies the merchant account ID. The ID is displayed in the PayPal account details of the merchant.
+                          example: '{{merchant account id}}'
+                          type: string
+                        name:
+                          description: Specifies the name of the gateway.
+                          example: PayPal Express Checkout
+                          type: string
+                        test:
+                          description: Specifies whether the test mode is enabled. Set `true` to enable test mode and `false` to disable the test mode. Default is `false`.
+                          example: true
+                          type: boolean
+                        slug:
+                          description: Represents the slug of the gateway.
+                          example: paypal_express_checkout
+                          type: string
+                        type:
+                          description: Specifies the type of object being returned.
+                          example: gateway
+                          type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                  status: 401
+                  title: Unauthorized
+      deprecated: false
+  /v2/gateways/adyen:
+    put:
+      tags:
+      - Gateways
+      summary: Update Adyen Gateway
+      description: Use this endpoint to configure Adyen.
+      operationId: updateAdyenGateway
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdyenGatewayRequest'
+            examples:
+              default:
+                value:
+                  data:
+                    enabled: true
+                    merchant_account: MyCompanyECOM
+                    username: ws@Company.MyCompany
+                    password: xxx
+                    test: false
+        required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Response.Data'
+                - properties:
+                    data:
+                      type: object
+                      allOf:
+                      - $ref: '#/components/schemas/Response.Gateway'
+                      - properties:
+                          merchant_account:
+                            description: Represents your Adyen merchant account code. For example, MyCompanyECOM.
+                            type: string
+                            example: MyCompanyECOM
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                  status: 401
+                  title: Unauthorized
+      deprecated: false
+  /v2/gateways/authorize_net:
+    put:
+      tags:
+      - Gateways
+      summary: Update Authorize.net Gateway
+      description: '
+
+        Use this endpoint to configure Authorize.net.
+
+
+        :::note
+
+        The credentials used for a test account may differ from those used for a live account. When configuring the payment gateway with your credentials and setting `test` to `true`, the system allows you to test various Authorize.net payment interactions to ensure everything works as expected. Once you are ready to go live, update `test` as `false` to direct requests to the live endpoints instead of the test account. Additionally, ensure that you switch to the credentials for the live account when making this change. To access your sandbox environment, see [Authorize.net Sandbox account](https://developer.authorize.net/hello_world/sandbox.html).
+
+        :::
+
+        '
+      operationId: updateAuthorizeNetGateway
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/Request.UpdateAuthorizeNetGateway'
+            examples:
+              default:
+                value:
+                  data:
+                    login: xxx
+                    password: xxx
+                    slug: authorize_net
+                    enabled: true
+                    test: true
+        required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Response.Data'
+                - properties:
+                    data:
+                      type: object
+                      allOf:
+                      - $ref: '#/components/schemas/Response.Gateway'
+                      - properties:
+                          password:
+                            description: Indicates Authorize.net Transaction Key.
+                            type: string
+                            example: authorize-net-transaction-key
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                  status: 401
+                  title: Unauthorized
+      deprecated: false
+  /v2/gateways/card_connect:
+    put:
+      tags:
+      - Gateways
+      summary: Update CardConnect Gateway
+      description: Use this endpoint to configure CardConnect.
+      operationId: updateCardConnectGateway
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Request.UpdateCardConnectGateway'
+            examples:
+              default:
+                value:
+                  data:
+                    merchant_id: xxx
+                    username: xxx
+                    password: xxx
+                    test: false
+                    enabled: false
+        required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Response.Data'
+                - properties:
+                    data:
+                      type: object
+                      allOf:
+                      - $ref: '#/components/schemas/Response.Gateway'
+                      - properties:
+                          merchant_id:
+                            description: Specifies your CardConnect Merchant ID.
+                            type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                  status: 401
+                  title: Unauthorized
+      deprecated: false
+  /v2/gateways/cyber_source:
+    put:
+      tags:
+      - Gateways
+      summary: Update CyberSource Gateway
+      description: Use this endpoint to configure CyberSource.
+      operationId: updateCyberSourceGateway
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Request.UpdateCyberSourceGateway'
+            examples:
+              default:
+                value:
+                  data:
+                    enabled: true
+                    login: xxx
+                    password: xxx
+                    test: true
+        required: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Response.Data'
+                - properties:
+                    data:
+                      type: object
+                      allOf:
+                      - $ref: '#/components/schemas/Response.Gateway'
+                      - properties:
+                          login:
+                            description: Represents your live or test CyberSource merchant ID.
+                            type: string
+                            example: cybersource-merchant-id
+                          password:
+                            description: Indicates your live or test CyberSource SOAP key.
+                            type: string
+                            example: cybersource SOAP key
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                  status: 401
+                  title: Unauthorized
+      deprecated: false
+components:
+  schemas:
+    Response.Gateway:
+      type: object
+      properties:
+        enabled:
+          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+          example: true
+          type: boolean
+        login:
+          description: Represents your login ID.
+          type: string
+        name:
+          description: Represents the name of the gateway.
+          example: '{gatewayName}'
+          type: string
+        type:
+          description: Specifies the type of object being returned.
+          example: gateway
+          type: string
+        password:
+          description: Specifies your password.
+          type: string
+        signature:
+          type: string
+        slug:
+          description: Specifies the slug of the gateway.
+          example: '{gatewaySlug}'
+          type: string
+        test:
+          description: Specifies whether the test mode is enabled. Set `true` to enable test mode and `false` to disable the test mode. Default is `false`.
+          example: false
+          type: boolean
+    Data.UpdateManualGateway:
+      title: Update Manual Gateway Data
+      type: object
+      properties:
+        enabled:
+          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+          type: boolean
+          examples: true
+    UpdateAdyenGatewayRequest:
+      title: Update Adyen Gateway Request
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Data.UpdateAdyenGateway'
+    Request.UpdateBraintreeGateway:
+      title: Update Braintree Gateway Request
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Data.UpdateBraintreeGateway'
+    Request.UpdateManualGateway:
+      title: Update Manual Gateway Request
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Data.UpdateManualGateway'
+    Data.UpdateStripeGateway:
+      title: Update Stripe Gateway Data
+      type: object
+      required:
+      - login
+      properties:
+        enabled:
+          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+          type: boolean
+          examples:
+          - true
+        login:
+          description: Represents Stripe `test` or `live` secret key.
+          type: string
+          examples:
+          - '{{stripeToken}}'
+    UpdateAuthorizeNetGatewayData:
+      title: Update Authorize Net Gateway Data
+      type: object
+      required:
+      - login
+      - password
+      properties:
+        login:
+          description: Represents Authorize.net API Login ID.
+          type: string
+        password:
+          description: Indicates Authorize.net Transaction Key.
+          type: string
+        slug:
+          description: Specifies a unique slug for this gateway.
+          type: string
+        enabled:
+          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+          type: boolean
+          examples:
+          - true
+        test:
+          description: Specifies whether the test account is enabled or disabled. Set `true` to enable the test account and `false` to disable the test account. Default is `false`.
+          type: boolean
+          examples:
+          - true
+    Data.UpdatePaypalExpressCheckoutGateway:
+      title: Update Paypal Express Checkout Gateway Data
+      type: object
+      required:
+      - payer_id
+      properties:
+        enabled:
+          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+          type: boolean
+          examples:
+          - true
+        payer_id:
+          description: Specifies the merchant account ID. The ID is displayed in the PayPal account details of the merchant.
+          type: string
+          examples:
+          - '{{merchant account id}}'
+        test:
+          description: Specifies whether the test mode is enabled. Set `true` to enable test mode and `false` to disable the test mode. Default is `false`.
+          type: boolean
+          examples:
+          - true
+    Data.ElasticPathPaymentsStripeGateway:
+      title: Update Elastic Path Payments by Stripe Gateway Data
+      type: object
+      required:
+      - stripe_account
+      properties:
+        enabled:
+          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+          type: boolean
+          examples:
+          - true
+        stripe_account:
+          description: Specifies the Stripe account ID.
+          type: string
+          examples:
+          - '{{stripeAccountId}}'
+        test:
+          description: Specifies whether the test mode is enabled. Set `true` to enable test mode and `false` to disable the test mode. Default is `false`.
+          type: boolean
+          examples:
+          - true
+    Response.Error:
+      type: array
+      properties:
+        detail:
+          type: string
+        status:
+          type: string
+        title:
+          type: string
+    Data.UpdateCardConnectGateway:
+      title: Update CardConnect Gateway Data
+      type: object
+      required:
+      - merchant_id
+      - username
+      - password
+      properties:
+        merchant_id:
+          description: Specifies your CardConnect Merchant ID.
+          type: string
+        username:
+          description: Represents your CardConnect username.
+          type: string
+        password:
+          description: Indicates your CardConnect password.
+          type: string
+        test:
+          description: Specifies whether the test account is enabled or disabled. Set `true` to enable the test account and `false` to disable the test account. Default is `false`.
+          type: boolean
+          examples:
+          - false
+        enabled:
+          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+          type: boolean
+          examples:
+          - false
+    Request.UpdateStripeGateway:
+      title: Update Stripe Gateway Request
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Data.UpdateStripeGateway'
+    Data.UpdateCyberSourceGateway:
+      title: Update CyberSource Gateway Data
+      type: object
+      required:
+      - login
+      - password
+      properties:
+        enabled:
+          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+          type: boolean
+          examples:
+          - true
+        test:
+          description: Specifies whether the test account is enabled or disabled. Set `true` to enable the test account and `false` to disable the test account. Default is `false`.
+          type: boolean
+          examples:
+          - true
+        login:
+          description: Represents your live or test CyberSource merchant ID.
+          type: string
+        password:
+          description: Indicates your live or test CyberSource SOAP key.
+          type: string
+    Data.UpdateAdyenGateway:
+      title: Update Adyen Gateway Data
+      type: object
+      required:
+      - merchant_account
+      - username
+      - password
+      properties:
+        enabled:
+          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+          type: boolean
+          examples:
+          - true
+        merchant_account:
+          description: Represents your Adyen merchant account code. For example, MyCompanyECOM.
+          type: string
+        username:
+          description: Indicates your web service username. For example, ws@Company.MyCompany.
+          type: string
+        password:
+          description: Specifies your web service user Basic Auth password.
+          type: string
+        test:
+          description: Specifies whether the test account is enabled or disabled. Set `true` to enable the test account and `false` to disable the test account. Default is `false`.
+          type: boolean
+          examples:
+          - false
+    Data.UpdateBraintreeGateway:
+      title: Update Braintree Gateway Data
+      type: object
+      required:
+      - merchant_id
+      - private_key
+      - public_key
+      properties:
+        enabled:
+          description: Specifies whether the gateway is enabled or disabled. Set `true` to enable the gateway and `false` to disable the gateway. Default is `false`.
+          type: boolean
+          examples:
+          - true
+        environment:
+          description: Specifies production or sandbox environment.
+          type: string
+          examples:
+          - sandbox
+        merchant_id:
+          description: Specifies Your Braintree merchant ID.
+          type: string
+          examples:
+          - '{{braintreeMerchantId}}'
+        private_key:
+          description: Represents Your Braintree private key.
+          type: string
+          examples:
+          - '{{braintreePrivateKey}}'
+        public_key:
+          description: Indicates Your Braintree public key.
+          type: string
+          examples:
+          - '{{braintreePublicKey}}'
+    Request.UpdatePaypalExpressCheckoutGateway:
+      title: Update Paypal Express Checkout Gateway Request
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Data.UpdatePaypalExpressCheckoutGateway'
+    Request.UpdateCardConnectGateway:
+      title: Update CardConnect Gateway Request
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Data.UpdateCardConnectGateway'
+    Request.UpdateElasticPathPaymentsStripeGateway:
+      title: Update Elastic Path Payments by Stripe Gateway Request
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Data.ElasticPathPaymentsStripeGateway'
+    Response.Data:
+      type: object
+      properties:
+        data: {}
+    Request.UpdateAuthorizeNetGateway:
+      title: Update Authorize Net Gateway Request
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/UpdateAuthorizeNetGatewayData'
+    Request.UpdateCyberSourceGateway:
+      title: Update CyberSource Gateway Request
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Data.UpdateCyberSourceGateway'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

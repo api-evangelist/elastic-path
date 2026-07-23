@@ -1,0 +1,587 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Cart Payments API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Cart Payments
+paths:
+  /v2/carts/{cartID}/payments/{paymentIntentID}:
+    put:
+      tags:
+      - Cart Payments
+      summary: Update a Payment Intent on a Cart
+      description: Updates the payment information for a specific payment intent on a cart.
+      operationId: updateCartPaymentIntent
+      parameters:
+      - name: cartID
+        in: path
+        description: The unique identifier of the cart.
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: paymentIntentID
+        in: path
+        description: The unique identifier of the payment intent.
+        required: true
+        style: simple
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartPaymentUpdate'
+      responses:
+        '200':
+          description: Payment updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartEntityResponse'
+      deprecated: false
+components:
+  schemas:
+    CartContact:
+      title: CartContact
+      type: object
+      properties:
+        email:
+          description: The email address attached to a cart.
+          type: string
+          format: email
+          examples:
+          - tester@email.com
+    CustomAttributes:
+      title: CustomAttributes
+      type: object
+      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
+      additionalProperties:
+        type: object
+        required:
+        - type
+        - value
+        properties:
+          type:
+            type: string
+            description: The type of the custom attribute value.
+            enum:
+            - string
+            - integer
+            - boolean
+            - float
+          value:
+            description: The value of the custom attribute.
+            type:
+            - string
+            - boolean
+            - number
+    CartTimestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this was created.
+          type: string
+        updated_at:
+          description: The date this was last updated.
+          type: string
+        expires_at:
+          description: The date this expires.
+          type: string
+    DiscountSettings:
+      title: DiscountSettings
+      type: object
+      properties:
+        custom_discounts_enabled:
+          description: This parameter enables custom discounts for a cart. When set to true, Elastic Path promotions will not be applied to the new carts. Default is set from cart discount settings for the store. See [Cart Settings](/docs/api/carts/put-v-2-settings-cart).
+          type: boolean
+          examples:
+          - false
+        use_rule_promotions:
+          description: When set to true, this parameter allows the cart to use rule promotions.
+          type: boolean
+          examples:
+          - false
+    ItemSettings:
+      title: ItemSettings
+      type: object
+      properties:
+        separate_items_by_location:
+          description: When set to true, cart items with the same SKU but different locations are kept as separate line items instead of being merged. When false (default), items with the same SKU are merged and the location is updated to the most recent value.
+          type: boolean
+          examples:
+          - false
+    CartResponse:
+      title: CartResponse
+      allOf:
+      - $ref: '#/components/schemas/BaseCartResponse'
+      - type: object
+        properties:
+          type:
+            description: The type of object being returned.
+            type: string
+            const: cart
+    CustomDiscountResponse:
+      title: CustomDiscountResponse
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the resource. Always `custom_discount`.
+          type: string
+          const: custom_discount
+        id:
+          description: Specifies the UUID of the custom discount.
+          type: string
+          format: uuid
+          examples:
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        external_id:
+          description: Specifies an external id for the custom discount.
+          type: string
+          examples:
+          - custom-discount-external-id
+        discount_engine:
+          description: 'Specifies from where the custom discount is applied.
+
+            '
+          type: string
+          examples:
+          - Custom Discount Engine
+        amount:
+          description: The amount of the custom discount.
+          $ref: '#/components/schemas/FormattedPriceData'
+        description:
+          description: Specifies a description for the custom discount.
+          type: string
+          examples:
+          - Custom discount description
+        discount_code:
+          description: Specifies the discount code used for the custom discount.
+          type: string
+          examples:
+          - cart-custom-promo-code
+        relationships:
+          description: Relationships to other resources like cart items
+          type: object
+          properties:
+            item:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: The cart item ID this discount is related to
+                    type:
+                      type: string
+                      enum:
+                      - cart_item
+                      - custom_item
+    FormattedPriceData:
+      title: FormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The raw total.
+          type: number
+          examples:
+          - 10000
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - $10.00
+    Response.ErrorItem:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type:
+          - string
+          - integer
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+        source:
+          type: string
+          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
+        meta:
+          type: object
+          description: Additional metadata associated with the error. May include arbitrary keys.
+          properties:
+            id:
+              type: string
+              description: The resource id associated with the error
+            ids:
+              type: array
+              items:
+                type: string
+                description: The resource ids associated with the error
+            item_ids:
+              type: array
+              items:
+                type: string
+                description: The cart_item ids associated with the error
+            shipping_group_id:
+              type: string
+              description: The shipping group id associated with the error
+            shipping_group_ids:
+              type: array
+              items:
+                type: string
+                description: The shipping group ids associated with the error
+            cart_id:
+              type: string
+              description: The cart id associated with the error
+            code:
+              type: string
+              description: The code associated with the error.
+            order_id:
+              type: string
+              description: The order id associated with the error.
+            sku:
+              type: string
+              description: The SKU associated with the error.
+            email:
+              type: string
+              format: email
+              description: The email address associated with the error.
+            component_product_id:
+              type: string
+              format: uuid
+              description: The component product ID associated with the error.
+            error-meta-key:
+              type: string
+              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
+            value:
+              description: The value associated with the error.
+              oneOf:
+              - type: string
+              - type: integer
+              - type: boolean
+              - type: object
+                additionalProperties: true
+              - type: array
+    InventorySettings:
+      title: InventorySettings
+      type: object
+      properties:
+        defer_inventory_check:
+          description: This parameter enables deferring inventory checks on the cart. This allows items to be added to or updating in the cart without checking stock levels. Inventory checks are still performed as normal on checkout
+          type: boolean
+          examples:
+          - false
+    CondensedPromotionResponse:
+      title: CondensedPromotionResponse
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the resource. Always `promotion`.
+          type: string
+          const: promotion
+          examples:
+          - promotion
+        id:
+          description: Specifies the UUID of the promotion.
+          type: string
+          format: uuid
+          readOnly: true
+          examples:
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        name:
+          description: The name of the promotion.
+          type: string
+          examples:
+          - Summer Sale
+        description:
+          description: The description of the promotion.
+          type: string
+          examples:
+          - Get 20% off all summer items
+        automatic:
+          description: Whether the promotion is applied automatically.
+          type: boolean
+          examples:
+          - true
+        promotion_type:
+          description: The type of promotion (for v1 promotions).
+          type: string
+          examples:
+          - discount
+        promotion_source:
+          description: The source of the promotion (for rule promotions).
+          type: string
+          examples:
+          - rule-promotion
+        start:
+          description: The start date and time of the promotion.
+          type: string
+          format: date-time
+          examples:
+          - '2024-06-01T00:00:00Z'
+        end:
+          description: The end date and time of the promotion.
+          type: string
+          format: date-time
+          examples:
+          - '2024-08-31T23:59:59Z'
+    RelationshipArray:
+      title: RelationshipArray
+      description: Array of relationships
+      type: object
+      properties:
+        data:
+          description: Individual relationships
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipItem'
+    BaseCartResponse:
+      title: BaseCartResponse
+      type: object
+      properties:
+        id:
+          description: The unique identifier for the cart. Use SDK or create it yourself.
+          type: string
+        name:
+          description: The name of this cart.
+          type: string
+          examples:
+          - cart name
+        description:
+          description: A description of the cart.
+          type: string
+          examples:
+          - cart description
+        contact:
+          $ref: '#/components/schemas/CartContact'
+        discount_settings:
+          $ref: '#/components/schemas/DiscountSettings'
+        inventory_settings:
+          $ref: '#/components/schemas/InventorySettings'
+        item_settings:
+          $ref: '#/components/schemas/ItemSettings'
+        payment_intent_id:
+          description: Stripe-assigned unique identifier for the linked Payment Intent
+          type: string
+        custom_attributes:
+          $ref: '#/components/schemas/CustomAttributes'
+        snapshot_date:
+          description: The snapshot date for the cart.
+          type: string
+          format: date-time
+        links:
+          type: object
+          properties:
+            self:
+              description: A link to that specific resource.
+              type: string
+          examples:
+          - https://useast.api.elasticpath.com/v2/carts/1
+        meta:
+          type: object
+          properties:
+            display_price:
+              type: object
+              properties:
+                with_tax:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                without_tax:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                tax:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                discount:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                without_discount:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                shipping:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                shipping_discount:
+                  $ref: '#/components/schemas/FormattedPriceData'
+            timestamps:
+              $ref: '#/components/schemas/CartTimestamps'
+            promotion_suggestions:
+              description: Array of promotion suggestions
+              type: array
+              items:
+                type: object
+                properties:
+                  bundle:
+                    description: Bundle configuration with promotion targets
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        auto_add_free_gift:
+                          description: Whether to automatically add free gift
+                          type: boolean
+                        cart_item_id:
+                          description: Cart item ID for the target
+                          type: string
+                        quantity:
+                          description: Quantity for the promotion
+                          type: integer
+                        targets:
+                          description: Array of target SKUs
+                          type: array
+                          items:
+                            type: string
+                      additionalProperties: true
+                  code:
+                    type: string
+                  info:
+                    type: string
+                  message:
+                    type: string
+                  promotion_id:
+                    type: string
+        relationships:
+          type: object
+          properties:
+            customers:
+              anyOf:
+              - $ref: '#/components/schemas/RelationshipArray'
+              - type: object
+                maxProperties: 0
+            items:
+              anyOf:
+              - $ref: '#/components/schemas/RelationshipArray'
+              - type: object
+                properties:
+                  data:
+                    oneOf:
+                    - type: 'null'
+                    - type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          type:
+                            type: string
+                required:
+                - data
+            accounts:
+              anyOf:
+              - $ref: '#/components/schemas/RelationshipArray'
+              - type: object
+                maxProperties: 0
+            custom_discounts:
+              $ref: '#/components/schemas/RelationshipArray'
+            promotions:
+              $ref: '#/components/schemas/RelationshipArray'
+    CartEntityResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/CartResponse'
+        included:
+          type: object
+          description: Related objects that are included in the response.
+          properties:
+            custom_discounts:
+              type: array
+              items:
+                $ref: '#/components/schemas/CustomDiscountResponse'
+            promotions:
+              type: array
+              items:
+                $ref: '#/components/schemas/CondensedPromotionResponse'
+        meta:
+          type: object
+          description: Additional metadata for the cart response.
+          properties:
+            payment_intent:
+              type: object
+              description: Payment intent details with nested structure including status and other Stripe payment intent fields
+              additionalProperties: true
+        errors:
+          type: array
+          description: Array of error objects, if any errors occurred.
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    CartPaymentUpdate:
+      title: Cart Payment Update
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - gateway
+          - method
+          - payment_method_types
+          - amount
+          properties:
+            gateway:
+              type: string
+            method:
+              type: string
+            payment_method_types:
+              type: array
+              items:
+                type: string
+            amount:
+              type: integer
+            options:
+              type: object
+    RelationshipItem:
+      title: RelationshipItem
+      description: Relationship data entry
+      required:
+      - type
+      - id
+      type: object
+      properties:
+        type:
+          description: The type of related resource.
+          type: string
+        id:
+          description: The ID of the related resource.
+          type: string
+          format: uuid
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

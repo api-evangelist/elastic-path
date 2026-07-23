@@ -1,0 +1,245 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Search Indexes API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Search Indexes
+  description: 'Search Indexes represent the indexed data for your catalog releases. Each time a catalog is published with search enabled, a search index is created containing the product data optimized for fast querying.
+
+
+    ### Index Status
+
+
+    The Search Indexes API allows you to view the status of your indexes and identify any that are out of sync. An index becomes out of sync when:
+
+
+    - Indexable fields have been added, modified, or deleted
+
+    - The index failed to build during catalog publishing
+
+    - A reindex is required due to schema changes
+
+
+    ### Monitoring Indexes
+
+
+    Use the list endpoint to:
+
+
+    - **View all indexes**: See all search indexes for your store
+
+    - **Check sync status**: Identify indexes that need reindexing
+
+    - **Filter by status**: Find only out-of-sync indexes using the `out_of_sync` query parameter
+
+
+    ### Index Information
+
+
+    Each search index includes:
+
+
+    | Property      | Description                                             |
+
+    |---------------|---------------------------------------------------------|
+
+    | `catalog_id`  | The ID of the catalog this index belongs to             |
+
+    | `release_id`  | The ID of the catalog release this index was built from |
+
+    | `out_of_sync` | Whether the index needs to be rebuilt                   |
+
+
+    ### Reindexing
+
+
+    When indexes are out of sync, use the reindex endpoint in [Jobs](/docs/api/pxm/catalog-search/jobs) to rebuild them. Reindexing ensures your search indexes reflect the current indexable field configuration.
+
+    '
+paths:
+  /pcm/catalogs/search-indexes:
+    get:
+      tags:
+      - Search Indexes
+      operationId: listSearchIndexes
+      summary: List search indexes
+      description: List search indexes.
+      parameters:
+      - name: out_of_sync
+        in: query
+        description: Filter search indexes by out of sync status
+        required: false
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: List search indexes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSearchIndexesResponse'
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
+    SearchIndexMeta:
+      type: object
+      required:
+      - catalog_id
+      - release_id
+      - out_of_sync
+      - owner
+      properties:
+        catalog_id:
+          description: The ID of the catalog.
+          type: string
+          example: ac107ce9-96ac-4bd5-aa3d-59f40b91279b
+          x-go-name: CatalogID
+        release_id:
+          description: The ID of the catalog release.
+          type: string
+          example: b2ddd253-d9bd-4344-a18b-581c1e0b25f8
+          x-go-name: ReleaseID
+        out_of_sync:
+          description: Whether the search index is out of sync and needs to re-indexed.
+          type: boolean
+          example: false
+        owner:
+          $ref: '#/components/schemas/ResourceOwner'
+    ListResponseMeta:
+      type: object
+      required:
+      - results
+      properties:
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
+    SearchIndex:
+      type: object
+      required:
+      - id
+      - type
+      - meta
+      properties:
+        id:
+          description: The unique identifier for the search index.
+          type: string
+          format: uuid
+          example: 805103ff-0a37-4f83-8fe0-95a16039bd98
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/SearchIndexType'
+        meta:
+          $ref: '#/components/schemas/SearchIndexMeta'
+    ListResponseMetaResults:
+      description: Contains the results for the entire collection.
+      type: object
+      required:
+      - total
+      properties:
+        total:
+          description: Total number of results for the entire collection.
+          type: integer
+          example: 100
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    ListSearchIndexesResponse:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchIndex'
+        meta:
+          $ref: '#/components/schemas/ListResponseMeta'
+    SearchIndexType:
+      description: Represents the type of object being returned. Always `catalog_search_index`.
+      type: string
+      example: catalog_search_index
+      enum:
+      - catalog_search_index
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

@@ -1,0 +1,255 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Account Authentication Settings API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Account Authentication Settings
+  description: You can use the Account Authentication Settings endpoint to retrieve or modify how settings controlling account and account member authentication.
+  externalDocs:
+    url: https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/account-authentication-settings
+paths:
+  /v2/settings/account-authentication:
+    get:
+      tags:
+      - Account Authentication Settings
+      summary: Get Account Authentication Settings
+      description: Use this endpoint to view account authentication settings
+      operationId: get-v2-settings-account-authentication
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountAuthenticationSettingsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Account Authentication Settings
+      summary: Update Account Authentication Settings
+      description: Use this endpoint to update account authentication settings
+      operationId: put-v2-settings-account-authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/AccountAuthenticationSettings'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/AccountAuthenticationSettingsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
+    AccountAuthenticationSettings:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Specifies the type of object. Set this value to `account_authentication_settings`.
+          const: account_authentication_settings
+        enable_self_signup:
+          description: Set to `true` to enable self signup.
+          type: boolean
+          example: true
+        auto_create_account_for_account_members:
+          description: This will automatically create an account for each new account member, using the account member’s name as the account name.
+          type: boolean
+          example: true
+        account_member_self_management:
+          description: Whether a user with an [Account Management Authentication Token](/docs/api/accounts/post-v-2-account-members-tokens) can update their own account member details. By default, this is `disabled`. Set to `update_only` if you want the user to be able to update their own account member details (e.g., name, email, and if applicable their username and password). The user can update their own account member details by updating their [User Authentication Info](/docs/authentication/single-sign-on/user-authentication-info-api/update-a-user-authentication-info) using the `account_member_id` retrieved from the `meta` in the response of [Generating an Account Management Authentication Token](/docs/api/accounts/post-v-2-account-members-tokens) as the `id` and find the authentication credentials to update by calling the [Get All User Authentication Password Profile Info](/docs/authentication/single-sign-on/user-authentication-password-profiles-api/get-all-user-authentication-password-profile-info) endpoint.
+          type: string
+          default: disabled
+          enum:
+          - disabled
+          - update_only
+        account_management_authentication_token_timeout_secs:
+          description: The expiry time for Account Management Authentication Token in seconds. If you want to implement idle timout for you application, see [Implementing Idle Timeout](/guides/How-To/Accounts/implement-idle-timeout)
+          type: integer
+          default: 86400
+          example: 86400
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    AccountAuthenticationSettingsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          allOf:
+          - $ref: '#/components/schemas/AccountAuthenticationSettings'
+          - type: object
+            properties:
+              id:
+                $ref: '#/components/schemas/UUID'
+              relationships:
+                type: object
+                properties:
+                  authentication_realm:
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            description: The ID of the authentication realm entity.
+                            type: string
+                            format: uuid
+                            example: 3418c54e-d768-42c1-a9db-d7afd2a18452
+                          type:
+                            description: The type of the authentication realm entity.
+                            type: string
+                            const: authentication_realm
+                          links:
+                            type: object
+                            properties:
+                              self:
+                                description: A URL to the specific resource.
+                                type: string
+                                example: https://useast.api.elasticpath.com/v2/authentication-realms/3418c54e-d768-42c1-a9db-d7afd2a18452
+              meta:
+                type: object
+                properties:
+                  client_id:
+                    description: The client ID to be used in Single Sign On authentication flows for accounts.
+                    type: string
+                    example: account-management
+        links:
+          type: object
+          properties:
+            self:
+              description: A URL to the specific resource.
+              type: string
+              example: https://useast.api.elasticpath.com/v2/account_authentication_settings
+  responses:
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value:
+                errors:
+                - title: Unauthorized
+                  status: '401'
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unprocessable-entity:
+              value:
+                errors:
+                - title: Unprocessable Entity
+                  status: '422'
+                  detail: store id mismatch
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

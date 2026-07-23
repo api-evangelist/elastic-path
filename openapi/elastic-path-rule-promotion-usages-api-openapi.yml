@@ -1,0 +1,519 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Rule Promotion Usages API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Rule Promotion Usages
+paths:
+  /v2/rule-promotions/usages/anonymize:
+    post:
+      tags:
+      - Rule Promotion Usages
+      summary: Anonymize Rule Promotion Usages
+      description: "Anonymizes user-related data in Rule Promotion usage records. \nThis operation is typically used for GDPR compliance or privacy-related requests.\n\n- This process replaces identifiable user data with anonymized placeholders.\n- Affects all recorded promotion usages where customer data is stored.\n- Does not impact historical transaction records or applied discounts.\n\nA successful request returns a `200 OK` response with the anonymized usage records.\n"
+      operationId: anonymizeRulePromotionUsages
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    usage_ids:
+                      type: array
+                      items:
+                        type: string
+                      description: 'The unique identifiers of the usages to be anonymized.
+
+                        Multiple usage IDs can be provided to anonymize in bulk.
+
+                        '
+              required:
+              - data
+            example:
+              data:
+                usage_ids:
+                - ca4385ec-7fb2-4a95-8690-f752c508d68a
+                - d4e5f6g7-h8i9-0j1k-2l3m-4n5o6p7q8r9s
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/RulePromotionUsage'
+                - $ref: '#/components/schemas/Response.Error'
+                example:
+                  data:
+                  - id: ca4385ec-7fb2-4a95-8690-f752c508d68a
+                    order_id: 8edd5ca8-39b7-468d-aea9-a470690ca98d
+                    code_id: 00fc633b-9932-4e18-b122-fd5c3173caa3
+                    code: node1off
+                    times_used: 1
+                    used_on: '2023-06-19T18:05:20.846Z'
+                    customer_id: 9ef25142-d67a-41d3-99b2-4d30aeef6c9d
+                    customer_email: '**'
+                    meta:
+                      timestamps:
+                        updated_at: '2023-06-19T18:05:39.141Z'
+                    updated_by: Key-2439657140697170361
+                    anonymized: true
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                - status: 400
+                  title: Invalid Request
+                  detail: The request payload is malformed or missing required fields.
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                - status: 401
+                  title: Unauthorized
+                  detail: Authentication credentials were missing or incorrect.
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                - status: 404
+                  title: Usages Not Found
+                  detail: Some usage IDs could not be found.
+                  meta:
+                    usage_ids:
+                    - invalid-usage-id-1
+                    - invalid-usage-id-2
+  /v2/rule-promotions/{promotionID}/usages:
+    get:
+      tags:
+      - Rule Promotion Usages
+      summary: Get Rule Promotion Usages
+      description: 'Retrieves a list of usage records for a specific Rule Promotion.
+
+
+        - Provides details about when and how a promotion was used.
+
+        - Can be filtered and paginated to refine results.
+
+        - Useful for analyzing promotion effectiveness and customer engagement.
+
+        '
+      operationId: getRulePromotionUsages
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - name: promotionID
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the rule promotion.
+      - name: filter
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 'Filter attributes to refine the usage records. Supported attributes:
+
+          - `id`: Filter by usage ID.
+
+          - `code`: Filter by promotion code.
+
+          - `used_on`: Filter by usage date with operators `gt`, `ge`, `le`, `lt`.
+
+          '
+        example: eq(code,cart1off)
+      - name: page[limit]
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: The number of records per page.
+          example: 10
+      - name: page[offset]
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: The number of records to offset the results by.
+          example: 0
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RulePromotionUsage'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                - id: a9b73e4d-637f-4f1c-9b3e-2de1f8a70351
+                  order_id: e3d7b9fa-4a90-4e98-bac2-d7a4b4f2f63f
+                  code_id: 8a2c3f47-9d3b-4562-8392-4e5e6cda3d2b
+                  code: cart10off
+                  times_used: 1
+                  used_on: '2024-02-20T15:42:00.000Z'
+                  customer_id: 4f3e8c5d-37e4-43fb-9276-d1b76f0c3a2a
+                  customer_email: shopper@example.com
+                  meta:
+                    timestamps:
+                      updated_at: '2024-02-20T15:45:00.000Z'
+                  updated_by: Admin-User-123
+                links:
+                  first: https://useast.api.elasticpath.com/v2/rule-promotions/123/usages?page%5Boffset%5D=0&page%5Blimit%5D=10
+                  last: https://useast.api.elasticpath.com/v2/rule-promotions/123/usages?page%5Boffset%5D=90&page%5Blimit%5D=10
+                  prev: null
+                  next: https://useast.api.elasticpath.com/v2/rule-promotions/123/usages?page%5Boffset%5D=10&page%5Blimit%5D=10
+                meta:
+                  pagination:
+                    total: 100
+                    limit: 10
+                    offset: 0
+                    current: 1
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                - status: 401
+                  title: Unauthorized
+                  detail: Authentication is required to access this resource.
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                - status: 404
+                  title: Promotion Not Found
+                  detail: No usages found for the specified promotion ID.
+  /v2/rule-promotions/{promotionID}/codes/{code}/usages:
+    get:
+      tags:
+      - Rule Promotion Usages
+      summary: Get Rule Promotion Code Usages
+      description: 'Retrieves a list of usage records for a specific Rule Promotion code.
+
+
+        - Provides insights into how many times a specific code was used.
+
+        - Can be filtered and paginated to refine results.
+
+        - Useful for tracking the performance of individual promotion codes.
+
+        '
+      operationId: getRulePromotionCodeUsages
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - name: promotionID
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the rule promotion.
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The specific promotion code for which to retrieve usage records.
+      - name: filter
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 'Filter attributes to refine the results. Supported attributes:
+
+          - `id`: Filter by usage ID.
+
+          - `used_on`: Filter by date with operators `gt`, `ge`, `le`, `lt`.
+
+          '
+        example: gt(used_on,2024-02-01T00:00:00Z)
+      - name: page[limit]
+        in: query
+        required: false
+        schema:
+          type: integer
+        description: The number of records per page.
+        example: 10
+      - name: page[offset]
+        in: query
+        required: false
+        schema:
+          type: integer
+        description: The number of records to offset the results by.
+        example: 0
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RulePromotionUsage'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                - id: c2f45a8d-6ebf-4b6a-8b1c-d2e7c9e0f45f
+                  order_id: 1a3b5c7d-9e2f-4a5b-8c1d-6e3f9b0d4c5f
+                  code_id: 5d7e9f2b-3c4a-6b8d-1e9f-0a2b3c4d5e6f
+                  code: holiday50
+                  times_used: 2
+                  used_on: '2024-02-18T10:30:00.000Z'
+                  customer_id: 7e6c5d4b-3a2f-1e9d-8b0c-9f4e7d6c3b5a
+                  customer_email: vipuser@example.com
+                  meta:
+                    timestamps:
+                      updated_at: '2024-02-18T10:35:00.000Z'
+                  updated_by: Admin-User-456
+                links:
+                  first: https://useast.api.elasticpath.com/v2/rule-promotions/123/codes/holiday50/usages?page%5Boffset%5D=0&page%5Blimit%5D=10
+                  last: https://useast.api.elasticpath.com/v2/rule-promotions/123/codes/holiday50/usages?page%5Boffset%5D=10&page%5Blimit%5D=10
+                  prev: null
+                  next: https://useast.api.elasticpath.com/v2/rule-promotions/123/codes/holiday50/usages?page%5Boffset%5D=10&page%5Blimit%5D=10
+                meta:
+                  pagination:
+                    total: 20
+                    limit: 10
+                    offset: 0
+                    current: 1
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                - status: 401
+                  title: Unauthorized
+                  detail: Authentication is required to access this resource.
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+              example:
+                errors:
+                - status: 404
+                  title: Promotion Code Not Found
+                  detail: No usages found for the specified promotion code.
+components:
+  parameters:
+    Authorization:
+      name: Authorization
+      in: header
+      description: The Bearer token required to get access to the API.
+      required: true
+      schema:
+        type: string
+        format: Bearer
+  schemas:
+    RulePromotionUsage:
+      type: object
+      description: Represents a single rule promotion usage record.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the usage record.
+        order_id:
+          type:
+          - string
+          - 'null'
+          description: The associated order ID, if applicable.
+        code_id:
+          type: string
+          description: The unique identifier of the promotion code.
+        code:
+          type: string
+          description: The promotion code used.
+        times_used:
+          type: integer
+          description: The number of times the promotion code has been used.
+        used_on:
+          type: string
+          format: date-time
+          description: The timestamp when the promotion was applied.
+        customer_id:
+          type:
+          - string
+          - 'null'
+          description: The customer identifier who used the promotion, if applicable.
+        account_id:
+          type:
+          - string
+          - 'null'
+          description: The account identifier associated with the promotion usage, if applicable.
+        customer_email:
+          type:
+          - string
+          - 'null'
+          description: The email of the customer who used the promotion, if applicable.
+        meta:
+          type: object
+          properties:
+            timestamps:
+              type: object
+              properties:
+                updated_at:
+                  type: string
+                  format: date-time
+                  description: The timestamp when the usage record was last updated.
+        updated_by:
+          type: string
+          description: Identifier of the user or system that last updated the record.
+        anonymized:
+          type: boolean
+          description: Indicates whether the usage record has been anonymized.
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: object
+          properties:
+            current:
+              type: integer
+              description: Current page number
+            limit:
+              type: integer
+              description: Number of items per page
+            offset:
+              type: integer
+              description: Offset from the first result
+            total:
+              type: integer
+              description: Total number of pages
+        results:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total number of results
+            total_method:
+              type: string
+              description: Method used to calculate the total (e.g., 'exact')
+    PaginationLinks:
+      type: object
+      properties:
+        current:
+          type: string
+          format: uri
+          description: URL for the current page of results
+        first:
+          type: string
+          format: uri
+          description: URL for the first page of results
+        last:
+          type: string
+          format: uri
+          description: URL for the last page of results
+        next:
+          type: string
+          format: uri
+          description: URL for the next page of results
+        prev:
+          type: string
+          format: uri
+          description: URL for the previous page of results
+    Response.Error:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type:
+                - string
+                - integer
+                description: HTTP status code.
+              title:
+                type: string
+                description: Error title.
+              detail:
+                type: string
+                description: Error details.
+              source:
+                type: string
+                description: Source of the error (e.g., which field or parameter caused the error)
+              meta:
+                type: object
+                properties:
+                  usage_ids:
+                    type: array
+                    items:
+                      type: string
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

@@ -1,0 +1,762 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Rule Promotion Codes API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Rule Promotion Codes
+paths:
+  /v2/rule-promotions/{promotionID}/codes:
+    post:
+      tags:
+      - Rule Promotion Codes
+      summary: Create Rule Promotion Codes
+      description: "Creates new promotion codes for a specific rule promotion, allowing customers to redeem discounts based on predefined conditions.\n\n- Supports  bulk creation of multiple promotion codes in a single request.\n- Each code can have individual usage limits.\n- Can optionally assign codes to specific users to enforce targeted promotions.\n- The promotion codes are case-insensitive.\n\n:::note\n\nRegarding first time shopper limitations:\n- Orders without payment transactions do not count as completed purchases.\n- Canceling or refunding an order does not reinstate first-time shopper status.\n- A first-time shopper coupon code cannot have limited uses or be assigned to specific users, meaning the code cannot be restricted by the number of times it can be used or tied to a specific customer ID.\n\n:::\n\nA successful request returns a `201 Created` response with details of the generated promotion codes.\n\n### Duplicate Codes\nDuplicate promotion codes **are supported across different promotions** in the store, regardless of their statuses and validity dates. However, **duplicate codes cannot be created within the same promotion**.\nThis means that shoppers can apply a single coupon code to trigger multiple promotions if those promotions share common coupon codes. \n\nCodes that share the same name can serve different purposes.  For example, one code may have `per_application` with a limited number of uses, while another identical code can have `per_checkout` with unlimited use.\n\n**Duplicate Code Handling:**\n- If a duplicate code is detected **within the same promotion**, the request will return a `422 Duplicate code` error.\n- When creating duplicate codes, a message appears with the successful response indicating the duplication.\n\n\nPlease refer to the **OpenAPI examples** section on this page for sample request structures.\n"
+      operationId: createRulePromotionCodes
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - name: promotionID
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the rule promotion.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionCodesRequest'
+            examples:
+              CreateCodes:
+                summary: Create Rule Promotion Codes
+                value:
+                  data:
+                    type: promotion_codes
+                    codes:
+                    - code: spring2024
+                    - code: summer2024
+                      consume_unit: per_checkout
+                    - code: summer2024_limited
+                      consume_unit: per_application
+                      uses: 5
+                    - code: summer2024_memberOnly
+                      consume_unit: per_application
+                      uses: 1
+                      user: vip_shopper@email.com
+              SingleUsePerShopperIncludingGuests:
+                summary: Create a Promotion Code Usable Once Per Shopper, Including Guest Shoppers with Emails Associated with their Carts
+                value:
+                  data:
+                    type: promotion_codes
+                    codes:
+                    - code: one_per_shopper
+                      consume_unit: per_checkout
+                      max_uses_per_shopper:
+                        includes_guests: true
+                        max_uses: 1
+              MaxUsesLimitWithPerShopperRestriction:
+                summary: Create a Promotion Code with a Total Usage Limit and Per Shopper Restriction
+                description: 'Create a promotion code that allows up to **10 total uses** and allows each individual shopper to use the code **once**.
+
+
+                  - The `uses` field is set to `10`, meaning the promotion code can be redeemed a maximum of **10 times across all shoppers**.
+
+                  - The `max_uses_per_shopper` field sets `max_uses: 1`, ensuring **each shopper can only redeem the code once**.
+
+                  - The `includes_guests` field is set to `true`, allowing **both registered and guest shoppers** to use the promotion code.
+
+                  - The `consume_unit` is set to `per_checkout`, meaning the code is **consumed once per successful checkout**.
+
+
+                  This setup is useful for **one-time promotions** where a **limited number of shoppers can redeem the code** but prevents any single shopper from claiming multiple redemptions.
+
+                  '
+                value:
+                  data:
+                    type: promotion_codes
+                    codes:
+                    - code: one_time_use
+                      consume_unit: per_checkout
+                      uses: 10
+                      max_uses_per_shopper:
+                        includes_guests: true
+                        max_uses: 1
+              MaxUsesForSpecificShopper:
+                summary: Limit Promotion Code Usage to a Specific Shopper
+                description: 'Create a promotion which **limits the maximum usage of a promotion code to a specific shopper** based on their `customerID`.
+
+
+                  - The `uses` field is set to `1`, meaning **this promotion code can only be used once by the identified shopper**.
+
+                  - The `user` field is set to `customer-id-123`, ensuring the **code is only valid when the cart is checked out by the specified customer**.
+
+                  - The `consume_unit` is set to `per_checkout`, meaning the code is **redeemed upon a successful checkout**.
+
+
+                  **Important Notes:**
+
+                  - This method is useful for **targeted, personalized promotions** where only a specific shopper should receive the discount.
+
+                  - The promotion code **cannot be used by any other shopper**.
+
+                  - **Account user IDs are currently not supported**.
+
+
+                  This setup is ideal for **single-use, customer-specific promotions**, such as loyalty rewards or personalized discount offers.
+
+                  '
+                value:
+                  data:
+                    type: promotion_codes
+                    codes:
+                    - code: one_per_shopper
+                      consume_unit: per_checkout
+                      uses: 1
+                      user: customer-id-123
+              MaxUsesForSpecificRegisteredShopper:
+                summary: Limit Promotion Code Usage to a Specific Registered Shopper
+                description: 'This example demonstrates how to **restrict a promotion code to a specific registered shopper** using their `customerID`, with a limit on how many times they can redeem the code.
+
+
+                  - The `user` field is set to `customer-id-123`, ensuring **only the specified shopper can use the promotion code**.
+
+                  - The `max_uses_per_shopper.max_uses` field is set to `1`, meaning **this shopper can only redeem the code once**.
+
+                  - The `max_uses_per_shopper.includes_guests` field is set to `false`, meaning **guest shoppers cannot use this code**.
+
+                  - The `consume_unit` is set to `per_checkout`, meaning **the code is consumed once per successful checkout**.
+
+
+                  **Key Differences from Other Shopper-Specific Limits:**
+
+                  - Unlike a `uses: 1` setup, which sets a global limit for the code, this method **explicitly enforces per-shopper usage limits**.
+
+                  - This approach is ideal for **exclusive promotions targeting specific registered shoppers**, ensuring that only they can redeem the discount and preventing usage by guest shoppers.
+
+                  - **Account user IDs are currently not supported**.
+
+
+                  This setup is useful for **member-only discounts, personalized promotional offers, or exclusive VIP rewards**.
+
+                  '
+                value:
+                  data:
+                    type: promotion_codes
+                    codes:
+                    - code: one_per_shopper
+                      consume_unit: per_checkout
+                      user: customer-id-123
+                      max_uses_per_shopper:
+                        includes_guests: false
+                        max_uses: 1
+              FirstTimeShopperCodeRequest:
+                summary: Create a Promotion Code for First-Time Shoppers
+                description: 'Create a **promotion code that is only applicable to first-time shoppers**.  Here, the `is_for_new_shopper` field is set to `true`, indicating that **only first-time shoppers can use this code**.
+
+
+                  **Important Notes:**
+
+                  - Promotion codes with `is_for_new_shopper: true` **cannot have usage limits** (`uses`) or be assigned to specific users.
+
+                  - If usage limits or shopper assignments are included, a **400 Invalid Code error** will be returned.
+
+                  '
+                value:
+                  data:
+                    type: promotion_codes
+                    codes:
+                    - code: first_time
+                      is_for_new_shopper: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePromotionCodesResponse'
+              examples:
+                PromotionCodeCreatedResponse:
+                  summary: Response When a Promotion Code is Successfully Created
+                  value:
+                    data:
+                    - id: 8a1c73bc-7c15-41c3-a3ed-a0aa398c3984
+                      code: one_per_shopper
+                      user: 5abb8d4e-57c0-459b-91d5-c4e6f77e9c5e
+                      max_uses_per_shopper:
+                        max_uses: 1
+                        includes_guests: false
+                      consume_unit: per_checkout
+                FullyConsumedPromotionCodeResponse:
+                  summary: Response When a Promotion Code Has Been Fully Used
+                  description: 'Response indicating that a **promotion code has already been fully consumed** by the shopper and is no longer valid for use.
+
+
+                    - The `source.id` field provides the unique identifier of the promotion.
+
+                    - The `source.code` field specifies the exact promotion code that has been fully consumed.
+
+                    - The `title` field (`"Fully Consumed"`) serves as a user-friendly summary of the issue.
+
+                    - The `description` field provides a clear explanation: `"You''ve already fully consumed this promotion code"`.
+
+
+                    This response is useful for handling **errors when applying promotion codes**, ensuring that customers receive **clear feedback** if they attempt to reuse a code that has reached its usage limit.
+
+                    '
+                  value:
+                    messages:
+                    - source:
+                        type: promotion_codes
+                        id: 38861a5c-81bb-43bc-8934-e30cde108579
+                        code: one_per_shopper
+                      title: Fully Consumed
+                      description: You've already fully consumed this promotion code
+                DuplicateCodeNameResponse:
+                  summary: Message Response When Creating a Duplicate Promotion Code Name
+                  value:
+                    messages:
+                    - source:
+                        type: promotion_codes
+                        codes:
+                        - duplicate-code
+                      title: Duplicate code names
+                      description: Code names duplicated in other promotions
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: integer
+                          example: 400
+                        source:
+                          type: string
+                          example: data.codes.0.max_uses_per_shopper
+                        title:
+                          type: string
+                          example: missing_dependency
+                        detail:
+                          type: string
+                          example: Has a dependency on max_uses
+              examples:
+                MissingMaxUsesDependencyError:
+                  summary: Error When `max_uses_per_shopper.includes_guests` is Provided Without `max_uses`
+                  description: 'This error occurs when `max_uses_per_shopper.includes_guests` is provided **without specifying** `max_uses`.
+
+                    '
+                  value:
+                    errors:
+                    - status: 400
+                      source: data.codes.0.max_uses_per_shopper
+                      title: missing_dependency
+                      detail: Has a dependency on max_uses
+                FirstTimeShopperCodeError:
+                  summary: Error When Setting Usage Limits While Assigning First-Time Shopper Codes
+                  description: 'This error occurs when a **first-time shopper promotion code** is created **with restricted uses (`uses`) or assigned to specific users (`user`)**.
+
+                    '
+                  value:
+                    errors:
+                    - status: 400
+                      source: ''
+                      title: Invalid Code
+                      detail: Code - first_time_uses can't have limited uses or assigned to users since it's for first-time shoppers.
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: '422'
+                        source:
+                          type: string
+                          example: ''
+                        title:
+                          type: string
+                          example: Unsupported consume unit
+                        detail:
+                          type: string
+                          example: Consume unit 'per_application' is not supported when using 'max_uses_per_shopper' features.
+              examples:
+                UnsupportedConsumeUnitError:
+                  summary: Error When `max_uses_per_shopper.max_uses` is Used with `per_application`
+                  description: 'This error occurs when `max_uses_per_shopper.max_uses` is set while using `consume_unit: per_application`, which is not supported.
+
+                    '
+                  value:
+                    errors:
+                    - status: '422'
+                      source: ''
+                      title: Unsupported consume unit
+                      detail: Consume unit 'per_application' is not supported when using 'max_uses_per_shopper' features.
+                NoCodesAllowedForAutomaticPromotion:
+                  summary: Error When Attempting to Create Promotion Codes for Automatic Promotions
+                  value:
+                    errors:
+                    - status: '422'
+                      title: No codes allowed
+                      detail: Cannot add codes to automatic promotion
+                DuplicatePromotionCodeError:
+                  summary: Error When Creating a Promotion Code That Already Exists
+                  description: 'This error occurs when attempting to create a promotion code that already exists within the same Rule Promotion.
+
+                    '
+                  value:
+                    errors:
+                    - status: '422'
+                      title: Duplicate code
+                      detail: Promotion code already in use
+    get:
+      tags:
+      - Rule Promotion Codes
+      summary: Get Rule Promotion Codes
+      description: 'Retrieves the list of promotion codes associated with a specific Rule Promotion.
+
+
+        - Returns all codes generated for the given promotion ID, including details on usage limits and redemption status.
+
+        - Supports both automatically generated and manually created promotion codes.
+
+        - Can be used to verify whether a promotion code is still valid or has reached its usage limit.
+
+        '
+      operationId: getRulePromotionCodes
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - name: promotionID
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the rule promotion.
+      - name: filter
+        in: query
+        schema:
+          type: string
+        description: 'This parameter accepts a filtering expression that uses specific operators and attributes. Promotion codes are case-insensitive.
+
+
+          The following operators and attributes are available when filtering on this endpoint. See [Supported Filtering Characters](/guides/Getting-Started/filtering#supported-characters).
+
+
+          | Attribute | Type     | Operator    | Example        |
+
+          |:--------- |:---------|:------------|:---------------|
+
+          | `code`    | `string`, `number` |  `eq`, `gt`       |  `eq(code,summer2024)`, `gt(code,2024)` |
+
+          '
+      - name: sort
+        in: query
+        schema:
+          type: string
+          enum:
+          - code
+          - -code
+          x-enumDescriptions:
+            code: Sort in increasing order of code, case-insensitively.
+            -code: Sort in decreasing order of code, case-insensitively.
+        description: 'Specifies the order of the codes that will be returned.
+
+          '
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPromotionCodesResponse'
+    delete:
+      tags:
+      - Rule Promotion Codes
+      summary: Delete Rule Promotion Codes
+      description: 'Deletes one or more promotion codes from a specific rule promotion.
+
+
+        - Supports **bulk deletion**, allowing multiple codes to be removed in a single request.
+
+        - Removes promotion codes permanently, making them unavailable for future use.
+
+        - If a code has already been redeemed, it will be removed from the system but may still reflect in historical transactions.
+
+
+        A successful request returns a `204 No Content` response, indicating the specified promotion codes have been deleted.
+
+        '
+      operationId: deleteRulePromotionCodes
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - name: promotionID
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the rule promotion.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionCodesRequest'
+            examples:
+              DeleteCodes:
+                summary: Delete Rule Promotion Codes
+                value:
+                  data:
+                    type: promotion_codes
+                    codes:
+                    - code: spring2024
+                    - code: summer2024
+                      consume_unit: per_checkout
+                    - code: summer2024_limited
+                      consume_unit: per_application
+                      uses: 5
+                    - code: summer2024_memberOnly
+                      consume_unit: per_application
+                      uses: 1
+                      user: vip_shopper@email.com
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response.Error'
+  /v2/rule-promotions/{promotionID}/codes/{codeID}:
+    delete:
+      tags:
+      - Rule Promotion Codes
+      summary: Delete A Single Rule Promotion Code
+      description: 'Deletes a single promotion code from a specific rule promotion.
+
+
+        - Permanently removes the specified promotion code, making it unavailable for future use.
+
+        - Can be used to **revoke a specific code** without affecting other codes under the same promotion.
+
+        - If the code has already been redeemed, it will still be removed from the system but may still reflect in historical transactions.
+
+
+        A successful request returns a `204 No Content` response, indicating the specified promotion code has been deleted.
+
+        '
+      operationId: deleteSingleRulePromotionCode
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - name: promotionID
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the rule promotion.
+      - name: codeID
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the rule promotion code.
+      responses:
+        '204':
+          description: No Content
+components:
+  schemas:
+    CreatePromotionCodeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          const: promotion_codes
+        code:
+          type: string
+        uses:
+          type: integer
+        user:
+          type: string
+        consume_unit:
+          type: string
+          enum:
+          - per_application
+          - per_checkout
+        max_uses:
+          type: integer
+        max_uses_per_shopper:
+          $ref: '#/components/schemas/MaxUsesPerShopper'
+        is_for_new_shopper:
+          type: boolean
+    MaxUsesPerShopper:
+      type: object
+      description: Object for setting max uses per shopper. Only include this object, when you want to set limit per shopper.
+      properties:
+        max_uses:
+          type: integer
+          description: Sets max number of times the code can be used by a shopper. NOTE - This cannot be set with `per_application` consume unit.
+        includes_guests:
+          type: boolean
+          default: false
+          description: The flag to include guest shoppers for the discount with max use restriction. **If this field is provided, the max_uses value is required.** When set to `true`, guest shoppers must have an email associated with the cart to use the code. A guest cart without an email cannot use the code. When set to `false`, guest shoppers cannot use the promo code, even if the cart has an associated guest email.
+    GetPromotionCodesResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetPromotionCodeResponse'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    CreatePromotionCodesResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreatePromotionCodeResponse'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionCodeMessage'
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: object
+          properties:
+            current:
+              type: integer
+              description: Current page number
+            limit:
+              type: integer
+              description: Number of items per page
+            offset:
+              type: integer
+              description: Offset from the first result
+            total:
+              type: integer
+              description: Total number of pages
+        results:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total number of results
+            total_method:
+              type: string
+              description: Method used to calculate the total (e.g., 'exact')
+    PaginationLinks:
+      type: object
+      properties:
+        current:
+          type: string
+          format: uri
+          description: URL for the current page of results
+        first:
+          type: string
+          format: uri
+          description: URL for the first page of results
+        last:
+          type: string
+          format: uri
+          description: URL for the last page of results
+        next:
+          type: string
+          format: uri
+          description: URL for the next page of results
+        prev:
+          type: string
+          format: uri
+          description: URL for the previous page of results
+    PromotionCodesRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              const: promotion_codes
+            codes:
+              type: array
+              description: Specifies the code details in an array of objects.
+              items:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    description: Specifies the string to use as a code for the promotion.
+                  uses:
+                    type: integer
+                    description: Specifies the number of times the code can be used. If no value is set, the customer can use the code any number of times.
+                  user:
+                    type: string
+                    description: Specifies the customer ID of the shopper who can use the code. For more information, see the [Create a customer](/docs/customer-management/customer-management-api/create-a-customer) section.
+                  consume_unit:
+                    type: string
+                    enum:
+                    - per_application
+                    - per_checkout
+                    description: 'Specifies whether the code is consumed per application or per checkout. With `per_checkout`, the code is used once for each checkout, regardless of the number of items in the cart. When set to `per_application`, the code is used per application. For cart discounts, each application counts as one usage. For item discounts, each application to either a single quantity or a bundle is counted as one usage. For example, in a store that offers 50% off on SKU1, SKU2, and SKU3, and limits the maximum usage of the promotion code to two, a shopper can apply the promotion up to two quantities. If the cart contains two or more quantities of SKU1, the promotion is applied 2 times to SKU1, and other quantities and items are at the regular price. If the cart contains one quantity of SKU1, one quantity of SKU2, and one quantity of SKU3, the promotion is applied once to SKU1 and once to SKU2. The code usage is applied at checkout and the code is considered consumed at that point.
+
+                      '
+                  max_uses_per_shopper:
+                    $ref: '#/components/schemas/MaxUsesPerShopper'
+                  is_for_new_shopper:
+                    type: boolean
+                    description: A flag indicating whether the coupon is for first-time shoppers. If set to `true`, the discount will only apply if the shopper has never made a payment on any order in the store. If set to `false` or left unset, it will be a regular discount that applies to all shoppers. When this flag is set to `true`, the coupon cannot have usage limitations or be assigned to specific users.
+    Response.Error:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type:
+                - string
+                - integer
+                description: HTTP status code.
+              title:
+                type: string
+                description: Error title.
+              detail:
+                type: string
+                description: Error details.
+              source:
+                type: string
+                description: Source of the error (e.g., which field or parameter caused the error)
+              meta:
+                type: object
+                properties:
+                  usage_ids:
+                    type: array
+                    items:
+                      type: string
+    PromotionCodeMessage:
+      type: object
+      properties:
+        source:
+          type: object
+          description: Information about the affected promotion codes.
+          properties:
+            type:
+              type: string
+              const: promotion_codes
+              description: Indicates that the affected entity is a promotion code.
+            codes:
+              type: array
+              description: A list of promotion codes that triggered the message.
+              items:
+                type: string
+                example: spring2024
+        title:
+          type: string
+          description: A brief title summarizing the message.
+          example: Duplicate code names
+        description:
+          type: string
+          description: A detailed explanation of the message.
+          example: Code names duplicated in other promotions
+    GetPromotionCodeResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          const: promotion_codes
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the promotion code
+        code:
+          type: string
+        uses:
+          type: integer
+        user:
+          type: string
+        consume_unit:
+          type: string
+          enum:
+          - per_application
+          - per_checkout
+          description: 'Specifies whether the code is consumed per application or per checkout. With `per_checkout`, the code is used once for each checkout, regardless of the number of items in the cart. When set to `per_application`, the code is used per application. For cart discounts, each application counts as one usage. For item discounts, each application to either a single quantity or a bundle is counted as one usage. For example, in a store that offers 50% off on SKU1, SKU2, and SKU3, and limits the maximum usage of the promotion code to two, a shopper can apply the promotion up to two quantities. If the cart contains two or more quantities of SKU1, the promotion is applied 2 times to SKU1, and other quantities and items are at the regular price. If the cart contains one quantity of SKU1, one quantity of SKU2, and one quantity of SKU3, the promotion is applied once to SKU1 and once to SKU2. The code usage is applied at checkout and the code is considered consumed at that point.
+
+            '
+        max_uses:
+          type: integer
+        max_uses_per_shopper:
+          $ref: '#/components/schemas/MaxUsesPerShopper'
+        is_for_new_shopper:
+          type: boolean
+        created_by:
+          type: string
+        meta:
+          type: object
+          properties:
+            timestamps:
+              type: object
+              properties:
+                created_at:
+                  type: string
+                  format: date-time
+  parameters:
+    Authorization:
+      name: Authorization
+      in: header
+      description: The Bearer token required to get access to the API.
+      required: true
+      schema:
+        type: string
+        format: Bearer
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

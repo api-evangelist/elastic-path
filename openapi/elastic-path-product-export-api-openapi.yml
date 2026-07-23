@@ -1,0 +1,341 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Product Export API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Product Export
+  description: "```mdx-code-block\nimport ProductExport from '/docs/partials/pxm/import/export.mdx';\n\n<ProductExport />\n```\n\n### Characteristics of Exporting Products\n\n- Product exports are an asynchronous operation. When you send a request to the Export API, it triggers an asynchronous job to build the `.csv` file containing the product entries.\n- Jobs are processed one at a time. You can continue to send product export requests, but those jobs are queued. In other words, Commerce looks for any jobs that have a status of PENDING and starts the job with the earliest created date. This process is repeated until all jobs are processed. See [**Jobs**](/docs/api/pxm/products/jobs).\n- The Export API response includes a job resource. In the response, you can verify the job status; if the status is successful, the response includes a link to the location where the `.csv` file is stored. See [**Product Export CSV File**](#product-export-csv-file). A single CSV file contains 10,000 rows, excluding the header. If you are exporting 50,000 products, the job endpoint response contains links to five `.csv` files; each `.csv` file including 10,000 products.\n- You might have specified custom extension data in a `.csv` file when you imported the products. These modifications are all exported. So, when you send a request to the Export API, the `.csv` file, included in the Job endpoint response, reflects any changes that you have made.\n- You cannot export product bundles.\n\n### Product Export CSV File\n\nThe Product Export API generates a Comma Separated Values (CSV) file that you can use to import/update products, main image files, and custom extension data. \n\nThe `.csv` file is:\n\n - Comma-separated.\n - Header-based.\n   - Header attributes must be the same as the product attributes.\n   - Header names can be in any order.\n - Each row after the first line represents a single product.\n\nThe following table describes the headers that are supported.\n\n| Header                           | Required | Description |                                                             \n|:---------------------------------|:---------|:-----------------------------------------------------|\n| id                               | Optional | A unique product ID that is generated when you create the product. The `id` is used to look up products in the `.csv` file and matches them to the products in your storefront that you want to update.                                                    |\n| external_ref                     | Optional | A unique attribute associated with a product. This could be an external reference from a separate company system, for example. The maximum length is 2048 characters.  |                                                                                          \n| name                             | Required | The name of a product.     |                                                                              \n| description                      | Required | A description for a product. You can include quotes in your product description, if you want to emphasize a word, for example. To do this, put quotes around the product description. For example, \"This product description describes my \"product\" and the product \"version\".\" |\n| slug                             | Required | A label for the product that is used in the URL paths. A slug can contain any combination of letters, numbers, periods, hyphens, and underscores. NO spaces or other characters are allowed. By default, the product name is used as the slug.                |\n| status                           | Required | The status of a product, either `Draft` or `Live`.    |                                                  \n| commodity_type                   | Required | The commodity type, either `physical` or `digital`.    |                                                 \n| upc_ean                          | Optional | The universal product code or european article number of the product.     |                               \n| mpn                              | Optional | The manufacturer part number of a product.       |                                                        \n| sku                              | Optional | The unique stock keeping unit of the product.   |   \n| tags                             | Optional | The product tags used to store or assign a key word against a product. A product can have up to 20 product tags. A product tag can be up to 255 characters. See [**Product Tags**](/docs/api/pxm/products/product-tags\n).                                                   |\n| main_image_id                    | Optional | Specifies a unique ID of a main image file for a product. See [Exporting Main Image Files](#exporting-main-image-files).  |                                                                                                                       \n| `_created_at`                      | Optional| The date and time a product was created. **Note**: This field does not populate any data; it is provided solely for informational purposes.      |                                                                                                               \n| `_updated_at`                      | Optional | The date and time a product was updated. **Note**: This field does not populate any data; it is provided solely for informational purposes.        |                                                                                                             \n| `template:<templateID>:created_at` | Optional | The date and time a template was created. **Note**: This field does not populate any data; it is provided solely for informational purposes.         |                                                                                                           \n| `template:<templateID>:updated_at` | Optional | The date and time a template was updated. **Note**: This field does not populate any data; it is provided solely for informational purposes.      |                                                                                                              \n| `template:<flowID>:<fieldName>`  | Optional | Custom extension data includes the flow `ID` or `slug` and the field `name`. See [Exporting Custom Data (Flows)](#exporting-custom-data-flows).   |                                                                                                              \n\n### Exporting Main Image Files\n\nThe main images that you have previously uploaded Commerce are exported. A `main_image_id` header is added to your `.csv` file. The ID in `main_image_id` is the ID of a file that has already been uploaded to Commerce using [create a file](/docs/api/pxm/files/create-a-file).\n\n### Exporting Custom Data (Flows)\n\nCustom extension data is exported in a `.csv` file by creating a header that includes the flow `ID` or `slug` and the field `name` as shown below:\n\n- `template:<flowSlug>:<fieldName>`\n- `template:<flowID>:<fieldName>`\n\nwhere:\n\n- `template` must be `template`.\n- one of the following for the template that contains the field whose data you want to export:\n  - `flowID` is the ID of the flow.\n  - `flowSlug` is the flow slug.\n- `fieldName` is the name of the field whose data you want to export.\n\nIn the following example, for a flow with ID `82c10a02-1851-4992-8ecb-d44f2782d09b` and a field with the name `condition`:\n\n- the header is `template:82c10a02-1851-4992-8ecb-d44f2782d09b:condition`.\n- the updated custom data is `as-new`.\n\n| name | slug | sku | status | template:82c10a02-1851-4992-8ecb-d44f2782d09b:condition |\n| :--- | :--- | :--- | :--- | :--- |\n| BestEver Range | bestever-range-1a1a-30 | BE-Range-1a1a-30 | draft | as-new |\n"
+paths:
+  /pcm/products/export:
+    post:
+      summary: Export Products
+      description: "\nThe Export API is available to make bulk updates to products in Product Experience Manager. You might also export products for your personal requirements. \n \nThe Export API builds a CSV file containing the product entries. A CSV file can contain up to 50,000 product entries. If you have more than 50,000 product entries, then another CSV file is created and so on, until all your products are exported.\n\nThe Job endpoint response specifies the location where the CSV file is stored. See [Characteristics of CSV Files](/docs/api/pxm/products/product-export#characteristics-of-exporting-products).\n\n### Custom Attributes in Exported CSV\n\nExported CSV files include custom attribute columns using the prefixes `shopper_attributes.` and `admin_attributes.` followed by the attribute key name. For example, a product with `admin_attributes: {cost_of_goods: \"42.0\"}` produces a column `admin_attributes.cost_of_goods` in the exported file.\n\nYou can select specific attribute columns to include in the export using the `columns.include` parameter. You may specify individual keys (for example, `admin_attributes.cost_of_goods`) or use a wildcard to include all keys of a given type (for example, `admin_attributes.*`). You cannot combine a wildcard and individual keys for the same attribute type in a single export request.\n\n### Exporting Selected Columns\nProduct exports support the ability to select a subset of columns to be included in the generated .csv file. This allows you to export only the data you need, making it easier to work with smaller, more focused datasets.\n\n To specify the columns you want to include in the export, use the columns.include parameter in the request body of this endpoint. This parameter accepts an array of strings, where each string represents the name of a product attribute or a flow field.\n\n #### Specifying Flow Field Columns:\n \n The format for specifying flow field columns depends on the useTemplateSlugs setting:\n \n * useTemplateSlugs: `true`: Specify flow field columns using the format: `products(<flow_slug>):<field_name>`. For example: `products(my_flow):my_field`.\n * useTemplateSlugs: `false` (default): Specify flow field columns using the format: `template:<flow_id>:<field_name>`. For example: `template:82c10a02-1851-4992-8ecb-d44f2782d09b:my_field`.\n \n #### Mandatory Fields:\n\n To ensure successful re-importing of product data, the following fields are always included in the export, regardless of the columns.include parameter:\n   \n   * id\n   * name\n   * sku\n   * external_ref\n   * commodity_type\n \n If the `columns.include` parameter is not provided in the request, the system will export all available product fields.\n \n ### Filtering\n \nThe following attributes and operators are supported.\n\n| Operator                  | Attribute                                                                                                                                               | Description                                                                                                                                                                                                                                             | Example                                          |\n | :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------- |\n | `eq`                      | `id`, `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `name`, `templates`, `commodity_type`, `owner`, `product_types`, `parent_id`, `component_option_id`, `tags`, `status`, `has_nodes (false only)`, `created_at`, `updated_at`, `external_ref`, `description` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. For `product_types`, you can only specify one product type. **Note:** `has_nodes` can only be filtered as `false`. **Note:** `component_option_id` matches when a bundle includes that product id as a component option. | `?filter=eq(name,some-name)` |\n | `like`                    | `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `name`, `tags`, `description`, `external_ref`                                                        | Like. Checks if the operand contains the specified string. Wildcards are supported.                                                                                                                                                                     | `?filter=like(name,*some-name*)`                 |\n | `in`                      | `id`, `name`, `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `product_types`, `parent_id`, `component_option_id`, `tags`, `external_ref`                                   | Checks if the values are included in the specified list. If they are, the condition is true. For `product_types`, you can specify more than one product type.                                                                                           | `?filter=in(id,some-id)`                         |\n | `gt`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Greater than. Checks if the value of the field is greater than the given value.                                                                                                                                                                         | `?filter=gt(updated_at,2024-01-01T00:00:00Z)`    |\n | `ge`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Greater than or equal to. Checks if the value of the field is greater than or equal to the given value.                                                                                                                                                 | `?filter=ge(created_at,2023-01-01T00:00:00Z)`    |\n | `lt`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Less than. Checks if the value of the field is less than the given value.                                                                                                                                                                               | `?filter=lt(updated_at,2025-01-01T00:00:00Z)`    |\n | `le`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Less than or equal to. Checks if the value of the field is less than or equal to the given value.                                                                                                                                                       | `?filter=le(created_at,2022-01-01T00:00:00Z)`    |\n | `eq` (extensions)         | `extensions.book.isbn`                                                                                                                                  | Filters using a nested extension field.                                                                                                                                                                                                                 | `?filter=eq(extensions.book.isbn,1765426)`       |\n | `eq` (shopper_attributes) | `shopper_attributes.color`                                                                                                                              | Filters using a shopper custom attribute field.                                                                                                                                                                                                         | `?filter=eq(shopper_attributes.color,red)`       |\n | `eq` (admin_attributes)   | `admin_attributes.warehouse`                                                                                                                            | Filters using an admin custom attribute field.                                                                                                                                                                                                          | `?filter=eq(admin_attributes.warehouse,US-EAST)` |\n"
+      operationId: exportProducts
+      tags:
+      - Product Export
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  required:
+                  - type
+                  properties:
+                    attributes:
+                      type: object
+                      properties:
+                        columns:
+                          type: object
+                          properties:
+                            include:
+                              type: array
+                              items:
+                                type: string
+                    type:
+                      type: string
+                      example: product-export
+            examples:
+              product-export-columns:
+                summary: Export only a subset of columns when useTemplateSlugs is `false`
+                value:
+                  data:
+                    type: product-export
+                    attributes:
+                      columns:
+                        include:
+                        - description
+                        - template:a1b2c3d4-e5f6-7890-1234-567890abcdef:isbn
+              product-export-columns-template-slugs:
+                summary: Export only a subset of columns when useTemplateSlugs is `true`
+                value:
+                  data:
+                    type: product-export
+                    attributes:
+                      columns:
+                        include:
+                        - description
+                        - products(book):isbn
+      responses:
+        '201':
+          description: Export started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/single'
+              examples:
+                pending:
+                  summary: Successful Job
+                  $ref: '#/components/examples/export'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '422':
+          $ref: '#/components/responses/unprocessable_entity'
+        '500':
+          $ref: '#/components/responses/internal'
+      parameters:
+      - $ref: '#/components/parameters/useTemplateSlugs'
+      - $ref: '#/components/parameters/filterexport'
+components:
+  parameters:
+    useTemplateSlugs:
+      name: useTemplateSlugs
+      description: Set to `true` if you want to use a template slug instead of a template ID when exporting products that have custom data.
+      in: query
+      style: form
+      explode: true
+      schema:
+        type: boolean
+        default: false
+    filterexport:
+      name: filter
+      in: query
+      description: '
+
+        Many Commerce API endpoints support filtering. The general syntax is described [**here**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+
+        For more information about the attributes and operators that this endpoint supports, see [Export Products](/docs/api/pxm/products/export-products).
+
+        '
+      style: form
+      explode: true
+      schema:
+        type: string
+      examples:
+        eq:
+          value: eq(name,some-name)
+        like:
+          value: like(name,*some-name*)
+        in:
+          value: in(id,some-id)
+  schemas:
+    single:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/job'
+    error:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                example: '500'
+              title:
+                type: string
+                description: A brief summary of the error.
+                example: Internal server error
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                example: An internal error has occurred.
+              request_id:
+                type: string
+                description: Internal request ID.
+                example: 00000000-0000-0000-0000-000000000000
+              meta:
+                type: object
+                description: Additional supporting meta data for the error.
+                example:
+                  missing_ids:
+                  - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    job:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: A unique identifier generated when a job is created.
+          type: string
+        type:
+          description: This represents the type of resource object being returned. Always `pim-job`.
+          type: string
+          enum:
+          - pim-job
+        attributes:
+          type: object
+          required:
+          - started_at
+          - completed_at
+          - created_at
+          - updated_at
+          - type
+          - status
+          properties:
+            started_at:
+              description: The date and time a job is started.
+              type: string
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+              nullable: true
+            completed_at:
+              type: string
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+              nullable: true
+              description: The date and time a job is completed.
+            created_at:
+              type: string
+              description: The date and time a job is created.
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+            updated_at:
+              type: string
+              description: The date and time a job is updated.
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+            type:
+              type: string
+              description: 'The status of a job.
+
+
+                * `pending` - Commerce has received the request but is currently busy processing other requests.
+
+                * `started` - Commerce has started processing the job.
+
+                * `success` - The job has successfully completed.
+
+                * `failed` - The job has failed.
+
+                '
+              enum:
+              - child-products
+              - product-import
+              - product-export
+              - hierarchy-duplicate
+              - pricebook-import
+              - pricebook-delete
+              - hierarchy-delete
+              - indexing-job
+            status:
+              type: string
+              enum:
+              - pending
+              - cancelled
+              - cancelling
+              - started
+              - success
+              - failed
+        meta:
+          type: object
+          required:
+          - x_request_id
+          properties:
+            x_request_id:
+              type: string
+              description: Applies to all job types. A unique request ID is generated when a job is created.
+            copied_from:
+              type: string
+              description: Applies to `hierarchy-duplicate` job types. The ID of the original hierarchy that you duplicated.
+            hierarchy_id:
+              type: string
+              description: Applies to `hierarchy-duplicate` job types. The duplicated hierarchy ID.
+            file_locations:
+              type: array
+              nullable: true
+              description: If the job type is `product_export`, a link to the file is created when running a job.
+              items:
+                type: string
+            filter:
+              type: string
+              nullable: true
+              description: The entities included in the job. For example, if the job type is `product-export`, the PXM products included in the export.
+  responses:
+    bad_request:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            bad-request:
+              value:
+                errors:
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+    internal:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: '500'
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+  examples:
+    export:
+      value:
+        data:
+          type: pim-job
+          id: 7e1b9ba1-c844-4556-9b16-4ae3f0988b0f
+          attributes:
+            completed_at: null
+            created_at: '2024-01-05T15:27:23.161Z'
+            started_at: null
+            status: pending
+            type: product-export
+            updated_at: '2024-01-05T15:27:23.161Z'
+          meta:
+            file_locations: null
+            filter: eq(sku,product-1)
+            x_request_id: fad8c5c0-9546-4e0c-b68e-8a2d809891e5
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

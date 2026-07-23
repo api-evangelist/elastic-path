@@ -1,0 +1,299 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses OIDC Authentication API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: OIDC Authentication
+  description: 'The OIDC IDP Login endpoints handle the initiation of OpenID Connect authentication flows.
+
+
+    When a user needs to authenticate via OIDC, they are redirected to these endpoints which then redirect them to the configured OIDC provider for authentication.
+
+    '
+paths:
+  /oidc-idp/login/stores/{storeId}/authentication-realms/{realmId}:
+    get:
+      tags:
+      - OIDC Authentication
+      summary: Initiate OIDC Login
+      description: 'Initiate the OIDC login flow for a specific store and authentication realm
+
+        ::: note This is not an **API Endpoint**, but the [Authentication Request](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest) of the OpenID Connect Authentication Flow.
+
+        To initiate an OpenID Connect authentication you must change the location in the Browser to this URL, not call it asynchronously. :::'
+      operationId: get-oidc-idp-login-stores-storeId-authentication-realms-realmId
+      parameters:
+      - name: storeId
+        in: path
+        description: The ID of the store.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: realmId
+        in: path
+        description: The ID of the authentication realm.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: client_id
+        in: query
+        description: The Client ID, for Account Management Authentication see the `meta.client_id` field on [Account Authentication Settings](/docs/api/accounts/get-v-2-settings-account-authentication).
+        required: true
+        schema:
+          type: string
+      - name: redirect_uri
+        in: query
+        description: Redirection URI to which the response will be sent. Must exactly match a pre-registered redirect URI for the client in the `redirect_uris` of the [Authentication Realm](/docs/api/single-sign-on/get-v-2-authentication-realms-realm-id).
+        required: true
+        schema:
+          type: string
+          format: uri
+      - name: response_type
+        in: query
+        description: OIDC/OAuth 2.0 response type, this must be "code" in Commerce.
+        required: true
+        schema:
+          type: string
+          const: code
+      - name: scope
+        in: query
+        description: Space-delimited list of scopes. Must include "openid", "email", and "name".
+        required: true
+        schema:
+          type: string
+      - name: state
+        in: query
+        description: Opaque value used to maintain state between the request and the callback. Helps prevent CSRF.
+        required: true
+        schema:
+          type: string
+          maxLength: 2048
+      - name: code_challenge_method
+        in: query
+        description: '[Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636) transformation method that was used to derive code_challenge.'
+        required: true
+        schema:
+          type: string
+          enum:
+          - S256
+          - plain
+        example: S256
+      - name: code_challenge
+        in: query
+        description: '[Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636) Code Challenge.'
+        required: true
+        schema:
+          type: string
+      - name: prompt
+        in: query
+        description: Space-delimited, case-sensitive list that specifies whether the Authorization Server prompts the End-User for re-authentication and consent.  This value is passed to the configured IdP. See [Section 3.1.2.1. Authentication Request - OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest).
+        required: false
+        schema:
+          type: string
+      - name: display
+        in: query
+        description: ASCII string value that specifies how the Authorization Server displays the authentication and consent user interface. This value is passed to the configured IdP. See [Section 3.1.2.1. Authentication Request - OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest).
+        required: false
+        schema:
+          type: string
+      - name: ui_locales
+        in: query
+        description: End-User's preferred languages and scripts for the user interface, represented as space-separated list of BCP47 language tag values. This value is forwarded to the configured IdP.  See [Section 3.1.2.1. Authentication Request - OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest).
+        required: false
+        schema:
+          type: string
+        example: fr-CA fr en
+      - name: elasticpath_commerce_cloud_profile_id
+        in: query
+        description: Selects the specific OIDC Profile within the realm to use for authentication.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: ep_report_callback_replay_error
+        in: query
+        description: Custom boolean flag. If true, if the user attempts to hit back in their browser, we will redirect them back to the store front
+        required: false
+        schema:
+          type: boolean
+      responses:
+        '303':
+          description: See Other - Redirects to the IdP provider for authentication
+          headers:
+            Location:
+              description: The URL of the IdP provider to redirect to
+              schema:
+                type: string
+                format: uri
+        '307':
+          description: Temporary Redirect - Redirects the user back to the caller.
+          headers:
+            Location:
+              description: The location to redirect to, typically the store front.
+              schema:
+                type: string
+                format: uri
+        '400':
+          description: 'In some cases the OAuth 2.0 specification does not permit us to redirect the user back to the caller, in which case they will see a 4xx.
+
+            '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: OAuth 2.0 error code
+                  errorDescription:
+                    type: string
+                    description: Human-readable error description (camelCase)
+                  error_description:
+                    type: string
+                    description: Human-readable error description (snake_case, OAuth 2.0 standard)
+                required:
+                - error
+              examples:
+                invalid_client:
+                  summary: Invalid client_id
+                  value:
+                    error: invalid_request
+                    errorDescription: The field [client_id] with value [unknownClient] is invalid.
+                    error_description: The field [client_id] with value [unknownClient] is invalid.
+      security: []
+  /oidc-idp/stores/{storeId}/authentication-realms/{realmId}/.well-known/openid-configuration:
+    get:
+      tags:
+      - OIDC Authentication
+      summary: OpenID Connect Discovery
+      description: 'Returns the OpenID Connect discovery document for the authentication realm.
+
+        This endpoint provides metadata about the OIDC provider''s configuration, including endpoints, supported features, and capabilities. Some libraries might require an OIDC discovery document in order to work.
+
+        For more information see [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)'
+      operationId: get-oidc-idp-stores-storeId-authentication-realms-realmId-well-known-openid-configuration
+      parameters:
+      - name: storeId
+        in: path
+        description: The ID of the store.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: realmId
+        in: path
+        description: The ID of the authentication realm.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: elasticpath_commerce_cloud_profile_id
+        in: query
+        description: The ID of the [OIDC profile](/docs/api/single-sign-on/oidc-profiles) that you would like to authenticate with
+        required: false
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: OK - OpenID Connect discovery document
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  issuer:
+                    type: string
+                    format: uri
+                    description: The issuer identifier for this OIDC provider
+                  authorization_endpoint:
+                    type: string
+                    format: uri
+                    description: URL of the authorization endpoint
+                  token_endpoint:
+                    type: string
+                    format: uri
+                    description: URL of the token endpoint, note that this endpoint is not public, and clients will not call it.
+                  jwks_uri:
+                    type: string
+                    format: uri
+                    description: URL of the JSON Web Key Set document
+                  response_types_supported:
+                    type: array
+                    items:
+                      type: string
+                    description: List of OAuth 2.0 response_type values supported
+                  subject_types_supported:
+                    type: array
+                    items:
+                      type: string
+                    description: List of subject identifier types supported
+                  id_token_signing_alg_values_supported:
+                    type: array
+                    items:
+                      type: string
+                    description: List of JWS signing algorithms supported for ID Tokens
+                  scopes_supported:
+                    type: array
+                    items:
+                      type: string
+                    description: List of OAuth 2.0 scope values supported
+                  token_endpoint_auth_methods_supported:
+                    type: string
+                    description: Authentication methods supported by the token endpoint
+                required:
+                - issuer
+                - authorization_endpoint
+                - token_endpoint
+                - jwks_uri
+                - response_types_supported
+                - subject_types_supported
+                - id_token_signing_alg_values_supported
+              examples:
+                discovery_document:
+                  summary: OpenID Connect discovery document
+                  value:
+                    authorization_endpoint: http://euwest.api.elasticpath.com/oidc-idp/login/stores/88888888-4444-4333-8333-111111111111/authentication-realms/45928070-44a6-448b-8246-a85aa35320af
+                    id_token_signing_alg_values_supported:
+                    - RS256
+                    issuer: http://euwest.api.elasticpath.com/oidc-idp/stores/88888888-4444-4333-8333-111111111111/authentication-realms/45928070-44a6-448b-8246-a85aa35320af
+                    jwks_uri: http://euwest.api.elasticpath.com/oidc-idp/.well-known/jwks.json
+                    response_types_supported:
+                    - code
+                    scopes_supported:
+                    - profile
+                    - openid
+                    - email
+                    subject_types_supported:
+                    - public
+                    token_endpoint: http://euwest.api.elasticpath.com/oidc-idp/token/stores/88888888-4444-4333-8333-111111111111/authentication-realms/45928070-44a6-448b-8246-a85aa35320af
+                    token_endpoint_auth_methods_supported: client_secret_basic
+      security: []
+components:
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

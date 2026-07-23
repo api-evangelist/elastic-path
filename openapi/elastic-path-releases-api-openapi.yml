@@ -1,0 +1,629 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Releases API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Releases
+  description: 'When a catalog is published, a catalog release is created. A catalog release provides a snapshot of the product information taken at the time of publication. You can have one or more catalog releases available in your organization or in your store. If you publish a catalog for your organization, the catalog is available when the store is launched.
+
+
+    If you have more than one catalog published for your store, use catalog rules to specify when to display each catalog. For example, you can use [**catalog rules**](/docs/api/pxm/catalog/rules) to schedule a catalog to appear during a particular date and time, such as a seasonal catalog. The catalog may have different pricing than the other catalogs.
+
+
+    When a catalog is ready to be used in a store, you publish it. You can create and publish catalogs for different contexts and channels.
+
+
+    Here are some pointers to understand a catalogs'' lifecycle.
+
+
+    - The default catalog is always the oldest published catalog and must have have at least one release.
+
+    - At any time, the most recent three catalog releases are maintained. Hence, if there is a fourth catalog release, the first catalog release is automatically removed.
+
+    - Until the catalog is published again, the previously created three catalog releases stay permanently.
+
+    - If you want any other catalog to become the default catalog, you must create a catalog rule.
+
+    - If you want the oldest published catalog to become the default catalog, you must remove the catalog rule.
+
+    - Use the `sort_order` value in the `variations` to program your storefront to display the variation options in the order that you want.
+
+
+    Here is a diagram that describes a catalogs'' lifecycle:
+
+
+    ![Catalogs'' Lifecycle](/assets/catalog-lifecycle.png)
+
+
+    ### Publishing catalogs
+
+
+    When you publish a catalog, the `live` products in the hierarchies appear in a catalog release. A catalog release provides a snapshot of product information taken at the time of publication. You can have one or more catalog releases available in your organization or in your store. If you publish a catalog for your organization, the catalog is available when the store is launched.
+
+
+    If you have more than one catalog published for your store, use catalog rules to specify when to display each catalog. For example, you can use [catalog rules](/docs/api/pxm/catalog/rules) to schedule a catalog to appear during a particular date and time, such as a seasonal catalog. The catalog may have different pricing than the other catalogs. You can have multiple published catalogs.
+
+
+    When a catalog is ready to be used in a store, you publish it. You can create and publish catalogs for different contexts and channels. You can see the differences between the last two consecutive catalog releases. See [Publish a catalog](/docs/api/pxm/catalog/publish-release).
+
+
+    You retrieve catalogs for your shopper experience by using the [Catalog View API](/docs/api/pxm/catalog/releases).
+
+    '
+paths:
+  /catalog:
+    get:
+      tags:
+      - Releases
+      summary: Get the catalog release as shoppers
+      description: Returns a list of all published releases of the specified catalog.
+      operationId: getByContextRelease
+      parameters:
+      - $ref: '#/components/parameters/accept-language'
+      - $ref: '#/components/parameters/channel'
+      - $ref: '#/components/parameters/tag'
+      responses:
+        '200':
+          description: The catalog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/release-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases:
+    post:
+      tags:
+      - Releases
+      summary: Publishes a catalog
+      description: '
+
+        Publishes a catalog. You must publish a catalog before you can retrieve that catalog in an organization or store. The hierarchies, live products, and prices associated with a published catalog are in read-only mode. If you make a change to these resources, for example, a change to your price book or hierarchies, you need to republish the catalog.
+
+
+        You can get [a catalog release](/docs/api/pxm/catalog/get-release-by-id) to retrieve a published catalog. Currently, published catalogs are limited to the current release and two releases prior to the current release.
+
+
+        You can see the differences between the last 2 consecutive catalog releases. This is useful if want to understand how your products have changed in your catalog, ensuring your site search integration is kept up-to-date.
+
+
+        Once a catalog release has completed publishing, the delta relationship links to the delta document.
+
+
+        The `delta` links are signed and only valid for 1 hour. Re-reading a catalog release, for example, using [Getting a release of a catalog](/docs/api/pxm/catalog/get-release-by-id) returns a fresh a link.
+
+
+        You can use the `is_full_delta` attribute returned from the `get a release of a catalog` endpoint to determine if you need to refresh the data in your company system before injecting fresh data in a `delta` link. The `is_full_delta` attribute tells you if this is a full publish of the catalog. Using a search service as an example, if the `is_full_delta` attribute is `true`, you should remove all data about that catalog from the search service before injecting fresh data from the `delta` file. If the `is_full_delta` attribute is `false`, then data from the previous catalog overlays the existing data in the `delta` file. To publish a catalog and inject fresh data in a `delta` link, set `export_full_delta` to `true`.
+
+
+        If a previous catalog publish date is greater than 90 days, then a full catalog publish is automatically performed. If you publish your catalogs infrequently, Commerce may perform a full publish when you are expecting a delta publish.
+
+
+        :::caution
+
+
+        Generating a full delta is resource intensive and slows down the publishing process and so should only be performed in certain circumstances, for example, when initializing an integration with a service like Algolia.
+
+
+        :::
+
+
+        The `is_full_delta` attribute is always `true` the first time a catalog is published. The information is stored in a collection of `json` documents in a compressed file. You can either manually check the file or, for example, use them to automatically update another company system you may have.
+
+
+        - Delta files are only available for 30 days.
+
+        - Delta files are removed when a catalog release is deleted.
+
+
+        Each document has a `delta_type` with one of the following values, depending on whether a product has been deleted, updated or created in a catalog release.
+
+
+        - `delete` describes products deleted from this release of a catalog.
+
+        - `createupdate` describes products updated in this release of a catalog.
+
+
+        ### Multi-Store Management Solutions
+
+
+        In a multi-store management solution.
+
+
+        - You can create organization catalogs. Your organization catalogs are available for your stores to use.
+
+        - Your stores can create their own catalogs.
+
+        - Your stores can create catalogs that have a combination of organization products and store products.
+
+
+        If you are publishing a catalog in a store that contains resources from an organization, in Commerce Manager, you must enable the **Include Organization Resources in Catalog Publishes** checkbox.
+
+
+        1. Go to **SYSTEM** > **Store Settings**.
+
+        2. Click **General Settings**.
+
+        3. Select **PXM** from the list.
+
+        4. Select the **Include Organization Resources in Catalog Publishes** checkbox.
+
+        '
+      operationId: publishRelease
+      parameters:
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/catalog-release-create-data'
+        description: Options for catalog release publishing
+      responses:
+        '201':
+          description: Publishes a catalog release with the following attributes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/release-data'
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+    get:
+      tags:
+      - Releases
+      summary: Gets all authorized catalog releases
+      description: "Returns a list of all published releases of the specified catalog. Currently, published catalogs are limited to the current release and two releases prior to the current release. You can see the differences between the last 2 consecutive catalog releases using the `delta` link returned in the response of a `publish a catalog` endpoint.\n\nYou can use the `is_full_delta` attribute returned from the `get a release of a catalog` endpoint to determine if you need to refresh the data in your company system before publishing a catalog release and injecting fresh data in a delta link. The `is_full_delta` attribute tells you if this is a full publish of a catalog release. Using a search service as an example, if the `is_full_delta` attribute is `true`, you should remove all data about that catalog from the search service before publishing a catalog release and injecting fresh data from the delta file. \n\nIf the `is_full_publish` attribute returned in the response is `false`, data from the previous catalog release overlaid the existing data in the delta file. The `is_full_publish` attribute is always `true` the first time a catalog is published. When determining whether delta data needs to be refreshed, ignore this attribute and always use the `is_full_delta` attribute.\n"
+      operationId: getReleases
+      parameters:
+      - $ref: '#/components/parameters/accept-language'
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The list of catalogs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/release-list-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+    delete:
+      tags:
+      - Releases
+      summary: Deletes all releases
+      description: Deletes all releases of the specified published catalog.
+      operationId: deleteReleases
+      parameters:
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: A 204 response indicates that the releases have been deleted.
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /catalogs/{catalog_id}/releases/{release_id}:
+    get:
+      tags:
+      - Releases
+      summary: Get a catalog release by ID
+      description: Retrieves the specified catalog release.
+      operationId: getReleaseByID
+      parameters:
+      - $ref: '#/components/parameters/accept-language'
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The catalog.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/release-data'
+        default:
+          description: The unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+    delete:
+      tags:
+      - Releases
+      summary: Deletes a release
+      description: Deletes the specified published catalog release.
+      operationId: deleteReleaseByID
+      parameters:
+      - description: The catalog ID.
+        name: catalog_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: The unique identifier of a published release of the catalog or `latestPublished` for the most recently published version.
+        name: release_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: A 204 response indicates that the release has been deleted.
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+components:
+  schemas:
+    release:
+      type: object
+      title: Release
+      description: A catalog release represents a collection of hierarchical product data, price books and catalogs rules.
+      properties:
+        id:
+          description: A unique identifier for the catalog release.
+          type: string
+          x-go-name: ID
+          example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
+        attributes:
+          type: object
+          properties:
+            name:
+              description: The name of a release.
+              type: string
+              example: Clothing
+            published_at:
+              description: The date and time a release was published.
+              type: string
+              format: date-time
+              example: '1970-01-01T00:00:00.000'
+              nullable: true
+            catalog_id:
+              description: A unique identifier for the catalog.
+              type: string
+              example: 0194f54d-f2a1-4e33-9a6e-9ec366152490
+            description:
+              description: A description of the catalog release.
+              type: string
+              example: Catalog for Store 123
+              default: ''
+            hierarchies:
+              description: An array of hierarchy IDs associated with the release.
+              type: array
+              items:
+                $ref: '#/components/schemas/node-reference'
+              x-go-name: RootNodes
+        relationships:
+          $ref: '#/components/schemas/release-relationships'
+        type:
+          description: This represents the type of object being returned. Always `catalog-release`.
+          type: string
+          x-go-name: Type
+        meta:
+          $ref: '#/components/schemas/release-meta'
+      x-go-name: Release
+    node-reference:
+      type: object
+      title: NodeReference
+      description: Minimum set of information to identify a catalog node.
+      properties:
+        id:
+          description: The unique identifier of a hierarchy.
+          type: string
+          example: 65477ce0-fcb8-436b-a120-3d57979421dd
+          x-go-name: ID
+        label:
+          description: A label for a hierarchy.
+          type: string
+          example: category
+          x-go-name: Label
+        name:
+          description: The name of a hierarchy.
+          type: string
+          example: Formal dresswear
+          x-go-name: Name
+      x-go-name: NodeReference
+    release-data:
+      type: object
+      title: Release Data
+      description: Container for a catalog release.
+      properties:
+        data:
+          $ref: '#/components/schemas/release'
+        links:
+          $ref: '#/components/schemas/links'
+    error:
+      type: object
+      title: APIError
+      description: APIError is a json-api style part of an error response.
+      properties:
+        detail:
+          type: string
+          example: not processable
+          x-go-name: Detail
+        status:
+          type: string
+          example: '422'
+          x-go-name: Status
+        title:
+          type: string
+          example: There was a problem processing your request.
+          x-go-name: Title
+      x-go-name: APIError
+    catalog-release-create-data:
+      type: object
+      title: CatalogReleaseCreateData
+      description: Creates a catalog release with the following attributes.
+      properties:
+        data:
+          type: object
+          properties:
+            export_full_delta:
+              type: boolean
+              description: 'Set to `true` if you want to export all the data from a catalog release in a delta link. The `is_full_delta` attribute is returned from the `get a release of a catalog` endpoint. The `is_full_delta` attribute tells you if the delta file contains the full content of a catalog release. You can use the `is_full_delta` to determine if you need to refresh the data in your company system before publishing a catalog release with fresh data in a delta link. Using a search service as an example, if the `is_full_delta` attribute is true, you should remove all data about that catalog from the search service before publishing a catalog release and injecting fresh data from the delta file. If the `is_full_delta` attribute is false, then data from the previous catalog overlays the existing data in the delta file. The `is_full_delta` attribute is always `true` the first time a catalog is published.
+
+                '
+              x-go-name: ExportFullDelta
+            include_organization_resources:
+              type: boolean
+              description: If you are publishing a catalog in a store that contains resources from an organization, you must set this to true and you must enable the **Include Organization Resources in Catalog Publishes** checkbox in Commerce Manager. See [**Multi-Store Management Solutions**](/docs/api/pxm/catalog/publish-release).
+              x-go-name: IncludeOrganizationResources
+              nullable: true
+    release-list-data:
+      type: object
+      title: ReleaseListData
+      description: Container for a list of catalog releases.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/release'
+        links:
+          $ref: '#/components/schemas/links'
+    error-response:
+      type: object
+      title: ErrorResponse
+      description: ErrorResponse is a json-api style Error response.
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/error'
+          x-go-name: Errors
+      x-go-name: ErrorResponse
+    release-meta:
+      type: object
+      title: ReleaseMeta
+      description: A release's metadata.
+      properties:
+        created_at:
+          description: The date and time a release is created.
+          type: string
+          format: date-time
+          example: '1970-01-01T00:00:00.000'
+        started_at:
+          description: The date and time a release is available for use. In other words, the date and time the status of a catalog release changes to PUBLISHED, rather than IN PROGRESS.
+          type: string
+          format: date-time
+          example: '1970-01-01T00:00:00.000'
+          nullable: true
+        updated_at:
+          description: The date and time a release is updated.
+          type: string
+          format: date-time
+          example: '1970-01-01T00:00:00.000'
+          nullable: true
+        release_status:
+          description: The status of the current release.
+          type: string
+          enum:
+          - PENDING
+          - IN_PROGRESS
+          - FAILED
+          - PUBLISHED
+        language:
+          description: Your storefront's preferred language code and locale.
+          type: string
+          example: en-GB
+        is_full_publish:
+          description: 'Indicates that a full publish was performed (either because this is the first time a catalog has been published or because of a change that occurred, for example, adding/removing a price book or hierarchy). When determining whether delta data needs to be refreshed, ignore this attribute and always use the `is_full_delta` attribute.
+
+            '
+          type: boolean
+          example: false
+          default: false
+          x-go-name: IsFullPublish
+        is_full_delta:
+          description: 'Indicates whether the release delta file contains the full content of a catalog release. Using a search service as an example, if the `is_full_delta` attribute is `true`, you should remove all data about that catalog release from the search service before injecting fresh data from the delta file. If the `is_full_delta` attribute is `false`, then data from the previous catalog release overlays the existing data in the delta file. The `is_full_delta` attribute is always `true` the first time a catalog is published.
+
+            '
+          type: boolean
+          example: false
+          default: false
+          x-go-name: IsFullDelta
+        total_products:
+          description: The total number of products displayed in a catalog release.
+          type: integer
+          format: int64
+          x-go-name: TotalProducts
+          nullable: true
+        total_nodes:
+          description: The total number of hierarchy nodes displayed in a catalog release.
+          type: integer
+          format: int64
+          x-go-name: TotalNodes
+          nullable: true
+        percent_completed:
+          description: An integer that represents the progress of a catalog publish. The attribute starts at `0` and reaches `100` when publishing is complete.
+          type: integer
+          format: int32
+          x-go-name: PercentCompleted
+          nullable: true
+        owner:
+          description: The owner of the resource, can be either `organization` or `store`.
+          type: string
+          enum:
+          - store
+          - organization
+          x-go-name: Owner
+          nullable: true
+        price_segmentation_enabled:
+          description: This indicates whether the catalog release will support price segmentation using catalog rules to define which pricebook(s) to use for pricing
+          type: boolean
+        includes_draft_products:
+          description: When `true`, this catalog release includes `draft` products in its published data. This reflects the catalog `include_draft_products` attribute at the time of publish.
+          type: boolean
+          example: false
+          default: false
+          x-go-name: IncludesDraftProducts
+      x-go-name: ReleaseMeta
+      x-omitempty: true
+    related-link:
+      description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+      type: object
+      properties:
+        related:
+          description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+          type: string
+      required:
+      - related
+    release-relationships:
+      type: object
+      title: ReleaseRelationships
+      description: Relationships are established between different catalog entities. For example, products, hierarchies, price books, and catalog rules are related to a catalog, as they are associated with it.
+      properties:
+        delta:
+          description: A URL to a delta document that describes the changes between catalog releases.
+          type: object
+          properties:
+            links:
+              $ref: '#/components/schemas/related-link'
+        products:
+          description: A URL to all products included in a catalog release.
+          type: object
+          properties:
+            links:
+              $ref: '#/components/schemas/related-link'
+        hierarchies:
+          description: A URL to all hierarchies included in a catalog release.
+          type: object
+          properties:
+            links:
+              $ref: '#/components/schemas/related-link'
+          required:
+          - links
+      x-go-name: ReleaseRelationships
+    links:
+      description: Links allow you to move between requests.
+      type: object
+      properties:
+        self:
+          description: Single entities use a `self` parameter with a link the specific resource.
+          type: string
+          format: uri
+          nullable: true
+        first:
+          description: Always the first page.
+          type: string
+          format: uri
+          nullable: true
+        last:
+          description: This is `null` if there is only one page.
+          type: string
+          format: uri
+          nullable: true
+        prev:
+          description: This is `null` if there is only one page.
+          type: string
+          format: uri
+          nullable: true
+        next:
+          description: This is `null` if there is only one page.
+          type: string
+          format: uri
+          nullable: true
+  parameters:
+    tag:
+      description: Tags are used to refine the eligibility criteria for a rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
+      in: header
+      name: EP-Context-Tag
+      required: false
+      schema:
+        type: string
+    channel:
+      description: The list of channels in which this catalog can be displayed. A channel is the shopping experience, such as a mobile app or web storefront. If empty, the catalog rule matches all channels. The channel will eventually be included in the bearer token that is used for authorization, but currently, you must set the `EP-Channel` header in your requests.
+      in: header
+      name: EP-Channel
+      required: false
+      schema:
+        type: string
+    accept-language:
+      description: The language and locale your storefront prefers. See [Accept-Language](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
+      in: header
+      name: accept-language
+      required: false
+      schema:
+        type: string
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer

@@ -1,0 +1,648 @@
+openapi: 3.1.0
+info:
+  version: 25.1126.6886238
+  x-version-timestamp: 2025-11-26 19:10:23+00:00
+  title: Addresses Introduction Account Addresses Price Book Modifiers API
+  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+
+
+    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+
+    '
+  contact:
+    name: Elastic Path
+    url: https://www.elasticpath.com
+    email: support@elasticpath.com
+  license:
+    url: https://elasticpath.dev
+    name: MIT
+servers:
+- url: https://useast.api.elasticpath.com
+  description: US East
+- url: https://euwest.api.elasticpath.com
+  description: EU West
+security:
+- BearerToken: []
+tags:
+- name: Price Book Modifiers
+  description: 'You can use price modifiers to change the price property of child products. By default, child products inherit the same price as their base products. Using price modifiers, you can enable child products to inherit a different price. This enables you to configure the price of child products, for example, to be lower than its base product, without having to individually update the price of your child products. There are three types of price modifier.
+
+
+    | Modifier          | Data Type | Effect                                       |
+
+    |:------------------|:----------|:---------------------------------------------|
+
+    | `price_increment` | `string`  | Increases the price of a product.            |
+
+    | `price_decrement` | `string`  | Decreases the price of a product.            |
+
+    | `price_equals`    | `string`  | Sets the price of a product to the amount you specify. |
+
+
+    The following is an overview of the steps you need to follow to use price modifiers.
+
+
+    1. Create a price modifier. You must give the price modifier a unique name. For more information, see [Create a Price Modifier](/docs/api/pxm/pricebooks/create-price-modifier).
+
+    1. Build your child products with the new product modifier.
+
+    '
+paths:
+  /pcm/pricebooks/{pricebookID}/modifiers:
+    parameters:
+    - name: pricebookID
+      in: path
+      description: Unique identifier of a Price Book
+      required: true
+      schema:
+        type: string
+    post:
+      tags:
+      - Price Book Modifiers
+      description: You can use price modifiers to change the price property of child products. By default, child products inherit the same price as their base products. Using price modifiers, you can enable child products to inherit a different price. This enables you to configure the price of child products, for example, to be lower than its base product, without having to individually update the price of your child products. There are three types of price modifier.
+      summary: Create a Modifier
+      operationId: createPriceModifier
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/price-modifier-create-data'
+        description: The price modifier to create within a price book.
+        required: true
+      responses:
+        '201':
+          description: The created price modifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/price-modifier-data'
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response-modifiers'
+    get:
+      tags:
+      - Price Book Modifiers
+      summary: Gets a list of all modifiers
+      description: 'Retrieves a list of price modifiers for the specified price book.
+
+
+        ### Filtering
+
+
+        Filtering is supported on this endpoint. For the general syntax, see [Filtering](/guides/Getting-Started/filtering).
+
+
+        You can filter on the following attributes and operators.
+
+
+        | Operator | Attribute | Description | Example |
+
+        | --- | --- | --- | --- |
+
+        | `eq` | `external_ref`, `name` | Checks if the values you provide matches a price modifier. | `filter=eq(name,largesupplement)` |
+
+        '
+      operationId: getPriceModifiers
+      parameters:
+      - $ref: '#/components/parameters/filter-modifier'
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: The price modifier list.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/price-modifier-list-data'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response-modifiers'
+  /pcm/pricebooks/{pricebookID}/modifiers/{modifierID}:
+    parameters:
+    - name: pricebookID
+      in: path
+      description: Unique identifier of a Price Book
+      required: true
+      schema:
+        type: string
+    - name: modifierID
+      in: path
+      description: Unique identifier of a Price Book Modifier
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Get a Modifier
+      description: Retrieves the specified price book modifier from the specified price book.
+      tags:
+      - Price Book Modifiers
+      operationId: getPriceModifierByID
+      responses:
+        '200':
+          description: The price modifier.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/price-modifier-data'
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response-modifiers'
+    put:
+      summary: Update a Modifier
+      description: Specify whichever attributes you want to change. The values of the other attributes remain the same. If the attributes section is empty, the price modifier is not updated.
+      tags:
+      - Price Book Modifiers
+      operationId: updatePriceModifier
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/price-modifier-update-data'
+        description: The updated price modifier
+        required: true
+      responses:
+        '200':
+          description: Updated price modifier.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/price-modifier-data'
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response-modifiers'
+    delete:
+      tags:
+      - Price Book Modifiers
+      description: Deletes the specified price book modifier.
+      summary: Delete a Modifier
+      operationId: deletePriceModifier
+      responses:
+        '204':
+          description: A 204 response indicates that the price modifiers have been deleted
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response-modifiers'
+components:
+  schemas:
+    currencies:
+      type: object
+      description: A collection of one or more currencies objects that consists of the [**three-letter ISO code**](https://www.iso.org/iso-3166-country-codes.html) of the currencies associated with this price and the amount. This is the product's price.
+      example:
+        USD:
+          amount: 100
+          includes_tax: false
+          tiers:
+            min_5:
+              minimum_quantity: 5
+              amount: 50
+        CAD:
+          amount: 127
+          includes_tax: false
+          tiers:
+            min_10:
+              minimum_quantity: 10
+              amount: 100
+        GBP:
+          amount: 73
+          includes_tax: true
+          tiers:
+            min_20:
+              minimum_quantity: 20
+              amount: 60
+      additionalProperties:
+        $ref: '#/components/schemas/amount'
+    price-modifier-update-data:
+      type: object
+      title: PriceModifierUpdateData
+      description: Json-api style data object containing a price modifier to be updated.
+      properties:
+        data:
+          $ref: '#/components/schemas/price-modifier-update'
+      required:
+      - data
+      additionalProperties: false
+      x-go-name: PriceModifierUpdateData
+    price-modifier-update:
+      type: object
+      title: PriceModifier
+      description: Price modifier update request.
+      properties:
+        id:
+          description: A unique identifier for the price modifier.
+          type: string
+          example: 37f2eed6-0bea-4d0b-a3c6-24cc76143bfd
+          x-go-name: ID
+        type:
+          type: string
+          x-go-name: Type
+          default: price-modifier
+          example: price-modifier
+          enum:
+          - price-modifier
+        attributes:
+          type: object
+          properties:
+            currencies:
+              $ref: '#/components/schemas/currencies'
+            name:
+              description: A name for the modifier. You must give the price modifier a unique name. Price modifier names are case-sensitive
+              type: string
+              example: large-supplement
+              minLength: 1
+              x-go-name: Name
+              nullable: true
+            modifier_type:
+              description: 'There are three modifier types.
+
+
+                * `price_increment` - Increases the price of a product.
+
+                * `price_decrement` - Decreases the price of a product.
+
+                * `price_equals` - Sets the price of a product to the amount you specify.
+
+                '
+              type: string
+              example: price_equals
+              enum:
+              - price_equals
+              - price_increment
+              - price_decrement
+              x-go-name: ModifierType
+              nullable: true
+            external_ref:
+              description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+              type: string
+              example: external-ref
+              x-go-name: External Ref
+              nullable: true
+          additionalProperties: false
+      required:
+      - id
+      - type
+      - attributes
+      additionalProperties: false
+      x-go-name: PriceModifierUpdate
+    price-modifier-create:
+      type: object
+      title: PriceModifier
+      properties:
+        type:
+          type: string
+          x-go-name: Type
+          default: price-modifier
+          example: price-modifier
+          enum:
+          - price-modifier
+        attributes:
+          type: object
+          properties:
+            currencies:
+              $ref: '#/components/schemas/currencies'
+            name:
+              description: A name for the modifier. You must give the price modifier a unique name. Price modifier names are case-sensitive.
+              type: string
+              example: large-supplement
+              minLength: 1
+              x-go-name: Name
+            modifier_type:
+              description: "There are three modifier types.\n   * `price_increment` - Increases the price of a product.\n   * `price_decrement` - Decreases the price of a product.\n   * `price_equals` - Sets the price of a product to the amount you specify.\n"
+              type: string
+              example: price_equals
+              enum:
+              - price_equals
+              - price_increment
+              - price_decrement
+              x-go-name: ModifierType
+            external_ref:
+              description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+              type: string
+              example: external-ref
+              x-go-name: External Ref
+              nullable: true
+          required:
+          - name
+          - modifier_type
+          - currencies
+          additionalProperties: false
+      required:
+      - type
+      - attributes
+      additionalProperties: false
+      x-go-name: PriceModifierCreate
+    page-meta:
+      type: object
+      description: Contains the results for the entire collection.
+      title: PageMeta
+      properties:
+        results:
+          type: object
+          properties:
+            total:
+              description: Total number of results for the entire collection.
+              type: integer
+              example: 1
+              nullable: true
+        page:
+          type: object
+          properties:
+            limit:
+              description: The maximum number of records for all pages.
+              type: integer
+              example: 10
+              x-omitempty: false
+            offset:
+              description: The current offset by number of pages.
+              type: integer
+              example: 0
+              x-omitempty: false
+            current:
+              description: The current number of pages.
+              type: integer
+              example: 0
+              x-omitempty: false
+            total:
+              description: The total number of records for the entire collection.
+              type: integer
+              example: 1
+              x-omitempty: false
+    price-modifier:
+      type: object
+      title: PriceModifier
+      description: A price modifier with the following attributes.
+      properties:
+        type:
+          type: string
+          example: price-modifier
+          default: price-modifier
+          enum:
+          - price-modifier
+        pricebook_external_ref:
+          description: The unique attribute associated with the price book. This can be an external reference from a separate company system, for example. The maximum length is 2048 characters.
+          type: string
+          example: a-pricebook-external-ref
+          x-go-name: Pricebook External Ref
+          nullable: true
+        attributes:
+          type: object
+          properties:
+            external_ref:
+              description: A unique identifier associated with the price modifier. This can be an external reference from a separate company system, for example. The maximum length is 2048 characters.
+              type: string
+              example: external-ref
+              x-go-name: External Ref
+              nullable: true
+            currencies:
+              $ref: '#/components/schemas/currencies'
+            name:
+              description: A name for the modifier. You must give the price modifier a unique name. Price modifier names are case-sensitive.
+              type: string
+              example: large-supplement
+            modifier_type:
+              description: "There are three modifier types.\n   * `price_increment` - Increases the price of a product.\n   * `price_decrement` - Decreases the price of a product.\n   * `price_equals` - Sets the price of a product to the amount you specify.\n"
+              type: string
+              example: price_equals
+              enum:
+              - price_equals
+              - price_increment
+              - price_decrement
+            created_at:
+              description: The date and time when the price book was created.
+              type: string
+              format: date-time
+              example: '2020-09-22T09:00:00Z'
+              x-go-name: CreatedAt
+            updated_at:
+              description: The date and time when the price book was last updated.
+              type: string
+              example: '2020-09-22T09:00:00Z'
+              format: date-time
+              x-go-name: UpdatedAt
+          required:
+          - name
+          - modifier_type
+          - currencies
+        id:
+          description: A unique identifier for the price modifier.
+          type: string
+          example: 37f2eed6-0bea-4d0b-a3c6-24cc76143bfd
+          x-go-name: ID
+        meta:
+          type: object
+          properties:
+            owner:
+              description: The product owner, either `organization` or `store`.
+              type: string
+              example: store
+              nullable: true
+      required:
+      - type
+      - attributes
+      - id
+      additionalProperties: false
+      x-go-name: PriceModifier
+    price-modifier-data:
+      type: object
+      title: PriceModifierData
+      description: Json-api style data object containing a single price modifier.
+      properties:
+        data:
+          $ref: '#/components/schemas/price-modifier'
+        links:
+          $ref: '#/components/schemas/links-modifier'
+      required:
+      - data
+      additionalProperties: false
+      x-go-name: PriceModifierData
+    error-modifiers:
+      type: object
+      title: ApiError
+      description: This is a json-api style part of an error response
+      properties:
+        detail:
+          type: string
+          example: The modifier already exists
+          x-go-name: Detail
+        status:
+          type: string
+          example: '409'
+          x-go-name: Status
+        title:
+          type: string
+          example: conflict
+          x-go-name: Title
+      additionalProperties: false
+      x-go-name: ApiError
+    links-modifiers:
+      description: Links are used to allow you to move between requests.
+      type: object
+      properties:
+        self:
+          description: Single entities use a self parameter with a link to that specific resource.
+          type: string
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers
+          nullable: true
+        first:
+          description: Always the first page.
+          type: string
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers?page[offset]=0&page[limit]=25
+          nullable: true
+        last:
+          description: This is `null` if there is only one page.
+          type: string
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers?page[offset]=0&page[limit]=25
+          nullable: true
+        prev:
+          description: This is `null` if there is only one page.
+          type: string
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers?page[offset]=0&page[limit]=25
+          nullable: true
+        next:
+          description: This is `null` if there is only one page.
+          type: string
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers?page[offset]=25&page[limit]=25
+          nullable: true
+    links-modifier:
+      description: Links are used to allow you to move between requests.
+      type: object
+      properties:
+        self:
+          description: Single entities use a self parameter with a link to that specific resource.
+          type: string
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers/f5bd1fc7-48a2-40ac-88dd-2bd9985050cd
+          nullable: true
+    error-response-modifiers:
+      type: object
+      title: ErrorResponse
+      description: This is a json-api style error response
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/error-modifiers'
+          x-go-name: Errors
+      additionalProperties: false
+      x-go-name: ErrorResponse
+    amount:
+      type: object
+      description: The three-letter ISO code for the currency associated with this price.
+      properties:
+        amount:
+          description: The price in the lowest denomination for the specified currency. This is a product's list price.
+          type: integer
+          format: int64
+          example: 100
+          x-go-name: Amount
+          nullable: true
+        includes_tax:
+          description: Whether this price includes tax.
+          type: boolean
+          example: false
+          default: false
+          x-go-name: IncludesTax
+        tiers:
+          type: object
+          description: The price tier that an item is eligible for based on the quantity purchased. You cannot have conflicting tiers within the same currencies block.
+          additionalProperties:
+            $ref: '#/components/schemas/tier-price'
+    tier-price:
+      type: object
+      description: The name of the tier, for example, `Pencils`.
+      properties:
+        minimum_quantity:
+          description: The minimum quantity of 1 or more defined for the specified price. If a minimum quantity is not specified, an error is returned.
+          type: integer
+          format: int64
+          example: '10'
+          x-go-name: MinQuantity
+          nullable: true
+        amount:
+          description: The price for each quantity.
+          type: integer
+          format: int64
+          example: '50'
+          x-go-name: Amount
+          nullable: true
+      x-go-name: TierPrice
+    price-modifier-list-data:
+      type: object
+      title: PriceModifierListData
+      description: Json-api style array containing a list of price modifiers.
+      properties:
+        meta:
+          $ref: '#/components/schemas/page-meta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/price-modifier'
+        links:
+          $ref: '#/components/schemas/links-modifiers'
+      required:
+      - data
+      additionalProperties: false
+      x-go-name: PriceModifierListData
+    price-modifier-create-data:
+      type: object
+      title: PriceModifierCreateData
+      description: Json-api style data object containing a price modifier to be created.
+      properties:
+        data:
+          $ref: '#/components/schemas/price-modifier-create'
+      required:
+      - data
+      additionalProperties: false
+      x-go-name: PriceModifierCreateData
+  parameters:
+    filter-modifier:
+      in: query
+      description: 'This endpoint supports filtering. See [Filtering]().
+
+        '
+      name: filter
+      required: false
+      schema:
+        type: string
+    offset:
+      name: page[offset]
+      in: query
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page offset is set, the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+    limit:
+      name: page[limit]
+      in: query
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
