@@ -1,0 +1,1480 @@
+{
+  "item": [
+    {
+      "id": "e518a27e-0983-481b-9773-f6be37d07d81",
+      "name": "Indexable Fields",
+      "description": {
+        "content": "Indexable Fields allow you to extend and fine-tune the search schema. By default, the search index includes all the core product fields like name, description, SKU, slug etc. Indexable Fields let you:\n\n- **Add custom fields** to the index from product extension templates or custom (shopper and admin) attributes\n- **Configure core field behavior** such as stemming and tokenization on built-in fields like `name` and `description`\n- **Control tokenization** at the collection or per-field level using token separators and symbols to index\n\n### When to Use Indexable Fields\n\nUse Indexable Fields when you want to:\n\n- **Search custom attributes**: Enable full-text search on custom product fields like brand, material, or specifications\n- **Filter by custom attributes**: Allow shoppers to filter products by custom fields like color, size, or rating\n- **Facet on custom attributes**: Display aggregated counts for custom field values in your navigation\n- **Sort by custom attributes**: Order search results by custom numeric fields like rating or popularity\n- **Enable stemming**: Match different word forms (e.g., \"running\" also matches \"run\", \"runs\") on both custom or core fields\n- **Customize tokenization**: Control how hyphenated, compound, or symbol-containing text is split and indexed\n\n### How Indexable Fields Work\n\n1. **Create indexable fields**: Define custom fields to index and configure collection-level or per-field tokenization settings\n2. **Override core field behavior**: Use `core_field_overrides` to configure stemming, token separators, or symbols to index on built-in fields like `name` and `description`\n3. **Reindex catalogs**: After creating or modifying indexable fields, reindex your catalog releases to apply the changes\n4. **Use in searches**: Once reindexed, custom fields are available in search queries for filtering, faceting, and sorting\n\n### Field Configuration\n\nEach entry in the custom fields (`fields` array) supports the following options:\n\n| Option             | Description                                                                                               |\n|--------------------|-----------------------------------------------------------------------------------------------------------|\n| `name`             | The field path — see **Field Types** below for supported formats                                          |\n| `facetable`        | When `true`, the field can be used for faceting to show aggregated value counts                           |\n| `sortable`         | When `true`, the field can be used for sorting results                                                    |\n| `locale`           | Language code for text tokenization, defaults to `en` for English                                         |\n| `stem`             | When `true`, enables word stemming using the Snowball stemmer — see **Stemming** below                    |\n| `token_separators` | Per-field characters to use as token separators, overriding the collection-level setting                  |\n| `symbols_to_index` | Per-field special characters to preserve as part of tokens, overriding the collection-level setting       |\n\n### Field Types\n\nTwo categories of fields can be indexed:\n\n#### Extension Fields\n\nFields from your product extension templates, following the pattern `extensions.products(<template_slug>).<field_name>`:\n\n- `<template_slug>` is the slug of your product extension template\n- `<field_name>` is the name of the field within that template\n- The field must exist and be enabled in the flows service\n- Only enumerated string fields, numeric fields, and boolean fields can be faceted\n\n**Example**: For a product extension template with slug `Details` containing a field `brand`, the indexable field name would be `extensions.products(Details).brand`.\n\n#### Custom Attribute Fields\n\nMerchant-defined key/value attributes stored directly on products:\n\n- `shopper_attributes.<attribute_name>` — visible in shopper and admin catalog API responses and available for filtering, sorting, and faceting in both shopper and admin search\n- `admin_attributes.<attribute_name>` — available for filtering and sorting in both shopper and admin search; not returned in search response payloads\n- `<attribute_name>` must be no longer than **64 characters** and can only contain alphanumeric characters, underscores (`_`), and hyphens (`-`).\n- Attribute fields are always typed as `string`\n- Faceting and sorting can be enabled\n\n**Examples**: `shopper_attributes.fabric`, `admin_attributes.internal_grade`\n\n### Core Field Overrides\n\nIn addition to configuring custom fields, Indexable Fields can influence the behavior of built-in product fields such as `name`, `description`, and `sku`. Use the `core_field_overrides` to apply per-field settings.\n\nEach entry in `core_field_overrides` supports `stem`, `token_separators`, `symbols_to_index`, and `sortable`. This is useful when you want to enable stemming on the product description, apply custom tokenization to a specific core field, or enable sorting on fields like `name` and `sku`.\n\n**Example**: Enable stemming on `description` and treat hyphens as token separators only on `name`:\n\n```json\n{\n  \"core_field_overrides\": [\n    { \"name\": \"description\", \"stem\": true },\n    { \"name\": \"name\", \"token_separators\": [\"-\"], \"sortable\": true }\n  ]\n}\n```\n\n### Stemming\n\nStemming reduces words to their root form at both index and query time, so a search for \"running\" also matches products containing \"run\", \"runs\", or \"runner\". This improves search recall for descriptive text fields where shoppers may use different word forms than those found in product data.\n\n- Enable per field using `stem: true` on any entry in `fields` or `core_field_overrides`\n- Uses the [Snowball stemmer](https://snowballstem.org/)\n- Only valid for string-typed fields\n- Defaults to `false`\n\n### Token Separators and Symbols to Index\n\nThese settings control how text is split into tokens during indexing and searching.\n\n#### Token Separators\n\n`token_separators` specifies characters that split text into separate tokens, in addition to the default whitespace splitting. This is useful for hyphenated text, part numbers, or other compound formats.\n\nFor example, with `token_separators: [\"-\"]`, the text `non-tech` is tokenized to `non` and `tech`, so searches for both `non-tech` and `non tech` will match.\n\n#### Symbols to Index\n\n`symbols_to_index` specifies special characters that should be preserved within tokens rather than stripped during indexing. Useful when products contain meaningful symbols like `+`, `#`, or `@`.\n\n#### Collection-Level vs Field-Level\n\nBoth settings can be configured at two scopes:\n\n- **Collection-level**: Set `token_separators` or `symbols_to_index` at the top level of the indexable fields resource to apply the setting across all indexed fields.\n- **Field-level**: Set the same properties on an individual entry in `fields` or `core_field_overrides` to apply only to that field, overriding the collection-level setting.\n\nAn empty array at the field level defers to the collection-level setting.\n\n### Reindexing Requirement\n\nAny change to indexable fields requires reindexing your catalog releases to take effect. The system detects when indexes are out of sync. Use the [reindex endpoint](/docs/api/pxm/catalog-search/reindex-tenant-releases) to apply changes. See [Jobs](/docs/api/pxm/catalog-search/jobs) for more details on reindexing operations.\n",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "81e4ec3d-0909-4e36-9c34-d960ee72050c",
+          "name": "Create indexable fields",
+          "request": {
+            "name": "Create indexable fields",
+            "description": {
+              "content": "Specify additional fields to be indexed.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "catalogs",
+                "indexable-fields"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"type\": \"<string>\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"<string>\",\n          \"facetable\": false,\n          \"sortable\": \"<boolean>\",\n          \"locale\": \"en\",\n          \"stem\": \"<boolean>\",\n          \"token_separators\": [\n            \"<string>\",\n            \"<string>\"\n          ],\n          \"symbols_to_index\": [\n            \"<string>\",\n            \"<string>\"\n          ]\n        },\n        {\n          \"name\": \"<string>\",\n          \"facetable\": false,\n          \"sortable\": \"<boolean>\",\n          \"locale\": \"en\",\n          \"stem\": \"<boolean>\",\n          \"token_separators\": [\n            \"<string>\",\n            \"<string>\"\n          ],\n          \"symbols_to_index\": [\n            \"<string>\",\n            \"<string>\"\n          ]\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"<string>\",\n          \"stem\": \"<boolean>\",\n          \"token_separators\": [\n            \"<string>\",\n            \"<string>\"\n          ],\n          \"symbols_to_index\": [\n            \"<string>\",\n            \"<string>\"\n          ],\n          \"sortable\": \"<boolean>\"\n        },\n        {\n          \"name\": \"<string>\",\n          \"stem\": \"<boolean>\",\n          \"token_separators\": [\n            \"<string>\",\n            \"<string>\"\n          ],\n          \"symbols_to_index\": [\n            \"<string>\",\n            \"<string>\"\n          ],\n          \"sortable\": \"<boolean>\"\n        }\n      ],\n      \"token_separators\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"symbols_to_index\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "cc516114-5689-48ba-b8b3-1aeaafd70923",
+              "name": "Successfully created indexable fields",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"805103ff-0a37-4f83-8fe0-95a16039bd98\",\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"type\": \"string\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"type\": \"string\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"type\": \"string\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    },\n    \"meta\": {\n      \"owner\": \"organization\"\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "13db461e-365f-4730-be0a-88763b9b5986",
+              "name": "Bad request - invalid search parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "4b6df2c1-b6f3-4d1b-905d-2c8ad2aa6427",
+              "name": "Conflict - reindexing job queued or in progress",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "135c5e08-ddfd-4ba2-8f67-15073268defd",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "67a66205-aa03-49bc-bceb-3f364e9f1af8",
+          "name": "List indexable fields",
+          "request": {
+            "name": "List indexable fields",
+            "description": {
+              "content": "List indexable fields.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "catalogs",
+                "indexable-fields"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "a846a926-4268-44e3-b648-5ae58aac59b0",
+              "name": "List indexable fields",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": \"805103ff-0a37-4f83-8fe0-95a16039bd98\",\n      \"type\": \"catalog_search_indexable_fields\",\n      \"attributes\": {\n        \"fields\": [\n          {\n            \"name\": \"extensions.products(clothing).color\",\n            \"type\": \"string\",\n            \"facetable\": false,\n            \"sortable\": false,\n            \"locale\": \"en\"\n          },\n          {\n            \"name\": \"shopper_attributes.fabric\",\n            \"type\": \"string\",\n            \"facetable\": false,\n            \"sortable\": false\n          },\n          {\n            \"name\": \"admin_attributes.internal_grade\",\n            \"type\": \"string\",\n            \"sortable\": true\n          }\n        ],\n        \"core_field_overrides\": [\n          {\n            \"name\": \"name\",\n            \"stem\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"token_separators\": [\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            ],\n            \"symbols_to_index\": [\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            ],\n            \"sortable\": true\n          },\n          {\n            \"name\": \"name\",\n            \"stem\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"token_separators\": [\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            ],\n            \"symbols_to_index\": [\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            ],\n            \"sortable\": true\n          }\n        ],\n        \"token_separators\": [\n          \"s\",\n          \"s\"\n        ],\n        \"symbols_to_index\": [\n          \"s\",\n          \"s\"\n        ]\n      },\n      \"meta\": {\n        \"owner\": \"organization\"\n      }\n    },\n    {\n      \"id\": \"805103ff-0a37-4f83-8fe0-95a16039bd98\",\n      \"type\": \"catalog_search_indexable_fields\",\n      \"attributes\": {\n        \"fields\": [\n          {\n            \"name\": \"extensions.products(clothing).color\",\n            \"type\": \"string\",\n            \"facetable\": false,\n            \"sortable\": false,\n            \"locale\": \"en\"\n          },\n          {\n            \"name\": \"shopper_attributes.fabric\",\n            \"type\": \"string\",\n            \"facetable\": false,\n            \"sortable\": false\n          },\n          {\n            \"name\": \"admin_attributes.internal_grade\",\n            \"type\": \"string\",\n            \"sortable\": true\n          }\n        ],\n        \"core_field_overrides\": [\n          {\n            \"name\": \"name\",\n            \"stem\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"token_separators\": [\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            ],\n            \"symbols_to_index\": [\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            ],\n            \"sortable\": true\n          },\n          {\n            \"name\": \"name\",\n            \"stem\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"token_separators\": [\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            ],\n            \"symbols_to_index\": [\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            ],\n            \"sortable\": true\n          }\n        ],\n        \"token_separators\": [\n          \"s\",\n          \"s\"\n        ],\n        \"symbols_to_index\": [\n          \"s\",\n          \"s\"\n        ]\n      },\n      \"meta\": {\n        \"owner\": \"organization\"\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "830736a2-f000-4e6e-9a25-a58b6b572ccf",
+              "name": "Bad request - invalid search parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "7b1771c8-8abc-48c6-937e-8a5edc19746c",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "12155992-c073-42ab-86da-76bc509c4685",
+          "name": "Get indexable fields",
+          "request": {
+            "name": "Get indexable fields",
+            "description": {
+              "content": "Get additional fields to be indexed.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "catalogs",
+                "indexable-fields",
+                ":indexable_fields_id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "indexable_fields_id",
+                  "description": "(Required) The unique ID of the indexable fields"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "3aab0e12-44d4-41d1-a76f-32d348ae5ae5",
+              "name": "Get indexable fields",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"805103ff-0a37-4f83-8fe0-95a16039bd98\",\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"type\": \"string\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"type\": \"string\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"type\": \"string\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    },\n    \"meta\": {\n      \"owner\": \"organization\"\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "dd868a09-fed8-4e66-88e0-538a4794ca04",
+              "name": "Bad request - invalid search parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "bce213ce-f9d6-486a-bd3e-5da29083dc69",
+              "name": "Indexable fields not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "23bec75d-b7f4-4997-a446-e5a116bbc7a6",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "16417c7c-c60b-45a6-8d89-2941c74fba23",
+          "name": "Update indexable fields",
+          "request": {
+            "name": "Update indexable fields",
+            "description": {
+              "content": "Update additional fields to be indexed.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "catalogs",
+                "indexable-fields",
+                ":indexable_fields_id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "indexable_fields_id",
+                  "description": "(Required) The unique ID of the indexable fields"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"id\": \"<uuid>\",\n    \"type\": \"<string>\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"<string>\",\n          \"facetable\": false,\n          \"sortable\": \"<boolean>\",\n          \"locale\": \"en\",\n          \"stem\": \"<boolean>\",\n          \"token_separators\": [\n            \"<string>\",\n            \"<string>\"\n          ],\n          \"symbols_to_index\": [\n            \"<string>\",\n            \"<string>\"\n          ]\n        },\n        {\n          \"name\": \"<string>\",\n          \"facetable\": false,\n          \"sortable\": \"<boolean>\",\n          \"locale\": \"en\",\n          \"stem\": \"<boolean>\",\n          \"token_separators\": [\n            \"<string>\",\n            \"<string>\"\n          ],\n          \"symbols_to_index\": [\n            \"<string>\",\n            \"<string>\"\n          ]\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"<string>\",\n          \"stem\": \"<boolean>\",\n          \"token_separators\": [\n            \"<string>\",\n            \"<string>\"\n          ],\n          \"symbols_to_index\": [\n            \"<string>\",\n            \"<string>\"\n          ],\n          \"sortable\": \"<boolean>\"\n        },\n        {\n          \"name\": \"<string>\",\n          \"stem\": \"<boolean>\",\n          \"token_separators\": [\n            \"<string>\",\n            \"<string>\"\n          ],\n          \"symbols_to_index\": [\n            \"<string>\",\n            \"<string>\"\n          ],\n          \"sortable\": \"<boolean>\"\n        }\n      ],\n      \"token_separators\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"symbols_to_index\": [\n        \"<string>\",\n        \"<string>\"\n      ]\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "66ce7d39-b6fd-497c-8251-ae11b95e9238",
+              "name": "Successfully updated indexable fields",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"805103ff-0a37-4f83-8fe0-95a16039bd98\",\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"805103ff-0a37-4f83-8fe0-95a16039bd98\",\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"type\": \"string\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"type\": \"string\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"type\": \"string\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    },\n    \"meta\": {\n      \"owner\": \"organization\"\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "3bd05028-f0f3-4edd-b05a-47a68ea7edc5",
+              "name": "Bad request - invalid search parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"805103ff-0a37-4f83-8fe0-95a16039bd98\",\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "35700f2e-f2ae-4a4f-ad5b-0e803ed22aff",
+              "name": "Permission denied - indexable fields owned by the organization",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"805103ff-0a37-4f83-8fe0-95a16039bd98\",\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "78f93286-7210-405f-8c21-2aa245ba4692",
+              "name": "Indexable fields not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"805103ff-0a37-4f83-8fe0-95a16039bd98\",\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "fd047c98-dbce-4087-b00f-af0ef016e08b",
+              "name": "Conflict - reindexing job queued or in progress",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"805103ff-0a37-4f83-8fe0-95a16039bd98\",\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d49976a5-a400-422f-aec8-3bc2b3f3f8f9",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"805103ff-0a37-4f83-8fe0-95a16039bd98\",\n    \"type\": \"catalog_search_indexable_fields\",\n    \"attributes\": {\n      \"fields\": [\n        {\n          \"name\": \"extensions.products(clothing).color\",\n          \"facetable\": false,\n          \"sortable\": false,\n          \"locale\": \"en\"\n        },\n        {\n          \"name\": \"shopper_attributes.fabric\",\n          \"facetable\": false,\n          \"sortable\": false\n        },\n        {\n          \"name\": \"admin_attributes.internal_grade\",\n          \"sortable\": true\n        }\n      ],\n      \"core_field_overrides\": [\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        },\n        {\n          \"name\": \"name\",\n          \"stem\": true,\n          \"token_separators\": [\n            \"s\",\n            \"s\"\n          ],\n          \"symbols_to_index\": [\n            \"s\",\n            \"s\"\n          ],\n          \"sortable\": true\n        }\n      ],\n      \"token_separators\": [\n        \"s\",\n        \"s\"\n      ],\n      \"symbols_to_index\": [\n        \"s\",\n        \"s\"\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "9e097b59-e363-4a15-9246-8c174a380863",
+          "name": "Delete indexable fields",
+          "request": {
+            "name": "Delete indexable fields",
+            "description": {
+              "content": "Delete additional fields to be indexed.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "catalogs",
+                "indexable-fields",
+                ":indexable_fields_id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "indexable_fields_id",
+                  "description": "(Required) The unique ID of the indexable fields"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "DELETE",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "071e47c6-bf08-489a-a33f-01e83ecd96a0",
+              "name": "Successfully deleted indexable fields",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "d563a98e-fe95-4568-8b73-e4f0d0f2220f",
+              "name": "Bad request - invalid search parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "37a635d9-1ac6-4efd-91a3-c34d5a93620c",
+              "name": "Permission denied - indexable fields owned by the organization",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "f382ac05-47a4-400e-8351-4f6bce79cbb3",
+              "name": "Conflict - reindexing job queued or in progress",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "48a82b45-df3b-44f7-a67e-be3a906144b8",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "indexable-fields",
+                    ":indexable_fields_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "indexable_fields_id",
+                      "description": "(Required) The unique ID of the indexable fields"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://useast.api.elasticpath.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "cb84b329-6cf0-40f1-8fc8-1342d14c4da7",
+    "name": "Addresses Introduction Account Addresses Indexable Fields API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.\n\nYou can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.\n\n\nContact Support:\n Name: Elastic Path\n Email: support@elasticpath.com",
+      "type": "text/plain"
+    }
+  }
+}

@@ -1,0 +1,1642 @@
+{
+  "item": [
+    {
+      "id": "b0b3b907-56b4-4313-89a3-2378f5571400",
+      "name": "Payments",
+      "description": {
+        "content": "When you [checkout](/docs/api/carts/checkout) a [cart](/docs/api/carts/cart-management), an unpaid [order](/docs/api/carts/orders) is returned. You can process the payment for the order though a payment gateway.\n\n:::note\n\n- You need to configure and enable a payment gateway before you can accept payments for orders.\n- Configure your store to use [Manual Gateway](/docs/api/payments/update-manual-gateway) to process payments if the order total is zero or the payment is through non-supported payment providers.\n- There are a number of actions that happen to your inventory when checking out and paying for an order. For more information, see [Inventory](/docs/api/pxm/inventory/inventories-introduction).\n- We recommend to wait until the payment confirmation process is fully completed before proceeding with any additional updates to the order. Making simultaneous updates to the same entity immediately after payment confirmation can lead to a race condition. To learn more information on handling parallel calls to API objects, see [Parallel Calls to API Objects](/guides/Getting-Started/api-contract#parallel-calls-to-api-objects).\n\n:::\n\n### Payment Methods\n\nDepending on the chosen gateway, you may or may not have access to capture funds immediately or authorize for later payment.\n\nTo make a partial payment in Postman through any payment gateway, specify the desired payment amount in the amount field within the request body. To learn about Split Payments, see the [Split Payments](/docs/api/payments/payment-gateways-introduction#split-payments) section.\n\n#### Purchase\n\nThe simplest method is purchase. The gateway attempts to charge the customer immediately, and the result of the attempt is returned.\n\nYou can partially pay funds using purchase method. The gateway attempts to charge the customer immediately, and the payment status for an order shows `partially_paid`.\n\nWhen you Get an order, you can see the following fields in the `meta` object:\n\n- `balance_owing`: Specifies the outstanding funds required to complete an order. It considers all complete or pending transactions, including authorized, paid, and captured transactions. (`balance_owing` = order total - `authorized` amount - `paid` amount).\n- `paid`: Specifies the total amount of purchased or captured transactions.\n- `authorized`: Specifies the total amount of completed or pending authorized transactions for an order.\n\n#### Authorize\n\nYou can `authorize` a payment so funds can later be captured when an item is dispatched or restocked.\n\nYou can partially pay for an order using `authorize` payment method so that the order is `partially_authorized`. The transaction must be complete for the order status to be `partially_authorized`.\n\nFor more information about order and payment statuses for split payments, see [Split Payments](/docs/api/payments/payment-gateways-introduction#split-payments).\n\n#### Capture\n\nAfter authorizing a transaction, you have to capture the authorized funds.\n\n:::note\n\nWe recommend capturing payments several hours to days after the authorization to mitigate risks of fraud and chargebacks. When you sell digital goods that are delivered immediately, we recommend using a single purchase call instead of separate authorize and capture calls.\n\n:::\n\nAfter the payment is `partially_authorized`, you must `capture` the authorized transaction later. Once you capture the authorized transactions, the order payment status will change to `partially_paid`.\n\n#### Refunds\n\nYou can use either the Refund through Composable Commerce or use the Mark as Refunded capability, or a combination of both capabilities.\n\nFor more information about refund for split payments, see [Refund a Payment](/docs/api/carts/refund-a-transaction).\n\n#### Refund through Composable Commerce\n\nYou can start a full or partial refund to a supported payment provider directly from Commerce Manager or the API. When you start the refund process, the refund request is sent to the payment gateway. You no longer have to log on to your payment gateway's console to process the refund.\n\nWhen you process a refund, use the refund endpoint to pass the refund amount. If you don't pass an amount, the refund is processed as Mark as refunded. For more information, see the Mark as Refunded section.\n\nEach time a partial refund is triggered, the transaction.updated event is generated and updated with refunded.amount. The `order.updated` event is also triggered. The `order.refunded` event generates when the full amount is refunded.\n\n\n#### Mark as Refunded\n\nYou can use your payment gateway's console to process a refund. Process the refund first in the payment gateway and then use the **Mark as Refunded** capability in Composable Commerce to complete the process.\n\nWhen an order is **Marked as refunded**, the payment status `order.payment.status` is set to `refunded`. In this case, the `order.updated`, `transaction.updated` and `order.refunded` events are generated.\n",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "2b76e689-5c88-45c0-a314-05b7aaeb7339",
+          "name": "Create Stripe Payment Intent for a Cart",
+          "request": {
+            "name": "Create Stripe Payment Intent for a Cart",
+            "description": {
+              "content": "The Cart Payment Intent feature enables the creation of a Stripe Payment Intent specifically tied to a shopping cart and its subsequent order. This allows Payment Intent users to track payment details from the cart stage and seamlessly maintain consistency in payment information throughout the order stage. Using these features, you can create Payment Intents for their carts, update Payment Intents with final cart details, and synchronize Payment Intents from Stripe to Commerce.\n\n:::note\n\n- Typically, in Commerce, inventory is allocated at the time of payment initiation after an order is created. However, in the case of Cart Payment Intent, information about the payment is received only upon synchronizing the order from Stripe to Commerce. This may happen after the payment is completed. Therefore, there might be a delay between the payment made and allocation, increasing the chance of paying for items that are not in stock.\n- There are certain fields you can choose to set up when [creating a payment intent](https://stripe.com/docs/api/payment_intents/create). However, if you decide to update a payment intent, the available options may not be the same as those allowed while creating a payment intent. See [updating a payment intent](https://stripe.com/docs/api/payment_intents/update).\n\n:::\n\nThe following steps outline the workflow associated with the Payment Intent:\n\n1. [Add items to cart](/docs/api/carts/manage-carts#add-custom-item-to-cart).\n1. [Create a Payment Intent for the cart](/docs/api/carts/create-cart-payment-intent). The Payment Intent is created in Stripe, reflecting the cart and transaction details, including currency, amounts, payment type, and any optional Stripe details. The Payment Intent ID is generated and linked to the cart.\n1. [Update a Payment Intent](/docs/carts-orders/update-cart-payment-intent). This step is optional but becomes necessary when there are changes in the cart details at the time of payment. It ensures the Payment Intent accurately reflects the current cart details when processing the payments on the front end.\n1. [Checkout the cart](/docs/api/carts/checkout). An unpaid order is created, and the Payment Intent ID is linked to the order.\n1. [Confirm the order](/docs/carts-orders/confirm-an-order). This is important because after checkout, it is essential to confirm the Payment Intent and synchronize it with Commerce. This results in a corresponding transaction and change in order statuses in Commerce. Additionally, the Payment Intent ID is removed from the order once it is linked via the transaction.\n\n### Best Practices\n\nWe recommend you follow these practices to maintain consistency and accuracy when using Cart Payment Intent.\n\n- After checkout, we recommend clearing the shopping cart. You can achieve this using a [Delete a cart](/docs/api/carts/delete-a-cart) endpoint or [Update a cart](/docs/api/carts/update-a-cart) to remove the Payment Intent ID. This helps to avoid potential issues where subsequent checkouts for the same cart might unintentionally use the previous Stripe Payment Intent ID.\n- If it is not reasonable to clear the cart immediately after checkout due to several subsequent, duplicate checkouts to the same cart, ensure that you only synchronize the Payment Intent when finalizing the order. Each order confirmation is unaware of the others, and syncing Payment Intent IDs for each confirmation can lead to duplicate transactions in Commerce. In other words, if you synchronize Payment Intents for earlier versions of a repeated checkout, you'll end up with multiple orders from the same cart, each having transactions linked to the same Payment Intent.\n- To pay the entire amount at once, use the [Update Cart Payment Intent](/docs/carts-orders/update-cart-payment-intent) endpoint to update the Stripe Payment Intent with the final cart details when preparing to take the payment. Doing so, ensures that the Payment Intent accurately reflects the current cart details when processing payments on the front end. We do not recommend calling the [Update Cart Payment Intent](/docs/carts-orders/update-cart-payment-intent) for each individual change in the cart, as this can lead to more requests and may slow down the front-end performance.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "carts",
+                ":cartID",
+                "payments"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "cartID",
+                  "description": "(Required) The universally unique identifier of the cart for which you want to create a payment intent."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"gateway\": \"<string>\",\n    \"method\": \"<string>\",\n    \"amount\": \"<number>\",\n    \"options\": {\n      \"receipt_email\": \"<string>\",\n      \"automatic_payment_methods\": {\n        \"enabled\": \"<boolean>\"\n      }\n    },\n    \"payment_method_types\": [\n      \"<string>\",\n      \"<string>\"\n    ],\n    \"payment\": \"<string>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "66f22e10-311d-475a-ae56-953c5b880d70",
+              "name": "Payment Intent created successfully.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "carts",
+                    ":cartID",
+                    "payments"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "cartID",
+                      "description": "(Required) The universally unique identifier of the cart for which you want to create a payment intent."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"gateway\": \"elastic_path_payments_stripe\",\n    \"method\": \"purchase\",\n    \"options\": {\n      \"automatic_payment_methods\": {\n        \"enabled\": true\n      },\n      \"receipt_email\": \"john@example.com\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"string\",\n    \"name\": \"cart name\",\n    \"description\": \"cart description\",\n    \"contact\": {\n      \"email\": \"tester@email.com\"\n    },\n    \"discount_settings\": {\n      \"custom_discounts_enabled\": false,\n      \"use_rule_promotions\": false\n    },\n    \"inventory_settings\": {\n      \"defer_inventory_check\": false\n    },\n    \"item_settings\": {\n      \"separate_items_by_location\": false\n    },\n    \"payment_intent_id\": \"string\",\n    \"custom_attributes\": {\n      \"key_0\": {\n        \"type\": \"float\",\n        \"value\": 4830.997600312965\n      },\n      \"key_1\": {\n        \"type\": \"string\",\n        \"value\": 2660.5857637218824\n      }\n    },\n    \"snapshot_date\": \"1970-08-31T01:54:13.941Z\",\n    \"links\": {\n      \"self\": \"string\"\n    },\n    \"meta\": {\n      \"display_price\": {\n        \"with_tax\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"without_tax\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"tax\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"discount\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"without_discount\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"shipping\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"shipping_discount\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        }\n      },\n      \"timestamps\": {\n        \"created_at\": \"string\",\n        \"updated_at\": \"string\",\n        \"expires_at\": \"string\"\n      },\n      \"promotion_suggestions\": [\n        {\n          \"bundle\": [\n            {\n              \"auto_add_free_gift\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"cart_item_id\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"quantity\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"targets\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"key_0\": false\n            },\n            {\n              \"auto_add_free_gift\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"cart_item_id\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"quantity\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"targets\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"key_0\": 131\n            }\n          ],\n          \"code\": \"string\",\n          \"info\": \"string\",\n          \"message\": \"string\",\n          \"promotion_id\": \"string\"\n        },\n        {\n          \"bundle\": [\n            {\n              \"auto_add_free_gift\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"cart_item_id\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"quantity\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"targets\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            {\n              \"auto_add_free_gift\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"cart_item_id\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"quantity\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"targets\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"key_0\": \"string\"\n            }\n          ],\n          \"code\": \"string\",\n          \"info\": \"string\",\n          \"message\": \"string\",\n          \"promotion_id\": \"string\"\n        }\n      ]\n    },\n    \"relationships\": {\n      \"customers\": {\n        \"data\": [\n          {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        ]\n      },\n      \"items\": {\n        \"data\": [\n          {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        ]\n      },\n      \"accounts\": {\n        \"data\": [\n          {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        ]\n      },\n      \"custom_discounts\": {\n        \"data\": [\n          {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        ]\n      },\n      \"promotions\": {\n        \"data\": [\n          {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        ]\n      }\n    },\n    \"type\": \"string\"\n  },\n  \"included\": {\n    \"custom_discounts\": [\n      {\n        \"type\": \"string\",\n        \"id\": \"662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9\",\n        \"external_id\": \"custom-discount-external-id\",\n        \"discount_engine\": \"Custom Discount Engine\",\n        \"amount\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"description\": \"Custom discount description\",\n        \"discount_code\": \"cart-custom-promo-code\",\n        \"relationships\": {\n          \"item\": {\n            \"data\": {\n              \"id\": \"a0f69bca-65aa-c5b0-6221-8fbf4b89bae9\",\n              \"type\": \"custom_item\"\n            }\n          }\n        }\n      },\n      {\n        \"type\": \"string\",\n        \"id\": \"662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9\",\n        \"external_id\": \"custom-discount-external-id\",\n        \"discount_engine\": \"Custom Discount Engine\",\n        \"amount\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"description\": \"Custom discount description\",\n        \"discount_code\": \"cart-custom-promo-code\",\n        \"relationships\": {\n          \"item\": {\n            \"data\": {\n              \"id\": \"f5efe1be-3382-2c41-b85e-a17649ee398b\",\n              \"type\": \"cart_item\"\n            }\n          }\n        }\n      }\n    ],\n    \"promotions\": [\n      {\n        \"type\": \"promotion\",\n        \"id\": \"662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9\",\n        \"name\": \"Summer Sale\",\n        \"description\": \"Get 20% off all summer items\",\n        \"automatic\": true,\n        \"promotion_type\": \"discount\",\n        \"promotion_source\": \"rule-promotion\",\n        \"start\": \"2024-06-01T00:00:00Z\",\n        \"end\": \"2024-08-31T23:59:59Z\"\n      },\n      {\n        \"type\": \"promotion\",\n        \"id\": \"662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9\",\n        \"name\": \"Summer Sale\",\n        \"description\": \"Get 20% off all summer items\",\n        \"automatic\": true,\n        \"promotion_type\": \"discount\",\n        \"promotion_source\": \"rule-promotion\",\n        \"start\": \"2024-06-01T00:00:00Z\",\n        \"end\": \"2024-08-31T23:59:59Z\"\n      }\n    ]\n  },\n  \"meta\": {\n    \"payment_intent\": {\n      \"key_0\": \"string\",\n      \"key_1\": 4710,\n      \"key_2\": 17.194478178698127,\n      \"key_3\": \"string\"\n    }\n  },\n  \"errors\": [\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"bg6T-cc5lDV@QSGhJujaWPcbgGMHOtTdzPo.nzxd\",\n        \"component_product_id\": \"e65da317-3647-d001-f8c5-b85de71d54de\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    },\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"skzrOpPkImPWKJa@FZqqJ.sac\",\n        \"component_product_id\": \"e0cfb44f-642e-b8bb-716f-5410b9ccf1a4\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "de4a0fd9-b145-4988-9f8c-82029998354e",
+          "name": "Payments",
+          "request": {
+            "name": "Payments",
+            "description": {
+              "content": "Depending on the payment gateway, you may have access to different transaction types such as capturing funds immediately or authorizing them for later. For more information, see [Payments](/docs/api/carts/payments).\n\nThe following types of payment methods are available depending on the payment gateway:\n\n- `purchase`: This is the simplest method. The gateway attempts to charge the customer immediately.\n- `authorize`: This method authorizes a payment so that funds can be captured later, for example, when an item is dispatched or restocked.\n- `purchase_setup`: This method prepares the system for a purchase by verifying payment details without actually charging the customer. For example, a customer adds items to their cart and proceeds to checkout. Before finalizing the purchase, the system runs `purchase_setup` to confirm all payment details, but no funds are transferred until the customer confirms the order.\n- `authorize_setup`: This method prepares the system for an authorization-only transaction. This process holds the necessary funds but does not transfer them, ensuring that the customer has sufficient balance for the transaction. It sets up the conditions for a future capture of the authorized funds. For example, a customer places a pre-order for a product that will ship in two weeks. The merchant uses `authorize_setup` to prepare for the payment authorization. This holds the customer's funds to ensure they can cover the purchase but waits to capture the payment until the product ships. This ensures that payment is secured but not collected prematurely.\n\n:::note\n\nSplit payments can be performed using any methods for any gateway.\n\n- You can partially pay funds using `purchase` method. The gateway attempts to charge the customer immediately, and the payment status for an order will show `partially_paid`\n- You can partially pay for an order using `authorize` method where the order will be marked as `partially_authorized`. The transaction must be completed for the order status to be `partially_authorized`.\n- A `purchase_setup` method allows verification of payment details for partial payments without transferring funds until the customer confirms the full order.\n- An `authorize_setup` method can be used to hold a partial amount of the total funds, ensuring the customer has enough balance for a future capture.\nUntil a payment is made neither `purchase_setup` nor `authorize_setup` affects the payment statuses, and the order remains unpaid. For more information about order and payment statuses for split payments, see [Split payments](/docs/api/payments/payment-gateways-introduction#split-payments).\n\n:::\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "orders",
+                ":orderID",
+                "payments"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "orderID",
+                  "description": "(Required) The Universally Unique Identifier (UUID) of the order you want to pay for."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"gateway\": \"<string>\",\n    \"method\": \"<string>\",\n    \"payment\": \"<string>\",\n    \"amount\": \"<number>\",\n    \"options\": {\n      \"shopper_reference\": \"<string>\",\n      \"recurring_processing_model\": \"<string>\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "627b9917-0072-4a68-8a0a-91f37b3c6673",
+              "name": "OK",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "payments"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The Universally Unique Identifier (UUID) of the order you want to pay for."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"gateway\": \"paypal_express_checkout\",\n    \"method\": \"authorize_setup\",\n    \"payment\": \"string\",\n    \"amount\": 10000,\n    \"options\": {\n      \"shopper_reference\": \"string\",\n      \"recurring_processing_model\": \"string\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"ed6b5658-9506-2747-32a4-aff430b27708\",\n    \"reference\": \"manual\",\n    \"name\": \"payment method name\",\n    \"custom_reference\": \"custom reference\",\n    \"gateway\": \"stripe_payment_intents\",\n    \"amount\": 10000,\n    \"refunded_amount\": 0,\n    \"currency\": \"USD\",\n    \"transaction_type\": \"refund\",\n    \"type\": \"string\",\n    \"status\": \"complete\",\n    \"payment_details\": {\n      \"detailed_status\": \"string\"\n    },\n    \"failure_details\": {\n      \"code\": \"2\",\n      \"reason\": \"This transaction has been declined.\"\n    },\n    \"payment_intent\": {\n      \"key_0\": 2924.097808028414,\n      \"key_1\": 3348\n    },\n    \"capture_mechanism\": \"automatic\",\n    \"refund_mechanism\": \"manual\",\n    \"client_parameters\": {\n      \"redirect_url\": \"string\",\n      \"secret\": \"string\",\n      \"token\": \"string\"\n    },\n    \"next_actions\": [\n      \"string\",\n      \"string\"\n    ],\n    \"relationships\": {\n      \"order\": {\n        \"data\": {\n          \"type\": \"order\",\n          \"id\": \"5601a4b1-9d13-42d3-8fb7-03b35169d1b6\"\n        }\n      }\n    },\n    \"meta\": {\n      \"display_price\": {\n        \"amount\": 10000,\n        \"currency\": \"USD\",\n        \"formatted\": \"$10.00\"\n      },\n      \"display_refunded_amount\": {\n        \"total\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        }\n      },\n      \"timestamps\": {\n        \"created_at\": \"string\",\n        \"updated_at\": \"string\"\n      }\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "45718911-43da-4c4c-89d5-5118f81fd5b0",
+              "name": "Bad Request",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "payments"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The Universally Unique Identifier (UUID) of the order you want to pay for."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"gateway\": \"paypal_express_checkout\",\n    \"method\": \"authorize_setup\",\n    \"payment\": \"string\",\n    \"amount\": 10000,\n    \"options\": {\n      \"shopper_reference\": \"string\",\n      \"recurring_processing_model\": \"string\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"detail\": \"Request could not be processed\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "e02199d5-81af-4b76-a60e-41cd880da8dc",
+              "name": "Conflict",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "payments"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The Universally Unique Identifier (UUID) of the order you want to pay for."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"gateway\": \"paypal_express_checkout\",\n    \"method\": \"authorize_setup\",\n    \"payment\": \"string\",\n    \"amount\": 10000,\n    \"options\": {\n      \"shopper_reference\": \"string\",\n      \"recurring_processing_model\": \"string\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"yqJI8jDqn@GnLtJMqrhzrUluo.nyuj\",\n        \"component_product_id\": \"b6b69885-3c14-2055-468b-7a5af999ac40\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    },\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"nkn51Q@DeVBpfvmBIHlxx.fzs\",\n        \"component_product_id\": \"c5d01e9f-7487-78df-3836-05e907235f4f\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "087470bc-adbc-4dba-b1ff-f750750599ac",
+              "name": "Unprocessable Entity",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "payments"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The Universally Unique Identifier (UUID) of the order you want to pay for."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"gateway\": \"paypal_express_checkout\",\n    \"method\": \"authorize_setup\",\n    \"payment\": \"string\",\n    \"amount\": 10000,\n    \"options\": {\n      \"shopper_reference\": \"string\",\n      \"recurring_processing_model\": \"string\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+              "code": 422,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"yqJI8jDqn@GnLtJMqrhzrUluo.nyuj\",\n        \"component_product_id\": \"b6b69885-3c14-2055-468b-7a5af999ac40\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    },\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"nkn51Q@DeVBpfvmBIHlxx.fzs\",\n        \"component_product_id\": \"c5d01e9f-7487-78df-3836-05e907235f4f\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "0cd2d702-3c7f-4b38-8cae-edac63bf440b",
+          "name": "Confirm Payment",
+          "request": {
+            "name": "Confirm Payment",
+            "description": {
+              "content": "Confirm Payment serves as a mechanism to synchronize transaction information from the third-party payment provider back to our system. This ensures that Composable Commerce accurately reflects the values from the payment provider.\n\n### Handling 3D Secure Validations for Stripe Payments\n\nFor Stripe Payments requiring 3D Secure validation, the transaction response will include the `client_parameters` object, which provides credentials to support validation of these payment requests on the payment provider's side. We recommend using the Stripe's client libraries to manage these 3D Secure validations. Once the validation succeeds, proceed with a confirmation request to sync the validated transaction into Composable Commerce and continue with the payment process.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "orders",
+                ":orderID",
+                "transactions",
+                ":transactionID",
+                "confirm"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "orderID",
+                  "description": "(Required) The unique identifier of the order."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "transactionID",
+                  "description": "(Required) The unique identifier of the transaction."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": \"<object>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "b22224ba-f825-408f-9f45-84a9d24549c5",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "transactions",
+                    ":transactionID",
+                    "confirm"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The unique identifier of the order."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "transactionID",
+                      "description": "(Required) The unique identifier of the transaction."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"ed6b5658-9506-2747-32a4-aff430b27708\",\n    \"reference\": \"manual\",\n    \"name\": \"payment method name\",\n    \"custom_reference\": \"custom reference\",\n    \"gateway\": \"stripe_payment_intents\",\n    \"amount\": 10000,\n    \"refunded_amount\": 0,\n    \"currency\": \"USD\",\n    \"transaction_type\": \"refund\",\n    \"type\": \"string\",\n    \"status\": \"complete\",\n    \"payment_details\": {\n      \"detailed_status\": \"string\"\n    },\n    \"failure_details\": {\n      \"code\": \"2\",\n      \"reason\": \"This transaction has been declined.\"\n    },\n    \"payment_intent\": {\n      \"key_0\": 2924.097808028414,\n      \"key_1\": 3348\n    },\n    \"capture_mechanism\": \"automatic\",\n    \"refund_mechanism\": \"manual\",\n    \"client_parameters\": {\n      \"redirect_url\": \"string\",\n      \"secret\": \"string\",\n      \"token\": \"string\"\n    },\n    \"next_actions\": [\n      \"string\",\n      \"string\"\n    ],\n    \"relationships\": {\n      \"order\": {\n        \"data\": {\n          \"type\": \"order\",\n          \"id\": \"5601a4b1-9d13-42d3-8fb7-03b35169d1b6\"\n        }\n      }\n    },\n    \"meta\": {\n      \"display_price\": {\n        \"amount\": 10000,\n        \"currency\": \"USD\",\n        \"formatted\": \"$10.00\"\n      },\n      \"display_refunded_amount\": {\n        \"total\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        }\n      },\n      \"timestamps\": {\n        \"created_at\": \"string\",\n        \"updated_at\": \"string\"\n      }\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "af79124c-bcdd-4aee-98f7-cd572bb6cf03",
+              "name": "Bad Request",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "transactions",
+                    ":transactionID",
+                    "confirm"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The unique identifier of the order."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "transactionID",
+                      "description": "(Required) The unique identifier of the transaction."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"detail\": \"Request could not be processed\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "5e51bee4-e1bf-4649-adce-1469f559b1d4",
+          "name": "Capture a Transaction",
+          "request": {
+            "name": "Capture a Transaction",
+            "description": {
+              "content": "Use this endpoint to capture a previously authorized payment. In this step, you can also pass in a custom reference, such as the payment reference from your chosen gateway.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "orders",
+                ":orderID",
+                "transactions",
+                ":transactionID",
+                "capture"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "orderID",
+                  "description": "(Required) The UUID of the order."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "transactionID",
+                  "description": "(Required) The UUID of the transaction to capture."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"options\": {\n      \"soft_descriptor\": \"<string>\",\n      \"note_to_payer\": \"<string>\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "86238e9d-4fc2-43d5-9c5b-e93fb9875400",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "transactions",
+                    ":transactionID",
+                    "capture"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The UUID of the order."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "transactionID",
+                      "description": "(Required) The UUID of the transaction to capture."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"options\": {\n      \"soft_descriptor\": \"string\",\n      \"note_to_payer\": \"string\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"ed6b5658-9506-2747-32a4-aff430b27708\",\n    \"reference\": \"manual\",\n    \"name\": \"payment method name\",\n    \"custom_reference\": \"custom reference\",\n    \"gateway\": \"stripe_payment_intents\",\n    \"amount\": 10000,\n    \"refunded_amount\": 0,\n    \"currency\": \"USD\",\n    \"transaction_type\": \"refund\",\n    \"type\": \"string\",\n    \"status\": \"complete\",\n    \"payment_details\": {\n      \"detailed_status\": \"string\"\n    },\n    \"failure_details\": {\n      \"code\": \"2\",\n      \"reason\": \"This transaction has been declined.\"\n    },\n    \"payment_intent\": {\n      \"key_0\": 2924.097808028414,\n      \"key_1\": 3348\n    },\n    \"capture_mechanism\": \"automatic\",\n    \"refund_mechanism\": \"manual\",\n    \"client_parameters\": {\n      \"redirect_url\": \"string\",\n      \"secret\": \"string\",\n      \"token\": \"string\"\n    },\n    \"next_actions\": [\n      \"string\",\n      \"string\"\n    ],\n    \"relationships\": {\n      \"order\": {\n        \"data\": {\n          \"type\": \"order\",\n          \"id\": \"5601a4b1-9d13-42d3-8fb7-03b35169d1b6\"\n        }\n      }\n    },\n    \"meta\": {\n      \"display_price\": {\n        \"amount\": 10000,\n        \"currency\": \"USD\",\n        \"formatted\": \"$10.00\"\n      },\n      \"display_refunded_amount\": {\n        \"total\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        }\n      },\n      \"timestamps\": {\n        \"created_at\": \"string\",\n        \"updated_at\": \"string\"\n      }\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "2a9eac51-b901-4024-af5f-837d342d54ee",
+              "name": "Bad Request",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "transactions",
+                    ":transactionID",
+                    "capture"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The UUID of the order."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "transactionID",
+                      "description": "(Required) The UUID of the transaction to capture."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"options\": {\n      \"soft_descriptor\": \"string\",\n      \"note_to_payer\": \"string\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"detail\": \"Request could not be processed\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "7a6655a4-bc78-4eba-aa03-b19ed4307c37",
+          "name": "Refund a Transaction",
+          "request": {
+            "name": "Refund a Transaction",
+            "description": {
+              "content": "There are two ways to refund; through your payment gateway and mark it refunded in Commerce Manager, or directly through Commerce Manager or API.\n\n* Mark as Refunded: You can manually mark a transaction as refunded. Before you can mark the order as refunded, you need to handle the actual refund on your side with your payment provider. Mark as Refunded is a full refund made to the transaction.\n* Refund through Composable Commerce: You can process a full or partial refund to a supported payment provider directly from Commerce Manager or API by providing the refund amount. When you start the refund process, the request is directly sent to the payment gateway.\n\n:::caution\n\nIf you use manual gateway for partial or full refund, you need to handle the actual refund on your side with your payment provider.\n\n:::\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "orders",
+                ":orderID",
+                "transactions",
+                ":transactionID",
+                "refund"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "orderID",
+                  "description": "(Required) The UUID of the order."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "transactionID",
+                  "description": "(Required) The UUID of the transaction you want to refund."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"amount\": \"<number>\",\n    \"options\": {\n      \"note\": \"<string>\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "3020e4d7-f7d6-42b8-a94f-01ccf6ed89b8",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "transactions",
+                    ":transactionID",
+                    "refund"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The UUID of the order."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "transactionID",
+                      "description": "(Required) The UUID of the transaction you want to refund."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"amount\": 1000,\n    \"options\": {\n      \"note\": \"string\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"ed6b5658-9506-2747-32a4-aff430b27708\",\n    \"reference\": \"manual\",\n    \"name\": \"payment method name\",\n    \"custom_reference\": \"custom reference\",\n    \"gateway\": \"stripe_payment_intents\",\n    \"amount\": 10000,\n    \"refunded_amount\": 0,\n    \"currency\": \"USD\",\n    \"transaction_type\": \"refund\",\n    \"type\": \"string\",\n    \"status\": \"complete\",\n    \"payment_details\": {\n      \"detailed_status\": \"string\"\n    },\n    \"failure_details\": {\n      \"code\": \"2\",\n      \"reason\": \"This transaction has been declined.\"\n    },\n    \"payment_intent\": {\n      \"key_0\": 2924.097808028414,\n      \"key_1\": 3348\n    },\n    \"capture_mechanism\": \"automatic\",\n    \"refund_mechanism\": \"manual\",\n    \"client_parameters\": {\n      \"redirect_url\": \"string\",\n      \"secret\": \"string\",\n      \"token\": \"string\"\n    },\n    \"next_actions\": [\n      \"string\",\n      \"string\"\n    ],\n    \"relationships\": {\n      \"order\": {\n        \"data\": {\n          \"type\": \"order\",\n          \"id\": \"5601a4b1-9d13-42d3-8fb7-03b35169d1b6\"\n        }\n      }\n    },\n    \"meta\": {\n      \"display_price\": {\n        \"amount\": 10000,\n        \"currency\": \"USD\",\n        \"formatted\": \"$10.00\"\n      },\n      \"display_refunded_amount\": {\n        \"total\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        }\n      },\n      \"timestamps\": {\n        \"created_at\": \"string\",\n        \"updated_at\": \"string\"\n      }\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "618c1d93-b345-4bb3-b7d6-f6d26c5f2391",
+              "name": "Bad Request",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "transactions",
+                    ":transactionID",
+                    "refund"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The UUID of the order."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "transactionID",
+                      "description": "(Required) The UUID of the transaction you want to refund."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"amount\": 1000,\n    \"options\": {\n      \"note\": \"string\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"yqJI8jDqn@GnLtJMqrhzrUluo.nyuj\",\n        \"component_product_id\": \"b6b69885-3c14-2055-468b-7a5af999ac40\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    },\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"nkn51Q@DeVBpfvmBIHlxx.fzs\",\n        \"component_product_id\": \"c5d01e9f-7487-78df-3836-05e907235f4f\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "74733694-cda2-477e-bb5d-61277737040d",
+              "name": "Unprocessable Entity",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "transactions",
+                    ":transactionID",
+                    "refund"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The UUID of the order."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "transactionID",
+                      "description": "(Required) The UUID of the transaction you want to refund."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"amount\": 1000,\n    \"options\": {\n      \"note\": \"string\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+              "code": 422,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "9895db03-1615-410f-9ff1-0f7b1612b138",
+          "name": "Get Order Transactions",
+          "request": {
+            "name": "Get Order Transactions",
+            "description": {
+              "content": "Get order transactions",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "orders",
+                ":orderID",
+                "transactions"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "orderID",
+                  "description": "(Required) The unique identifier of the order."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "e5b2f20c-6fd3-4071-b505-2d57e253256b",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "transactions"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The unique identifier of the order."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": \"dde5c5b6-a2bf-9586-c706-d3a6f6ba7393\",\n      \"reference\": \"manual\",\n      \"name\": \"payment method name\",\n      \"custom_reference\": \"custom reference\",\n      \"gateway\": \"stripe_payment_intents\",\n      \"amount\": 10000,\n      \"refunded_amount\": 0,\n      \"currency\": \"USD\",\n      \"transaction_type\": \"authorize\",\n      \"type\": \"string\",\n      \"status\": \"complete\",\n      \"payment_details\": {\n        \"detailed_status\": \"string\"\n      },\n      \"failure_details\": {\n        \"code\": \"2\",\n        \"reason\": \"This transaction has been declined.\"\n      },\n      \"payment_intent\": {\n        \"key_0\": \"string\",\n        \"key_1\": true,\n        \"key_2\": false\n      },\n      \"capture_mechanism\": \"manual\",\n      \"refund_mechanism\": \"manual\",\n      \"client_parameters\": {\n        \"redirect_url\": \"string\",\n        \"secret\": \"string\",\n        \"token\": \"string\"\n      },\n      \"next_actions\": [\n        \"string\",\n        \"string\"\n      ],\n      \"relationships\": {\n        \"order\": {\n          \"data\": {\n            \"type\": \"order\",\n            \"id\": \"5601a4b1-9d13-42d3-8fb7-03b35169d1b6\"\n          }\n        }\n      },\n      \"meta\": {\n        \"display_price\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"display_refunded_amount\": {\n          \"total\": {\n            \"amount\": 10000,\n            \"currency\": \"USD\",\n            \"formatted\": \"$10.00\"\n          }\n        },\n        \"timestamps\": {\n          \"created_at\": \"string\",\n          \"updated_at\": \"string\"\n        }\n      }\n    },\n    {\n      \"id\": \"2a02113d-63f5-0218-c5d6-3e169771b964\",\n      \"reference\": \"manual\",\n      \"name\": \"payment method name\",\n      \"custom_reference\": \"custom reference\",\n      \"gateway\": \"manual\",\n      \"amount\": 10000,\n      \"refunded_amount\": 0,\n      \"currency\": \"USD\",\n      \"transaction_type\": \"purchase\",\n      \"type\": \"string\",\n      \"status\": \"complete\",\n      \"payment_details\": {\n        \"detailed_status\": \"string\"\n      },\n      \"failure_details\": {\n        \"code\": \"2\",\n        \"reason\": \"This transaction has been declined.\"\n      },\n      \"payment_intent\": {\n        \"key_0\": 8934,\n        \"key_1\": 6236.009750850422\n      },\n      \"capture_mechanism\": \"automatic\",\n      \"refund_mechanism\": \"automatic\",\n      \"client_parameters\": {\n        \"redirect_url\": \"string\",\n        \"secret\": \"string\",\n        \"token\": \"string\"\n      },\n      \"next_actions\": [\n        \"string\",\n        \"string\"\n      ],\n      \"relationships\": {\n        \"order\": {\n          \"data\": {\n            \"type\": \"order\",\n            \"id\": \"5601a4b1-9d13-42d3-8fb7-03b35169d1b6\"\n          }\n        }\n      },\n      \"meta\": {\n        \"display_price\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"display_refunded_amount\": {\n          \"total\": {\n            \"amount\": 10000,\n            \"currency\": \"USD\",\n            \"formatted\": \"$10.00\"\n          }\n        },\n        \"timestamps\": {\n          \"created_at\": \"string\",\n          \"updated_at\": \"string\"\n        }\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "dbc9e6d8-624e-46bd-812b-5bf1ad3730b5",
+              "name": "Bad Request",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "transactions"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The unique identifier of the order."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "d3aff396-0dd7-4d4b-9df5-3d87ce603a91",
+          "name": "Get a Transaction",
+          "request": {
+            "name": "Get a Transaction",
+            "description": {
+              "content": "Retrieves a transaction",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "orders",
+                ":orderID",
+                "transactions",
+                ":transactionID"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "orderID",
+                  "description": "(Required) The unique identifier of the order that you require transactions for."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "transactionID",
+                  "description": "(Required) The unique identifier of the transaction."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "06dab648-b632-4726-ad41-981017c86dcf",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "transactions",
+                    ":transactionID"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The unique identifier of the order that you require transactions for."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "transactionID",
+                      "description": "(Required) The unique identifier of the transaction."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"ad5a62ab-3eeb-edce-65ae-e5151331bf1f\",\n    \"reference\": \"manual\",\n    \"name\": \"payment method name\",\n    \"custom_reference\": \"custom reference\",\n    \"gateway\": \"elastic_path_payments_stripe\",\n    \"amount\": 10000,\n    \"refunded_amount\": 0,\n    \"currency\": \"USD\",\n    \"transaction_type\": \"authorize\",\n    \"type\": \"string\",\n    \"status\": \"complete\",\n    \"payment_details\": {\n      \"detailed_status\": \"string\"\n    },\n    \"failure_details\": {\n      \"code\": \"2\",\n      \"reason\": \"This transaction has been declined.\"\n    },\n    \"payment_intent\": {\n      \"key_0\": 52,\n      \"key_1\": 8822,\n      \"key_2\": 9576.241561182429,\n      \"key_3\": 15.592217641455797\n    },\n    \"capture_mechanism\": \"automatic\",\n    \"refund_mechanism\": \"manual\",\n    \"client_parameters\": {\n      \"redirect_url\": \"string\",\n      \"secret\": \"string\",\n      \"token\": \"string\"\n    },\n    \"next_actions\": [\n      \"string\",\n      \"string\"\n    ],\n    \"relationships\": {\n      \"order\": {\n        \"data\": {\n          \"type\": \"order\",\n          \"id\": \"5601a4b1-9d13-42d3-8fb7-03b35169d1b6\"\n        }\n      }\n    },\n    \"meta\": {\n      \"display_price\": {\n        \"amount\": 10000,\n        \"currency\": \"USD\",\n        \"formatted\": \"$10.00\"\n      },\n      \"display_refunded_amount\": {\n        \"total\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        }\n      },\n      \"timestamps\": {\n        \"created_at\": \"string\",\n        \"updated_at\": \"string\"\n      }\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "223812ff-f14b-45d3-82e5-23764ca0cc01",
+          "name": "Cancel a Transaction",
+          "request": {
+            "name": "Cancel a Transaction",
+            "description": {
+              "content": "Use this endpoint to cancel or void a pending or authorized transaction. The transaction can be canceled or voided when it is in `pending` and `completed` statuses.\n\n:::caution\n\nThis endpoint works only for Stripe and PayPal and does not work for manual gateway.\n\n:::\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "orders",
+                ":orderID",
+                "transactions",
+                ":transactionID",
+                "cancel"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "orderID",
+                  "description": "(Required) The unique identifier of the order."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "transactionID",
+                  "description": "(Required) The unique identifier of the transaction to be canceled or voided."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"options\": \"<object>\",\n    \"reason\": \"<string>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "f6b39d84-dd5a-4388-adb6-da6ff654905c",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "transactions",
+                    ":transactionID",
+                    "cancel"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The unique identifier of the order."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "transactionID",
+                      "description": "(Required) The unique identifier of the transaction to be canceled or voided."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"options\": {},\n    \"reason\": \"requested_by_customer\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"ed6b5658-9506-2747-32a4-aff430b27708\",\n    \"reference\": \"manual\",\n    \"name\": \"payment method name\",\n    \"custom_reference\": \"custom reference\",\n    \"gateway\": \"stripe_payment_intents\",\n    \"amount\": 10000,\n    \"refunded_amount\": 0,\n    \"currency\": \"USD\",\n    \"transaction_type\": \"refund\",\n    \"type\": \"string\",\n    \"status\": \"complete\",\n    \"payment_details\": {\n      \"detailed_status\": \"string\"\n    },\n    \"failure_details\": {\n      \"code\": \"2\",\n      \"reason\": \"This transaction has been declined.\"\n    },\n    \"payment_intent\": {\n      \"key_0\": 2924.097808028414,\n      \"key_1\": 3348\n    },\n    \"capture_mechanism\": \"automatic\",\n    \"refund_mechanism\": \"manual\",\n    \"client_parameters\": {\n      \"redirect_url\": \"string\",\n      \"secret\": \"string\",\n      \"token\": \"string\"\n    },\n    \"next_actions\": [\n      \"string\",\n      \"string\"\n    ],\n    \"relationships\": {\n      \"order\": {\n        \"data\": {\n          \"type\": \"order\",\n          \"id\": \"5601a4b1-9d13-42d3-8fb7-03b35169d1b6\"\n        }\n      }\n    },\n    \"meta\": {\n      \"display_price\": {\n        \"amount\": 10000,\n        \"currency\": \"USD\",\n        \"formatted\": \"$10.00\"\n      },\n      \"display_refunded_amount\": {\n        \"total\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        }\n      },\n      \"timestamps\": {\n        \"created_at\": \"string\",\n        \"updated_at\": \"string\"\n      }\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "1f1ee683-33ac-4d46-8a88-adce6dd913bd",
+              "name": "Bad Request",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "orders",
+                    ":orderID",
+                    "transactions",
+                    ":transactionID",
+                    "cancel"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "orderID",
+                      "description": "(Required) The unique identifier of the order."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "transactionID",
+                      "description": "(Required) The unique identifier of the transaction to be canceled or voided."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"options\": {},\n    \"reason\": \"requested_by_customer\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"yqJI8jDqn@GnLtJMqrhzrUluo.nyuj\",\n        \"component_product_id\": \"b6b69885-3c14-2055-468b-7a5af999ac40\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    },\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"nkn51Q@DeVBpfvmBIHlxx.fzs\",\n        \"component_product_id\": \"c5d01e9f-7487-78df-3836-05e907235f4f\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://useast.api.elasticpath.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "951b76be-be72-4cd0-98ea-0688af9cd4f1",
+    "name": "Addresses Introduction Account Addresses Payments API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.\n\nYou can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.\n\n\nContact Support:\n Name: Elastic Path\n Email: support@elasticpath.com",
+      "type": "text/plain"
+    }
+  }
+}

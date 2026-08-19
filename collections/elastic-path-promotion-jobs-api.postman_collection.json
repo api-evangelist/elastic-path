@@ -1,0 +1,530 @@
+{
+  "item": [
+    {
+      "id": "51c20292-3124-4033-b87e-587cd0f2312d",
+      "name": "Promotion Jobs",
+      "description": {
+        "content": "Use Jobs API to initiate a job within a promotion. Jobs operate asynchronously and have a different status based on their progress. The following are the job statuses:\n\n- `pending`: Commerce has received the request but is currently busy processing other requests.\n- `processing`: Commerce has initiated processing the job.\n- `completed`: The job is successfully completed.\n- `failed`: The job has failed.\n- `cancelling`: The job is currently in the process of being canceled. You need to wait for the cancellation process to complete. This occurs prior to the `cancelled` status. For example, if you cancel a big `code_generate` job, it may take some time for the cancellation to complete since part of the cancellation process involves deleting the generated codes.\n- `cancelled` : The job request is canceled.\n\n![Promotion Job Statuses Workflow](/assets/job_status_workflow.png)\n\n### Characteristics of Jobs\n\n- You can only initiate one job at a time within a promotion. If you want to run another job for the same promotion, you must wait until the previous job is `completed` or `failed`. However, you can create new jobs for different promotions even if there are `pending` jobs in other promotions.\n- If you intend to manage promotions with more than 10,000 codes per promotion, we recommend [exporting codes](/docs/api/promotions/create-a-promotion-job) for viewing purposes instead of attempting to view them within Commerce Manager. This recommendation is made due to our enforced maximum page offset limit of 10,000. Altering the page_offset_limit value poses potential performance risks to the platform.\n- A `code_generate` job is initiated even if the maximum allowable number of codes for the promotion has been reached. However, when processed, this job will fail. To view the status of this failed job, you can only do so by passing [GET Jobs](/docs/api/promotions/get-promotion-jobs) request.\n- A limited number of jobs can be processed at a time. Jobs are queued and processed sequentially, one after the other. You can expect a certain delay before job processing.\n",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "9d7f35d2-a957-464b-a65e-2d71d1de0ddb",
+          "name": "Get Promotion Jobs",
+          "request": {
+            "name": "Get Promotion Jobs",
+            "description": {
+              "content": "Retrieves the list of jobs for a specific promotion.\n\nIn the response example, you can see the `result.generated` field, which indicates the number of codes generated during the job processing. Additionally, you may also see the optional `result.deleted` field, indicating the number of codes deleted during the job cancellation. The parameters and result objects are shown only when `job_type` is `code_generate`.\n\n### Filtering\n\nThe following operators and attributes are available when filtering on this endpoint.\n\n| Attribute | Type | Operator | Example |\n| ----------| ----- | -------- | ------ |\n| `job_type` | `string` | `eq` | `eq(job_type, code_export)` |\n| `status` | `string` | `eq` | `eq(status, complete)` |\n\n### Errors\n\nIf an error occurs during job processing, the response includes an optional error field. For example, when you `GET` promotion jobs, the following response shows the details within the error field if an error occurred during job processing.\n\n  ```json\n{\n    \"data\": [\n        {\n            \"type\": \"promotion_job\",\n            \"id\": \"84d86114-a92d-4c34-92f1-3e36ef6cabeb\",\n            \"promotion_id\": \"ad386702-e780-42c6-b190-0527ad768917\",\n            \"job_type\": \"code_generate\",\n            \"name\": \"job\",\n            \"parameters\": {\n                \"number_of_codes\": 1000,\n                \"consume_unit\": \"per_cart\",\n                \"max_uses_per_code\": 1,\n                \"code_length\": 8,\n                \"code_prefix\": \"promo-\"\n            },\n            \"status\": \"failed\",\n            \"error\": \"codes limit exceeded\",\n            \"meta\": {\n                \"timestamps\": {\n                    \"created_at\": \"2023-12-06T13:52:29.587Z\",\n                    \"updated_at\": \"2023-12-06T13:54:49.133Z\"\n                }\n            }\n        }\n    ],\n    \"links\": {\n        \"current\": \"https://useast.api.elasticpath.com/v2/promotions/ad386702-e780-42c6-b190-0527ad768917/jobs?page[offset]=0&page[limit]=25\",\n        \"first\": \"https://useast.api.elasticpath.com/v2/promotions/ad386702-e780-42c6-b190-0527ad768917/jobs?page[offset]=0&page[limit]=25\",\n        \"last\": \"https://useast.api.elasticpath.com/v2/promotions/ad386702-e780-42c6-b190-0527ad768917/jobs?page[offset]=0&page[limit]=25\",\n        \"prev\": \"https://useast.api.elasticpath.com/v2/promotions/ad386702-e780-42c6-b190-0527ad768917/jobs?page[offset]=0&page[limit]=25\",\n        \"next\": \"https://useast.api.elasticpath.com/v2/promotions/ad386702-e780-42c6-b190-0527ad768917/jobs?page[offset]=0&page[limit]=25\"\n    },\n    \"meta\": {\n        \"page\": {\n            \"limit\": 25,\n            \"offset\": 0,\n            \"current\": 1,\n            \"total\": 1\n        },\n        \"results\": {\n            \"total\": 1\n        }\n    }\n}\n```\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "promotions",
+                ":promotionID",
+                "jobs"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "filter",
+                  "value": "<string>",
+                  "description": "Specifies the filter attributes."
+                }
+              ],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "promotionID",
+                  "description": "(Required) The unique identifier of a promotion."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [
+            {
+              "id": "b9fb1edf-7636-49f4-a146-ac07f4d9f8f3",
+              "name": "Successful response",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "promotions",
+                    ":promotionID",
+                    "jobs"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "<string>"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "promotionID",
+                      "description": "(Required) The unique identifier of a promotion."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": "(Required) The Bearer token required to get access to the API.",
+                    "key": "Authorization",
+                    "value": "string"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": \"string\",\n      \"type\": \"promotion_job\",\n      \"promotion_id\": \"string\",\n      \"job_type\": \"string\",\n      \"name\": \"string\",\n      \"parameters\": {},\n      \"status\": \"string\",\n      \"meta\": {\n        \"timestamps\": {\n          \"created_at\": \"2011-11-11T14:46:51.217Z\",\n          \"updated_at\": \"1998-07-21T17:49:34.122Z\"\n        }\n      }\n    },\n    {\n      \"id\": \"string\",\n      \"type\": \"promotion_job\",\n      \"promotion_id\": \"string\",\n      \"job_type\": \"string\",\n      \"name\": \"string\",\n      \"parameters\": {},\n      \"status\": \"string\",\n      \"meta\": {\n        \"timestamps\": {\n          \"created_at\": \"1980-08-07T10:57:29.507Z\",\n          \"updated_at\": \"2024-01-17T17:40:31.642Z\"\n        }\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "83dc6fcf-d17a-45f5-98fc-a3388e6b7057",
+          "name": "Create a Promotion Job",
+          "request": {
+            "name": "Create a Promotion Job",
+            "description": {
+              "content": "Use this endpoint to create an asynchronous job to generate codes and export promotion codes.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "promotions",
+                ":promotionID",
+                "jobs"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "promotionID",
+                  "description": "(Required) The unique identifier of a promotion."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"<string>\",\n  \"job_type\": \"<string>\",\n  \"name\": \"<string>\",\n  \"parameters\": {\n    \"number_of_codes\": \"<integer>\",\n    \"max_uses_per_code\": \"<integer>\",\n    \"consume_unit\": \"<string>\",\n    \"code_prefix\": \"<string>\",\n    \"code_length\": \"<integer>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "6c77c89a-7325-44f4-908b-48b1fb76c68a",
+              "name": "Promotion job created",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "promotions",
+                    ":promotionID",
+                    "jobs"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "promotionID",
+                      "description": "(Required) The unique identifier of a promotion."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": "(Required) The Bearer token required to get access to the API.",
+                    "key": "Authorization",
+                    "value": "string"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"promotion_job\",\n  \"job_type\": \"code_generate\",\n  \"name\": \"Summer Sale Job\",\n  \"parameters\": {\n    \"number_of_codes\": 1,\n    \"max_uses_per_code\": 1,\n    \"consume_unit\": \"per_cart\",\n    \"code_prefix\": \"Summer-\",\n    \"code_length\": 10\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"string\",\n    \"type\": \"promotion_job\",\n    \"promotion_id\": \"string\",\n    \"job_type\": \"string\",\n    \"name\": \"string\",\n    \"parameters\": {},\n    \"status\": \"string\",\n    \"meta\": {\n      \"timestamps\": {\n        \"created_at\": \"1972-08-03T17:55:34.788Z\",\n        \"updated_at\": \"1965-08-08T19:02:37.135Z\"\n      }\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "a28e9311-7f59-4fa9-8c36-9f52d0c804dd",
+          "name": "Cancel a Job",
+          "request": {
+            "name": "Cancel a Job",
+            "description": {
+              "content": "Cancels an asynchronous job whose status is pending or processing.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "promotions",
+                ":promotionID",
+                "jobs",
+                ":jobID",
+                "cancel"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "promotionID",
+                  "description": "(Required) The unique identifier of a promotion."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "jobID",
+                  "description": "(Required) The unique identifier of a job to be canceled."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST"
+          },
+          "response": [
+            {
+              "id": "d6ad8258-6c39-41d8-936c-57da641a3a2b",
+              "name": "Job canceled successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "promotions",
+                    ":promotionID",
+                    "jobs",
+                    ":jobID",
+                    "cancel"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "promotionID",
+                      "description": "(Required) The unique identifier of a promotion."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "jobID",
+                      "description": "(Required) The unique identifier of a job to be canceled."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": "(Required) The Bearer token required to get access to the API.",
+                    "key": "Authorization",
+                    "value": "string"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"string\",\n    \"type\": \"promotion_job\",\n    \"promotion_id\": \"string\",\n    \"job_type\": \"string\",\n    \"name\": \"string\",\n    \"parameters\": {},\n    \"status\": \"string\",\n    \"meta\": {\n      \"timestamps\": {\n        \"created_at\": \"1972-08-03T17:55:34.788Z\",\n        \"updated_at\": \"1965-08-08T19:02:37.135Z\"\n      }\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "f4a690fb-e1c9-4980-8f6c-e4405a634269",
+          "name": "Get Promotion Code Exported File",
+          "request": {
+            "name": "Get Promotion Code Exported File",
+            "description": {
+              "content": "Retrieves exported codes in a CSV format.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "promotions",
+                ":promotionID",
+                "jobs",
+                ":jobID",
+                "file"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "promotionID",
+                  "description": "(Required) The unique identifier of a promotion."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "jobID",
+                  "description": "(Required) The unique identifier of a job associated with the file."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [
+            {
+              "id": "c9e521aa-2135-4da6-bc37-9053e2f51bd3",
+              "name": "Successful response",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "promotions",
+                    ":promotionID",
+                    "jobs",
+                    ":jobID",
+                    "file"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "promotionID",
+                      "description": "(Required) The unique identifier of a promotion."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "jobID",
+                      "description": "(Required) The unique identifier of a job associated with the file."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": "(Required) The Bearer token required to get access to the API.",
+                    "key": "Authorization",
+                    "value": "string"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"href\": \"string\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://useast.api.elasticpath.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "6adeca6e-f25f-4b32-a38c-3b9df1b0dde2",
+    "name": "Addresses Introduction Account Addresses Promotion Jobs API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.\n\nYou can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.\n\n\nContact Support:\n Name: Elastic Path\n Email: support@elasticpath.com",
+      "type": "text/plain"
+    }
+  }
+}

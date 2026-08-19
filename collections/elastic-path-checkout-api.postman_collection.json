@@ -1,0 +1,310 @@
+{
+  "item": [
+    {
+      "id": "84d9842c-4f5b-4185-af18-ddc7b7fad6bc",
+      "name": "Checkout",
+      "description": {
+        "content": "\nThe checkout workflow ties together many of the key concepts covered in this section. When a customer initiates the checkout process, an order is created from the cart. The order is incomplete until after a successful payment is made. A complete order can be shipped and the product deducted from inventory counts.\n\n![Checkout workflow](/assets/checkout-flow.png)\n\n### Summary of the checkout workflow\n\n1. Add a product to a cart. A cart and its reference number is generated.\n2. Manage the cart items. For example, you might add items, remove items, and change quantities.\n3. Check out the cart. An incomplete order is created.\n4. Pay for an order: provide billing and shipping details, if you are a new customer. The order is now in the processing status.\n5. If using a manual gateway, after you authorize and capture it, Composable Commerce considers the order complete. If you use a third-party integration supported by Composable Commerce (such as Stripe), after the third-party gateway authorizes and captures the payment, the order becomes complete. Usually capture does not occur at the same time as authorization. For more information, see the Capture section.\n6. After the order is shipped, you can manually flag it as fulfilled.\n\n### Carts\n\nWhen a product is added to a cart, a cart is generated together with its unique reference ID that on checkout becomes a part of the order ID. If you are using our JavaScript software development kit, generating a cart reference ID is done for you; otherwise, add a cart reference generator to your functionality.\n\n### Promotions and custom items\n\nOptionally, apply a promotion code on a cart, or add custom_items to modify the product price (typically to handle taxes, customs, or shipping).\n\n### Checkout\n\nYou can checkout a cart with an associated customer name and email (customer object). Typically, this would be used for new customers or ones that prefer to shop as guests. Use the `customer.id` checkout option to checkout for an existing customer. After a successful checkout is completed, the response contains an order.\n\nEmail addresses that either begin or end with a period, or contain consecutive periods, are considered invalid, resulting in the following error:\n```json\n\"errors\": [\n  {\n      \"status\": 400,\n      \"source\": \"data.customer.email\",\n      \"title\": \"format\",\n      \"detail\": \"Does not match format 'email'\"\n  }\n]\n  ```\n\n### Payments\n\nOn checkout, an incomplete order is created. You can then use a third-party integration to handle your payment gateway. If the payment gateway is supported by Composable Commerce, such as Stripe, the payment is processed externally but handled internally. When a successful validation is returned, Composable Commerce flags the order as complete.\n\nIf you are using a payment method not officially supported by Composable Commerce, the gateway needs to be implemented and handled manually. After the payment has been authorized and captured either through Commerce Manager or API, the status of an order becomes complete.\n\n### Shipping\n\nThe status of an order and the status of shipping are handled separately, and so an order can be complete but not shipped. Orders that have not been shipped yet have a status of unfulfilled. This flag is generated automatically by Composable Commerce when an order is created. Currently, you can only update the shipping status manually, through the API. After the order is shipped, flag its shipping status as fulfilled.\n\n### Inventory\n\nIf enabled, you can manage your stock. As such, your stock is automatically updated as soon as a product is checked out.\n",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "d56474db-6fe6-4ab1-801f-4b28726fb134",
+          "name": "Checkout API",
+          "request": {
+            "name": "Checkout API",
+            "description": {
+              "content": "When a Cart is ready for checkout, you can convert the cart to an order. The cart remains and can be modified and checked out again if required.\n\nA cart can be checked out with a customer ID, customer object, or with an account by authenticating with the `Client Credentials Token`.\n\nAfter a successful checkout, a response that contains the order is returned. If the cart is linked to a shipping group, the shipping group is also associated with the order after checkout.\n\nYou can checkout using one of the following methods:\n- **Customer ID**: You can checkout a cart with an existing customer ID.\n- **Guest Checkout** (Checkout with Customer Object): You can checkout a cart with an associated customer name and email.\n- **Checkout with Account**: The shopper authenticates with the `Client Credentials` Token.\n- **Checkout with Account Management Authentication Token**: The shopper authenticates with the `Implicit Token` and the `EP-Account-Management-Authentication-Token`.\n\n:::note\n\n- The cart currency is set when the first item is added to the cart.\n- The product being added to the cart requires a price in the same currency as the other items in the cart. The API returns a 400 error if a price is not defined in the correct currency.\n- To ensure that a free gift is automatically applied to an order, set the promotion to automatic. The checkout process will not be successful if free gift items are out of stock. See [Errors](#errors) section.\n\n:::\n\n:::caution\n\n- By default, carts are automatically deleted 7 days after the last update. You can change this setting by [updating cart settings](/docs/api/carts/put-v-2-settings-cart).\n- Your inventory is modified during checkout and payment of an order. For more information about the changes in the inventory, see the [Inventory](/docs/api/pxm/inventory/inventories-introduction) section.\n\n:::\n\n You can pass `order_number` and `external_ref` in the checkout endpoint or when [updating an order](/docs/api/carts/update-an-order). The `order_number` is an optional, user-managed field that is used as an alternative to `order_id`. When processing transactions through Authorize.net, the `order_number` is sent instead of the `order_id`, and it will appear in the invoice number section. If no `order_number` is provided, the `order_id` is sent to Authorize.net on payment by default. There are no duplication restrictions on the `order_number` value.\n\n### Next Steps\n\nAfter a cart has been converted to an Order using either of the previous methods, you most likely want to capture payment for order. See [Paying for an Order](/docs/api/carts/payments).\n\n### Errors\n\nThe following error response is returned during checkout when an eligible item is added to the cart, and the free gift is out of stock.\n\n```json\n{\n    \"errors\": [\n        {\n            \"status\": 400,\n            \"title\": \"Insufficient stock\",\n            \"detail\": \"There is not enough stock to add gift2 to your cart\",\n            \"meta\": {\n                \"id\": \"f2b68648-9621-45a3-aed6-1b526b0f5beb\",\n                \"sku\": \"gift2\"\n            }\n        }\n    ]\n}\n```\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "carts",
+                ":cartID",
+                "checkout"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "cartID",
+                  "description": "(Required) The ID of the cart that you want to checkout."
+                }
+              ]
+            },
+            "header": [
+              {
+                "disabled": false,
+                "description": "An account management authentication token that identifies the authenticated account member.",
+                "key": "EP-Account-Management-Authentication-Token",
+                "value": "<string>"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"order_number\": \"<string>\",\n    \"external_ref\": \"<string>\",\n    \"customer\": {\n      \"id\": \"<string>\",\n      \"email\": \"<string>\",\n      \"name\": \"<string>\"\n    },\n    \"billing_address\": {\n      \"country\": {\n        \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n      },\n      \"first_name\": {\n        \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n      },\n      \"last_name\": {\n        \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n      },\n      \"line_1\": {\n        \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n      },\n      \"postcode\": {\n        \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n      },\n      \"region\": \"<string>\",\n      \"company_name\": {\n        \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n      },\n      \"line_2\": {\n        \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n      },\n      \"city\": {\n        \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n      },\n      \"county\": {\n        \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n      }\n    },\n    \"shipping_address\": {\n      \"region\": {\n        \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n      },\n      \"phone_number\": \"<string>\",\n      \"instructions\": \"<string>\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "3ea17686-c569-4c7d-8b7f-a65caa944bc9",
+              "name": "OK",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "carts",
+                    ":cartID",
+                    "checkout"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "cartID",
+                      "description": "(Required) The ID of the cart that you want to checkout."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": "An account management authentication token that identifies the authenticated account member.",
+                    "key": "EP-Account-Management-Authentication-Token",
+                    "value": "{{accountToken}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"order_number\": \"order-1234\",\n    \"external_ref\": \"e-123456789\",\n    \"customer\": {\n      \"id\": \"c8c1c511-beef-4812-9b7a-9f92c587217c\"\n    },\n    \"billing_address\": {\n      \"first_name\": \"John\",\n      \"last_name\": \"Doe\",\n      \"company_name\": \"Moltin\",\n      \"line_1\": \"1234 Disney Drive\",\n      \"line_2\": \"Disney Resort\",\n      \"city\": \"Anaheim\",\n      \"county\": \"Orange\",\n      \"region\": \"CA\",\n      \"postcode\": \"92802\",\n      \"country\": \"US\"\n    },\n    \"shipping_address\": {\n      \"first_name\": \"John\",\n      \"last_name\": \"Doe\",\n      \"phone_number\": \"(555) 555-1234\",\n      \"company_name\": \"Moltin\",\n      \"line_1\": \"1234 Disney Drive\",\n      \"line_2\": \"Disney Resort\",\n      \"city\": \"Anaheim\",\n      \"county\": \"Orange\",\n      \"region\": \"CA\",\n      \"postcode\": \"92802\",\n      \"country\": \"US\",\n      \"instructions\": \"Leave in porch\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"type\": \"string\",\n    \"order_number\": \"string\",\n    \"external_ref\": \"e-123456789\",\n    \"id\": \"aa854b8f-5930-476d-951a-e9b9cfbdefb1\",\n    \"status\": \"cancelled\",\n    \"payment\": \"refunded\",\n    \"shipping\": \"unfulfilled\",\n    \"anonymized\": false,\n    \"payment_intent_id\": \"pi_3MtwBwLkdIwHu7ix28a3tqPa\",\n    \"custom_attributes\": {\n      \"key_0\": {\n        \"type\": \"integer\",\n        \"value\": 3460.077223683873\n      },\n      \"key_1\": {\n        \"type\": \"boolean\",\n        \"value\": 1794.4746732484307\n      }\n    },\n    \"links\": {},\n    \"meta\": {\n      \"timestamps\": {\n        \"created_at\": \"string\",\n        \"updated_at\": \"string\",\n        \"fully_paid_at\": \"string\"\n      },\n      \"display_price\": {\n        \"with_tax\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"without_tax\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"tax\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"discount\": {\n          \"amount\": -1000,\n          \"currency\": \"USD\",\n          \"formatted\": \"-$10.00\"\n        },\n        \"balance_owing\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"paid\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"authorized\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"without_discount\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"shipping\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"shipping_discount\": {\n          \"amount\": -1000,\n          \"currency\": \"USD\",\n          \"formatted\": \"-$10.00\"\n        }\n      },\n      \"is_manual\": true\n    },\n    \"billing_address\": {\n      \"country\": \"US\",\n      \"first_name\": \"John\",\n      \"last_name\": \"Doe\",\n      \"line_1\": \"1 Sunny Street\",\n      \"postcode\": \"92802\",\n      \"region\": \"CA\",\n      \"company_name\": \"John Doe Enterprises\",\n      \"line_2\": \"Apartment 123\",\n      \"city\": \"Los Angeles\",\n      \"county\": \"Orange\"\n    },\n    \"contact\": {\n      \"email\": \"johndoe@email.com\",\n      \"name\": \"John Doe\"\n    },\n    \"customer\": {\n      \"name\": \"John Doe\",\n      \"email\": \"john.doe@example.com\",\n      \"id\": \"e5a0d684-a4af-4919-a348-f66b0b4955e0\"\n    },\n    \"shipping_address\": {\n      \"first_name\": \"John\",\n      \"last_name\": \"Doe\",\n      \"line_1\": \"1 Sunny Street\",\n      \"line_2\": \"Apartment 123\",\n      \"city\": \"Los Angeles\",\n      \"postcode\": \"92802\",\n      \"region\": \"CA\",\n      \"country\": \"US\",\n      \"instructions\": \"Please leave on porch\"\n    },\n    \"relationships\": {\n      \"items\": {\n        \"data\": [\n          {\n            \"type\": \"string\",\n            \"id\": \"4485c927-22ea-e555-32b8-10243f64622c\"\n          },\n          {\n            \"type\": \"string\",\n            \"id\": \"1007e7d5-d6fc-1793-f0d3-65635cc3e1ec\"\n          }\n        ]\n      },\n      \"custom_discounts\": {\n        \"data\": [\n          {\n            \"type\": \"string\",\n            \"id\": \"d54b3452-bf13-c19e-d879-e9854b435f2a\"\n          },\n          {\n            \"type\": \"string\",\n            \"id\": \"ef3495d3-1f75-3860-05e9-aced8ef4717a\"\n          }\n        ]\n      },\n      \"promotions\": {\n        \"data\": [\n          {\n            \"type\": \"string\",\n            \"id\": \"c3294728-b75c-1ccc-4b0c-8da09f75e392\"\n          },\n          {\n            \"type\": \"string\",\n            \"id\": \"f2407af5-2599-6e51-827f-4a4c53e62cae\"\n          }\n        ]\n      },\n      \"customer\": {\n        \"data\": {\n          \"type\": \"string\",\n          \"id\": \"61188589-1d13-05d6-a245-d6e3d43ea858\"\n        }\n      },\n      \"account\": {\n        \"data\": {\n          \"type\": \"string\",\n          \"id\": \"ad745be3-a361-f214-4377-060b2f560e84\"\n        }\n      },\n      \"account_member\": {\n        \"data\": {\n          \"type\": \"string\",\n          \"id\": \"8000b03f-1774-e64d-007e-a7544c06c2ab\"\n        }\n      },\n      \"store\": {\n        \"data\": {\n          \"type\": \"string\",\n          \"id\": \"f5ce4aad-5b39-e4cc-cf8e-139f3c5e2f93\"\n        }\n      }\n    }\n  },\n  \"included\": {\n    \"items\": [\n      {\n        \"type\": \"order_item\",\n        \"id\": \"68bf8510-bebf-47b1-96ba-8a9930c7d928\",\n        \"quantity\": 1,\n        \"product_id\": \"4e9c6098-9701-4839-a69c-54d8256d9012\",\n        \"subscription_offering_id\": \"69a39623-e681-415e-83c0-e1281010c77d\",\n        \"name\": \"Product 123\",\n        \"sku\": \"IFD-1\",\n        \"location\": \"string\",\n        \"unit_price\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"includes_tax\": false\n        },\n        \"value\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"includes_tax\": false\n        },\n        \"discounts\": [\n          {\n            \"amount\": {\n              \"amount\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"currency\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"includes_tax\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"code\": \"string\",\n            \"id\": \"475bc357-3073-50f2-a7d8-14114c6c92f2\",\n            \"promotion_source\": \"string\",\n            \"is_cart_discount\": false,\n            \"ordinal\": 1075\n          },\n          {\n            \"amount\": {\n              \"amount\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"currency\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"includes_tax\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"code\": \"string\",\n            \"id\": \"43c66fbd-66ef-c6cf-cf76-76de666d72fa\",\n            \"promotion_source\": \"string\",\n            \"is_cart_discount\": false,\n            \"ordinal\": 3742\n          }\n        ],\n        \"links\": {},\n        \"meta\": {\n          \"display_price\": {\n            \"with_tax\": {\n              \"unit\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"value\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"without_tax\": {\n              \"unit\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"value\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"tax\": {\n              \"unit\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"value\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"discount\": {\n              \"unit\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"value\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"without_discount\": {\n              \"unit\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"value\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"discounts\": {\n              \"key_0\": {\n                \"amount\": 5967.069150006798,\n                \"currency\": \"string\",\n                \"formatted\": \"string\",\n                \"constituents\": {\n                  \"key_0\": {\n                    \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                  }\n                }\n              }\n            },\n            \"original_price\": {\n              \"unit\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"value\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            }\n          },\n          \"timestamps\": {\n            \"created_at\": \"string\",\n            \"updated_at\": \"string\"\n          }\n        },\n        \"relationships\": {\n          \"cart_item\": {\n            \"data\": {\n              \"type\": \"order_item\",\n              \"id\": \"5601a4b1-9d13-42d3-8fb7-03b35169d1b6\"\n            }\n          },\n          \"taxes\": {\n            \"data\": null\n          },\n          \"promotions\": {\n            \"data\": null\n          }\n        },\n        \"catalog_id\": \"default\",\n        \"catalog_source\": \"pim\",\n        \"bundle_configuration\": {\n          \"selected_options\": {\n            \"key_0\": {\n              \"key_0\": 7828.776920465753,\n              \"key_1\": 7218.316032082529,\n              \"key_2\": 3238.6708909899608\n            },\n            \"key_1\": {\n              \"key_0\": 4913.019776922859,\n              \"key_1\": 7143.815926568164,\n              \"key_2\": 8549.592234293854\n            }\n          },\n          \"component_products\": [\n            {\n              \"id\": \"string\",\n              \"type\": \"string\",\n              \"attributes\": {\n                \"key_0\": false,\n                \"key_1\": true,\n                \"key_2\": \"string\"\n              },\n              \"meta\": {\n                \"key_0\": false,\n                \"key_1\": true\n              },\n              \"price\": {\n                \"key_0\": true\n              },\n              \"relationships\": {\n                \"key_0\": 1410,\n                \"key_1\": 7446\n              }\n            },\n            {\n              \"id\": \"string\",\n              \"type\": \"string\",\n              \"attributes\": {\n                \"key_0\": true\n              },\n              \"meta\": {\n                \"key_0\": 3941,\n                \"key_1\": true\n              },\n              \"price\": {\n                \"key_0\": 9247,\n                \"key_1\": \"string\"\n              },\n              \"relationships\": {\n                \"key_0\": 6809,\n                \"key_1\": true\n              }\n            }\n          ]\n        },\n        \"components\": {\n          \"key_0\": {\n            \"name\": \"string\",\n            \"options\": [\n              {\n                \"id\": \"string\",\n                \"quantity\": 2318.7431190234743,\n                \"type\": \"string\"\n              },\n              {\n                \"id\": \"string\",\n                \"quantity\": 7654.6694428106175,\n                \"type\": \"string\"\n              }\n            ]\n          }\n        },\n        \"custom_inputs\": {\n          \"key_0\": 6737.904659739178\n        },\n        \"custom_attributes\": {\n          \"key_0\": {\n            \"type\": \"boolean\",\n            \"value\": 6168.694463189958\n          },\n          \"key_1\": {\n            \"type\": \"string\",\n            \"value\": 4938.783278868398\n          }\n        },\n        \"shipping_group_id\": \"string\",\n        \"promotion_source\": \"string\",\n        \"subscription_configuration\": {\n          \"plan\": \"string\",\n          \"pricing_option\": \"string\"\n        }\n      },\n      {\n        \"type\": \"order_item\",\n        \"id\": \"68bf8510-bebf-47b1-96ba-8a9930c7d928\",\n        \"quantity\": 1,\n        \"product_id\": \"4e9c6098-9701-4839-a69c-54d8256d9012\",\n        \"subscription_offering_id\": \"69a39623-e681-415e-83c0-e1281010c77d\",\n        \"name\": \"Product 123\",\n        \"sku\": \"IFD-1\",\n        \"location\": \"string\",\n        \"unit_price\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"includes_tax\": false\n        },\n        \"value\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"includes_tax\": false\n        },\n        \"discounts\": [\n          {\n            \"amount\": {\n              \"amount\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"currency\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"includes_tax\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"code\": \"string\",\n            \"id\": \"c1c70e6f-4ec4-68df-005f-a16593666d2d\",\n            \"promotion_source\": \"string\",\n            \"is_cart_discount\": false,\n            \"ordinal\": 9922\n          },\n          {\n            \"amount\": {\n              \"amount\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"currency\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"includes_tax\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"code\": \"string\",\n            \"id\": \"005b81f2-e9d8-87ff-35f5-46430f4d8ca0\",\n            \"promotion_source\": \"string\",\n            \"is_cart_discount\": true,\n            \"ordinal\": 729\n          }\n        ],\n        \"links\": {},\n        \"meta\": {\n          \"display_price\": {\n            \"with_tax\": {\n              \"unit\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"value\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"without_tax\": {\n              \"unit\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"value\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"tax\": {\n              \"unit\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"value\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"discount\": {\n              \"unit\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"value\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"without_discount\": {\n              \"unit\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"value\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            },\n            \"discounts\": {\n              \"key_0\": {\n                \"amount\": 5807.611772848212,\n                \"currency\": \"string\",\n                \"formatted\": \"string\",\n                \"constituents\": {\n                  \"key_0\": {\n                    \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                  }\n                }\n              },\n              \"key_1\": {\n                \"amount\": 5246.093113342266,\n                \"currency\": \"string\",\n                \"formatted\": \"string\",\n                \"constituents\": {\n                  \"key_0\": {\n                    \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                  }\n                }\n              },\n              \"key_2\": {\n                \"amount\": 4375.783533515092,\n                \"currency\": \"string\",\n                \"formatted\": \"string\",\n                \"constituents\": {\n                  \"key_0\": {\n                    \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                  },\n                  \"key_1\": {\n                    \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n                  }\n                }\n              }\n            },\n            \"original_price\": {\n              \"unit\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              },\n              \"value\": {\n                \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n              }\n            }\n          },\n          \"timestamps\": {\n            \"created_at\": \"string\",\n            \"updated_at\": \"string\"\n          }\n        },\n        \"relationships\": {\n          \"cart_item\": {\n            \"data\": {\n              \"type\": \"order_item\",\n              \"id\": \"5601a4b1-9d13-42d3-8fb7-03b35169d1b6\"\n            }\n          },\n          \"taxes\": {\n            \"data\": null\n          },\n          \"promotions\": {\n            \"data\": null\n          }\n        },\n        \"catalog_id\": \"default\",\n        \"catalog_source\": \"pim\",\n        \"bundle_configuration\": {\n          \"selected_options\": {\n            \"key_0\": {\n              \"key_0\": 9627.119626923966\n            },\n            \"key_1\": {\n              \"key_0\": 8708.106045859959\n            }\n          },\n          \"component_products\": [\n            {\n              \"id\": \"string\",\n              \"type\": \"string\",\n              \"attributes\": {\n                \"key_0\": 9217.280382725352,\n                \"key_1\": true\n              },\n              \"meta\": {\n                \"key_0\": 9226,\n                \"key_1\": 2047\n              },\n              \"price\": {\n                \"key_0\": \"string\",\n                \"key_1\": true,\n                \"key_2\": \"string\"\n              },\n              \"relationships\": {\n                \"key_0\": 7077,\n                \"key_1\": \"string\",\n                \"key_2\": true\n              }\n            },\n            {\n              \"id\": \"string\",\n              \"type\": \"string\",\n              \"attributes\": {\n                \"key_0\": \"string\",\n                \"key_1\": false\n              },\n              \"meta\": {\n                \"key_0\": 5533,\n                \"key_1\": 5946,\n                \"key_2\": 3212.0132775008447\n              },\n              \"price\": {\n                \"key_0\": 4478.019746734559,\n                \"key_1\": \"string\"\n              },\n              \"relationships\": {\n                \"key_0\": 1869.0790430364345,\n                \"key_1\": 633.4874824129333\n              }\n            }\n          ]\n        },\n        \"components\": {\n          \"key_0\": {\n            \"name\": \"string\",\n            \"options\": [\n              {\n                \"id\": \"string\",\n                \"quantity\": 1255.6497061913885,\n                \"type\": \"string\"\n              },\n              {\n                \"id\": \"string\",\n                \"quantity\": 1824.022850491045,\n                \"type\": \"string\"\n              }\n            ]\n          },\n          \"key_1\": {\n            \"name\": \"string\",\n            \"options\": [\n              {\n                \"id\": \"string\",\n                \"quantity\": 3322.776380438004,\n                \"type\": \"string\"\n              },\n              {\n                \"id\": \"string\",\n                \"quantity\": 1304.1217493807044,\n                \"type\": \"string\"\n              }\n            ]\n          }\n        },\n        \"custom_inputs\": {\n          \"key_0\": false,\n          \"key_1\": 3080\n        },\n        \"custom_attributes\": {\n          \"key_0\": {\n            \"type\": \"float\",\n            \"value\": true\n          },\n          \"key_1\": {\n            \"type\": \"integer\",\n            \"value\": 1846.6042293431583\n          }\n        },\n        \"shipping_group_id\": \"string\",\n        \"promotion_source\": \"string\",\n        \"subscription_configuration\": {\n          \"plan\": \"string\",\n          \"pricing_option\": \"string\"\n        }\n      }\n    ],\n    \"tax_items\": [\n      {\n        \"type\": \"string\",\n        \"id\": \"662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9\",\n        \"jurisdiction\": \"US-CA\",\n        \"code\": \"CA_SALES_TAX\",\n        \"name\": \"California Sales Tax\",\n        \"rate\": 0.085,\n        \"amount\": 850\n      },\n      {\n        \"type\": \"string\",\n        \"id\": \"662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9\",\n        \"jurisdiction\": \"US-CA\",\n        \"code\": \"CA_SALES_TAX\",\n        \"name\": \"California Sales Tax\",\n        \"rate\": 0.085,\n        \"amount\": 850\n      }\n    ],\n    \"custom_discounts\": [\n      {\n        \"type\": \"string\",\n        \"id\": \"662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9\",\n        \"external_id\": \"custom-discount-external-id\",\n        \"discount_engine\": \"Custom Discount Engine\",\n        \"amount\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"description\": \"Custom discount description\",\n        \"discount_code\": \"cart-custom-promo-code\",\n        \"relationships\": {\n          \"item\": {\n            \"data\": {\n              \"id\": \"d7ec8b4b-599e-de88-aa17-f1bee56e3af2\",\n              \"type\": \"custom_item\"\n            }\n          }\n        }\n      },\n      {\n        \"type\": \"string\",\n        \"id\": \"662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9\",\n        \"external_id\": \"custom-discount-external-id\",\n        \"discount_engine\": \"Custom Discount Engine\",\n        \"amount\": {\n          \"amount\": 10000,\n          \"currency\": \"USD\",\n          \"formatted\": \"$10.00\"\n        },\n        \"description\": \"Custom discount description\",\n        \"discount_code\": \"cart-custom-promo-code\",\n        \"relationships\": {\n          \"item\": {\n            \"data\": {\n              \"id\": \"e11e6cbe-c1a1-c34e-3e21-ff6042879454\",\n              \"type\": \"cart_item\"\n            }\n          }\n        }\n      }\n    ],\n    \"promotions\": [\n      {\n        \"type\": \"promotion\",\n        \"id\": \"662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9\",\n        \"name\": \"Summer Sale\",\n        \"description\": \"Get 20% off all summer items\",\n        \"automatic\": true,\n        \"promotion_type\": \"discount\",\n        \"promotion_source\": \"rule-promotion\",\n        \"start\": \"2024-06-01T00:00:00Z\",\n        \"end\": \"2024-08-31T23:59:59Z\"\n      },\n      {\n        \"type\": \"promotion\",\n        \"id\": \"662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9\",\n        \"name\": \"Summer Sale\",\n        \"description\": \"Get 20% off all summer items\",\n        \"automatic\": true,\n        \"promotion_type\": \"discount\",\n        \"promotion_source\": \"rule-promotion\",\n        \"start\": \"2024-06-01T00:00:00Z\",\n        \"end\": \"2024-08-31T23:59:59Z\"\n      }\n    ]\n  },\n  \"errors\": [\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"PPIHm7AqmMRWs@QPRf.iei\",\n        \"component_product_id\": \"6cd5cf71-f3c1-e5a3-84c8-0efd3de0cc33\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    },\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"goknvLvcr@TOeoxnSwwPVUsJlHLYXisycyB.xv\",\n        \"component_product_id\": \"78931def-e98d-9d22-0e87-bb44c156581a\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "01960bc7-af21-4b2c-a7d6-897f7788491c",
+              "name": "Bad Request",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "carts",
+                    ":cartID",
+                    "checkout"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "cartID",
+                      "description": "(Required) The ID of the cart that you want to checkout."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": "An account management authentication token that identifies the authenticated account member.",
+                    "key": "EP-Account-Management-Authentication-Token",
+                    "value": "{{accountToken}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"order_number\": \"order-1234\",\n    \"external_ref\": \"e-123456789\",\n    \"customer\": {\n      \"id\": \"c8c1c511-beef-4812-9b7a-9f92c587217c\"\n    },\n    \"billing_address\": {\n      \"first_name\": \"John\",\n      \"last_name\": \"Doe\",\n      \"company_name\": \"Moltin\",\n      \"line_1\": \"1234 Disney Drive\",\n      \"line_2\": \"Disney Resort\",\n      \"city\": \"Anaheim\",\n      \"county\": \"Orange\",\n      \"region\": \"CA\",\n      \"postcode\": \"92802\",\n      \"country\": \"US\"\n    },\n    \"shipping_address\": {\n      \"first_name\": \"John\",\n      \"last_name\": \"Doe\",\n      \"phone_number\": \"(555) 555-1234\",\n      \"company_name\": \"Moltin\",\n      \"line_1\": \"1234 Disney Drive\",\n      \"line_2\": \"Disney Resort\",\n      \"city\": \"Anaheim\",\n      \"county\": \"Orange\",\n      \"region\": \"CA\",\n      \"postcode\": \"92802\",\n      \"country\": \"US\",\n      \"instructions\": \"Leave in porch\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"ys38eFyyLNDK@PYxCKlgVUCIwwQURJlGWf.nlcr\",\n        \"component_product_id\": \"93334f31-0fc8-abe4-b5b2-3c5898bc3a8b\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    },\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"k-G1m15yZmzn@dBmpj.ld\",\n        \"component_product_id\": \"a06bfc3e-ea76-5285-5a47-4ed72ffb3f12\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "ff385687-b4d4-4727-a208-e77ee3ed2406",
+              "name": "Internal Server Error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "carts",
+                    ":cartID",
+                    "checkout"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "cartID",
+                      "description": "(Required) The ID of the cart that you want to checkout."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "disabled": false,
+                    "description": "An account management authentication token that identifies the authenticated account member.",
+                    "key": "EP-Account-Management-Authentication-Token",
+                    "value": "{{accountToken}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"order_number\": \"order-1234\",\n    \"external_ref\": \"e-123456789\",\n    \"customer\": {\n      \"id\": \"c8c1c511-beef-4812-9b7a-9f92c587217c\"\n    },\n    \"billing_address\": {\n      \"first_name\": \"John\",\n      \"last_name\": \"Doe\",\n      \"company_name\": \"Moltin\",\n      \"line_1\": \"1234 Disney Drive\",\n      \"line_2\": \"Disney Resort\",\n      \"city\": \"Anaheim\",\n      \"county\": \"Orange\",\n      \"region\": \"CA\",\n      \"postcode\": \"92802\",\n      \"country\": \"US\"\n    },\n    \"shipping_address\": {\n      \"first_name\": \"John\",\n      \"last_name\": \"Doe\",\n      \"phone_number\": \"(555) 555-1234\",\n      \"company_name\": \"Moltin\",\n      \"line_1\": \"1234 Disney Drive\",\n      \"line_2\": \"Disney Resort\",\n      \"city\": \"Anaheim\",\n      \"county\": \"Orange\",\n      \"region\": \"CA\",\n      \"postcode\": \"92802\",\n      \"country\": \"US\",\n      \"instructions\": \"Leave in porch\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"ys38eFyyLNDK@PYxCKlgVUCIwwQURJlGWf.nlcr\",\n        \"component_product_id\": \"93334f31-0fc8-abe4-b5b2-3c5898bc3a8b\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    },\n    {\n      \"status\": \"400\",\n      \"title\": \"Bad Request\",\n      \"detail\": \"The field 'name' is required\",\n      \"source\": \"string\",\n      \"meta\": {\n        \"id\": \"string\",\n        \"ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"item_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"shipping_group_id\": \"string\",\n        \"shipping_group_ids\": [\n          \"string\",\n          \"string\"\n        ],\n        \"cart_id\": \"string\",\n        \"code\": \"string\",\n        \"order_id\": \"string\",\n        \"sku\": \"string\",\n        \"email\": \"k-G1m15yZmzn@dBmpj.ld\",\n        \"component_product_id\": \"a06bfc3e-ea76-5285-5a47-4ed72ffb3f12\",\n        \"error-meta-key\": \"string\",\n        \"value\": \"string\"\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://useast.api.elasticpath.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "6a75d58b-d6e4-472a-b011-ebcce85148ec",
+    "name": "Addresses Introduction Account Addresses Checkout API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.\n\nYou can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.\n\n\nContact Support:\n Name: Elastic Path\n Email: support@elasticpath.com",
+      "type": "text/plain"
+    }
+  }
+}

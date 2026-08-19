@@ -1,0 +1,1289 @@
+{
+  "item": [
+    {
+      "id": "03c89f6e-7be2-4920-90e4-dd4fdbe53a2f",
+      "name": "Synonym Sets",
+      "description": {
+        "content": "Synonym Sets allow you to define groups of equivalent or related terms so that searches for one term also return results for its synonyms. This helps shoppers find products regardless of the specific terminology they use.\n\n### How Synonym Sets Work\n\nA synonym set is a named container of synonym items. Each set belongs to an organization or store and is synced asynchronously. Once synced, a set can be attached to one or more search profiles; its synonym rules are then applied during searches that use those profiles to expand queries with matching terms.\n\n### Synonym Types\n\nEach item within a synonym set can be either multi-way or one-way:\n\n- **Multi-way synonyms**: All terms are treated as equivalent. Searching for any term in the list returns results for all of them. For example, `[\"sneakers\", \"trainers\", \"running shoes\"]` means a search for \"trainers\" also returns results for \"sneakers\" and \"running shoes\".\n- **One-way synonyms**: Searches for a `root` term also match the `synonyms`, but not vice versa. For example, with `root: \"jacket\"` and `synonyms: [\"blazer\", \"coat\"]`, searching for \"jacket\" also returns results for \"blazer\" and \"coat\", but searching for \"blazer\" does not return results for \"jacket\".\n\n### Synonym Item Configuration\n\nEach item within a synonym set supports the following options:\n\n| Option             | Required | Description                                                                                                  |\n|--------------------|----------|--------------------------------------------------------------------------------------------------------------|\n| `id`               | Yes      | Unique identifier for the item within the set. Alphanumeric characters, hyphens, and underscores only.       |\n| `synonyms`         | Yes      | List of synonym terms. Minimum 1 if `root` is provided (one-way), minimum 2 if `root` is absent (multi-way). |\n| `root`             | No       | Makes this a one-way synonym. Must not also appear in the `synonyms` array.                                  |\n| `locale`           | No       | ISO 639 language code for this synonym item.                                                                 |\n| `symbols_to_index` | No       | Special characters to preserve as part of tokens. Each element must be exactly one character.                |\n\n### Sync Status\n\nSynonym sets are synced asynchronously. The sync status is tracked and exposed in API responses:\n\n| Status           | Description                                                    |\n|------------------|----------------------------------------------------------------|\n| `pending_sync`   | Set has been created or updated in MongoDB but not yet synced  |\n| `synced`         | Set has been successfully synced                               |\n| `sync_failed`    | The last sync attempt failed                                   |\n| `pending_delete` | Set is marked for deletion; a background worker will remove it |\n\n### Tenancy\n\nSynonym sets follow the same tenancy model as other resources:\n\n- **Organization-scoped sets**: Managed by the organization; apply across all stores\n- **Store-scoped sets**: Managed by the store; apply only to that store\n\nStores cannot modify organization-scoped synonym sets.\n\n### Using Synonym Sets in Search Profiles\n\nSynonym sets only take effect once they are attached to a [search profile](/docs/api/pxm/catalog-search/search-profiles) via its `synonym_sets` attribute. At search time, the synonym sets of the resolved search profile are applied to the query.\n\nWhen attaching a synonym set to a search profile:\n\n- The set must exist and be accessible by the calling tenant. Organization-level search profiles may only reference organization-level sets; store-level search profiles may reference organization-level and same-store sets.\n- The set must have been synced at least once. A set in `pending_sync` or `sync_failed` state can still be used if it was previously synced — its last synced state continues to apply.\n\nA synonym set cannot be deleted while it is referenced by any search profile; the delete request is rejected with a `409 Conflict` until the reference is removed.\n\n### Use Cases\n\n- **Regional terminology**: Map British and American English terms (e.g., \"trousers\" ↔ \"pants\")\n- **Brand equivalents**: Link product category names with common alternatives\n- **Industry jargon**: Ensure technical terms match colloquial ones\n- **Abbreviations**: Map abbreviations to their full forms (e.g., \"tee\" → \"t-shirt\")\n",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "bf047e03-1067-46ba-a36b-e2a85175db43",
+          "name": "Create synonym set",
+          "request": {
+            "name": "Create synonym set",
+            "description": {
+              "content": "Create a new synonym set.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "catalogs",
+                "search",
+                "synonym-sets"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"type\": \"<string>\",\n    \"attributes\": {\n      \"name\": \"<string>\",\n      \"items\": [\n        {\n          \"id\": \"<string>\",\n          \"synonyms\": [\n            \"<string>\"\n          ],\n          \"root\": \"<string>\",\n          \"locale\": \"<string>\",\n          \"symbols_to_index\": [\n            \"<string>\",\n            \"<string>\"\n          ]\n        }\n      ]\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "1414f1f4-96d1-4546-9ea6-bfd212b09d48",
+              "name": "Successfully created synonym set",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"catalog_search_synonym_set\",\n    \"attributes\": {\n      \"name\": \"Apparel terms\",\n      \"items\": [\n        {\n          \"id\": \"footwear-terms\",\n          \"synonyms\": [\n            \"sneakers\",\n            \"trainers\",\n            \"running shoes\"\n          ],\n          \"root\": \"jacket\",\n          \"locale\": \"en\",\n          \"symbols_to_index\": [\n            \"-\"\n          ]\n        }\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"type\": \"catalog_search_synonym_set\",\n    \"attributes\": {\n      \"name\": \"Apparel terms\",\n      \"items\": [\n        {\n          \"id\": \"footwear-terms\",\n          \"synonyms\": [\n            \"sneakers\",\n            \"trainers\",\n            \"running shoes\"\n          ],\n          \"root\": \"jacket\",\n          \"locale\": \"en\",\n          \"symbols_to_index\": [\n            \"-\"\n          ]\n        }\n      ]\n    },\n    \"meta\": {\n      \"created_at\": \"2026-03-05T12:00:00Z\",\n      \"updated_at\": \"2026-03-05T12:00:00Z\",\n      \"owner\": \"organization\",\n      \"sync_status\": \"pending_sync\",\n      \"last_synced_at\": \"2026-03-05T12:01:00Z\"\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d8f127d1-588d-4c92-b80a-1ebe4a25921c",
+              "name": "Bad request - invalid parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"catalog_search_synonym_set\",\n    \"attributes\": {\n      \"name\": \"Apparel terms\",\n      \"items\": [\n        {\n          \"id\": \"footwear-terms\",\n          \"synonyms\": [\n            \"sneakers\",\n            \"trainers\",\n            \"running shoes\"\n          ],\n          \"root\": \"jacket\",\n          \"locale\": \"en\",\n          \"symbols_to_index\": [\n            \"-\"\n          ]\n        }\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "75e1aa3a-6f21-4e90-a930-58c92164f065",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"catalog_search_synonym_set\",\n    \"attributes\": {\n      \"name\": \"Apparel terms\",\n      \"items\": [\n        {\n          \"id\": \"footwear-terms\",\n          \"synonyms\": [\n            \"sneakers\",\n            \"trainers\",\n            \"running shoes\"\n          ],\n          \"root\": \"jacket\",\n          \"locale\": \"en\",\n          \"symbols_to_index\": [\n            \"-\"\n          ]\n        }\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "42a5a6e8-7e15-4288-97e7-c63d3a8319a2",
+          "name": "List synonym sets",
+          "request": {
+            "name": "List synonym sets",
+            "description": {
+              "content": "List all synonym sets.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "catalogs",
+                "search",
+                "synonym-sets"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "022da691-3a49-4b57-bb15-0c17c30a41af",
+              "name": "Successfully listed synonym sets",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"type\": \"catalog_search_synonym_set\",\n      \"attributes\": {\n        \"name\": \"Apparel terms\",\n        \"items\": [\n          {\n            \"id\": \"footwear-terms\",\n            \"synonyms\": [\n              \"sneakers\",\n              \"trainers\",\n              \"running shoes\"\n            ],\n            \"root\": \"jacket\",\n            \"locale\": \"en\",\n            \"symbols_to_index\": [\n              \"-\"\n            ]\n          }\n        ]\n      },\n      \"meta\": {\n        \"created_at\": \"2026-03-05T12:00:00Z\",\n        \"updated_at\": \"2026-03-05T12:00:00Z\",\n        \"owner\": \"organization\",\n        \"sync_status\": \"pending_sync\",\n        \"last_synced_at\": \"2026-03-05T12:01:00Z\"\n      }\n    },\n    {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"type\": \"catalog_search_synonym_set\",\n      \"attributes\": {\n        \"name\": \"Apparel terms\",\n        \"items\": [\n          {\n            \"id\": \"footwear-terms\",\n            \"synonyms\": [\n              \"sneakers\",\n              \"trainers\",\n              \"running shoes\"\n            ],\n            \"root\": \"jacket\",\n            \"locale\": \"en\",\n            \"symbols_to_index\": [\n              \"-\"\n            ]\n          }\n        ]\n      },\n      \"meta\": {\n        \"created_at\": \"2026-03-05T12:00:00Z\",\n        \"updated_at\": \"2026-03-05T12:00:00Z\",\n        \"owner\": \"organization\",\n        \"sync_status\": \"pending_sync\",\n        \"last_synced_at\": \"2026-03-05T12:01:00Z\"\n      }\n    }\n  ],\n  \"meta\": {\n    \"results\": {\n      \"total\": 100\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b0e0eaac-6669-4338-bab6-07c9d424584a",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "4545cfe1-0ca2-481a-b26d-d9e69044bdd5",
+          "name": "Get synonym set",
+          "request": {
+            "name": "Get synonym set",
+            "description": {
+              "content": "Get a synonym set by ID.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "catalogs",
+                "search",
+                "synonym-sets",
+                ":synonym_set_id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "synonym_set_id",
+                  "description": "(Required) The unique ID of the synonym set"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "aff75387-3348-4cc1-b084-f767d68ca55f",
+              "name": "Successfully retrieved synonym set",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"type\": \"catalog_search_synonym_set\",\n    \"attributes\": {\n      \"name\": \"Apparel terms\",\n      \"items\": [\n        {\n          \"id\": \"footwear-terms\",\n          \"synonyms\": [\n            \"sneakers\",\n            \"trainers\",\n            \"running shoes\"\n          ],\n          \"root\": \"jacket\",\n          \"locale\": \"en\",\n          \"symbols_to_index\": [\n            \"-\"\n          ]\n        }\n      ]\n    },\n    \"meta\": {\n      \"created_at\": \"2026-03-05T12:00:00Z\",\n      \"updated_at\": \"2026-03-05T12:00:00Z\",\n      \"owner\": \"organization\",\n      \"sync_status\": \"pending_sync\",\n      \"last_synced_at\": \"2026-03-05T12:01:00Z\"\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "4e26caa2-ad23-4e0d-8acd-1700faeee1f0",
+              "name": "Synonym set not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "601567df-8660-41a4-a14a-b73942299579",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "ebdde246-02e4-48bc-bd71-b42dd31e74ce",
+          "name": "Update synonym set",
+          "request": {
+            "name": "Update synonym set",
+            "description": {
+              "content": "Update a synonym set by ID.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "catalogs",
+                "search",
+                "synonym-sets",
+                ":synonym_set_id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "synonym_set_id",
+                  "description": "(Required) The unique ID of the synonym set"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"id\": \"<uuid>\",\n    \"type\": \"<string>\",\n    \"attributes\": {\n      \"name\": \"<string>\",\n      \"items\": [\n        {\n          \"id\": \"<string>\",\n          \"synonyms\": [\n            \"<string>\"\n          ],\n          \"root\": \"<string>\",\n          \"locale\": \"<string>\",\n          \"symbols_to_index\": [\n            \"<string>\",\n            \"<string>\"\n          ]\n        }\n      ]\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "b5abc6c8-51fb-42bd-bc1e-15d121f860df",
+              "name": "Successfully updated synonym set",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"8fccaa19-dba9-4621-8d11-31a222a68c7c\",\n    \"type\": \"catalog_search_synonym_set\",\n    \"attributes\": {\n      \"name\": \"Apparel terms\",\n      \"items\": [\n        {\n          \"id\": \"footwear-terms\",\n          \"synonyms\": [\n            \"sneakers\",\n            \"trainers\",\n            \"running shoes\"\n          ],\n          \"root\": \"jacket\",\n          \"locale\": \"en\",\n          \"symbols_to_index\": [\n            \"-\"\n          ]\n        }\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"type\": \"catalog_search_synonym_set\",\n    \"attributes\": {\n      \"name\": \"Apparel terms\",\n      \"items\": [\n        {\n          \"id\": \"footwear-terms\",\n          \"synonyms\": [\n            \"sneakers\",\n            \"trainers\",\n            \"running shoes\"\n          ],\n          \"root\": \"jacket\",\n          \"locale\": \"en\",\n          \"symbols_to_index\": [\n            \"-\"\n          ]\n        }\n      ]\n    },\n    \"meta\": {\n      \"created_at\": \"2026-03-05T12:00:00Z\",\n      \"updated_at\": \"2026-03-05T12:00:00Z\",\n      \"owner\": \"organization\",\n      \"sync_status\": \"pending_sync\",\n      \"last_synced_at\": \"2026-03-05T12:01:00Z\"\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "30446a25-f763-41e8-83ac-fe85d6f2bcf9",
+              "name": "Bad request - invalid parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"8fccaa19-dba9-4621-8d11-31a222a68c7c\",\n    \"type\": \"catalog_search_synonym_set\",\n    \"attributes\": {\n      \"name\": \"Apparel terms\",\n      \"items\": [\n        {\n          \"id\": \"footwear-terms\",\n          \"synonyms\": [\n            \"sneakers\",\n            \"trainers\",\n            \"running shoes\"\n          ],\n          \"root\": \"jacket\",\n          \"locale\": \"en\",\n          \"symbols_to_index\": [\n            \"-\"\n          ]\n        }\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "ce7ee1e9-837e-4e99-9753-b56a8a523b8c",
+              "name": "Permission denied",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"8fccaa19-dba9-4621-8d11-31a222a68c7c\",\n    \"type\": \"catalog_search_synonym_set\",\n    \"attributes\": {\n      \"name\": \"Apparel terms\",\n      \"items\": [\n        {\n          \"id\": \"footwear-terms\",\n          \"synonyms\": [\n            \"sneakers\",\n            \"trainers\",\n            \"running shoes\"\n          ],\n          \"root\": \"jacket\",\n          \"locale\": \"en\",\n          \"symbols_to_index\": [\n            \"-\"\n          ]\n        }\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d6261709-46d0-4938-9ef4-ecbe1b06463a",
+              "name": "Synonym set not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"8fccaa19-dba9-4621-8d11-31a222a68c7c\",\n    \"type\": \"catalog_search_synonym_set\",\n    \"attributes\": {\n      \"name\": \"Apparel terms\",\n      \"items\": [\n        {\n          \"id\": \"footwear-terms\",\n          \"synonyms\": [\n            \"sneakers\",\n            \"trainers\",\n            \"running shoes\"\n          ],\n          \"root\": \"jacket\",\n          \"locale\": \"en\",\n          \"symbols_to_index\": [\n            \"-\"\n          ]\n        }\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "9850a268-cce9-4791-927c-88a6a438695e",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"8fccaa19-dba9-4621-8d11-31a222a68c7c\",\n    \"type\": \"catalog_search_synonym_set\",\n    \"attributes\": {\n      \"name\": \"Apparel terms\",\n      \"items\": [\n        {\n          \"id\": \"footwear-terms\",\n          \"synonyms\": [\n            \"sneakers\",\n            \"trainers\",\n            \"running shoes\"\n          ],\n          \"root\": \"jacket\",\n          \"locale\": \"en\",\n          \"symbols_to_index\": [\n            \"-\"\n          ]\n        }\n      ]\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "ad9cf43b-5e90-48a9-85b3-844f3112fd53",
+          "name": "Delete synonym set",
+          "request": {
+            "name": "Delete synonym set",
+            "description": {
+              "content": "Delete a synonym set by ID. A synonym set cannot be deleted while it is being used by any search profile.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "catalogs",
+                "search",
+                "synonym-sets",
+                ":synonym_set_id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "synonym_set_id",
+                  "description": "(Required) The unique ID of the synonym set"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "DELETE",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "a40e5f7e-7af5-4bad-9aaf-8f3a4e3b64bd",
+              "name": "Synonym set marked for deletion",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "08c663e0-33c8-4618-af14-0168ba44d394",
+              "name": "Bad request - invalid parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "76b11248-538c-4b7e-8df0-b91f5c6a833f",
+              "name": "Permission denied",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "8c217630-3a4a-4abb-adc9-7bbdc15567ac",
+              "name": "Conflict - synonym set is referenced by a search profile",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    },\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal server error\",\n      \"detail\": \"An internal error has occurred.\",\n      \"meta\": {\n        \"missing_ids\": [\n          \"e7d50bd5-1833-43c0-9848-f9d325b08be8\"\n        ]\n      }\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "44d2a33e-8d88-4b05-9770-27d625b4b507",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "catalogs",
+                    "search",
+                    "synonym-sets",
+                    ":synonym_set_id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "synonym_set_id",
+                      "description": "(Required) The unique ID of the synonym set"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://useast.api.elasticpath.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "12d47555-4f65-4252-9aee-1ba1eff1b1ab",
+    "name": "Addresses Introduction Account Addresses Synonym Sets API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.\n\nYou can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.\n\n\nContact Support:\n Name: Elastic Path\n Email: support@elasticpath.com",
+      "type": "text/plain"
+    }
+  }
+}

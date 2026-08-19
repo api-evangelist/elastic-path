@@ -1,0 +1,347 @@
+{
+  "item": [
+    {
+      "id": "f9763127-b5a5-48c3-ac65-76a40728f69e",
+      "name": "Product Import/Bulk Update",
+      "description": {
+        "content": "```mdx-code-block\nimport ProductImport from '/docs/partials/pxm/import/import.mdx';\n\n<ProductImport />\n```\n\n#### Using Imported Main Image Files\n\nYou can use the main images that you have previously uploaded to Commerce and assign them to your products when importing products to Commerce. You can do this by adding a `main_image_id` header to your `.csv` file. The ID you provide in `main_image_id` is the ID of a file that has already been uploaded to Commerce using create a file.\n\n#### Importing Custom Data (Flows)\n\nYou can also create/update custom extension data in a `.csv` file by creating a header that includes the flow `ID` and the field `slug` in the following format: \n\ntemplate:*flowID*:*fieldSlug*.\n\nwhere:\n\n- `template` must be `template`.\n- `flowID` is the ID of the flow that contains the field whose data you want to create/update.\n- `fieldSlug` is the slug of the field whose data you want to create/update.\n\nIn the following example, for a flow with ID `82c10a02-1851-4992-8ecb-d44f2782d09b` and a field with the slug `condition`:\n\n- the header is `template:82c10a02-1851-4992-8ecb-d44f2782d09b:condition`.\n- the updated custom data is `as-new`.\n\n    | name | slug | sku | status | template:82c10a02-1851-4992-8ecb-d44f2782d09b:condition |\n    | :--- | :--- | :--- | :--- | :--- |\n    | BestEver Range | bestever-range-1a1a-30 | BE-Range-1a1a-30 | draft | as-new |\n\n#### Characteristics of CSV Import Files\n\nProduct Import uses a [**Comma Separated Values (CSV)**](#characteristics-of-csv-import-files) file to import/update products, main image files, and custom extension data. \n\n- Each row in a `.csv` file represents a product you want to create/update. \n- Each file:\n    - must not be larger than 50 megabytes. If a `.csv` file is larger than 50 megabytes, a `503 client read error` is displayed.\n    - must not have more than 50,000 rows, including the header. If a CSV file exceeds 50,000 rows, an error is displayed, and the products are not imported.\n    In other words, if you have a file with 50,000 rows that is larger than 50 megabytes, an error is displayed, and the products are not imported.\n- If you want to create/update more than 50,000 products or your `.csv` file is larger than 50 megabytes, you must have a separate `.csv` file and import each `.csv` file one at a time.\n- You can update existing products, including images, templates/flow fields, and entries. The entry in the `.csv` file must have a unique `id` and/or `external_ref` that matches the `id` and `external_ref` of the existing product you want to update. You may have both a unique `id` and `external_ref`, but you must have at least one.\n- You can add new products. For new products that you want to add, the entry in the `.csv` file must have an `external_ref` that does not match any existing products.\n\nThe following table describes the headers that are supported.\n\n| Header | Required | Description  |\n|:---- |:---------|:--|\n| id                              | Optional | A unique product ID that is generated when you create the product. The `id` is used to look up products in the `.csv` file and matches them to the products in your storefront that you want to update.                                                                                                                                                                                                       |\n| external_ref                    | Optional | A unique attribute associated with a product. This could be an external reference from a separate company system, for example. The maximum length is 2048 characters.                                                                                                                                                                                                                                         |\n| name                            | Required | The name of a product.                                                                                                                                                                                                                                                                                                                                                                                        |\n| description                     | Required | A description for a product. You can include quotes in your product description, if you want to emphasize a word, for example. To do this, put quotes around the product description. For example, \"This product description describes my \"product\" and the product \"version\".\"                                                                                                                               |\n| slug                            | Required | A label for the product that is used in the URL paths. A slug can contain any combination of letters, numbers, periods, hyphens, and underscores. NO spaces or other characters are allowed. By default, the product name is used as the slug.                                                                                                                                                                |\n| status                          | Required | The status of a product, either `Draft` or `Live`.                                                                                                                                                                                                                                                                                                                                                            |\n| commodity_type                  | Required | The commodity type, either `physical` or `digital`.                                                                                                                                                                                                                                                                                                                                                           |\n| upc_ean                         | Optional | The universal product code or european article number of the product.                                                                                                                                                                                                                                                                                                                                         |\n| mpn                             | Optional | The manufacturer part number of a product.                                                                                                                                                                                                                                                                                                                                                                    |\n| sku                             | Optional | The unique stock keeping unit of the product.                                                                                                                                                                                                                                                                                                                                                                 |\n| tags                             | Optional | The product tags used to store or assign a key word against a product. A product can have up to 20 product tags. A product tag can be up to 255 characters. See [**Product Tags**](/docs/api/pxm/products/product-tags).\n| main_image_id                   | Optional | Specifies a unique ID of a main image file for a product. You can include a `main_image_id` for your products for images that are already uploaded to Commerce. See [**Using Main Image Files**](#importing-custom-data-flows).                                                                                                                                                                                        |\n| `template:<flowID>:<fieldSlug>` | Optional | You can also specify custom extension data in the CSV by specifying the flow `ID` or `slug` and the field `name`. For example, `template:<flowSlug>:<fieldName>` format. See [**Importing Custom Data (Flows)**](#importing-custom-data-flows). |\n",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "f78e8d88-a21c-44f7-9059-8e7474f37d7c",
+          "name": "Import Products",
+          "request": {
+            "name": "Import Products",
+            "description": {
+              "content": "\nYou can use the Product Import API to:\n\n- Add new products, including:\n\n    - main image files. See [Importing Main Image Files](/docs/api/pxm/products/product-import-bulk-update#using-imported-main-image-files).\n    - custom data. See [Importing custom data](/docs/api/pxm/products/product-import-bulk-update#importing-custom-data-flows).\n    - Make bulk updates to existing products.\n\nYou cannot use product import to:\n\n- Delete existing products.\n- Import product bundles.\n\nThe Product Import API uses a Comma Separated Values (CSV) file to import products, main image files, custom extension data, and admin and shopper attributes. Each row in a .csv file represents a product you want to create/update. See an [example file](/assets/pim_product_import_example.csv).\n\nEach file can have 50,000 rows, including the header. If a CSV file exceeds 50,000 rows, an error is displayed, and the products are not imported. A CSV file must not be larger than 50 megabytes. If a CSV file is larger than 50 megabytes, a `503 client read` error is displayed.\n\nIf you want to create/update more than 50,000 products or your CSV file is larger than 50 megabytes, you must have a separate CSV file and import each CSV file one at a time.\n\nSee [**Characteristics of CSV Files**](/docs/api/pxm/products/product-import-bulk-update#characteristics-of-csv-import-files).\n\n## Custom Attributes in CSV\n\nYou can set custom attributes on products using CSV columns with the prefixes `shopper_attributes.` or `admin_attributes.` followed by the attribute key name. For example:\n\n- `shopper_attributes.color` sets the `color` key on `shopper_attributes`.\n- `admin_attributes.cost_of_goods` sets the `cost_of_goods` key on `admin_attributes`.\n\n**Partial updates:** When updating an existing product, only the attribute keys present as columns in the CSV are affected. Attribute keys not included as columns are left unchanged.\n\n**Removing an attribute key:** To explicitly delete an attribute key from an existing product, set the cell value to `__REMOVE_ATTRIBUTE__`. This special sentinel value instructs the importer to remove that key from the product's custom attributes. An empty cell value is treated as a literal empty string, not a deletion.\n\n**New products:** For new products being created via import, any column whose value is `__REMOVE_ATTRIBUTE__` is ignored (the key is not created).\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "products",
+                "import"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "locale",
+                  "value": "<string>",
+                  "description": "Specifies the locale to assist in parsing flow entry date values.\n\n- If a supported locale is provided, the system attempts to interpret dates using that locale's conventions. The import job fails if a date does not match one of the supported locale's formats.\n- If this parameter is omitted, or if the value provided is not on the supported list, the system proceeds using its default parsing logic. An unsupported locale is ignored and does not cause a failure.\n\n**Supported Locales and Date Formats:**\n\n**`en-US`**\n- `1/2/2006 15:04:05`\n- `01/02/2006 15:04:05`\n- `1/2/06 15:04`\n\n**`en-GB`**\n- `2/1/2006 15:04:05`\n- `02/01/2006 15:04:05`\n- `2/1/06 15:04`\n\n**`en-CA`**\n- `2/1/2006 15:04:05`\n- `02/01/2006 15:04:05`\n- `2/1/06 15:04`     \n\nAdditional locales and date formats can be added upon request.\n"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "description": "The file you want to upload. Ensure that the file format is Comma Separated Values (CSV)."
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "82ad1ad4-b7f6-4b8f-a285-c049fd40888c",
+              "name": "Import started",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "products",
+                    "import"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "locale",
+                      "value": "en-US"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "description": {
+                        "content": "The file you want to upload. Ensure that the file format is Comma Separated Values (CSV).",
+                        "type": "text/plain"
+                      },
+                      "key": "file",
+                      "type": "file"
+                    }
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"type\": \"pim-job\",\n    \"id\": \"7e1b9ba1-c844-4556-9b16-4ae3f0988b0f\",\n    \"attributes\": {\n      \"completed_at\": null,\n      \"created_at\": \"2024-01-05T15:27:23.161Z\",\n      \"started_at\": null,\n      \"status\": \"pending\",\n      \"type\": \"product-import\",\n      \"updated_at\": \"2024-01-05T15:27:23.161Z\"\n    },\n    \"meta\": {\n      \"x_request_id\": \"fad8c5c0-9546-4e0c-b68e-8a2d809891e5\"\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "26ce65de-00c8-4185-9aad-ad33b61638fd",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "products",
+                    "import"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "locale",
+                      "value": "en-US"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "description": {
+                        "content": "The file you want to upload. Ensure that the file format is Comma Separated Values (CSV).",
+                        "type": "text/plain"
+                      },
+                      "key": "file",
+                      "type": "file"
+                    }
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Bad Request\",\n      \"detail\": \"Could not parse the supplied filter\",\n      \"status\": \"400\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b84695a6-c798-478a-a59f-ee11aa4de406",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "products",
+                    "import"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "locale",
+                      "value": "en-US"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "description": {
+                        "content": "The file you want to upload. Ensure that the file format is Comma Separated Values (CSV).",
+                        "type": "text/plain"
+                      },
+                      "key": "file",
+                      "type": "file"
+                    }
+                  ]
+                }
+              },
+              "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+              "code": 422,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Failed Validation\",\n      \"status\": \"422\",\n      \"detail\": \"<XYZ> can not be empty\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "a6f28c32-94bf-4ab9-a7a1-fd25a09b14c0",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "products",
+                    "import"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "locale",
+                      "value": "en-US"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "description": {
+                        "content": "The file you want to upload. Ensure that the file format is Comma Separated Values (CSV).",
+                        "type": "text/plain"
+                      },
+                      "key": "file",
+                      "type": "file"
+                    }
+                  ]
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal Server Error\",\n      \"detail\": \"There was an internal server error, you can report with your request id.\",\n      \"request_id\": \"635da56d-75a1-43cd-b696-7ab119756b3a\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://useast.api.elasticpath.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "ce634b96-f511-4490-a6ab-1cb404b10827",
+    "name": "Addresses Introduction Account Addresses Product Import/Bulk Update API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.\n\nYou can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.\n\n\nContact Support:\n Name: Elastic Path\n Email: support@elasticpath.com",
+      "type": "text/plain"
+    }
+  }
+}

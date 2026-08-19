@@ -1,0 +1,1385 @@
+{
+  "item": [
+    {
+      "id": "1cf75879-dd11-4d7a-bd43-e648d0a1f9ad",
+      "name": "Schedules",
+      "description": {
+        "content": "You can schedule your billing, tax, and payment runs. By scheduling billing, tax, and payment runs, you automate the process, reducing manual intervention and ensuring the jobs are run in a timely manner.  You can define a schedule in the format (`* * * * *`) which is a set of five fields in a line, indicating when a job should be executed. For example, you can define a schedule so that your job runs multiple times a day, or runs on specific days and months.\n\nSubscriptions runs on Coordinated Universal Time (UTC) time and conforms to [**RFC 3339**](https://www.rfc-editor.org/rfc/rfc3339). \n\n### Unrestricted fields\n\nSetting a field to an asterisk (`*`) is sometimes referred to as leaving a field unrestricted because it is not restricted to a specific value.\n\nYou can use the asterisk (`*`) to indicate the range of all values for the field. When you use the asterisk, the first value in the range is: 0 for the minute, hour, and day of the week (Sunday) fields, and 1 for day of the month and the month fields.\n\n### Configuring fields\n\nThe time fields have the following format and possible values and must be specified in the following order:\n\n| Field | Format | Description  |                                                                                                    \n| --- | --- | -----|\n| Minute | 0-59 | Indicates how far past the top of the hour your job runs, in minutes. For example if a minute is set to 0, then the job runs at the top of the hour because it is 0 minutes after the hour. This means if the hour is 8.00 AM, the job runs at 8.00 AM. |\n| Hour | 0-23 | Indicates how far past midnight your job runs, in hours. This is rounded down to the nearest hours. This is because minutes are indicated by the minute field. |\n| Day of the month | 0-31 | Indicates the calendar date of the month. For example, 1 for the first day of the month. |\n| Month | 1-12 or JAN to DEC | Indicates the month. Specify the month number or the first three letters of the month name in uppercase. For example, 1 or JAN for January.  |\n| Day of the week | 0-6 (or SUN to SAT, or 7 for Sunday) | Indicates the day of the week. Monday is 1, Tuesday is 2, and so on. Either 0 or 7 indicates Sunday. Alternatively, specify the day of the week using the first three letters of the weekday name in uppercase. For example SUN for Sunday. If you use this field with the day of the month field, then this field is evaluated as an inclusive OR. For example, if the day of the month is set to 1 and the day of the week is set to SAT, the job runs on the first day of the month and on every Saturday of the month, even if the first day of the month is not a Saturday. If the day of the week is marked by an asterisk (*) then the field is marked as unrestricted. This means the job only runs on the first day of the month. |\n\n### Matching all values\n\nTo match all values for a field, set the field to an asterisk (`*`). When a field is set to an asterisk, the field matches all valid values for that field whenever the other field conditions are satisfied. \n\n Here are some examples.\n\n - `* 0 1 1 1`: the job runs every minute of the midnight hour on January 1st and Mondays.\n - `* * * * *`: the job runs every minute (of every hour, of every day of the month, of every month, every day of the week, because each of these is unrestricted).\n\n ### Matching a range\n\n To match a range of values, specify your start and stop values, separated by a hyphen (`-`). Do not include spaces in the range. Ranges are inclusive. The first number must be less than the second number. If you are using abbreviated names for the month or weekday (for example, JAN instead of 1 for the first month of the year), the first value must come earlier in the month or week than the second value.\n\nThe following equivalent examples run at midnight on Mondays, Tuesdays, Wednesdays, Thursdays, and Fridays (for all months):\n\n - `0 0 * * 1-5`\n - `0 0 * * MON-FRI`\n\n### Matching a list\n\nLists can contain any valid value for the field, including ranges. Specify your values, separated by a comma (,). Do not include spaces in the list.\n\nExamples:\n\n- `0 0,12 * * *`: the job runs at midnight and noon.\n- `0-5,30-35 * * * *`: the job runs in each of the first five minutes of every half hour (at the top of the hour and at half past the hour).\n\n### Skipping values in a range\n\nYou can skip values in a range by specifying a rate at which to step through the range. To do this, specify the range, followed by the forward slash (`/`) and the rate at which you want to skip through the range.\n\nThe step value cannot be larger than the largest possible value for the field. The default step is 1, so the step function `/1` is the same as not using a step function at all.\n\nExample ranges that use step functions:\n\n- `*/2`: this is a valid step function for any field. \n    - For the minute field, it matches 0, 2, 4, ... , 58. \n    - For the hour, it matches 0, 2, 4, ... , 22. \n    - For the day of the month, it matches 1, 3, 5, ... , 31 (for a month with 31 days). \n    - For the month, it matches 1, 3, 5, ... , 11. \n    - For the day of the week, it matches 0, 2, 4, 6.\n\n- `0-12/2`: this is a valid step function for the minute and hour fields. It matches 0, 2, 4, ... , 12.\n\nExample schedules using step functions:\n\n- `*/2 * * * *`: the job runs every two minutes.\n- `0 0-12/2 * * *`: the job runs every two hours, on the hour. The first run is at midnight. The last run is at noon.\n",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "180bb4bf-8e1a-455b-b2e8-58c945199377",
+          "name": "List schedules",
+          "request": {
+            "name": "List schedules",
+            "description": {
+              "content": "Retrieves a list of all schedules.\n\n### Filtering\n\nThis endpoint supports filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering).\n\nThe following attributes and operators are supported.\n\n| Operator | Attribute | Description |\n| --- | --- | --- | \n| `eq` | `external_ref` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. |\n| `in` | `external_ref` | In. Checks if the value is in the specified list. If it is, the condition is true. |\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "subscriptions",
+                "schedules"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "page[offset]",
+                  "value": "<long>",
+                  "description": "The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used."
+                },
+                {
+                  "disabled": false,
+                  "key": "page[limit]",
+                  "value": "<long>",
+                  "description": "The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used."
+                },
+                {
+                  "disabled": false,
+                  "key": "filter",
+                  "value": "<string>"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "91e1b3e9-5f22-41fe-8b97-c2095da695d4",
+              "name": "Success. A list of schedules is returned.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page[offset]",
+                      "value": "10"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "100"
+                    },
+                    {
+                      "key": "filter",
+                      "value": "eq(name,Alan Turing)"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"type\": \"subscription_schedule\",\n      \"attributes\": {\n        \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n        \"job\": {\n          \"job_type\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        },\n        \"location\": \"Europe/London\",\n        \"specification\": \"30 0 * * *\",\n        \"updated_at\": \"2017-01-10T11:41:19.244842Z\",\n        \"external_ref\": \"abc123\",\n        \"name\": \"Daily billing run.\"\n      },\n      \"meta\": {\n        \"owner\": \"store\",\n        \"timestamps\": {\n          \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n          \"updated_at\": \"2017-01-10T11:41:19.244842Z\"\n        },\n        \"scheduled_for\": \"2017-07-21T17:32:28Z\"\n      },\n      \"id\": \"11111111-2222-3333-4444-555555555555\"\n    },\n    {\n      \"type\": \"subscription_schedule\",\n      \"attributes\": {\n        \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n        \"job\": {\n          \"job_type\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        },\n        \"location\": \"Europe/London\",\n        \"specification\": \"30 0 * * *\",\n        \"updated_at\": \"2017-01-10T11:41:19.244842Z\",\n        \"external_ref\": \"abc123\",\n        \"name\": \"Daily billing run.\"\n      },\n      \"meta\": {\n        \"owner\": \"store\",\n        \"timestamps\": {\n          \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n          \"updated_at\": \"2017-01-10T11:41:19.244842Z\"\n        },\n        \"scheduled_for\": \"2017-07-21T17:32:28Z\"\n      },\n      \"id\": \"11111111-2222-3333-4444-555555555555\"\n    }\n  ],\n  \"links\": {\n    \"key_0\": \"http://example.com/articles/1/comments\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "12365929-e62b-42a0-b09c-376f1cf6fab6",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page[offset]",
+                      "value": "10"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "100"
+                    },
+                    {
+                      "key": "filter",
+                      "value": "eq(name,Alan Turing)"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Validation Error\",\n      \"status\": \"400\",\n      \"detail\": \"data.attributes.name: \\\"name\\\" is required\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "ffadeb6d-98d9-45e3-aaf8-36dc00d605b6",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page[offset]",
+                      "value": "10"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "100"
+                    },
+                    {
+                      "key": "filter",
+                      "value": "eq(name,Alan Turing)"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "8b787a83-f3be-49a3-8ac3-316c56cc52a8",
+          "name": "Create a schedule",
+          "request": {
+            "name": "Create a schedule",
+            "description": {},
+            "url": {
+              "path": [
+                "v2",
+                "subscriptions",
+                "schedules"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "filter",
+                  "value": "<string>"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"type\": \"<string>\",\n    \"attributes\": {\n      \"specification\": \"<string>\",\n      \"location\": \"<string>\",\n      \"job\": {\n        \"job_type\": \"<string>\"\n      },\n      \"external_ref\": \"<string>\",\n      \"name\": \"<string>\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "93dc15b2-aa56-40f1-8ad7-afe2a1f98fc4",
+              "name": "Success. The schedule is created.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "eq(name,Alan Turing)"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"subscription_schedule\",\n    \"attributes\": {\n      \"specification\": \"30 0 * * *\",\n      \"location\": \"Europe/London\",\n      \"job\": {\n        \"job_type\": \"billing-run\"\n      },\n      \"external_ref\": \"abc123\",\n      \"name\": \"Daily billing run.\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"type\": \"subscription_schedule\",\n    \"attributes\": {\n      \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n      \"job\": {\n        \"job_type\": {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      },\n      \"location\": \"Europe/London\",\n      \"specification\": \"30 0 * * *\",\n      \"updated_at\": \"2017-01-10T11:41:19.244842Z\",\n      \"external_ref\": \"abc123\",\n      \"name\": \"Daily billing run.\"\n    },\n    \"meta\": {\n      \"owner\": \"store\",\n      \"timestamps\": {\n        \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n        \"updated_at\": \"2017-01-10T11:41:19.244842Z\"\n      },\n      \"scheduled_for\": \"2017-07-21T17:32:28Z\"\n    },\n    \"id\": \"11111111-2222-3333-4444-555555555555\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "c3b4a4b3-f2ef-4d19-bb6b-a10863f8627d",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "eq(name,Alan Turing)"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"subscription_schedule\",\n    \"attributes\": {\n      \"specification\": \"30 0 * * *\",\n      \"location\": \"Europe/London\",\n      \"job\": {\n        \"job_type\": \"billing-run\"\n      },\n      \"external_ref\": \"abc123\",\n      \"name\": \"Daily billing run.\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Validation Error\",\n      \"status\": \"400\",\n      \"detail\": \"data.attributes.name: \\\"name\\\" is required\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "dd3b0a66-27f9-4931-9371-60c5ee0e3638",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "eq(name,Alan Turing)"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"subscription_schedule\",\n    \"attributes\": {\n      \"specification\": \"30 0 * * *\",\n      \"location\": \"Europe/London\",\n      \"job\": {\n        \"job_type\": \"billing-run\"\n      },\n      \"external_ref\": \"abc123\",\n      \"name\": \"Daily billing run.\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "e778f3b8-26de-4593-ae5f-144d5224fc99",
+          "name": "Get a schedule",
+          "request": {
+            "name": "Get a schedule",
+            "description": {},
+            "url": {
+              "path": [
+                "v2",
+                "subscriptions",
+                "schedules",
+                ":schedule_uuid"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "schedule_uuid",
+                  "description": "(Required) The unique identifier of the schedule."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "a944ea00-03fe-4d10-93c5-c3fb97fda445",
+              "name": "Success. A schedule is returned.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"type\": \"subscription_schedule\",\n    \"attributes\": {\n      \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n      \"job\": {\n        \"job_type\": {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      },\n      \"location\": \"Europe/London\",\n      \"specification\": \"30 0 * * *\",\n      \"updated_at\": \"2017-01-10T11:41:19.244842Z\",\n      \"external_ref\": \"abc123\",\n      \"name\": \"Daily billing run.\"\n    },\n    \"meta\": {\n      \"owner\": \"store\",\n      \"timestamps\": {\n        \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n        \"updated_at\": \"2017-01-10T11:41:19.244842Z\"\n      },\n      \"scheduled_for\": \"2017-07-21T17:32:28Z\"\n    },\n    \"id\": \"11111111-2222-3333-4444-555555555555\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d696c4ca-5950-4bca-9c0f-4198f49302d7",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Validation Error\",\n      \"status\": \"400\",\n      \"detail\": \"data.attributes.name: \\\"name\\\" is required\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "67873ffe-cb6e-4386-85c3-0b001a9f7afe",
+              "name": "Not found. The requested entity does not exist.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Not Found\",\n      \"status\": \"404\",\n      \"detail\": \"No plan found\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "9801ce9d-5923-47ef-b424-f2ad145aa750",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "6155403d-83f6-482f-8233-aeea9c6c7c81",
+          "name": "Update a schedule",
+          "request": {
+            "name": "Update a schedule",
+            "description": {},
+            "url": {
+              "path": [
+                "v2",
+                "subscriptions",
+                "schedules",
+                ":schedule_uuid"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "schedule_uuid",
+                  "description": "(Required) The unique identifier of the schedule."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"id\": \"<uuid>\",\n    \"type\": \"<string>\",\n    \"attributes\": {\n      \"external_ref\": \"<string>\",\n      \"name\": \"<string>\",\n      \"specification\": \"<string>\",\n      \"location\": \"<string>\",\n      \"job\": {\n        \"job_type\": \"<string>\"\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "0703114d-c3f3-4ce1-9b5f-cf2c7493ade8",
+              "name": "Success. The schedule details are returned.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"11111111-2222-3333-4444-555555555555\",\n    \"type\": \"subscription_schedule\",\n    \"attributes\": {\n      \"external_ref\": \"abc123\",\n      \"name\": \"Daily billing run.\",\n      \"specification\": \"30 0 * * *\",\n      \"location\": \"Europe/London\",\n      \"job\": {\n        \"job_type\": \"billing-run\"\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"type\": \"subscription_schedule\",\n    \"attributes\": {\n      \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n      \"job\": {\n        \"job_type\": {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      },\n      \"location\": \"Europe/London\",\n      \"specification\": \"30 0 * * *\",\n      \"updated_at\": \"2017-01-10T11:41:19.244842Z\",\n      \"external_ref\": \"abc123\",\n      \"name\": \"Daily billing run.\"\n    },\n    \"meta\": {\n      \"owner\": \"store\",\n      \"timestamps\": {\n        \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n        \"updated_at\": \"2017-01-10T11:41:19.244842Z\"\n      },\n      \"scheduled_for\": \"2017-07-21T17:32:28Z\"\n    },\n    \"id\": \"11111111-2222-3333-4444-555555555555\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "3a339ba3-cf9c-4c84-b2fc-895228f1bc6c",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"11111111-2222-3333-4444-555555555555\",\n    \"type\": \"subscription_schedule\",\n    \"attributes\": {\n      \"external_ref\": \"abc123\",\n      \"name\": \"Daily billing run.\",\n      \"specification\": \"30 0 * * *\",\n      \"location\": \"Europe/London\",\n      \"job\": {\n        \"job_type\": \"billing-run\"\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Validation Error\",\n      \"status\": \"400\",\n      \"detail\": \"data.attributes.name: \\\"name\\\" is required\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "c987577c-7c89-4fbc-ad7a-e86ba70e89d4",
+              "name": "Forbidden. The operation is forbidden on this entity.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"11111111-2222-3333-4444-555555555555\",\n    \"type\": \"subscription_schedule\",\n    \"attributes\": {\n      \"external_ref\": \"abc123\",\n      \"name\": \"Daily billing run.\",\n      \"specification\": \"30 0 * * *\",\n      \"location\": \"Europe/London\",\n      \"job\": {\n        \"job_type\": \"billing-run\"\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Permission denied\",\n      \"status\": \"404\",\n      \"detail\": \"Permission denied: plan tenancy mismatch\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b5d4bbd7-dad1-4b45-9f0e-17fd7e1c113c",
+              "name": "Not found. The requested entity does not exist.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"11111111-2222-3333-4444-555555555555\",\n    \"type\": \"subscription_schedule\",\n    \"attributes\": {\n      \"external_ref\": \"abc123\",\n      \"name\": \"Daily billing run.\",\n      \"specification\": \"30 0 * * *\",\n      \"location\": \"Europe/London\",\n      \"job\": {\n        \"job_type\": \"billing-run\"\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Not Found\",\n      \"status\": \"404\",\n      \"detail\": \"No plan found\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "9bc8d79e-e2d4-4b75-9848-e253daa6044f",
+              "name": "Write conflict. Unable to perform the operation at this time.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"11111111-2222-3333-4444-555555555555\",\n    \"type\": \"subscription_schedule\",\n    \"attributes\": {\n      \"external_ref\": \"abc123\",\n      \"name\": \"Daily billing run.\",\n      \"specification\": \"30 0 * * *\",\n      \"location\": \"Europe/London\",\n      \"job\": {\n        \"job_type\": \"billing-run\"\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Write Conflict\",\n      \"status\": \"409\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d52b4a0e-a36d-4633-baa1-ac876362e37a",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"11111111-2222-3333-4444-555555555555\",\n    \"type\": \"subscription_schedule\",\n    \"attributes\": {\n      \"external_ref\": \"abc123\",\n      \"name\": \"Daily billing run.\",\n      \"specification\": \"30 0 * * *\",\n      \"location\": \"Europe/London\",\n      \"job\": {\n        \"job_type\": \"billing-run\"\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "6a8cdc07-0148-4952-ba63-954e6cd62a08",
+          "name": "Delete schedule",
+          "request": {
+            "name": "Delete schedule",
+            "description": {},
+            "url": {
+              "path": [
+                "v2",
+                "subscriptions",
+                "schedules",
+                ":schedule_uuid"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "schedule_uuid",
+                  "description": "(Required) The unique identifier of the schedule."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "DELETE",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "4b12f2e0-6eab-471e-9580-95152926f1c1",
+              "name": "Success. The schedule is removed.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "9852b349-ec40-4c8e-946f-3fcff46a89e4",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Validation Error\",\n      \"status\": \"400\",\n      \"detail\": \"data.attributes.name: \\\"name\\\" is required\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "46091a48-3c32-4c09-ad5f-e74e1274c45c",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "schedules",
+                    ":schedule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "schedule_uuid",
+                      "description": "(Required) The unique identifier of the schedule."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://useast.api.elasticpath.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "09f42f26-f16a-45be-a972-d3c12982e32e",
+    "name": "Addresses Introduction Account Addresses Schedules API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.\n\nYou can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.\n\n\nContact Support:\n Name: Elastic Path\n Email: support@elasticpath.com",
+      "type": "text/plain"
+    }
+  }
+}

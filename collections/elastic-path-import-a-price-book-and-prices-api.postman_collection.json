@@ -1,0 +1,168 @@
+{
+  "item": [
+    {
+      "id": "d3ebb12c-270b-42be-a081-1a56ac02e252",
+      "name": "Import a Price Book and Prices",
+      "description": {
+        "content": "You can create and update product price books and prices in bulk, at both organization and store level, using the Price Book Import API. This is useful, for example, if you have a promotion and want to update 50,000 product prices. Rather than having to go to each price book and manually edit 50,000 prices, you can use the Price Book Import API to bulk update all your product prices at the same time, including setting different prices for different currencies.\n\nYou can create/update:\n\n- price books.\n- prices.\n  - sales pricing for products and product bundles with SKUs.\n  - volume pricing (tiers).\n\nThe following are not supported by the Price Book Import API:\n\n- price modifiers\n- SKUless bundles\n- Bundle sale prices\n\nThe API uses a [JSONL](https://jsonlines.org/) file. The JSONL file can be compressed to a GZIP file. Here is an [example of a JSONL file](/assets/example_file_all.jsonl).\n\nA file can include up to 50,000 objects. If you have more than 50,000 objects, then you must create a separate file, and import each file, one at a time.\n\n### Characteristics of Price Book Import\n\nThe Price Book Import API reads the entire file and then creates/updates the price book objects. This means the price book objects can be in any order in the file.\n\nPrice book imports are asynchronous. When you send a request to the price book import API, it triggers an asynchronous job to create/update the price books and product prices. You can see the status of a job using Get a job.\n\nJobs are processed one at a time. You can continue to send price book import requests, but those jobs are queued. In other words, Commerce looks for any jobs that have a status of PENDING and starts the job with the earliest created date. This process is repeated until all jobs are processed. See [Jobs](/docs/api/pxm/products/jobs).\n\nThe API works on a \"best endeavours\" approach. In other words, the API does its best to create/update the price book objects based on the file that you provide. You can then use the results of the job to understand what objects the API created/updated and to troubleshoot any errors. See [Price Book Import API Results](#price-book-import-api-results).\n\nPrice book imports are processed sequentially in the order that you send your import API requests.\n\n### Price Book Import Unique Identifiers\n\nThe API uses unique identifiers to identify the objects to be created/updated.\n\nYou must provide either an `id` or an `external_ref`. You may have both, but you must have at least one.\n\n- If you supply an `id` then the ID must exist for the object to be updated. If the ID does not exist, this causes an error.\n- If you supply an `external_ref` then the API checks if the external reference exists and updates the object. If the external reference does not exist, the API creates a new object with the external reference you have specified.\n\n#### Price Book Unique Identifiers\n\nThe following table describes the unique identifiers you must provide, depending on whether you are creating or updating a price book.\n\n| Action | Unique Identifiers |\n| --- | --- |\n| Creating | <ul><li>Unique price book name.</li><li>`external_ref` for the price book.</li></ul> |\n| Updating | <ul><li>`id` and/or `external_ref` for the price book.</li></ul> |\n\n#### Price Unique Identifiers\n\nThe following table describes the unique identifiers you must provide, depending on whether you are creating or updating a price.\n\n | Action | Unique Identifiers |\n | --- | --- |\n | Creating | <ul><li>The product SKU that the price belongs to.</li><li>`id` and/or `external_ref` for the price book where you want to create the new price.</li><li>`external_ref` for the price. The `external_ref` for a price must be unique within a price book. However, you can have duplicate price external references across multiple price books.</li></ul> |\n | Updating | <ul><li>The product SKU that the price belongs to.</li><li>`pricebook_external_ref` for the price book where you want to update the new price.</li><li>`id` and/or `external_ref` for the price. The `external_ref` for a price must be unique within a price book. However, you can have duplicate price external references across multiple price books.</li></ul> |\n \n ### Price Book Import File\n \n You can create/update price book objects using [Import a Price](/docs/api/pxm/pricebooks/import-a-price-book-and-prices).\n \n The API uses a [JSONL](https://jsonlines.org/) file. The JSONL file can be compressed to a GZIP file. Here is an [example of a JSONL file](/assets/example_file_all.jsonl).\n \n A file can include up to 50,000 objects. If you have more than 50,000 objects, then you must create a separate file, and import each file, one at a time.\n \n - The `pricebook` Object - The attributes you can specify for a `pricebook` object are the attributes you specify when [creating a pricebook](/docs/api/pxm/pricebooks/create-pricebook). \n \n - The `product-price` Object - The attributes you can specify for a `product-price` object are the attributes you specify when [adding a price to a price book](/docs/api/pxm/pricebooks/create-product-price).\n \n Once your import file is created, use the [import a price book and prices API to import](/docs/api/pxm/pricebooks/import-pricebook) the file.\n \n ### Importing product prices with custom attributes\n \n There are two types of custom attributes a price can have `shopper_attributes` and `admin_attributes`. When importing product prices with custom attributes, you can import a price with:\n \n - up to 100 `admin_attributes`\n - up to 100 `shopper_attributes`\n \n Ensure that a price adheres to these limits for custom attributes.\n \n ### Price Book Import API Results\n \n The API works on a \"best endeavours\" approach. In other words, the API does its best to create/update the price book objects based on the file that you provide.\n \n If there are any errors, then the import is aborted and the job fails with an error. You can then use the job results to understand what objects the API created/updated until the import failed and to troubleshoot any errors. \n \n Once you have fixed any errors, you can then use the [**import a price**](/docs/api/pxm/pricebooks/import-pricebook) endpoint to send the request again.\n \n The following table describes the import messages reported by the API.\n \n | Import Message | Description |\n | --- | --- |\n | <ul><li>import price book_id: '%v' belongs to Organization\", price book.ID))</li><li>\"import price book external_ref: '%v' belongs to Organization\", *price book.ExternalRef)</li></ul> | This group of messages tells you that these imported objects belong to an organization. \n | <ul><li>matched price with pricebook_id - had different external_ref</li><li>matched price with pricebook_id - belongs to different price book</li><li>matched price with pricebook_id - price_id not found</li><li>matched price with pricebook_id - price_id belongs to an organization.</li><li>matched price with pricebook_id - duplicate external_ref detected</li><li>matched price with pricebook_id - duplicate SKU detected - required SKU.</li></ul> | This group of messages is telling you that the price was updated but there is an issue with another attribute that requires fixing. |\n \n The following table describes the import errors reported by the API.\n \n | Error | Description |\n | --- | --- |\n | <ul><li>error processing gzip file</li><li>error processing object '%v' invalid json provided</li></ul> | This group of errors indicates that there is a problem with the JSONL file. You must fix the problems with the file and try the import again. |\n | <ul><li>duplicate price book Id '%s' in imported price books</li><li>missing attributes for price book</li><li>invalid type for external_ref for price book</li><li>missing attributes for price</li><li>missing sku for price</li><li>missing sku for price</li><li>invalid type for external_ref for price</li><li>invalid type for sku for price</li><li>missing price book_id/price book_external_ref for price</li><li>price book id(s) not found</li><li>price book external ref(s) not found</li><li>price book id not found:</li><li>duplicate external ref found</li><li>price Ids not found</li><li>price book external refs not found</li></ul> | This group of errors indicates that there is some information missing from the objects you are trying to create/update. |\n",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "c08a474b-e247-4f0b-b825-76d22f9a5ca4",
+          "name": "Import a Price",
+          "request": {
+            "name": "Import a Price",
+            "description": {
+              "content": "You can create and update product price books and prices in bulk, at both organization and store level, using the Price Book Import API. This is useful, for example, if you have a promotion and want to update 50,000 product prices. Rather than having to go to each price book and manually edit 50,000 prices, you can use the Price Book Import API to bulk update all your product prices at the same time, including setting different prices for different currencies.\n \n The API uses a [JSONL](https://jsonlines.org/) file. The JSONL file can be compressed to a GZIP file. Here is an [example of a JSONL file](/assets/example_file_all.jsonl).\n \n The API works on a \"best endeavours\" approach. In other words, the API does its best to create/update the price book objects based on the file that you provide. If there are any errors, then the import is aborted, and the job fails with an error. You can then use the job results to understand what objects the API created/updated until the import failed, and to troubleshoot any errors. See [Import Results](#tag/Price-Book-Import).\n \n Price book imports are processed sequentially in the order that you send your import API requests.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "pricebooks",
+                "import"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "1414fa0a-4c59-403f-a65d-3ab01680036e",
+              "name": "The created price book",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    "import"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"0dd4e7de-006f-460f-a43e-a581f375cedc\",\n    \"attributes\": {\n      \"created_at\": \"2020-09-22T09:00:00Z\",\n      \"updated_at\": \"2020-09-22T09:00:00Z\",\n      \"type\": \"pricebook-import\",\n      \"status\": \"pending\",\n      \"started_at\": \"2020-09-22T09:00:00Z\",\n      \"completed_at\": \"2020-09-22T09:00:00Z\"\n    },\n    \"meta\": {\n      \"x_request_id\": \"2d70776e-c2b0-4446-84e6-d08a24edfca4\"\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "49f1e808-1c32-4c66-b2d9-7f3e38c8ed63",
+              "name": "Unexpected error.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    "import"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"detail\": \"The price book already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    },\n    {\n      \"detail\": \"The price book already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://useast.api.elasticpath.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "a4ff03ee-c4d1-4be8-a648-0bd3d9ea2e9b",
+    "name": "Addresses Introduction Account Addresses Import a Price Book and Prices API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.\n\nYou can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.\n\n\nContact Support:\n Name: Elastic Path\n Email: support@elasticpath.com",
+      "type": "text/plain"
+    }
+  }
+}

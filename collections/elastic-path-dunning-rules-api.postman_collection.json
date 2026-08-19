@@ -1,0 +1,1373 @@
+{
+  "item": [
+    {
+      "id": "344645c5-7642-4913-9569-5ae5d02bb16c",
+      "name": "Dunning Rules",
+      "description": {
+        "content": "\nDunning is the process of handling failed payment attempts. This is important for recovering revenue from failed payments, reduces customer churn and maintains cashflow. By implementing efficient dunning processes, you can enhance financial health and operational efficiency.\n\nSubscriptions enables you to create a dunning rule that allows you to configure payment retry schedules. Subscriptions retries failed payments automatically. You can customize the timing and frequency of the payment retries.\n\nDunning is enabled by default. You can choose to disable dunning. If no dunning rule is configured, then payment is retried once a day for 10 days, in total 11 payments. You can decide what action to take after the Subscriptions has stopped retrying the payments.\n\n- Do nothing - the subscription remains active and Subscriptions does not attempt to retry the payment. However, the subscription is still available for a subscriber to use.\n- Suspend the subscription. Subscriptions does not attempt to retry the payment. A subscriber can choose to pay the outstanding invoice. However, a subscriber cannot renew their subscription; a merchandizer must renew the subscription on behalf of the subscriber.\n- close a subscription. The subscription ends and it's status becomes `inactive`. However, a merchandizer can choose to resume the subscription if a subscriber pays the outstanding payment. \n",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "670ee359-3d35-476a-96aa-2220aeb14b29",
+          "name": "Create a dunning rule",
+          "request": {
+            "name": "Create a dunning rule",
+            "description": {
+              "content": "Dunning rules must use a `fixed` strategy. This means payments are retried on a fixed schedule. \n\nWhen an invoice is created, it immediately becomes eligible for payment by the next payment run. If the first payment attempt fails then the invoice enters dunning. In subsequent payment runs, invoices are only  considered for payment if they meet the dunning rules you create.\n\nYou can configure a dunning rule to be the default for your store. There can only be one default rule per store. All invoices in your store will then perform dunning according to the specified rules. \n\n:::note\nIf no dunning rule is configured, then payment is retried once a day for 10 days, in total 11 payments. You can decide what action to take after the Subscriptions has stopped retrying the payments.\n:::\n\nThe following attributes are used to define a `fixed` schedule:\n\n- `payment_retry_unit - the unit of time used to measure the intervals between payment attempts or retries. \n- `payment_retry_interval` - the number of `payment_interval-units` to wait between each payment retry attempt.\n- `payment_retries_limit` - the number of times subscriptions attempts payments retries before an `action` is taken.\n- `action` - the action to take if payment is not successful.\n\nFor example, if:\n\n- the `payment_retry_unit` is `days` \n- the `payment_retry_interval` is `2`\n- the `payment_rety_limit` is `10`\n- the `action` is `close`.\n\nSubscriptions attempts to retry the payment every 2 days until 10 payment attempts have been tried. At that point, the subscription ends and it's status changes to `inacive`. \n\nFollowing on from this, you can specify that the dunning rule is no longer the default. You do not have to specify another rule to replace it. If you do remove the default dunning rule, the store defaults to the behavior that is followed when dunning is not enabled.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "subscriptions",
+                "dunning-rules"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"type\": \"<string>\",\n    \"attributes\": {\n      \"payment_retry_type\": \"<string>\",\n      \"payment_retries_limit\": \"<long>\",\n      \"action\": \"<string>\",\n      \"payment_retry_interval\": \"<long>\",\n      \"payment_retry_unit\": \"<string>\",\n      \"payment_retry_multiplier\": \"<double>\",\n      \"default\": \"<boolean>\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "be3dee42-0582-46df-9750-c2263bd98e3e",
+              "name": "Success. The dunning rule set is created.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"subscription_dunning_rule\",\n    \"attributes\": {\n      \"payment_retry_type\": \"fixed\",\n      \"payment_retry_unit\": \"day\",\n      \"payment_retry_interval\": 1,\n      \"payment_retries_limit\": 10,\n      \"action\": \"none\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"type\": \"subscription_dunning_rule\",\n    \"attributes\": {\n      \"payment_retry_type\": \"fixed\",\n      \"payment_retry_unit\": \"day\",\n      \"payment_retry_interval\": 1,\n      \"payment_retries_limit\": 10,\n      \"action\": \"none\"\n    },\n    \"meta\": {\n      \"owner\": \"store\",\n      \"timestamps\": {\n        \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n        \"updated_at\": \"2017-01-10T11:41:19.244842Z\"\n      }\n    },\n    \"id\": \"11111111-2222-3333-4444-555555555555\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b18c6799-e31b-471e-b8ed-2133f4a0965d",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"subscription_dunning_rule\",\n    \"attributes\": {\n      \"payment_retry_type\": \"fixed\",\n      \"payment_retry_unit\": \"day\",\n      \"payment_retry_interval\": 1,\n      \"payment_retries_limit\": 10,\n      \"action\": \"none\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Validation Error\",\n      \"status\": \"400\",\n      \"detail\": \"data.attributes.name: \\\"name\\\" is required\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "04ac672b-8fd9-436b-af7c-596abd47878e",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"subscription_dunning_rule\",\n    \"attributes\": {\n      \"payment_retry_type\": \"fixed\",\n      \"payment_retry_unit\": \"day\",\n      \"payment_retry_interval\": 1,\n      \"payment_retries_limit\": 10,\n      \"action\": \"none\"\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "f482510b-14f5-4a0a-be05-598bf0c579a5",
+          "name": "List dunning rules",
+          "request": {
+            "name": "List dunning rules",
+            "description": {
+              "content": "Retrieves a list of all dunning rule sets.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "subscriptions",
+                "dunning-rules"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "filter",
+                  "value": "<string>"
+                },
+                {
+                  "disabled": false,
+                  "key": "page[offset]",
+                  "value": "<long>",
+                  "description": "The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used."
+                },
+                {
+                  "disabled": false,
+                  "key": "page[limit]",
+                  "value": "<long>",
+                  "description": "The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used."
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "3a34ea4b-b7a1-4124-8678-5149aca9ca6f",
+              "name": "Success. A list of dunning rules is returned.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "eq(name,Alan Turing)"
+                    },
+                    {
+                      "key": "page[offset]",
+                      "value": "10"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "100"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"type\": \"subscription_dunning_rule\",\n      \"attributes\": {\n        \"payment_retry_type\": \"fixed\",\n        \"payment_retry_unit\": \"day\",\n        \"payment_retry_interval\": 1,\n        \"payment_retries_limit\": 10,\n        \"action\": \"none\"\n      },\n      \"meta\": {\n        \"owner\": \"store\",\n        \"timestamps\": {\n          \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n          \"updated_at\": \"2017-01-10T11:41:19.244842Z\"\n        }\n      },\n      \"id\": \"11111111-2222-3333-4444-555555555555\"\n    },\n    {\n      \"type\": \"subscription_dunning_rule\",\n      \"attributes\": {\n        \"payment_retry_type\": \"fixed\",\n        \"payment_retry_unit\": \"day\",\n        \"payment_retry_interval\": 1,\n        \"payment_retries_limit\": 10,\n        \"action\": \"none\"\n      },\n      \"meta\": {\n        \"owner\": \"store\",\n        \"timestamps\": {\n          \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n          \"updated_at\": \"2017-01-10T11:41:19.244842Z\"\n        }\n      },\n      \"id\": \"11111111-2222-3333-4444-555555555555\"\n    }\n  ],\n  \"links\": {\n    \"key_0\": \"http://example.com/articles/1/comments\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "6fb0b3fe-e844-4459-9d8f-2dcef9d92e03",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "eq(name,Alan Turing)"
+                    },
+                    {
+                      "key": "page[offset]",
+                      "value": "10"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "100"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Validation Error\",\n      \"status\": \"400\",\n      \"detail\": \"data.attributes.name: \\\"name\\\" is required\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "2c272382-570b-4b68-98df-7021d001ac46",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "eq(name,Alan Turing)"
+                    },
+                    {
+                      "key": "page[offset]",
+                      "value": "10"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "100"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "2593f39a-8024-4e3a-a58a-3aae92b90816",
+          "name": "Get dunning rule policy",
+          "request": {
+            "name": "Get dunning rule policy",
+            "description": {},
+            "url": {
+              "path": [
+                "v2",
+                "subscriptions",
+                "dunning-rules",
+                ":dunning_rule_uuid"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "dunning_rule_uuid",
+                  "description": "(Required) The unique identifier of a dunning rule set."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "e2e51b65-0d7a-4ce1-a9d6-979deeefeff1",
+              "name": "Success. The dunning rule details are returned.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"type\": \"subscription_dunning_rule\",\n    \"attributes\": {\n      \"payment_retry_type\": \"fixed\",\n      \"payment_retry_unit\": \"day\",\n      \"payment_retry_interval\": 1,\n      \"payment_retries_limit\": 10,\n      \"action\": \"none\"\n    },\n    \"meta\": {\n      \"owner\": \"store\",\n      \"timestamps\": {\n        \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n        \"updated_at\": \"2017-01-10T11:41:19.244842Z\"\n      }\n    },\n    \"id\": \"11111111-2222-3333-4444-555555555555\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d09c8ded-5846-401a-89e0-9935873709ec",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Validation Error\",\n      \"status\": \"400\",\n      \"detail\": \"data.attributes.name: \\\"name\\\" is required\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "4a21dccb-a97e-4073-ab4b-007ff104e7db",
+              "name": "Not found. The requested entity does not exist.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Not Found\",\n      \"status\": \"404\",\n      \"detail\": \"No plan found\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "4c9625a1-553c-4300-b44e-224c949f5a97",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "f4b50087-0c99-41ac-b947-931051fef522",
+          "name": "Update dunning rule policy",
+          "request": {
+            "name": "Update dunning rule policy",
+            "description": {
+              "content": "Specify whichever attributes you want to change. The values of the other attributes remain the same. If the attributes section is empty, the rule is not updated. For fields that are optional, an existing value can be removed by specifying a value of null.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "subscriptions",
+                "dunning-rules",
+                ":dunning_rule_uuid"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "dunning_rule_uuid",
+                  "description": "(Required) The unique identifier of a dunning rule set."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"id\": \"<uuid>\",\n    \"type\": \"<string>\",\n    \"attributes\": {\n      \"payment_retry_type\": \"<string>\",\n      \"payment_retry_interval\": \"<long>\",\n      \"payment_retry_unit\": \"<string>\",\n      \"payment_retry_multiplier\": \"<double>\",\n      \"payment_retries_limit\": \"<long>\",\n      \"action\": \"<string>\",\n      \"default\": \"<boolean>\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "c77e0239-71e9-4c83-b330-047976db3c96",
+              "name": "Success. The dunning rule set has been updated.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"11111111-2222-3333-4444-555555555555\",\n    \"type\": \"subscription_dunning_rule\",\n    \"attributes\": {\n      \"payment_retry_type\": \"fixed\",\n      \"payment_retry_interval\": 1,\n      \"payment_retry_unit\": \"day\",\n      \"payment_retry_multiplier\": 1,\n      \"payment_retries_limit\": 5,\n      \"action\": \"none\",\n      \"default\": false\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"type\": \"subscription_dunning_rule\",\n    \"attributes\": {\n      \"payment_retry_type\": \"fixed\",\n      \"payment_retry_unit\": \"day\",\n      \"payment_retry_interval\": 1,\n      \"payment_retries_limit\": 10,\n      \"action\": \"none\"\n    },\n    \"meta\": {\n      \"owner\": \"store\",\n      \"timestamps\": {\n        \"created_at\": \"2017-01-10T11:41:19.244842Z\",\n        \"updated_at\": \"2017-01-10T11:41:19.244842Z\"\n      }\n    },\n    \"id\": \"11111111-2222-3333-4444-555555555555\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "2e3c048a-a0fa-4cf5-ad91-dfdbcab66884",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"11111111-2222-3333-4444-555555555555\",\n    \"type\": \"subscription_dunning_rule\",\n    \"attributes\": {\n      \"payment_retry_type\": \"fixed\",\n      \"payment_retry_interval\": 1,\n      \"payment_retry_unit\": \"day\",\n      \"payment_retry_multiplier\": 1,\n      \"payment_retries_limit\": 5,\n      \"action\": \"none\",\n      \"default\": false\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Validation Error\",\n      \"status\": \"400\",\n      \"detail\": \"data.attributes.name: \\\"name\\\" is required\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d72c3a9a-0218-403d-98c1-1c89c898b474",
+              "name": "Forbidden. The operation is forbidden on this entity.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"11111111-2222-3333-4444-555555555555\",\n    \"type\": \"subscription_dunning_rule\",\n    \"attributes\": {\n      \"payment_retry_type\": \"fixed\",\n      \"payment_retry_interval\": 1,\n      \"payment_retry_unit\": \"day\",\n      \"payment_retry_multiplier\": 1,\n      \"payment_retries_limit\": 5,\n      \"action\": \"none\",\n      \"default\": false\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Permission denied\",\n      \"status\": \"404\",\n      \"detail\": \"Permission denied: plan tenancy mismatch\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "35d87908-6c59-4b9d-b20a-6c387b3bd7fe",
+              "name": "Not found. The requested entity does not exist.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"11111111-2222-3333-4444-555555555555\",\n    \"type\": \"subscription_dunning_rule\",\n    \"attributes\": {\n      \"payment_retry_type\": \"fixed\",\n      \"payment_retry_interval\": 1,\n      \"payment_retry_unit\": \"day\",\n      \"payment_retry_multiplier\": 1,\n      \"payment_retries_limit\": 5,\n      \"action\": \"none\",\n      \"default\": false\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Not Found\",\n      \"status\": \"404\",\n      \"detail\": \"No plan found\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "6c725c10-1b6b-4c7e-8d4a-9b13ad0df72b",
+              "name": "Write conflict. Unable to perform the operation at this time.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"11111111-2222-3333-4444-555555555555\",\n    \"type\": \"subscription_dunning_rule\",\n    \"attributes\": {\n      \"payment_retry_type\": \"fixed\",\n      \"payment_retry_interval\": 1,\n      \"payment_retry_unit\": \"day\",\n      \"payment_retry_multiplier\": 1,\n      \"payment_retries_limit\": 5,\n      \"action\": \"none\",\n      \"default\": false\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Write Conflict\",\n      \"status\": \"409\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "81f82f24-13d3-4ab0-90cb-a04216c9f2dc",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"id\": \"11111111-2222-3333-4444-555555555555\",\n    \"type\": \"subscription_dunning_rule\",\n    \"attributes\": {\n      \"payment_retry_type\": \"fixed\",\n      \"payment_retry_interval\": 1,\n      \"payment_retry_unit\": \"day\",\n      \"payment_retry_multiplier\": 1,\n      \"payment_retries_limit\": 5,\n      \"action\": \"none\",\n      \"default\": false\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "ae8338cc-1a0a-4c56-9d22-6624781d2697",
+          "name": "Delete dunning rules",
+          "request": {
+            "name": "Delete dunning rules",
+            "description": {
+              "content": "You can delete a dunning rule at any time. If a dunning rule is deleted then Subscriptions reverts to the configuration used if no dunning rule is set; payment is retried once a day for 10 days, in total 11 payments. You can decide what action to take after the Subscriptions has stopped retrying the payments. See [Dunning Rules](/docs/api/subscriptions/dunning-rules).",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "subscriptions",
+                "dunning-rules",
+                ":dunning_rule_uuid"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "dunning_rule_uuid",
+                  "description": "(Required) The unique identifier of a dunning rule set."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "DELETE",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "27fd1f44-27dc-425a-b8c8-5fde828f1734",
+              "name": "Success. The dunning rule is removed.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "590e408a-def8-4227-b1e5-01d00039e978",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Validation Error\",\n      \"status\": \"400\",\n      \"detail\": \"data.attributes.name: \\\"name\\\" is required\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5a3cae8b-d1d7-4425-937c-f9ed3d66b86b",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "subscriptions",
+                    "dunning-rules",
+                    ":dunning_rule_uuid"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "dunning_rule_uuid",
+                      "description": "(Required) The unique identifier of a dunning rule set."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://useast.api.elasticpath.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "e44652aa-5783-456e-aaca-a89cea14691e",
+    "name": "Addresses Introduction Account Addresses Dunning Rules API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.\n\nYou can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.\n\n\nContact Support:\n Name: Elastic Path\n Email: support@elasticpath.com",
+      "type": "text/plain"
+    }
+  }
+}

@@ -1,0 +1,1756 @@
+{
+  "item": [
+    {
+      "id": "53d03670-598d-44d8-9bfa-2c80e73fc190",
+      "name": "Custom Fields",
+      "description": {
+        "content": "A Custom Field represents a single field of data (for example a Product Rating). A Custom API is composed of one or more Custom Fields.\n\nHere is a comparison of different types and validation available in Custom APIs vs Non-Core Flows.\n\n| Feature                                       | Non-Core Flows | Commerce Extensions                        |\n|-----------------------------------------------|----------------|--------------------------------------------|\n| Data Type: String                             | ✅              | ✅                                          |\n| Data Type: Integer                            | ✅              | ✅                                          |\n| Data Type: Float                              | ✅              | ✅                                          |\n| Data Type: Boolean                            | ✅              | ✅                                          |\n| Data Type: List                               | ⛔              | ✅                                          |\n| Data Type: Any                                | ⛔              | ✅                                          |\n| Data Type: Date & Time                        | ✅              | ✅ Replaced by Regex Validation (See Below) |\n| Data Type: One To Many                        | ✅              | Planned                                    |\n| Validation: Regular Expression                | ⛔️             | ✅                                          |\n| Validation: Slug/Email                        | ✅              | ✅ Replaced by Regex Validation (See Below) |\n| Validation: Min/Max Value                     | ✅              | ✅                                          |\n| Validation: Enum(String)                      | ✅              | ✅ Replaced by Regex validation (See Below) |\n| Validation: Enum(Float/Integer)               | ✅              | ⛔️                                         |\n| Validation: Allow null values                 | ⛔              | ✅                                          |\n| Validation: Unique(String)                    | ⛔              | ✅                                          |\n| Validation: Unique Case Insensitivity(String) | ⛔              | ✅                                          |\n| Validation: Immutable                         | ⛔              | ✅                                          |\n\n## Validation\n\nWhen [creating](/docs/api/commerce-extensions/create-a-custom-field#request) or [updating](/docs/api/commerce-extensions/update-a-custom-field#request) a Custom Field, `validation` can be used to limit the values that may be stored in the corresponding Custom API Entry.\n\n:::note\n\nAll validation changes, such as those to `allow_null_values` and any type specific rules, apply to new entries only. Existing Custom API Entry records are unaffected until updated.\n\n:::\n\n### Integer Validation\n- `min_value`: Specifies the minimum whole number that can be stored. If set, it must be less than `max_value`.\n- `max_value`: Specifies the maximum whole number that can be stored. If set, it must be greater than `min_value`.\n\nsample integer validation object:\n\n```json\n{\n  \"validation\": {\n    \"integer\": {\n      \"min_value\": 0,\n      \"max_value\": 32\n    }\n  }\n}\n```\nEven if no validation is set, field_type `integer` only supports values between -2^53+1 and 2^53+1. This is because the JSON format doesn't guarantee that values outside this range are portable ([Source](https://datatracker.ietf.org/doc/html/rfc7159#section-6)).\n\n\n\n### Float Validation\n- `min_value`: Specifies the minimum number that can be stored. If set, it must be less than `max_value`.\n- `max_value`: Specifies the maximum number that can be stored. If set, it must be greater than `min_value`.\n\nsample float validation object:\n\n```json\n{\n  \"validation\": {\n    \"float\": {\n      \"min_value\": 0.01,\n      \"max_value\": 32.01\n    }\n  }\n}\n```\n\nThe `float` field_type cannot accurately represent some numbers and so using very small or large numbers might lose precision. We recommend that API clients use either the `integer` field_type if applicable , or the `string` data type if perfect precision or recall is required.\n\n### String Validation\n- `min_length`: Specifies the minimum number of characters that can be stored. If set, it must be greater than 0 and less than `max_length`.\n- `max_length`: Specifies the maximum number of characters that can be stored. If set, it must be greater than 0 and `min_length`.\n- `regex`: An [RE2](https://github.com/google/re2/wiki/Syntax) regular expression used to restrict the specific characters that can be stored. It must be less than 1024 characters.\n- `unique`: Specifies whether the field must have unique constraint or not. It must be `yes` or `no`.\n- `unique_case_insensitivity`: Applies when `unique` is set to `yes`. It controls whether values with different cases (for example, `ABC` and `abc`) should conflict. It must be `true` or `false`.\n  sample string validation object:\n\n```json\n{\n  \"validation\": {\n    \"string\": {\n      \"min_length\": 0,\n      \"max_length\": 64,\n      \"regex\": \"^.+\\\\.(jpg|jpeg|png|gif|pdf)$\",\n      \"unique\": \"yes\"\n      \"unique_case_insensitivity\": true\n    }\n  }\n}\n```\nEven if no validation is set, field_type `string` only supports values that are up to `65535` characters long.\n\n#### Date & Time Values With Regular Expressions\n\nWhile Commerce Extensions does not have a native date or time type, you can none-the-less use these values in Commerce Extensions, by using the `string` field type and `regex` validation. To ensure that\nordering is handled properly you should follow the guidance in [RFC 3339 - Section 5.1 Ordering](https://www.rfc-editor.org/rfc/rfc3339.html#section-5.1), namely store the fields in order of least to most precise,\nand in the same timezone, this will ensure that comparison operators (e.g., `gt`) and sorting, work as expected, for example the following regex will force all values to be in seconds in UTC: `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$`\n\nOne thing to keep in mind is that some libraries, especially when dealing with sub-seconds might only display them if they are non-zero, and you will want to ensure that they are fully padded to the same length.\n\n#### Enum Values with Regular Expressions\n\nYou can ensure that only some values are allowed using the regular expression `^(alpha|bravo|charlie)$`.\n\n#### Slug Values with Regular Expressions\n\nSlugs can be replaced with the regular expression `^[a-z][a-z0-9-]*$`, this will ensure that the field starts with a lower case letter, and then has lower case letters, numbers or hyphens. You can tweak this regular expression as needed to suit your needs.\n\n### Email Validation with Regular Expressions\n\nE-mails can be tricky to validate properly, especially because many services _accept_ e-mails that are not valid, and reject e-mail addresses that are technically valid. Additionally, your own capabilities and purposes might inform your decision (e.g., if you support [i18n addresses](https://datatracker.ietf.org/doc/html/rfc6530) or don't then the set of allowed e-mails changes).\n\n### List Validation\n- `min_length`: Specifies the minimum number of elements that must be in the list.\n- `max_length`: Specifies the maximum number of elements allowed in the list. The maximum supported value is 1000.\n- `allowed_type`: Specifies the primitive type that all elements in the list must be. Valid values are `string`, `integer`, `boolean`, `float`, or `any`. The default is `any`, which allows mixed types. This value cannot be changed after the field is created.\n\nsample list validation object:\n\n```json\n{\n  \"validation\": {\n    \"list\": {\n      \"min_length\": 1,\n      \"max_length\": 100,\n      \"allowed_type\": \"string\"\n    }\n  }\n}\n```\n\n### Any Validation\n\nThe `any` field type allows storing arbitrary JSON values including objects, arrays, strings, numbers, booleans, and null. When updating an entry, the `any` field value is completely replaced, not merged. Filtering is not supported on `any` fields.\n\nsample any validation object:\n\n```json\n{\n  \"validation\": {\n    \"any\": {\n      \"allow_null_values\": true,\n      \"immutable\": false\n    }\n  }\n}\n```\n\n### Null Values\n\nAll Custom Fields can be configured to restrict the storage of `null` values for that field on a Custom API Entry. By default, this is `true`.\n\nsample validation object :\n\n```json\n{\n  \"validation\": {\n    \"boolean\": {\n      \"allow_null_values\": false,\n      \"immutable\": false\n    }\n  }\n}\n```\n\n### Immutable\n\nWhen [creating](/docs/api/commerce-extensions/create-a-custom-field#request) a Custom Field, it can be configured to be `immutable`. When set to true, the value of this field can be specified only during POST requests and cannot be modified during PUT requests. By default, this is `false`.\n\nsample validation object :\n\n```json\n{\n  \"validation\": {\n    \"boolean\": {\n      \"immutable\": false\n    }\n  }\n}\n```\n\n## Presentation\n\nWhen [creating](/docs/api/commerce-extensions/create-a-custom-field#request) or [updating](/docs/api/commerce-extensions/update-a-custom-field#request) a Custom Field, `presentation` can be used to influence the layout and order of fields within Commerce Manager. It does not affect the order of keys within JSON, nor influence any behaviour outside of Commerce Manager.\n\n## Reserved Slugs\n\nThe following values cannot be used as a `slug` in a Custom Field.\n\n- slug\n- type\n- id\n- meta\n- created_at\n- updated_at\n- links\n- relationships\n- attributes\n- attribute\n- dimension\n- dimensions\n- weight\n- weights\n",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "7a9dfc90-c8a6-42d4-9ffe-43eb05f72094",
+          "name": "Create a Custom Field",
+          "request": {
+            "name": "Create a Custom Field",
+            "description": {
+              "content": "Create a Custom Field",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "settings",
+                "extensions",
+                "custom-apis",
+                ":custom-api-id",
+                "fields"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "custom-api-id",
+                  "description": "(Required) The unique identifier of the Custom API."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"type\": \"<string>\",\n    \"name\": \"<string>\",\n    \"description\": \"<string>\",\n    \"slug\": \"<string>\",\n    \"field_type\": \"<string>\",\n    \"use_as_url_slug\": \"<boolean>\",\n    \"presentation\": {\n      \"sort_order\": 0\n    },\n    \"validation\": {\n      \"boolean\": {\n        \"allow_null_values\": true,\n        \"immutable\": false\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "93cbfbf1-c48c-40d8-a31e-dffc690a541a",
+              "name": "A Custom Field",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"859aeba1-03c2-4822-bd4c-89afce93d7eb\",\n    \"type\": \"custom_field\",\n    \"name\": \"Keep Purchased Items\",\n    \"description\": \"This field stores whether or not to keep purchased items on the wishlist.\",\n    \"slug\": \"keep_purchased\",\n    \"field_type\": \"boolean\",\n    \"validation\": {\n      \"boolean\": {\n        \"allow_null_values\": true,\n        \"immutable\": false\n      }\n    },\n    \"links\": {\n      \"self\": \"/v2/settings/extensions/custom-apis/3fa85f64-5717-4562-b3fc-2c963f66afa6/fields/859aeba1-03c2-4822-bd4c-89afce93d7eb\"\n    },\n    \"meta\": {\n      \"timestamps\": {\n        \"created_at\": \"2017-01-10T11:41:19.244Z\",\n        \"updated_at\": \"2017-01-10T11:41:19.244Z\"\n      }\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "21b64b16-c5f3-40ac-a75b-cb734c248ea2",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Bad Request\\\",\\n      \\\"status\\\": \\\"400\\\",\\n      \\\"detail\\\": \\\"The field 'name' is required.\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "8204f0a2-0b40-420c-b046-0e4366043157",
+              "name": "Not found. The requested entity does not exist.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Not Found\\\",\\n      \\\"status\\\": \\\"404\\\",\\n      \\\"detail\\\": \\\"Not found\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "c06922a0-b699-41ad-82f7-2e24a3e870c5",
+              "name": "Unable to perform the operation at this time.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Conflict\\\",\\n      \\\"status\\\": \\\"409\\\",\\n      \\\"detail\\\": \\\"custom_api with the given api_type already exists\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "ab3df680-2d63-412f-b924-ac14d809331f",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Internal Server Error\\\",\\n      \\\"status\\\": \\\"500\\\",\\n      \\\"detail\\\": \\\"there was a problem processing your request\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "6bb5bb31-b398-4d9f-bf2c-2ba22c432908",
+          "name": "List Custom Fields",
+          "request": {
+            "name": "List Custom Fields",
+            "description": {
+              "content": "Retrieves a list of Custom Fields\n\n## Filtering\nThe following operators and attributes are available for [filtering](/guides/Getting-Started/filtering) Custom Fields:\n\n| Attribute     | Operators                     | Example                                       |\n|---------------|-------------------------------|-----------------------------------------------|\n| `id`          | `lt`,`le`,`eq`,`gt`,`ge`,`in` | `eq(id,859aeba1-03c2-4822-bd4c-89afce93d7eb)` |\n| `created_at`  | `lt`,`le`,`eq`,`gt`,`ge`      | `ge(created_at,2024-04-29T00:00:00.000Z)`     |\n| `updated_at`  | `lt`,`le`,`eq`,`gt`,`ge`      | `le(updated_at,2024-04-29T00:00:00.000Z)`     |\n| `description` | `eq`,`like`                   | `like(description,*confidential*)`            |\n| `field_type`  | `eq`,`in`                     | `eq(field_type,string)`                       |\n| `name`        | `eq`,`like`                   | `eq(name,\"Last Name\")`                        |\n| `slug`        | `eq`,`like`,`in`              | `like(slug,*private*)`                        |\n\n## Sorting\nThe following attributes are available for sorting. When specified, the results are sorted in ascending order based on the value of the field. To sort in descending order, prefix the attribute with `-`, for example, `-updated_at`. The default sort order is `created_at` in descending order.\n- `id`\n- `created_at`\n- `updated_at`\n- `field_type`\n- `name`\n- `slug`\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "settings",
+                "extensions",
+                "custom-apis",
+                ":custom-api-id",
+                "fields"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "page[offset]",
+                  "value": "<long>",
+                  "description": "The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used."
+                },
+                {
+                  "disabled": false,
+                  "key": "page[limit]",
+                  "value": "<long>",
+                  "description": "The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used."
+                },
+                {
+                  "disabled": false,
+                  "key": "filter",
+                  "value": "<string>",
+                  "description": "Filter attributes. For more information, see the [Filtering](/guides/Getting-Started/filtering) section."
+                },
+                {
+                  "disabled": false,
+                  "key": "sort",
+                  "value": "-created_at",
+                  "description": "Specifies the order in which Custom Fields will be returned. For more information, see [Sorting](/guides/Getting-Started/sorting).\n"
+                }
+              ],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "custom-api-id",
+                  "description": "(Required) The unique identifier of the Custom API."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "8e2a0fbb-aa14-4f34-af5a-66b55237ccbe",
+              "name": "List of Custom Fields",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page[offset]",
+                      "value": "0"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "100"
+                    },
+                    {
+                      "key": "filter",
+                      "value": "eq(name,\"My Wishlist\")"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "id"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"id\": \"3f2507c1-9e5e-aa21-e869-7610c4655e5e\",\n      \"type\": \"string\",\n      \"name\": \"string\",\n      \"description\": \"string\",\n      \"slug\": \"string\",\n      \"field_type\": \"list\",\n      \"use_as_url_slug\": true,\n      \"presentation\": {\n        \"sort_order\": 10\n      },\n      \"links\": {\n        \"self\": {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      },\n      \"meta\": {\n        \"timestamps\": {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      },\n      \"validation\": {\n        \"boolean\": {\n          \"allow_null_values\": true,\n          \"immutable\": false\n        }\n      }\n    },\n    {\n      \"id\": \"bc757e88-09fd-f07b-c978-b137574d48c4\",\n      \"type\": \"string\",\n      \"name\": \"string\",\n      \"description\": \"string\",\n      \"slug\": \"string\",\n      \"field_type\": \"integer\",\n      \"use_as_url_slug\": false,\n      \"presentation\": {\n        \"sort_order\": 10\n      },\n      \"links\": {\n        \"self\": {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      },\n      \"meta\": {\n        \"timestamps\": {\n          \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n        }\n      },\n      \"validation\": {\n        \"boolean\": {\n          \"allow_null_values\": true,\n          \"immutable\": false\n        }\n      }\n    }\n  ],\n  \"meta\": {\n    \"results\": {\n      \"total\": 877,\n      \"total_method\": \"lower_bound\"\n    },\n    \"page\": {\n      \"limit\": 100,\n      \"offset\": 0,\n      \"current\": 1,\n      \"total\": 1\n    }\n  },\n  \"links\": {\n    \"current\": \"http://KlfaLicrCQCJGaHDeExwiJkXvjUiAYn.xoKdMg0VJUfBeof9lelM,AqWK1EcZVeNXFtwwWsXoCLDcL2spZROZpf+azN\",\n    \"first\": \"http://zlbDxueoiwxhiEWxyhYkzAPgghzmNpu.sssnTzZxkeee-Qf,,-.zp\",\n    \"last\": \"https://YLASpxehOaxJeTtyHfACo.zswZ9n6-uT9aY4,poOEd-hRQt1DGudM3KekJQGg9sKHh0ZXeG1fx,CdaloFmKOQe3bkxDKHVgUH4Qu5N7zKN,N.\",\n    \"next\": \"http://fCyUDdtlCRGIoyqwJKaSgo.tdknHDCAgBv9bBMqTD5A0X1BNyvo\",\n    \"prev\": \"https://aBuKAcBnLjnrwwHEWekGMDKU.ecnMiNbqQFVqFX-6Jd\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "9dae032e-0203-430a-bda0-7039f07befe5",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page[offset]",
+                      "value": "0"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "100"
+                    },
+                    {
+                      "key": "filter",
+                      "value": "eq(name,\"My Wishlist\")"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "id"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"detail\\\": \\\"Invalid filter: unknown field [version] specified in search filter, allowed fields are [api_type created_at description id name slug updated_at]\\\",\\n      \\\"status\\\": \\\"400\\\",\\n      \\\"title\\\": \\\"Bad Request\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "f93f3e35-be49-4d47-a351-691245c6bfb8",
+              "name": "Not found. The requested entity does not exist.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page[offset]",
+                      "value": "0"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "100"
+                    },
+                    {
+                      "key": "filter",
+                      "value": "eq(name,\"My Wishlist\")"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "id"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Not Found\\\",\\n      \\\"status\\\": \\\"404\\\",\\n      \\\"detail\\\": \\\"Not found\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "f2cea03c-6d09-4c2d-9287-4d3d16a77ba0",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page[offset]",
+                      "value": "0"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "100"
+                    },
+                    {
+                      "key": "filter",
+                      "value": "eq(name,\"My Wishlist\")"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "id"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Internal Server Error\\\",\\n      \\\"status\\\": \\\"500\\\",\\n      \\\"detail\\\": \\\"there was a problem processing your request\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "2047c3a4-ba53-445b-a016-c30361fe24cd",
+          "name": "Get a Custom Field",
+          "request": {
+            "name": "Get a Custom Field",
+            "description": {
+              "content": "Get a Custom Field",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "settings",
+                "extensions",
+                "custom-apis",
+                ":custom-api-id",
+                "fields",
+                ":custom-field-id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "custom-api-id",
+                  "description": "(Required) The unique identifier of the Custom API."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "custom-field-id",
+                  "description": "(Required) The unique identifier of the Custom Field."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "72c6e1e9-3f51-44d3-bc08-d95c93b8625d",
+              "name": "A Custom Field",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"859aeba1-03c2-4822-bd4c-89afce93d7eb\",\n    \"type\": \"custom_field\",\n    \"name\": \"Keep Purchased Items\",\n    \"description\": \"This field stores whether or not to keep purchased items on the wishlist.\",\n    \"slug\": \"keep_purchased\",\n    \"field_type\": \"boolean\",\n    \"validation\": {\n      \"boolean\": {\n        \"allow_null_values\": true,\n        \"immutable\": false\n      }\n    },\n    \"links\": {\n      \"self\": \"/v2/settings/extensions/custom-apis/3fa85f64-5717-4562-b3fc-2c963f66afa6/fields/859aeba1-03c2-4822-bd4c-89afce93d7eb\"\n    },\n    \"meta\": {\n      \"timestamps\": {\n        \"created_at\": \"2017-01-10T11:41:19.244Z\",\n        \"updated_at\": \"2017-01-10T11:41:19.244Z\"\n      }\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "51f68fef-03e5-4134-bb79-5fa051ec6820",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Bad Request\\\",\\n      \\\"status\\\": \\\"400\\\",\\n      \\\"detail\\\": \\\"The field 'name' is required.\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "75cd23f1-33a1-4df1-9aba-9a86d61a1f0f",
+              "name": "Not found. The requested entity does not exist.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Not Found\\\",\\n      \\\"status\\\": \\\"404\\\",\\n      \\\"detail\\\": \\\"Not found\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "64e204db-243a-45c3-919e-1f7f501a6b42",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Internal Server Error\\\",\\n      \\\"status\\\": \\\"500\\\",\\n      \\\"detail\\\": \\\"there was a problem processing your request\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "6a71b2a2-088e-49f2-82bf-973fb43bb0b7",
+          "name": "Update a Custom Field",
+          "request": {
+            "name": "Update a Custom Field",
+            "description": {
+              "content": "Update a Custom Field",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "settings",
+                "extensions",
+                "custom-apis",
+                ":custom-api-id",
+                "fields",
+                ":custom-field-id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "custom-api-id",
+                  "description": "(Required) The unique identifier of the Custom API."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "custom-field-id",
+                  "description": "(Required) The unique identifier of the Custom Field."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"type\": \"<string>\",\n    \"name\": \"<string>\",\n    \"description\": \"<string>\",\n    \"slug\": \"<string>\",\n    \"presentation\": {\n      \"sort_order\": 0\n    },\n    \"validation\": {\n      \"boolean\": {\n        \"allow_null_values\": true,\n        \"immutable\": false\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "ad077f85-6541-478c-93df-e5739c56279d",
+              "name": "A Custom Field",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": \"859aeba1-03c2-4822-bd4c-89afce93d7eb\",\n    \"type\": \"custom_field\",\n    \"name\": \"Keep Purchased Items\",\n    \"description\": \"This field stores whether or not to keep purchased items on the wishlist.\",\n    \"slug\": \"keep_purchased\",\n    \"field_type\": \"boolean\",\n    \"validation\": {\n      \"boolean\": {\n        \"allow_null_values\": true,\n        \"immutable\": false\n      }\n    },\n    \"links\": {\n      \"self\": \"/v2/settings/extensions/custom-apis/3fa85f64-5717-4562-b3fc-2c963f66afa6/fields/859aeba1-03c2-4822-bd4c-89afce93d7eb\"\n    },\n    \"meta\": {\n      \"timestamps\": {\n        \"created_at\": \"2017-01-10T11:41:19.244Z\",\n        \"updated_at\": \"2017-01-10T11:41:19.244Z\"\n      }\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "8b40282f-fe51-4eda-8bfa-2803bae319aa",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Bad Request\\\",\\n      \\\"status\\\": \\\"400\\\",\\n      \\\"detail\\\": \\\"The field 'name' is required.\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "1270414e-2f11-43d8-92f8-b537e0b3ad37",
+              "name": "Not found. The requested entity does not exist.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Not Found\\\",\\n      \\\"status\\\": \\\"404\\\",\\n      \\\"detail\\\": \\\"Not found\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "785fa37a-7670-4dc6-80af-b783a96de5ea",
+              "name": "Unable to perform the operation at this time.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {}
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Conflict\\\",\\n      \\\"status\\\": \\\"409\\\",\\n      \\\"detail\\\": \\\"custom_api with the given api_type already exists\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "6432566d-37bf-4beb-b3ea-cf98a6eb153a",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Internal Server Error\\\",\\n      \\\"status\\\": \\\"500\\\",\\n      \\\"detail\\\": \\\"there was a problem processing your request\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "4c4ed4ec-1afd-4b50-8531-f291928353bf",
+          "name": "Delete a Custom Field",
+          "request": {
+            "name": "Delete a Custom Field",
+            "description": {
+              "content": "Delete a Custom Field",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "v2",
+                "settings",
+                "extensions",
+                "custom-apis",
+                ":custom-api-id",
+                "fields",
+                ":custom-field-id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "custom-api-id",
+                  "description": "(Required) The unique identifier of the Custom API."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<uuid>",
+                  "key": "custom-field-id",
+                  "description": "(Required) The unique identifier of the Custom Field."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "DELETE",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "225b1baa-6cae-4e74-9831-84ef113375dc",
+              "name": "No Content",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "fff4bf1f-500a-440a-93dc-8f63ae93111b",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Bad Request\\\",\\n      \\\"status\\\": \\\"400\\\",\\n      \\\"detail\\\": \\\"The field 'name' is required.\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "7910bff2-ded2-4e7e-ac93-46ffb8450ab8",
+              "name": "Not found. The requested entity does not exist.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Not Found\\\",\\n      \\\"status\\\": \\\"404\\\",\\n      \\\"detail\\\": \\\"Not found\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "a4ae706a-6fab-474d-ab8b-998aa54ded9c",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "v2",
+                    "settings",
+                    "extensions",
+                    "custom-apis",
+                    ":custom-api-id",
+                    "fields",
+                    ":custom-field-id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-api-id",
+                      "description": "(Required) The unique identifier of the Custom API."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<uuid>",
+                      "key": "custom-field-id",
+                      "description": "(Required) The unique identifier of the Custom Field."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "\"{\\n  \\\"errors\\\": [\\n    {\\n      \\\"title\\\": \\\"Internal Server Error\\\",\\n      \\\"status\\\": \\\"500\\\",\\n      \\\"detail\\\": \\\"there was a problem processing your request\\\"\\n    }\\n  ]\\n}\\n\"",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://useast.api.elasticpath.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "a33e6d19-93a1-42a2-a772-7fc6fa39e8df",
+    "name": "Addresses Introduction Account Addresses Custom Fields API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.\n\nYou can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.\n\n\nContact Support:\n Name: Elastic Path\n Email: support@elasticpath.com",
+      "type": "text/plain"
+    }
+  }
+}

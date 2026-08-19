@@ -1,0 +1,1154 @@
+{
+  "item": [
+    {
+      "id": "fcf77935-39b9-4f75-b05e-aff769fa1f8f",
+      "name": "Prices",
+      "description": {
+        "content": "Price books contain prices for the products in your catalog. Use the Price Books API to create price books and add product prices to the price book.\n\n### Volume (tiers) Pricing\n\nUsing volume (tiers) pricing allows your store to offer different pricing for minimum quantities of items that your customers purchase. When a customer adds sufficient quantity of an item and meets the minimum required quantity for different pricing, all products with that item SKU are discounted in the cart. You can define the price range for different quantities of different items as in the following example:\n\n| Quantity | Price/Each |\n|:---------|:-----------|\n| 1-5      | $10.50     |\n| 6-10     | $10.00     |\n| 11-20    | $9.50      |\n| 21-50    | $8.50      |\n| 51+      | $7.90      |\n\n### Sales Pricing\n\nWith sales pricing, a store can optionally add a sale price to a product price. For example, a store can schedule seasonal pricing on products without creating a new price book and catalog ruleset. Optionally, a store can schedule the date ranges for the sale products. \n\nYou can set a sale price for an item within a bundle so that the product is sold at the sale price when sold as part of the bundle. For example, if you have a bundle consisting of four items, you can apply a discounted price to an item within the bundle to get a bundle sales price. \n\n1. For sale prices in the same price book:\n\n    - the schedules must not be exactly the same.\n    - schedules can partially overlap. If the schedule does contain overlapping sales prices, the sale price of the smallest sale period is chosen.\n    - if you have just one sale price, without a schedule, this is effectively a permanent price. If you want to add more sale prices to the price book, you must configure a schedule for the sale price. \n\n2. Sale prices in different price books can have overlapping schedules.\n\nBoth list and sale price (or was/is prices) are available in the catalog response, enabling you to display slash pricing on your storefront, depending on your requirements.\n\n### Creating a bundle sale price\n\nYou can assign a sale price to an option in a bundle.\n\n1. In the product price book, create a sale.\n2. Specify the bundle ID that contains the option you want to provide a sale price for.\n3. Provide the sale price for the option. You can add the same sale price for the same option using an array of bundle_ids if you want to sell the product as part of different bundles.\n\n### Understanding Volume and Sale Pricing Behavior for Products\n\nIf you have configured both sale and volume pricing for your products and product bundles, the following table describes how pricing behaves in the following scenarios.\n\n| Scenario | Description |\n| --- | --- |\n| Minimum quantities for volume pricing and sale pricing | <ul><li>(With sale schedule) If you have specified a minimum quantity of five whose price is $0.99 and at the same time, you have configured a sale for the time of purchase, then when a shopper checks out with 5 or more items, the total is based on the volume pricing. In other words, $0.99 × 5 = $4.95. Additionally, if volume pricing exist for both the product price and the sale, the volume pricing for the sale takes precedence. If no volume pricing is set in the sale, the base sale price is applied, and the volume pricing for the product price will not be applied.</li><li>(With sale schedule) If a shopper's items in the cart do not meet the minimum quantity required for volume pricing, the total is calculated based on the sales price.</li><li>(Without sale schedule) If the sale is a permanent sale and volume pricing is only set for the product price, then regardless of the quantity a shopper adds to a cart, the final price is always calculated based on the base sales price. However, if volume pricing has been set for the sale, the final price will be determined by the volume tier pricing set in the sale, not the base sales price.</li></ul>\n| Two levels of volume pricing with different prices for each volume. | If you have configured two levels of volume pricing, for example, the first minimum quantity is 5 and the second minimum quantity is 10:<ul><li>When the quantity in the cart is => 5, then the price for the minimum quantity of 5 is used.</li><li>When the quantity in the cart is => 10 then the price for the minimum quantity of 10 is used.</li></ul> |\n\n### Optimizing product prices\n\nYou can add custom attributes to a product price, allowing your storefront to dynamically use these attributes in it's pricing and display logic. This enables you to optimize your pricing data, enhancing your ability to respond to market dynamics and customer preferences. Some examples of pricing optimization strategies are:\n\n- dynamic pricing - allows you to change the price of a product based on changes in customer demand, for example, raising prices during the high-demand holiday season or segment-focused, like special offers for new customers.\n- value-based pricing - allows you to offer different pricing tiers, for example, \"pro\" features cost more.\n- cost-plus pricing - allows you to set prices by adding a specific percentage to the production cost of a single unit.\n\nThere are two types of custom attributes:\n\n- `admin_attributes` - `admin_attributes` are not displayed in catalogs. This means `admin-attributes` can only be viewed by administrators. For example, you may want to add custom attributes that can automate price updates based on predefined rules, saving time and reducing human error or you might want to integrate price attributes with your other company systems, (ERP, CRM) ensuring consistency and accuracy across platforms.\n- `shopper_attributes` - `shopper_attributes` are displayed in catalogs. This means `shopper_attributes` can be viewed by both shoppers and administrators.  For example, you can set prices based on customer segments, offering different prices for wholesale and retail customers or providing discounts to loyal customers. \n\nBoth `admin-attributes` and `shopper_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys for each type of attribute.\n",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "ba667611-9278-4f67-b2f0-d41e108d2e4c",
+          "name": "Add a Product Price to a Price Book",
+          "request": {
+            "name": "Add a Product Price to a Price Book",
+            "description": {
+              "content": "Price books contain prices for the products in your catalog. Use the Prices API to adds the prices for a product to a specified price book. If the prices for the product already exist in the price book, the operation fails and the existing product prices are not updated.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "pricebooks",
+                ":pricebookID",
+                "prices"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "pricebookID",
+                  "description": "(Required) The unique identifier of a price book."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"type\": \"product-price\",\n    \"attributes\": {\n      \"currencies\": {\n        \"key_0\": {\n          \"amount\": \"<long>\",\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"key_0\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        }\n      },\n      \"sku\": \"<string>\",\n      \"sales\": {\n        \"key_0\": {\n          \"bundle_ids\": [\n            \"<uuid>\",\n            \"<uuid>\"\n          ],\n          \"schedule\": {\n            \"valid_from\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"valid_to\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"rrule\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"tzid\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          },\n          \"currencies\": {\n            \"key_0\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"key_1\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        }\n      },\n      \"external_ref\": \"<string>\",\n      \"admin_attributes\": {\n        \"key_0\": \"<string>\",\n        \"key_1\": \"<string>\",\n        \"key_2\": \"<string>\",\n        \"key_3\": \"<string>\"\n      },\n      \"shopper_attributes\": {\n        \"key_0\": \"<string>\",\n        \"key_1\": \"<string>\"\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "35f29976-1dec-42b3-a6d2-ab251b6aec70",
+              "name": "A product price with the following attributes.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    ":pricebookID",
+                    "prices"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "pricebookID",
+                      "description": "(Required) The unique identifier of a price book."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"product-price\",\n    \"attributes\": {\n      \"currencies\": {\n        \"USD\": {\n          \"amount\": 100,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_5\": {\n              \"minimum_quantity\": 5,\n              \"amount\": 50\n            }\n          }\n        },\n        \"CAD\": {\n          \"amount\": 127,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_10\": {\n              \"minimum_quantity\": 10,\n              \"amount\": 100\n            }\n          }\n        },\n        \"GBP\": {\n          \"amount\": 73,\n          \"includes_tax\": true,\n          \"tiers\": {\n            \"min_20\": {\n              \"minimum_quantity\": 20,\n              \"amount\": 60\n            }\n          }\n        }\n      },\n      \"sku\": \"product-sku-a\",\n      \"sales\": {\n        \"summer\": {\n          \"schedule\": {\n            \"valid_form\": \"2023-12-24T09:00:00\",\n            \"valid_to\": \"2023-12-25T09:00:00\"\n          },\n          \"currencies\": {\n            \"USD\": {\n              \"amount\": 90,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_5\": {\n                  \"minimum_quantity\": 5,\n                  \"amount\": 40\n                }\n              }\n            },\n            \"CAD\": {\n              \"amount\": 117,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_10\": {\n                  \"minimum_quantity\": 10,\n                  \"amount\": 80\n                }\n              }\n            },\n            \"GBP\": {\n              \"amount\": 65,\n              \"includes_tax\": true,\n              \"tiers\": {\n                \"min_20\": {\n                  \"minimum_quantity\": 20,\n                  \"amount\": 50\n                }\n              }\n            }\n          }\n        }\n      },\n      \"external_ref\": \"a-external-ref\",\n      \"admin_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      },\n      \"shopper_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"type\": \"product-price\",\n    \"attributes\": {\n      \"sku\": \"product-sku-a\",\n      \"currencies\": {\n        \"USD\": {\n          \"amount\": 100,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_5\": {\n              \"minimum_quantity\": 5,\n              \"amount\": 50\n            }\n          }\n        },\n        \"CAD\": {\n          \"amount\": 127,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_10\": {\n              \"minimum_quantity\": 10,\n              \"amount\": 100\n            }\n          }\n        },\n        \"GBP\": {\n          \"amount\": 73,\n          \"includes_tax\": true,\n          \"tiers\": {\n            \"min_20\": {\n              \"minimum_quantity\": 20,\n              \"amount\": 60\n            }\n          }\n        }\n      },\n      \"sales\": {\n        \"summer\": {\n          \"schedule\": {\n            \"valid_form\": \"2023-12-24T09:00:00\",\n            \"valid_to\": \"2023-12-25T09:00:00\"\n          },\n          \"currencies\": {\n            \"USD\": {\n              \"amount\": 90,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_5\": {\n                  \"minimum_quantity\": 5,\n                  \"amount\": 40\n                }\n              }\n            },\n            \"CAD\": {\n              \"amount\": 117,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_10\": {\n                  \"minimum_quantity\": 10,\n                  \"amount\": 80\n                }\n              }\n            },\n            \"GBP\": {\n              \"amount\": 65,\n              \"includes_tax\": true,\n              \"tiers\": {\n                \"min_20\": {\n                  \"minimum_quantity\": 20,\n                  \"amount\": 50\n                }\n              }\n            }\n          }\n        }\n      },\n      \"external_ref\": \"external-ref\",\n      \"created_at\": \"2020-09-22T09:00:00Z\",\n      \"updated_at\": \"2020-09-22T09:00:00Z\",\n      \"admin_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      },\n      \"shopper_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      }\n    },\n    \"id\": \"a915553d-935d-4d56-870b-817b47a44a99\",\n    \"pricebook_external_ref\": \"a-pricebook-external-ref\",\n    \"meta\": {\n      \"owner\": \"store\",\n      \"pricebook_id\": \"4c45e4ec-26e0-4043-86e4-c15b9cf985a7\"\n    }\n  },\n  \"links\": {\n    \"self\": \"https://bzkjzHuRPeLjqUfSHDsO.pxvLsoNAP7gzBIX+t+m6O1V+fzs+bDcrVdBS0fanH9-3qbfUVXwSU1ENqLETU0.V,PuYnzA6.H5M\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b4d16818-63cc-429a-9733-11b6d4774a06",
+              "name": "Unexpected error.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    ":pricebookID",
+                    "prices"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "pricebookID",
+                      "description": "(Required) The unique identifier of a price book."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"product-price\",\n    \"attributes\": {\n      \"currencies\": {\n        \"USD\": {\n          \"amount\": 100,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_5\": {\n              \"minimum_quantity\": 5,\n              \"amount\": 50\n            }\n          }\n        },\n        \"CAD\": {\n          \"amount\": 127,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_10\": {\n              \"minimum_quantity\": 10,\n              \"amount\": 100\n            }\n          }\n        },\n        \"GBP\": {\n          \"amount\": 73,\n          \"includes_tax\": true,\n          \"tiers\": {\n            \"min_20\": {\n              \"minimum_quantity\": 20,\n              \"amount\": 60\n            }\n          }\n        }\n      },\n      \"sku\": \"product-sku-a\",\n      \"sales\": {\n        \"summer\": {\n          \"schedule\": {\n            \"valid_form\": \"2023-12-24T09:00:00\",\n            \"valid_to\": \"2023-12-25T09:00:00\"\n          },\n          \"currencies\": {\n            \"USD\": {\n              \"amount\": 90,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_5\": {\n                  \"minimum_quantity\": 5,\n                  \"amount\": 40\n                }\n              }\n            },\n            \"CAD\": {\n              \"amount\": 117,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_10\": {\n                  \"minimum_quantity\": 10,\n                  \"amount\": 80\n                }\n              }\n            },\n            \"GBP\": {\n              \"amount\": 65,\n              \"includes_tax\": true,\n              \"tiers\": {\n                \"min_20\": {\n                  \"minimum_quantity\": 20,\n                  \"amount\": 50\n                }\n              }\n            }\n          }\n        }\n      },\n      \"external_ref\": \"a-external-ref\",\n      \"admin_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      },\n      \"shopper_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"detail\": \"The price already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    },\n    {\n      \"detail\": \"The price already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "fa353962-e92e-452c-a736-4ecbea778253",
+          "name": "Gets all Prices by Price Book ID",
+          "request": {
+            "name": "Gets all Prices by Price Book ID",
+            "description": {
+              "content": "Retrieves all the product prices in the specified price book.\n\n### Filtering\n\nThis endpoint supports filtering. For general syntax, see [Filtering](/guides/Getting-Started/filtering).\n\n| Operator | Attribute | Description | Example |\n| --- | --- | --- | --- |\n| `eq` | `external_ref`, `sku` | Checks if the values you provide matches a price. | `filter=eq(sku,some-sku)` |\n| `in` | `sku` | Checks if the values you provide are included in a product SKU. | `filter=in(sku,some-sku)' |\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "pricebooks",
+                ":pricebookID",
+                "prices"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "filter",
+                  "value": "<string>",
+                  "description": "This endpoint supports filtering. See [Filtering]().\n"
+                },
+                {
+                  "disabled": false,
+                  "key": "page[limit]",
+                  "value": "<long>",
+                  "description": "The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used."
+                },
+                {
+                  "disabled": false,
+                  "key": "page[offset]",
+                  "value": "<long>",
+                  "description": "The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page offset is set, the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used."
+                }
+              ],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "pricebookID",
+                  "description": "(Required) The unique identifier of a price book."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "eeae5e9d-430a-4dd2-8f34-be792694a416",
+              "name": "The product price list.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    ":pricebookID",
+                    "prices"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "<long>"
+                    },
+                    {
+                      "key": "page[offset]",
+                      "value": "<long>"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "pricebookID",
+                      "description": "(Required) The unique identifier of a price book."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"type\": \"product-price\",\n      \"attributes\": {\n        \"sku\": \"product-sku-a\",\n        \"currencies\": {\n          \"USD\": {\n            \"amount\": 100,\n            \"includes_tax\": false,\n            \"tiers\": {\n              \"min_5\": {\n                \"minimum_quantity\": 5,\n                \"amount\": 50\n              }\n            }\n          },\n          \"CAD\": {\n            \"amount\": 127,\n            \"includes_tax\": false,\n            \"tiers\": {\n              \"min_10\": {\n                \"minimum_quantity\": 10,\n                \"amount\": 100\n              }\n            }\n          },\n          \"GBP\": {\n            \"amount\": 73,\n            \"includes_tax\": true,\n            \"tiers\": {\n              \"min_20\": {\n                \"minimum_quantity\": 20,\n                \"amount\": 60\n              }\n            }\n          }\n        },\n        \"sales\": {\n          \"summer\": {\n            \"schedule\": {\n              \"valid_form\": \"2023-12-24T09:00:00\",\n              \"valid_to\": \"2023-12-25T09:00:00\"\n            },\n            \"currencies\": {\n              \"USD\": {\n                \"amount\": 90,\n                \"includes_tax\": false,\n                \"tiers\": {\n                  \"min_5\": {\n                    \"minimum_quantity\": 5,\n                    \"amount\": 40\n                  }\n                }\n              },\n              \"CAD\": {\n                \"amount\": 117,\n                \"includes_tax\": false,\n                \"tiers\": {\n                  \"min_10\": {\n                    \"minimum_quantity\": 10,\n                    \"amount\": 80\n                  }\n                }\n              },\n              \"GBP\": {\n                \"amount\": 65,\n                \"includes_tax\": true,\n                \"tiers\": {\n                  \"min_20\": {\n                    \"minimum_quantity\": 20,\n                    \"amount\": 50\n                  }\n                }\n              }\n            }\n          }\n        },\n        \"external_ref\": \"external-ref\",\n        \"created_at\": \"2020-09-22T09:00:00Z\",\n        \"updated_at\": \"2020-09-22T09:00:00Z\",\n        \"admin_attributes\": {\n          \"cost_of_goods\": \"42.0\",\n          \"charge_type\": \"credit card\"\n        },\n        \"shopper_attributes\": {\n          \"cost_of_goods\": \"42.0\",\n          \"charge_type\": \"credit card\"\n        }\n      },\n      \"id\": \"a915553d-935d-4d56-870b-817b47a44a99\",\n      \"pricebook_external_ref\": \"a-pricebook-external-ref\",\n      \"meta\": {\n        \"owner\": \"store\",\n        \"pricebook_id\": \"4c45e4ec-26e0-4043-86e4-c15b9cf985a7\"\n      }\n    },\n    {\n      \"type\": \"product-price\",\n      \"attributes\": {\n        \"sku\": \"product-sku-a\",\n        \"currencies\": {\n          \"USD\": {\n            \"amount\": 100,\n            \"includes_tax\": false,\n            \"tiers\": {\n              \"min_5\": {\n                \"minimum_quantity\": 5,\n                \"amount\": 50\n              }\n            }\n          },\n          \"CAD\": {\n            \"amount\": 127,\n            \"includes_tax\": false,\n            \"tiers\": {\n              \"min_10\": {\n                \"minimum_quantity\": 10,\n                \"amount\": 100\n              }\n            }\n          },\n          \"GBP\": {\n            \"amount\": 73,\n            \"includes_tax\": true,\n            \"tiers\": {\n              \"min_20\": {\n                \"minimum_quantity\": 20,\n                \"amount\": 60\n              }\n            }\n          }\n        },\n        \"sales\": {\n          \"summer\": {\n            \"schedule\": {\n              \"valid_form\": \"2023-12-24T09:00:00\",\n              \"valid_to\": \"2023-12-25T09:00:00\"\n            },\n            \"currencies\": {\n              \"USD\": {\n                \"amount\": 90,\n                \"includes_tax\": false,\n                \"tiers\": {\n                  \"min_5\": {\n                    \"minimum_quantity\": 5,\n                    \"amount\": 40\n                  }\n                }\n              },\n              \"CAD\": {\n                \"amount\": 117,\n                \"includes_tax\": false,\n                \"tiers\": {\n                  \"min_10\": {\n                    \"minimum_quantity\": 10,\n                    \"amount\": 80\n                  }\n                }\n              },\n              \"GBP\": {\n                \"amount\": 65,\n                \"includes_tax\": true,\n                \"tiers\": {\n                  \"min_20\": {\n                    \"minimum_quantity\": 20,\n                    \"amount\": 50\n                  }\n                }\n              }\n            }\n          }\n        },\n        \"external_ref\": \"external-ref\",\n        \"created_at\": \"2020-09-22T09:00:00Z\",\n        \"updated_at\": \"2020-09-22T09:00:00Z\",\n        \"admin_attributes\": {\n          \"cost_of_goods\": \"42.0\",\n          \"charge_type\": \"credit card\"\n        },\n        \"shopper_attributes\": {\n          \"cost_of_goods\": \"42.0\",\n          \"charge_type\": \"credit card\"\n        }\n      },\n      \"id\": \"a915553d-935d-4d56-870b-817b47a44a99\",\n      \"pricebook_external_ref\": \"a-pricebook-external-ref\",\n      \"meta\": {\n        \"owner\": \"store\",\n        \"pricebook_id\": \"4c45e4ec-26e0-4043-86e4-c15b9cf985a7\"\n      }\n    }\n  ],\n  \"meta\": {\n    \"results\": {\n      \"total\": 1\n    },\n    \"page\": {\n      \"limit\": 10,\n      \"offset\": 0,\n      \"current\": 0,\n      \"total\": 1\n    }\n  },\n  \"links\": {\n    \"self\": \"https://OvIjQpIEbDodHuTEAZxMdSDl.erpriHxEoP.6OAlelTFAVR0SR9tD3FQ1ivasaccu6X,SHJ7LFls\",\n    \"first\": \"http://ywndACCQrLYJbY.hkdpKOr-3PrTFIEX1EOwwZ9tM5Gkc-vd4O\",\n    \"last\": \"https://KLZNxjwGsbdzTtNscvFeUtqdjYtKEUNS.nrjvq+FbCJ.5PTe4ylJKG5AFL2vlGA898VyY+IVravSmCcemByv,ar8XjAyTOV9vWtrp+SNJKbvFKia\",\n    \"prev\": \"https://ROpcroGtEewIWqbCHhkzTgVTykCqKTbRj.lmkurhXR9.MBJl\",\n    \"next\": \"https://eBrCMzSrUhxmeoQGQoDSyVKkNAGY.qeWHbKqYMt3xAm3HOdrbgC8Q3MVm11l7NSitoPzTxJdcRYNdTmCTlMlvTHdAd\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "988f3ff0-5073-40dd-b459-9b9a4ffac971",
+              "name": "Unexpected error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    ":pricebookID",
+                    "prices"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "<long>"
+                    },
+                    {
+                      "key": "page[offset]",
+                      "value": "<long>"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "pricebookID",
+                      "description": "(Required) The unique identifier of a price book."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"detail\": \"The price already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    },\n    {\n      \"detail\": \"The price already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "32f91af9-9844-4f10-b8d6-28fd0eb4b0d9",
+          "name": "Get a Product Price by Price Book ID",
+          "request": {
+            "name": "Get a Product Price by Price Book ID",
+            "description": {
+              "content": "Retrieves a specified product price (`priceId`) in the specified price book (`id`).",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "pricebooks",
+                ":pricebookID",
+                "prices",
+                ":priceID"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "pricebookID",
+                  "description": "(Required) The unique identifier of a price book."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "priceID",
+                  "description": "(Required) A unique identifier of a price book price."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "7634d170-ad3a-4669-8b58-5aa88211fe02",
+              "name": "The product price.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    ":pricebookID",
+                    "prices",
+                    ":priceID"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "pricebookID",
+                      "description": "(Required) The unique identifier of a price book."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "priceID",
+                      "description": "(Required) A unique identifier of a price book price."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"type\": \"product-price\",\n    \"attributes\": {\n      \"sku\": \"product-sku-a\",\n      \"currencies\": {\n        \"USD\": {\n          \"amount\": 100,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_5\": {\n              \"minimum_quantity\": 5,\n              \"amount\": 50\n            }\n          }\n        },\n        \"CAD\": {\n          \"amount\": 127,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_10\": {\n              \"minimum_quantity\": 10,\n              \"amount\": 100\n            }\n          }\n        },\n        \"GBP\": {\n          \"amount\": 73,\n          \"includes_tax\": true,\n          \"tiers\": {\n            \"min_20\": {\n              \"minimum_quantity\": 20,\n              \"amount\": 60\n            }\n          }\n        }\n      },\n      \"sales\": {\n        \"summer\": {\n          \"schedule\": {\n            \"valid_form\": \"2023-12-24T09:00:00\",\n            \"valid_to\": \"2023-12-25T09:00:00\"\n          },\n          \"currencies\": {\n            \"USD\": {\n              \"amount\": 90,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_5\": {\n                  \"minimum_quantity\": 5,\n                  \"amount\": 40\n                }\n              }\n            },\n            \"CAD\": {\n              \"amount\": 117,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_10\": {\n                  \"minimum_quantity\": 10,\n                  \"amount\": 80\n                }\n              }\n            },\n            \"GBP\": {\n              \"amount\": 65,\n              \"includes_tax\": true,\n              \"tiers\": {\n                \"min_20\": {\n                  \"minimum_quantity\": 20,\n                  \"amount\": 50\n                }\n              }\n            }\n          }\n        }\n      },\n      \"external_ref\": \"external-ref\",\n      \"created_at\": \"2020-09-22T09:00:00Z\",\n      \"updated_at\": \"2020-09-22T09:00:00Z\",\n      \"admin_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      },\n      \"shopper_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      }\n    },\n    \"id\": \"a915553d-935d-4d56-870b-817b47a44a99\",\n    \"pricebook_external_ref\": \"a-pricebook-external-ref\",\n    \"meta\": {\n      \"owner\": \"store\",\n      \"pricebook_id\": \"4c45e4ec-26e0-4043-86e4-c15b9cf985a7\"\n    }\n  },\n  \"links\": {\n    \"self\": \"https://bzkjzHuRPeLjqUfSHDsO.pxvLsoNAP7gzBIX+t+m6O1V+fzs+bDcrVdBS0fanH9-3qbfUVXwSU1ENqLETU0.V,PuYnzA6.H5M\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d7c8131f-7ad4-4e06-be29-c3beee565410",
+              "name": "Unexpected error.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    ":pricebookID",
+                    "prices",
+                    ":priceID"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "pricebookID",
+                      "description": "(Required) The unique identifier of a price book."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "priceID",
+                      "description": "(Required) A unique identifier of a price book price."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"detail\": \"The price already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    },\n    {\n      \"detail\": \"The price already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "414077ba-40dc-4274-b8ab-929335b35d76",
+          "name": "Update a Product Price in a Price Book",
+          "request": {
+            "name": "Update a Product Price in a Price Book",
+            "description": {
+              "content": "Specify whichever attributes you want to change. The values of the other attributes remain the same. If the attributes section is empty, the price is not updated.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "pricebooks",
+                ":pricebookID",
+                "prices",
+                ":priceID"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "pricebookID",
+                  "description": "(Required) The unique identifier of a price book."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "priceID",
+                  "description": "(Required) A unique identifier of a price book price."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"type\": \"product-price\",\n    \"attributes\": {\n      \"sku\": \"<string>\",\n      \"currencies\": {\n        \"key_0\": {\n          \"amount\": \"<long>\",\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"key_0\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        }\n      },\n      \"sales\": {\n        \"key_0\": {\n          \"bundle_ids\": [\n            \"<uuid>\",\n            \"<uuid>\"\n          ],\n          \"schedule\": {\n            \"valid_from\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"valid_to\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"rrule\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"tzid\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          },\n          \"currencies\": {\n            \"key_0\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"key_1\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        },\n        \"key_1\": {\n          \"bundle_ids\": [\n            \"<uuid>\",\n            \"<uuid>\"\n          ],\n          \"schedule\": {\n            \"valid_from\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"valid_to\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"rrule\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"tzid\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          },\n          \"currencies\": {\n            \"key_0\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"key_1\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"key_2\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"key_3\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"key_4\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        }\n      },\n      \"external_ref\": \"<string>\",\n      \"created_at\": \"<dateTime>\",\n      \"updated_at\": \"<dateTime>\",\n      \"admin_attributes\": {\n        \"key_0\": \"<string>\",\n        \"key_1\": \"<string>\",\n        \"key_2\": \"<string>\",\n        \"key_3\": \"<string>\"\n      },\n      \"shopper_attributes\": {\n        \"key_0\": \"<string>\",\n        \"key_1\": \"<string>\",\n        \"key_2\": \"<string>\"\n      }\n    },\n    \"id\": \"<string>\",\n    \"pricebook_external_ref\": \"<string>\",\n    \"meta\": {\n      \"owner\": \"<string>\",\n      \"pricebook_id\": \"<string>\"\n    }\n  },\n  \"links\": {\n    \"self\": \"<uri>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "0e9f3202-b852-4984-b932-91efce16abd1",
+              "name": "An updated product price with the following attributes.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    ":pricebookID",
+                    "prices",
+                    ":priceID"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "pricebookID",
+                      "description": "(Required) The unique identifier of a price book."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "priceID",
+                      "description": "(Required) A unique identifier of a price book price."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"product-price\",\n    \"attributes\": {\n      \"sku\": \"product-sku-a\",\n      \"currencies\": {\n        \"USD\": {\n          \"amount\": 100,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_5\": {\n              \"minimum_quantity\": 5,\n              \"amount\": 50\n            }\n          }\n        },\n        \"CAD\": {\n          \"amount\": 127,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_10\": {\n              \"minimum_quantity\": 10,\n              \"amount\": 100\n            }\n          }\n        },\n        \"GBP\": {\n          \"amount\": 73,\n          \"includes_tax\": true,\n          \"tiers\": {\n            \"min_20\": {\n              \"minimum_quantity\": 20,\n              \"amount\": 60\n            }\n          }\n        }\n      },\n      \"sales\": {\n        \"summer\": {\n          \"schedule\": {\n            \"valid_form\": \"2023-12-24T09:00:00\",\n            \"valid_to\": \"2023-12-25T09:00:00\"\n          },\n          \"currencies\": {\n            \"USD\": {\n              \"amount\": 90,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_5\": {\n                  \"minimum_quantity\": 5,\n                  \"amount\": 40\n                }\n              }\n            },\n            \"CAD\": {\n              \"amount\": 117,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_10\": {\n                  \"minimum_quantity\": 10,\n                  \"amount\": 80\n                }\n              }\n            },\n            \"GBP\": {\n              \"amount\": 65,\n              \"includes_tax\": true,\n              \"tiers\": {\n                \"min_20\": {\n                  \"minimum_quantity\": 20,\n                  \"amount\": 50\n                }\n              }\n            }\n          }\n        }\n      },\n      \"external_ref\": \"external-ref\",\n      \"created_at\": \"2020-09-22T09:00:00Z\",\n      \"updated_at\": \"2020-09-22T09:00:00Z\",\n      \"admin_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      },\n      \"shopper_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      }\n    },\n    \"id\": \"a915553d-935d-4d56-870b-817b47a44a99\",\n    \"pricebook_external_ref\": \"a-pricebook-external-ref\",\n    \"meta\": {\n      \"owner\": \"store\",\n      \"pricebook_id\": \"4c45e4ec-26e0-4043-86e4-c15b9cf985a7\"\n    }\n  },\n  \"links\": {\n    \"self\": \"https://bzkjzHuRPeLjqUfSHDsO.pxvLsoNAP7gzBIX+t+m6O1V+fzs+bDcrVdBS0fanH9-3qbfUVXwSU1ENqLETU0.V,PuYnzA6.H5M\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"type\": \"product-price\",\n    \"attributes\": {\n      \"sku\": \"product-sku-a\",\n      \"currencies\": {\n        \"USD\": {\n          \"amount\": 100,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_5\": {\n              \"minimum_quantity\": 5,\n              \"amount\": 50\n            }\n          }\n        },\n        \"CAD\": {\n          \"amount\": 127,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_10\": {\n              \"minimum_quantity\": 10,\n              \"amount\": 100\n            }\n          }\n        },\n        \"GBP\": {\n          \"amount\": 73,\n          \"includes_tax\": true,\n          \"tiers\": {\n            \"min_20\": {\n              \"minimum_quantity\": 20,\n              \"amount\": 60\n            }\n          }\n        }\n      },\n      \"sales\": {\n        \"summer\": {\n          \"schedule\": {\n            \"valid_form\": \"2023-12-24T09:00:00\",\n            \"valid_to\": \"2023-12-25T09:00:00\"\n          },\n          \"currencies\": {\n            \"USD\": {\n              \"amount\": 90,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_5\": {\n                  \"minimum_quantity\": 5,\n                  \"amount\": 40\n                }\n              }\n            },\n            \"CAD\": {\n              \"amount\": 117,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_10\": {\n                  \"minimum_quantity\": 10,\n                  \"amount\": 80\n                }\n              }\n            },\n            \"GBP\": {\n              \"amount\": 65,\n              \"includes_tax\": true,\n              \"tiers\": {\n                \"min_20\": {\n                  \"minimum_quantity\": 20,\n                  \"amount\": 50\n                }\n              }\n            }\n          }\n        }\n      },\n      \"external_ref\": \"external-ref\",\n      \"created_at\": \"2020-09-22T09:00:00Z\",\n      \"updated_at\": \"2020-09-22T09:00:00Z\",\n      \"admin_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      },\n      \"shopper_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      }\n    },\n    \"id\": \"a915553d-935d-4d56-870b-817b47a44a99\",\n    \"pricebook_external_ref\": \"a-pricebook-external-ref\",\n    \"meta\": {\n      \"owner\": \"store\",\n      \"pricebook_id\": \"4c45e4ec-26e0-4043-86e4-c15b9cf985a7\"\n    }\n  },\n  \"links\": {\n    \"self\": \"https://bzkjzHuRPeLjqUfSHDsO.pxvLsoNAP7gzBIX+t+m6O1V+fzs+bDcrVdBS0fanH9-3qbfUVXwSU1ENqLETU0.V,PuYnzA6.H5M\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "278ca9a4-d743-48ce-a602-dd6c78d499f6",
+              "name": "Unexpected error.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    ":pricebookID",
+                    "prices",
+                    ":priceID"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "pricebookID",
+                      "description": "(Required) The unique identifier of a price book."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "priceID",
+                      "description": "(Required) A unique identifier of a price book price."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PUT",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"product-price\",\n    \"attributes\": {\n      \"sku\": \"product-sku-a\",\n      \"currencies\": {\n        \"USD\": {\n          \"amount\": 100,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_5\": {\n              \"minimum_quantity\": 5,\n              \"amount\": 50\n            }\n          }\n        },\n        \"CAD\": {\n          \"amount\": 127,\n          \"includes_tax\": false,\n          \"tiers\": {\n            \"min_10\": {\n              \"minimum_quantity\": 10,\n              \"amount\": 100\n            }\n          }\n        },\n        \"GBP\": {\n          \"amount\": 73,\n          \"includes_tax\": true,\n          \"tiers\": {\n            \"min_20\": {\n              \"minimum_quantity\": 20,\n              \"amount\": 60\n            }\n          }\n        }\n      },\n      \"sales\": {\n        \"summer\": {\n          \"schedule\": {\n            \"valid_form\": \"2023-12-24T09:00:00\",\n            \"valid_to\": \"2023-12-25T09:00:00\"\n          },\n          \"currencies\": {\n            \"USD\": {\n              \"amount\": 90,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_5\": {\n                  \"minimum_quantity\": 5,\n                  \"amount\": 40\n                }\n              }\n            },\n            \"CAD\": {\n              \"amount\": 117,\n              \"includes_tax\": false,\n              \"tiers\": {\n                \"min_10\": {\n                  \"minimum_quantity\": 10,\n                  \"amount\": 80\n                }\n              }\n            },\n            \"GBP\": {\n              \"amount\": 65,\n              \"includes_tax\": true,\n              \"tiers\": {\n                \"min_20\": {\n                  \"minimum_quantity\": 20,\n                  \"amount\": 50\n                }\n              }\n            }\n          }\n        }\n      },\n      \"external_ref\": \"external-ref\",\n      \"created_at\": \"2020-09-22T09:00:00Z\",\n      \"updated_at\": \"2020-09-22T09:00:00Z\",\n      \"admin_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      },\n      \"shopper_attributes\": {\n        \"cost_of_goods\": \"42.0\",\n        \"charge_type\": \"credit card\"\n      }\n    },\n    \"id\": \"a915553d-935d-4d56-870b-817b47a44a99\",\n    \"pricebook_external_ref\": \"a-pricebook-external-ref\",\n    \"meta\": {\n      \"owner\": \"store\",\n      \"pricebook_id\": \"4c45e4ec-26e0-4043-86e4-c15b9cf985a7\"\n    }\n  },\n  \"links\": {\n    \"self\": \"https://bzkjzHuRPeLjqUfSHDsO.pxvLsoNAP7gzBIX+t+m6O1V+fzs+bDcrVdBS0fanH9-3qbfUVXwSU1ENqLETU0.V,PuYnzA6.H5M\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"detail\": \"The price already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    },\n    {\n      \"detail\": \"The price already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "31e99330-67b6-4424-9d60-1d9513cc6c26",
+          "name": "Delete a Product Price from a Price Book",
+          "request": {
+            "name": "Delete a Product Price from a Price Book",
+            "description": {
+              "content": "Deletes a product price from the specified price book.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "pricebooks",
+                ":pricebookID",
+                "prices",
+                ":priceID"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "pricebookID",
+                  "description": "(Required) The unique identifier of a price book."
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "<string>",
+                  "key": "priceID",
+                  "description": "(Required) A unique identifier of a price book price."
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "DELETE",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "b3ef9327-65a5-4f45-a9b9-539077d08174",
+              "name": "A 204 response indicates that the product prices have been deleted",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    ":pricebookID",
+                    "prices",
+                    ":priceID"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "pricebookID",
+                      "description": "(Required) The unique identifier of a price book."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "priceID",
+                      "description": "(Required) A unique identifier of a price book price."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "4a125025-9846-46ac-a580-b4978a310f06",
+              "name": "Unexpected error.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    ":pricebookID",
+                    "prices",
+                    ":priceID"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "pricebookID",
+                      "description": "(Required) The unique identifier of a price book."
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "<string>",
+                      "key": "priceID",
+                      "description": "(Required) A unique identifier of a price book price."
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"detail\": \"The price already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    },\n    {\n      \"detail\": \"The price already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "839978f7-ca66-48ec-be46-df3dcb08e509",
+          "name": "Gets all Prices",
+          "request": {
+            "name": "Gets all Prices",
+            "description": {
+              "content": "Allows you to retrieve all prices for a product, irrespective of the different price books that include that product's price. For example, you can filter for all prices for a specified `sku`, or filter for all prices changed before or after a given date. This will retrieve prices from all price books.\n\n### Filtering\n\nThis endpoint supports filtering. For general syntax, see [Filtering](/guides/Getting-Started/filtering).\n\n| Operator | Attribute | Description | Example |\n| --- | --- | --- | --- |\n| `eq` | `external_ref`, `sku`, `id` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. | `filter=eq(sku,some-sku)` |\n| `in` | `external_ref`, `sku`, `id` | In. Checks if the values are included in the specified list. If they are, the condition is true. | `filter=in(sku,some-sku)` |\n| `like` | `external_ref`, `sku` | Like. Checks if the operand contains the specified string. Wildcards are supported. | `filter=like(sku,some-sku)` |\n| `gt` | `updated_at`, `created_at` | Greater than. Checks if the value on the left of the operator is greater than the value on the right. If it is, the condition is true. | `filter=gt(updated_at,2018-04-16T10:11:59.715Z)` |\n| `lt` | `updated_at`, `created_at` | Less than. Checks if the value on the left of the operator is less than the value on the right. If it is, the condition is true. | `filter=lt(updated_at,2018-04-16T10:11:59.715Z)` |\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "pricebooks",
+                "prices"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "filter",
+                  "value": "<string>",
+                  "description": "This endpoint supports filtering. See [Filtering]().\n"
+                },
+                {
+                  "disabled": false,
+                  "key": "page[limit]",
+                  "value": "<long>",
+                  "description": "The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used."
+                },
+                {
+                  "disabled": false,
+                  "key": "page[offset]",
+                  "value": "<long>",
+                  "description": "The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page offset is set, the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used."
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "62481a9a-fff3-480e-a4d8-2cadbaef1b13",
+              "name": "The price list.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    "prices"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "<long>"
+                    },
+                    {
+                      "key": "page[offset]",
+                      "value": "<long>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": [\n    {\n      \"type\": \"product-price\",\n      \"attributes\": {\n        \"sku\": \"product-sku-a\",\n        \"currencies\": {\n          \"USD\": {\n            \"amount\": 100,\n            \"includes_tax\": false,\n            \"tiers\": {\n              \"min_5\": {\n                \"minimum_quantity\": 5,\n                \"amount\": 50\n              }\n            }\n          },\n          \"CAD\": {\n            \"amount\": 127,\n            \"includes_tax\": false,\n            \"tiers\": {\n              \"min_10\": {\n                \"minimum_quantity\": 10,\n                \"amount\": 100\n              }\n            }\n          },\n          \"GBP\": {\n            \"amount\": 73,\n            \"includes_tax\": true,\n            \"tiers\": {\n              \"min_20\": {\n                \"minimum_quantity\": 20,\n                \"amount\": 60\n              }\n            }\n          }\n        },\n        \"sales\": {\n          \"summer\": {\n            \"schedule\": {\n              \"valid_form\": \"2023-12-24T09:00:00\",\n              \"valid_to\": \"2023-12-25T09:00:00\"\n            },\n            \"currencies\": {\n              \"USD\": {\n                \"amount\": 90,\n                \"includes_tax\": false,\n                \"tiers\": {\n                  \"min_5\": {\n                    \"minimum_quantity\": 5,\n                    \"amount\": 40\n                  }\n                }\n              },\n              \"CAD\": {\n                \"amount\": 117,\n                \"includes_tax\": false,\n                \"tiers\": {\n                  \"min_10\": {\n                    \"minimum_quantity\": 10,\n                    \"amount\": 80\n                  }\n                }\n              },\n              \"GBP\": {\n                \"amount\": 65,\n                \"includes_tax\": true,\n                \"tiers\": {\n                  \"min_20\": {\n                    \"minimum_quantity\": 20,\n                    \"amount\": 50\n                  }\n                }\n              }\n            }\n          }\n        },\n        \"external_ref\": \"external-ref\",\n        \"created_at\": \"2020-09-22T09:00:00Z\",\n        \"updated_at\": \"2020-09-22T09:00:00Z\",\n        \"admin_attributes\": {\n          \"cost_of_goods\": \"42.0\",\n          \"charge_type\": \"credit card\"\n        },\n        \"shopper_attributes\": {\n          \"cost_of_goods\": \"42.0\",\n          \"charge_type\": \"credit card\"\n        }\n      },\n      \"id\": \"a915553d-935d-4d56-870b-817b47a44a99\",\n      \"pricebook_external_ref\": \"a-pricebook-external-ref\",\n      \"meta\": {\n        \"owner\": \"store\",\n        \"pricebook_id\": \"4c45e4ec-26e0-4043-86e4-c15b9cf985a7\"\n      }\n    },\n    {\n      \"type\": \"product-price\",\n      \"attributes\": {\n        \"sku\": \"product-sku-a\",\n        \"currencies\": {\n          \"USD\": {\n            \"amount\": 100,\n            \"includes_tax\": false,\n            \"tiers\": {\n              \"min_5\": {\n                \"minimum_quantity\": 5,\n                \"amount\": 50\n              }\n            }\n          },\n          \"CAD\": {\n            \"amount\": 127,\n            \"includes_tax\": false,\n            \"tiers\": {\n              \"min_10\": {\n                \"minimum_quantity\": 10,\n                \"amount\": 100\n              }\n            }\n          },\n          \"GBP\": {\n            \"amount\": 73,\n            \"includes_tax\": true,\n            \"tiers\": {\n              \"min_20\": {\n                \"minimum_quantity\": 20,\n                \"amount\": 60\n              }\n            }\n          }\n        },\n        \"sales\": {\n          \"summer\": {\n            \"schedule\": {\n              \"valid_form\": \"2023-12-24T09:00:00\",\n              \"valid_to\": \"2023-12-25T09:00:00\"\n            },\n            \"currencies\": {\n              \"USD\": {\n                \"amount\": 90,\n                \"includes_tax\": false,\n                \"tiers\": {\n                  \"min_5\": {\n                    \"minimum_quantity\": 5,\n                    \"amount\": 40\n                  }\n                }\n              },\n              \"CAD\": {\n                \"amount\": 117,\n                \"includes_tax\": false,\n                \"tiers\": {\n                  \"min_10\": {\n                    \"minimum_quantity\": 10,\n                    \"amount\": 80\n                  }\n                }\n              },\n              \"GBP\": {\n                \"amount\": 65,\n                \"includes_tax\": true,\n                \"tiers\": {\n                  \"min_20\": {\n                    \"minimum_quantity\": 20,\n                    \"amount\": 50\n                  }\n                }\n              }\n            }\n          }\n        },\n        \"external_ref\": \"external-ref\",\n        \"created_at\": \"2020-09-22T09:00:00Z\",\n        \"updated_at\": \"2020-09-22T09:00:00Z\",\n        \"admin_attributes\": {\n          \"cost_of_goods\": \"42.0\",\n          \"charge_type\": \"credit card\"\n        },\n        \"shopper_attributes\": {\n          \"cost_of_goods\": \"42.0\",\n          \"charge_type\": \"credit card\"\n        }\n      },\n      \"id\": \"a915553d-935d-4d56-870b-817b47a44a99\",\n      \"pricebook_external_ref\": \"a-pricebook-external-ref\",\n      \"meta\": {\n        \"owner\": \"store\",\n        \"pricebook_id\": \"4c45e4ec-26e0-4043-86e4-c15b9cf985a7\"\n      }\n    }\n  ],\n  \"meta\": {\n    \"page\": {\n      \"limit\": 10,\n      \"offset\": 0,\n      \"current\": 0,\n      \"total\": 1\n    }\n  },\n  \"links\": {\n    \"self\": \"https://dMRzkCWkOwcj.jgrjPIms7oh-rPLEIzS-7Hb82WWUhOovYp.6HPnsEulEAMMU2y2T0\",\n    \"first\": \"http://AnxRdBZgpVZIMy.selpdDy7wr\",\n    \"prev\": \"http://OEEDbAHRRHQlCCPkzeTrIb.dlgbu64478QNTowfcMjzXIpKIoIoTzp-MAMr9dC-XDy2xLQXOMN+XlEzj\",\n    \"next\": \"http://nJojmBiWdEuIzSiSMhjNJvppxMZvyrQT.iysbbpYvEVeJdznmNXDy3DMsjmaWoxOf\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "12e95c88-047e-4f10-8ac0-6d40cecf661d",
+              "name": "Unexpected error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "pricebooks",
+                    "prices"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "filter",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "page[limit]",
+                      "value": "<long>"
+                    },
+                    {
+                      "key": "page[offset]",
+                      "value": "<long>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"detail\": \"The price already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    },\n    {\n      \"detail\": \"The price already exists\",\n      \"status\": \"409\",\n      \"title\": \"conflict\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://useast.api.elasticpath.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "b186348b-0229-47cc-8f6b-242d63164c1f",
+    "name": "Addresses Introduction Account Addresses Prices API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.\n\nYou can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.\n\n\nContact Support:\n Name: Elastic Path\n Email: support@elasticpath.com",
+      "type": "text/plain"
+    }
+  }
+}

@@ -1,0 +1,352 @@
+{
+  "item": [
+    {
+      "id": "d0689843-3136-41da-b92d-a3e80adf65d8",
+      "name": "Product Export",
+      "description": {
+        "content": "```mdx-code-block\nimport ProductExport from '/docs/partials/pxm/import/export.mdx';\n\n<ProductExport />\n```\n\n### Characteristics of Exporting Products\n\n- Product exports are an asynchronous operation. When you send a request to the Export API, it triggers an asynchronous job to build the `.csv` file containing the product entries.\n- Jobs are processed one at a time. You can continue to send product export requests, but those jobs are queued. In other words, Commerce looks for any jobs that have a status of PENDING and starts the job with the earliest created date. This process is repeated until all jobs are processed. See [**Jobs**](/docs/api/pxm/products/jobs).\n- The Export API response includes a job resource. In the response, you can verify the job status; if the status is successful, the response includes a link to the location where the `.csv` file is stored. See [**Product Export CSV File**](#product-export-csv-file). A single CSV file contains 10,000 rows, excluding the header. If you are exporting 50,000 products, the job endpoint response contains links to five `.csv` files; each `.csv` file including 10,000 products.\n- You might have specified custom extension data in a `.csv` file when you imported the products. These modifications are all exported. So, when you send a request to the Export API, the `.csv` file, included in the Job endpoint response, reflects any changes that you have made.\n- You cannot export product bundles.\n\n### Product Export CSV File\n\nThe Product Export API generates a Comma Separated Values (CSV) file that you can use to import/update products, main image files, and custom extension data. \n\nThe `.csv` file is:\n\n - Comma-separated.\n - Header-based.\n   - Header attributes must be the same as the product attributes.\n   - Header names can be in any order.\n - Each row after the first line represents a single product.\n\nThe following table describes the headers that are supported.\n\n| Header                           | Required | Description |                                                             \n|:---------------------------------|:---------|:-----------------------------------------------------|\n| id                               | Optional | A unique product ID that is generated when you create the product. The `id` is used to look up products in the `.csv` file and matches them to the products in your storefront that you want to update.                                                    |\n| external_ref                     | Optional | A unique attribute associated with a product. This could be an external reference from a separate company system, for example. The maximum length is 2048 characters.  |                                                                                          \n| name                             | Required | The name of a product.     |                                                                              \n| description                      | Required | A description for a product. You can include quotes in your product description, if you want to emphasize a word, for example. To do this, put quotes around the product description. For example, \"This product description describes my \"product\" and the product \"version\".\" |\n| slug                             | Required | A label for the product that is used in the URL paths. A slug can contain any combination of letters, numbers, periods, hyphens, and underscores. NO spaces or other characters are allowed. By default, the product name is used as the slug.                |\n| status                           | Required | The status of a product, either `Draft` or `Live`.    |                                                  \n| commodity_type                   | Required | The commodity type, either `physical` or `digital`.    |                                                 \n| upc_ean                          | Optional | The universal product code or european article number of the product.     |                               \n| mpn                              | Optional | The manufacturer part number of a product.       |                                                        \n| sku                              | Optional | The unique stock keeping unit of the product.   |   \n| tags                             | Optional | The product tags used to store or assign a key word against a product. A product can have up to 20 product tags. A product tag can be up to 255 characters. See [**Product Tags**](/docs/api/pxm/products/product-tags\n).                                                   |\n| main_image_id                    | Optional | Specifies a unique ID of a main image file for a product. See [Exporting Main Image Files](#exporting-main-image-files).  |                                                                                                                       \n| `_created_at`                      | Optional| The date and time a product was created. **Note**: This field does not populate any data; it is provided solely for informational purposes.      |                                                                                                               \n| `_updated_at`                      | Optional | The date and time a product was updated. **Note**: This field does not populate any data; it is provided solely for informational purposes.        |                                                                                                             \n| `template:<templateID>:created_at` | Optional | The date and time a template was created. **Note**: This field does not populate any data; it is provided solely for informational purposes.         |                                                                                                           \n| `template:<templateID>:updated_at` | Optional | The date and time a template was updated. **Note**: This field does not populate any data; it is provided solely for informational purposes.      |                                                                                                              \n| `template:<flowID>:<fieldName>`  | Optional | Custom extension data includes the flow `ID` or `slug` and the field `name`. See [Exporting Custom Data (Flows)](#exporting-custom-data-flows).   |                                                                                                              \n\n### Exporting Main Image Files\n\nThe main images that you have previously uploaded Commerce are exported. A `main_image_id` header is added to your `.csv` file. The ID in `main_image_id` is the ID of a file that has already been uploaded to Commerce using [create a file](/docs/api/pxm/files/create-a-file).\n\n### Exporting Custom Data (Flows)\n\nCustom extension data is exported in a `.csv` file by creating a header that includes the flow `ID` or `slug` and the field `name` as shown below:\n\n- `template:<flowSlug>:<fieldName>`\n- `template:<flowID>:<fieldName>`\n\nwhere:\n\n- `template` must be `template`.\n- one of the following for the template that contains the field whose data you want to export:\n  - `flowID` is the ID of the flow.\n  - `flowSlug` is the flow slug.\n- `fieldName` is the name of the field whose data you want to export.\n\nIn the following example, for a flow with ID `82c10a02-1851-4992-8ecb-d44f2782d09b` and a field with the name `condition`:\n\n- the header is `template:82c10a02-1851-4992-8ecb-d44f2782d09b:condition`.\n- the updated custom data is `as-new`.\n\n| name | slug | sku | status | template:82c10a02-1851-4992-8ecb-d44f2782d09b:condition |\n| :--- | :--- | :--- | :--- | :--- |\n| BestEver Range | bestever-range-1a1a-30 | BE-Range-1a1a-30 | draft | as-new |\n",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "ac967126-0a44-4b6b-a555-ad4a2022051c",
+          "name": "Export Products",
+          "request": {
+            "name": "Export Products",
+            "description": {
+              "content": "\nThe Export API is available to make bulk updates to products in Product Experience Manager. You might also export products for your personal requirements. \n \nThe Export API builds a CSV file containing the product entries. A CSV file can contain up to 50,000 product entries. If you have more than 50,000 product entries, then another CSV file is created and so on, until all your products are exported.\n\nThe Job endpoint response specifies the location where the CSV file is stored. See [Characteristics of CSV Files](/docs/api/pxm/products/product-export#characteristics-of-exporting-products).\n\n### Custom Attributes in Exported CSV\n\nExported CSV files include custom attribute columns using the prefixes `shopper_attributes.` and `admin_attributes.` followed by the attribute key name. For example, a product with `admin_attributes: {cost_of_goods: \"42.0\"}` produces a column `admin_attributes.cost_of_goods` in the exported file.\n\nYou can select specific attribute columns to include in the export using the `columns.include` parameter. You may specify individual keys (for example, `admin_attributes.cost_of_goods`) or use a wildcard to include all keys of a given type (for example, `admin_attributes.*`). You cannot combine a wildcard and individual keys for the same attribute type in a single export request.\n\n### Exporting Selected Columns\nProduct exports support the ability to select a subset of columns to be included in the generated .csv file. This allows you to export only the data you need, making it easier to work with smaller, more focused datasets.\n\n To specify the columns you want to include in the export, use the columns.include parameter in the request body of this endpoint. This parameter accepts an array of strings, where each string represents the name of a product attribute or a flow field.\n\n #### Specifying Flow Field Columns:\n \n The format for specifying flow field columns depends on the useTemplateSlugs setting:\n \n * useTemplateSlugs: `true`: Specify flow field columns using the format: `products(<flow_slug>):<field_name>`. For example: `products(my_flow):my_field`.\n * useTemplateSlugs: `false` (default): Specify flow field columns using the format: `template:<flow_id>:<field_name>`. For example: `template:82c10a02-1851-4992-8ecb-d44f2782d09b:my_field`.\n \n #### Mandatory Fields:\n\n To ensure successful re-importing of product data, the following fields are always included in the export, regardless of the columns.include parameter:\n   \n   * id\n   * name\n   * sku\n   * external_ref\n   * commodity_type\n \n If the `columns.include` parameter is not provided in the request, the system will export all available product fields.\n \n ### Filtering\n \nThe following attributes and operators are supported.\n\n| Operator                  | Attribute                                                                                                                                               | Description                                                                                                                                                                                                                                             | Example                                          |\n | :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------- |\n | `eq`                      | `id`, `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `name`, `templates`, `commodity_type`, `owner`, `product_types`, `parent_id`, `component_option_id`, `tags`, `status`, `has_nodes (false only)`, `created_at`, `updated_at`, `external_ref`, `description` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. For `product_types`, you can only specify one product type. **Note:** `has_nodes` can only be filtered as `false`. **Note:** `component_option_id` matches when a bundle includes that product id as a component option. | `?filter=eq(name,some-name)` |\n | `like`                    | `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `name`, `tags`, `description`, `external_ref`                                                        | Like. Checks if the operand contains the specified string. Wildcards are supported.                                                                                                                                                                     | `?filter=like(name,*some-name*)`                 |\n | `in`                      | `id`, `name`, `sku`, `slug`, `upc_ean`, `manufacturer_part_num`, `product_types`, `parent_id`, `component_option_id`, `tags`, `external_ref`                                   | Checks if the values are included in the specified list. If they are, the condition is true. For `product_types`, you can specify more than one product type.                                                                                           | `?filter=in(id,some-id)`                         |\n | `gt`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Greater than. Checks if the value of the field is greater than the given value.                                                                                                                                                                         | `?filter=gt(updated_at,2024-01-01T00:00:00Z)`    |\n | `ge`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Greater than or equal to. Checks if the value of the field is greater than or equal to the given value.                                                                                                                                                 | `?filter=ge(created_at,2023-01-01T00:00:00Z)`    |\n | `lt`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Less than. Checks if the value of the field is less than the given value.                                                                                                                                                                               | `?filter=lt(updated_at,2025-01-01T00:00:00Z)`    |\n | `le`                      | `id`, `created_at`, `updated_at`, `external_ref`                                                                                                        | Less than or equal to. Checks if the value of the field is less than or equal to the given value.                                                                                                                                                       | `?filter=le(created_at,2022-01-01T00:00:00Z)`    |\n | `eq` (extensions)         | `extensions.book.isbn`                                                                                                                                  | Filters using a nested extension field.                                                                                                                                                                                                                 | `?filter=eq(extensions.book.isbn,1765426)`       |\n | `eq` (shopper_attributes) | `shopper_attributes.color`                                                                                                                              | Filters using a shopper custom attribute field.                                                                                                                                                                                                         | `?filter=eq(shopper_attributes.color,red)`       |\n | `eq` (admin_attributes)   | `admin_attributes.warehouse`                                                                                                                            | Filters using an admin custom attribute field.                                                                                                                                                                                                          | `?filter=eq(admin_attributes.warehouse,US-EAST)` |\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "pcm",
+                "products",
+                "export"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "useTemplateSlugs",
+                  "value": "false",
+                  "description": "Set to `true` if you want to use a template slug instead of a template ID when exporting products that have custom data."
+                },
+                {
+                  "disabled": false,
+                  "key": "filter",
+                  "value": "<string>",
+                  "description": "\nMany Commerce API endpoints support filtering. The general syntax is described [**here**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.\n\nFor more information about the attributes and operators that this endpoint supports, see [Export Products](/docs/api/pxm/products/export-products).\n"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"type\": \"<string>\",\n    \"attributes\": {\n      \"columns\": {\n        \"include\": [\n          \"<string>\",\n          \"<string>\"\n        ]\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "8a3f6aba-185e-4bf5-89d4-12f00a571007",
+              "name": "Export started",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "products",
+                    "export"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "useTemplateSlugs",
+                      "value": "false"
+                    },
+                    {
+                      "key": "filter",
+                      "value": "eq(name,some-name)"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"product-export\",\n    \"attributes\": {\n      \"columns\": {\n        \"include\": [\n          \"description\",\n          \"template:a1b2c3d4-e5f6-7890-1234-567890abcdef:isbn\"\n        ]\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"type\": \"pim-job\",\n    \"id\": \"7e1b9ba1-c844-4556-9b16-4ae3f0988b0f\",\n    \"attributes\": {\n      \"completed_at\": null,\n      \"created_at\": \"2024-01-05T15:27:23.161Z\",\n      \"started_at\": null,\n      \"status\": \"pending\",\n      \"type\": \"product-export\",\n      \"updated_at\": \"2024-01-05T15:27:23.161Z\"\n    },\n    \"meta\": {\n      \"file_locations\": null,\n      \"filter\": \"eq(sku,product-1)\",\n      \"x_request_id\": \"fad8c5c0-9546-4e0c-b68e-8a2d809891e5\"\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b2857d0a-5a42-4c45-a7fb-96f33dc0c82b",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "products",
+                    "export"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "useTemplateSlugs",
+                      "value": "false"
+                    },
+                    {
+                      "key": "filter",
+                      "value": "eq(name,some-name)"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"product-export\",\n    \"attributes\": {\n      \"columns\": {\n        \"include\": [\n          \"description\",\n          \"template:a1b2c3d4-e5f6-7890-1234-567890abcdef:isbn\"\n        ]\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Bad Request\",\n      \"detail\": \"Could not parse the supplied filter\",\n      \"status\": \"400\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5d9ec14d-25fa-44c7-9680-878437b927bc",
+              "name": "Bad request. The request failed validation.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "products",
+                    "export"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "useTemplateSlugs",
+                      "value": "false"
+                    },
+                    {
+                      "key": "filter",
+                      "value": "eq(name,some-name)"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"product-export\",\n    \"attributes\": {\n      \"columns\": {\n        \"include\": [\n          \"description\",\n          \"template:a1b2c3d4-e5f6-7890-1234-567890abcdef:isbn\"\n        ]\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+              "code": 422,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"title\": \"Failed Validation\",\n      \"status\": \"422\",\n      \"detail\": \"<XYZ> can not be empty\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "0d496d9b-36b9-4863-a9af-adbadcef92e8",
+              "name": "Internal server error. There was a system failure in the platform.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "pcm",
+                    "products",
+                    "export"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "useTemplateSlugs",
+                      "value": "false"
+                    },
+                    {
+                      "key": "filter",
+                      "value": "eq(name,some-name)"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"type\": \"product-export\",\n    \"attributes\": {\n      \"columns\": {\n        \"include\": [\n          \"description\",\n          \"template:a1b2c3d4-e5f6-7890-1234-567890abcdef:isbn\"\n        ]\n      }\n    }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"errors\": [\n    {\n      \"status\": \"500\",\n      \"title\": \"Internal Server Error\",\n      \"detail\": \"There was an internal server error, you can report with your request id.\",\n      \"request_id\": \"635da56d-75a1-43cd-b696-7ab119756b3a\"\n    }\n  ]\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://useast.api.elasticpath.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "3d820f4e-4725-4342-b241-66b653411ff7",
+    "name": "Addresses Introduction Account Addresses Product Export API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.\n\nYou can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.\n\n\nContact Support:\n Name: Elastic Path\n Email: support@elasticpath.com",
+      "type": "text/plain"
+    }
+  }
+}
