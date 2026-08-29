@@ -1,28 +1,22 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Rule Promotion Usages API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
-
-
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
-
-    '
+  title: Rule Promotions Rule Promotion Usages API
+  description: "Rule Promotions provide the flexibility to offer diverse discounts to shoppers. This functionality supports discounts of varying complexities, from code-based customer discounts, to \"Buy X Get Y\" scenarios, fixed price promotions, and more based on your business needs.\n\nYou can create a Rule Promotion using the Rule Promotions API or through the Promotions Builder in Commerce Manager.\n\nTo apply Rule Promotions in carts and orders across an entire store, please enable the `use_rule_promotions` configuration in Cart Settings. You can also update a specific cart to use Rule Promotions by updating the cart's specific discount settings. Please see [Update A Cart](/docs/api/carts/update-a-cart) for more details.  \n\nEnabling Rule Promotions enacts Hybrid Mode, allowing simultaneous use of both Promotions Standard and Rule Promotions discounts.\n\nFor example, let's say a store provides the following promotions:\n- A Promotions Standard discount for 10% off the shopping cart\n- A Rule Promotion offering for a 20% discount on the shopping cart\n\nIf a cart qualifies for both discounts based on the respective eligibility criteria, the system applies both types of discounts to the shopping cart, starting with Promotions Standard definitions before applying Rule Promotions.  In this case, the application results in a 10% discount from the Promotions Standard definition and a 20% discount from the Rule Promotion.  \n\n### Rule Set\nA rule set is the criteria that determine when and how promotions get applied. Rule Sets consist of rule conditions and corresponding actions, which define eligibility and application details, respectively. Rule Sets may also contain targeted catalogs and currencies for further application granularity.\n\n**Example**\nBuy an apple, get an orange 50% off.\n\nHere, buying an apple is the rule and the 50% discount on an orange is the action.\n\n#### Rules\nRules describe the conditions necessary for promotion eligibility. \n\nIn our apple-orange example above, the rule indicates the shopper must buy an apple to get the discount on an orange. In other words, the buying of an apple is the condition which determines eligibility for the corresponding discount.\n\n**Condition Architecture:**\nAll conditions follow a consistent structure with three primary components: - **`strategy`**: Defines the type of condition (e.g., `cart_total`, `item_category`) - **`operator`**: Specifies how the condition is evaluated (e.g., `gte`, `in`, `contains_all`) - **`args`**: Contains the values to evaluate against\nSome conditions support additional components for complex scenarios: - **`children`**: Sub-conditions that provide additional specificity - **`condition`**: Used in actions to define item-specific restrictions\n\n**Condition Categories:** - **Cart-level**: Evaluate entire cart properties (total, custom attributes) - **Account-level**: Consider customer account characteristics (tags, segments)   - **Item-level**: Target specific products, categories, or attributes - **Bundle conditions**: Complex multi-item requirements for \"Buy X, Get Y\" scenarios - **Logical operators**: AND/OR logic for sophisticated eligibility rules\n\n**Key Design Considerations:** - **Performance**: Order conditions from most to least restrictive for optimal evaluation - **Maintainability**: Use `item_identifier` instead of legacy `item_sku`/`item_product_id` strategies - **Complexity**: Limit nesting depth and consider evaluation costs for complex bundle conditions - **Business Logic**: Ensure condition combinations align with promotion goals and margin requirements\n\n#### Actions\nActions describe how discounts apply to eligible carts and orders. These signify the discount type, level, configurations, and any limitations or restrictions when applying.\n\nActions can also include:\n- Action conditions: specify which items should be included or excluded when applying the discounts. These can be based on factors such as item SKUs, product attributes, quantities, or categories.\n- Action limitations: impose restrictions  on the number of products eligible for discounts, maximum discount amounts, and/or total applications for discounts.\n\nIn the apple-orange example, the action denotes the system applies a 50% discount to an orange, assuming the eligibility rules are met.  For more complex scenarios, the action might say to provide a 50% discount on up to three oranges or might provide a fixed $1 discount on the two most expensive items from the \"fruit\" category.\n\n:::note\n\nFor promotions that include a mix of item and cart rules or actions, we recommend including the specific item conditions in all item strategies to ensure desired discount applications.\n\nFor complex promotions in general, we recommend including specific item conditions on all item strategies to ensure the appropriate items receive discounts.  Please see the [Create a Rule Promotion API Request Examples](/docs/api/promotions-builder/create-rule-promotion) for more details on specifying conditions, restrictions, and inclusions.\n\n:::\n\n#### Action Limitations\nAction limitations define constraints or rules that govern how a promotion's action is applied.  While actions specify what discount is given (e.g., 10% off the cart), limitations control how much,  to which items, and under what circumstances that action is applied.\nLimitations include:\n  - **`max_discount`**: Caps the total value of the discount.\n  - **`max_quantity`**: Limits the number of discounted units per item.\n  - **`items`**: Restricts how many and which items are eligible, and in what order (e.g., max_items, price_strategy).\n    - **`max_items`**: Specifies the maximum number of items eligible for the discount.\n    - **`price_strategy`**: Determines how eligible items are selected based on price:\n      - **Cheapest (default)**: The discount is applied to the cheapest item(s) in the cart.\n      - **Expensive**: The discount applies to the most expensive item(s) in the cart.\n    Some limitations, like auto_add, influence the application behavior of the action rather than its scope.\n    - **`auto_add`**: Automatically adds items to the cart once conditions are met, \n      providing additional configuration for the promotion’s application mode.\n    - **`show_suggestions`**: A flag indicating whether to show suggestions for eligible items in the cart \n      if the item is not in the cart.          \n\nIn this way, limitations can affect either the scope of the discount or the manner in which it is applied,  providing both technical and user-facing boundaries around a promotion’s behavior.\nFor example, consider a **50% discount on items from a category**, with the following limitations:\n  - **Applies to a maximum of two items (`max_items: 2`)**\n  - **Only applies to the two cheapest eligible items (`price_strategy: cheapest`)**\n  - **Limits the total discount to $10 (`max_discount: 1000`)**\n  - **Ensures a maximum of two units per eligible item receive the discount (`max_quantity: 2`)**\n\n#### Catalogs and Currencies\nAs part of the Rule Set, you can also specify the catalogs and currencies for a given Rule Promotion. \n\nWith catalogs defined, the promotion only considers items from the identified catalogs and therefore will not consider custom items or items from other catalogs. With no catalogs defined, the promotion considers all items, including custom items.\n\nSpecifying a currency for a Rule Promotion restricts it to carts using that currency.  Rule Promotions support multiple currencies when using a percent discount.  If no currencies are defined, the discount applies to carts in any currency.\n\n### Building Blocks\n\n#### Strategies\nStrategies describe the types of condition criteria or application actions used to build a promotion.  A given promotion can be comprised of several strategies in its rules and actions.  These might include several instances of similar strategies, different strategies, or some combination thereof.  Think of these as building blocks that can be applied together to provide a functional discount.\n\n- Rule strategies define the types of conditions that need to be met for eligibility. These might include cart total amount, item prices, cart custom attributes, and more.\n- Action strategies refer to the type of action execution run when the eligibility criteria are met. For actions, the possible strategies are `cart_discount`, `item_discount`, `item_bundle_discount` and `shipping_discount`. For more information, please see [Promotions Builder API Overview](/docs/promotions-builder/promotions-builder-api/promotions-builder-api-overview).\n#### Operators and Args\nOperators determine how to evaluate a given strategy, while `args` define the value threshold to measure against.  For example, please consider the following condition strategy:\n\n```\n{\n  \"strategy\": \"cart_total\",\n  \"operator\": \"gte\",\n  \"args\": [ 10000 ]\n}\n```\n\nIn this example, the strategy is `cart_total`, telling the system to assess eligibility based on the total cart value.  The operator is a greater-than-or-equal-to (`gte`) evaluation, indicating the candidate value (in this case, cart total) becomes eligible once it reaches or exceeds the threshold.  Finally, the `args` value provides the threshold value to compare against, 10000.  Taken together, then, this strategy looks for cart totals greater than or equal to 10000.\n\n::: note Different strategies support different operators. For more information, please see [Rule Promotions API Overview](/docs/promotions-builder/promotions-builder-api/promotions-builder-api-overview). :::\n#### Children and Sub-Conditions\nFor additional promotion granularity, some strategies support additional specifications via `children` and `condition` fields. \nThese fields contain strategies, which provide further specifications around their parent strategy evaluations.  \nIn other words, sub-conditions refer to additional criteria or conditions that must be met for a particular promotion to be applied.\n\nThe following strategies support children/sub-conditions:\n- `item_price`\n- `item_quantity`\n- `item_category`\n- `item_attribute`\n- `and`\n- `or`\n\nNotably, when multiple sub-condition siblings exist, they are combined together, such that all sub-conditions must be met to fulfill eligibility.\n\n### Stacking\nPromotion stacking and priority are key elements in managing discounts, ensuring promotions are applied as intended. Stacking allows multiple promotions to be applied to a single cart, either targeting the same items or different ones. The `stackable` flag determines whether a promotion can stack with others, defaulting to `true`. If set to `false`, no other promotion can stack on top, and the highest-priority promotion takes precedence. \n\nPriority settings dictate the order in which promotions are applied, with higher numbers indicating higher priorities. By default, promotions without assigned priorities are applied in reverse order of creation, with newer promotions applied first and calculated against any existing discounted prices.\n\nHybrid Mode enables the coexistence of Standard Promotions and those configured in the Promotions Builder, with each functioning independently. This means Standard Promotions can stack alongside non-stackable Builder promotions, and their stackability and priority settings remain unaffected by Standard Promotions.\n\nOverride stacking, set using the `override_stacking` flag, provides an additional layer of control over how promotions interact.  This flag determines whether the promotion can stack with other promotions that are typically non-stackable and defaults to `false` when not set. When set to `true`, the promotion can stack with promotions configured as non-stackable, unless those non-stackable promotions also override stacking.\n\n### Shipping\nRule Promotions support shipping discounts, identified by the corresponding strategies during promotion creation.  Shipping discounts apply to shipping group base prices and do not impact shipping taxes or configured shipping fees.  Please see [Shipping Groups](/docs/ship-groups/shipping-groups/index) for more information on creating and interacting with shipping groups.\n\n### Items Bundle\nYou can promote and discount groups of items together using the `items_bundle` rule strategy and the `items_bundle_discount` action strategy. When these strategies are applied, the cart must contain items that meet all specified criteria to qualify for the discount.\n- The `items_bundle` rule strategy defines the required group of items for discount eligibility.\n- The `items_bundle_discount` action strategy specifies how the discount is applied to the qualifying group.\n- The `items_bundle` strategy requires **at least one** requirement that defines which items are eligible. Bundle items can be mixed across categories or attributes to form a valid bundle.\n- The `item_quantity` can be used with any of the bundling strategies, including `item_category`, `item_identifier`, `item_attribute`, etc.\n  - `item_quantity` only support `eq` operator when configuring `items_bundle` strategy.\n  - For instance, targeting a category with `item_quantity` with operator `eq` 2 means any two items from that category can form a bundle. The system will prioritize individual line items with sufficient quantity first before combining quantities of separate line items.\n```\n{\n   \"strategy\": \"items_bundle\",\n        \"children\": [\n            {\n                \"strategy\": \"and\",\n                \"children\": [\n                    {\n                        \"strategy\": \"item_category\",\n                        \"operator\": \"in\",\n                        \"args\": [\n                            \"667d9fae-d8c7-4941-b556-70cb4b8612f1\"\n                        ]\n                    },\n                    {\n                        \"strategy\": \"item_quantity\",\n                        \"operator\": \"gte\",\n                        \"args\": [\n                            2\n                        ]\n                    }\n                ]\n            }\n        ]\n}\n```\n- When using `item_quantity` to target specific items or categories, the required quantity can be fulfilled by a combination of eligible items.\n  - For example, if the rule is `item_quantity` with operator `eq` 3 for products in the \"Office Supplies\" category, the discount will apply when the cart includes any of the following combinations:\n    - 2 packs of printer paper + 1 box of pens\n    - 1 stapler + 2 notepad\n    - 1 box of pens + 1 notepad + 1 pack of printer paper\n    - 3 identical items, such as 3 boxes of pens\n\n  - **Please Note**: the system considers line items sequentially based on their quantities, using the order of addition to the cart as a fallback tie-breaker. If the first eligible item has sufficient quantity to fulfill the bundle criteria, it will consume the required quantity and complete the evaluation for that criteria. The system does not re-evaluate these processed items to share any remaining quantities with other items. This behaviour may result in differing total discount amounts for two shopping carts with the same items added in a different order if those items have the same quantity values.\n\nAvailable discount types:\n  - `fixed_price` – Sets a fixed total price for the group (e.g., If the fixed price is set at $100, then the group's subtotal is exactly $100)\n  - `percent` – Applies a percentage-based discount to the group.\n  - `fixed` – Deducts a fixed amount from the group's total price.\n"
+  version: 26.0504.7552059
+  x-version-timestamp: 2026-05-04 17:39:21+00:00
   contact:
     name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
+    url: https://elasticpath.com
   license:
-    url: https://elasticpath.dev
     name: MIT
+    url: assets/LICENSE
 servers:
 - url: https://useast.api.elasticpath.com
-  description: US East
+  description: US East Production Server
+  variables: {}
 - url: https://euwest.api.elasticpath.com
-  description: EU West
-security:
-- BearerToken: []
+  description: EU West Production Server
+  variables: {}
 tags:
 - name: Rule Promotion Usages
 paths:
@@ -378,6 +372,62 @@ components:
         type: string
         format: Bearer
   schemas:
+    Response.Error:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type:
+                - string
+                - integer
+                description: HTTP status code.
+              title:
+                type: string
+                description: Error title.
+              detail:
+                type: string
+                description: Error details.
+              source:
+                type: string
+                description: Source of the error (e.g., which field or parameter caused the error)
+              meta:
+                type: object
+                properties:
+                  usage_ids:
+                    type: array
+                    items:
+                      type: string
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: object
+          properties:
+            current:
+              type: integer
+              description: Current page number
+            limit:
+              type: integer
+              description: Number of items per page
+            offset:
+              type: integer
+              description: Offset from the first result
+            total:
+              type: integer
+              description: Total number of pages
+        results:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total number of results
+            total_method:
+              type: string
+              description: Method used to calculate the total (e.g., 'exact')
     RulePromotionUsage:
       type: object
       description: Represents a single rule promotion usage record.
@@ -434,33 +484,6 @@ components:
         anonymized:
           type: boolean
           description: Indicates whether the usage record has been anonymized.
-    PaginationMeta:
-      type: object
-      properties:
-        page:
-          type: object
-          properties:
-            current:
-              type: integer
-              description: Current page number
-            limit:
-              type: integer
-              description: Number of items per page
-            offset:
-              type: integer
-              description: Offset from the first result
-            total:
-              type: integer
-              description: Total number of pages
-        results:
-          type: object
-          properties:
-            total:
-              type: integer
-              description: Total number of results
-            total_method:
-              type: string
-              description: Method used to calculate the total (e.g., 'exact')
     PaginationLinks:
       type: object
       properties:
@@ -484,36 +507,7 @@ components:
           type: string
           format: uri
           description: URL for the previous page of results
-    Response.Error:
-      type: object
-      properties:
-        errors:
-          type: array
-          items:
-            type: object
-            properties:
-              status:
-                type:
-                - string
-                - integer
-                description: HTTP status code.
-              title:
-                type: string
-                description: Error title.
-              detail:
-                type: string
-                description: Error details.
-              source:
-                type: string
-                description: Source of the error (e.g., which field or parameter caused the error)
-              meta:
-                type: object
-                properties:
-                  usage_ids:
-                    type: array
-                    items:
-                      type: string
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

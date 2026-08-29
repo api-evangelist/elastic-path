@@ -1,28 +1,37 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Catalogs API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Introduction Catalogs API
+  description: 'Use the catalog-view Service API to create your catalogs.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    You also have the flexibility to create catalogs for different scenarios by combining hierarchies of products with a price book. Scenarios might include:
+
+
+    - Multiple geographical regions. Display different catalogs in different regions with suitable pricing or combine product hierarchies from two different regions to display in a third region.
+
+    - Multiple channels. Display different catalogs based on how a shopper accesses your store, such as through a mobile app or a web storefront.
+
+    - Direct to business versus direct to customers. Offer different products and prices for business customers versus retail customers.
+
+    - Preferred customers. Offer special pricing to preferred customers while displaying a standard price catalog to all other shoppers.
+
+    - Reward programs. Enable reward programs where catalog prices drop after a certain spending level is reached.
+
+    - Product sales. Offer sale items for a limited time.
+
+
+    Scenarios are created by defining the context within which a catalog is displays. Contexts can be a customer ID, a channel, or any other user-defined tag that can be passed to the APIs from the front-end shopper experiences.
 
     '
-  contact:
-    name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
-  license:
-    url: https://elasticpath.dev
-    name: MIT
+  version: 26.0508.7574130
+  x-version-timestamp: 2026-05-08 11:06:53+00:00
 servers:
-- url: https://useast.api.elasticpath.com
-  description: US East
 - url: https://euwest.api.elasticpath.com
-  description: EU West
+  description: EU West Production Server
+- url: https://useast.api.elasticpath.com
+  description: US East Production Server
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Catalogs
   description: 'A catalog contains the products available for sale either in your organization or store. A catalog also contains information about how to organize those products for navigation menus and search facets in a shopper experience.
@@ -300,6 +309,214 @@ paths:
                 $ref: '#/components/schemas/error-response'
 components:
   schemas:
+    related-link:
+      description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+      type: object
+      properties:
+        related:
+          description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+          type: string
+      required:
+      - related
+    page-meta:
+      type: object
+      description: Contains the results for the entire collection.
+      title: PageMeta
+      properties:
+        results:
+          description: Total number of results for the entire collection.
+          type: object
+          properties:
+            total:
+              description: Total number of results for the entire collection.
+              type: integer
+              format: int64
+        page:
+          type: object
+          properties:
+            limit:
+              description: The maximum number of records for all pages.
+              type: integer
+              format: int64
+            offset:
+              description: The current offset by number of pages.
+              type: integer
+              format: int64
+            current:
+              description: The current number of pages.
+              type: integer
+              format: int64
+            total:
+              description: The total number of records for the entire collection.
+              type: integer
+              format: int64
+    catalog-create-data:
+      type: object
+      title: CatalogCreateData
+      description: Creates a catalog with the following attributes.
+      properties:
+        data:
+          type: object
+          properties:
+            attributes:
+              type: object
+              properties:
+                name:
+                  description: The name of the catalog.
+                  type: string
+                  minLength: 1
+                  example: catalog-123
+                description:
+                  description: A brief description of the catalog.
+                  type:
+                  - string
+                  - 'null'
+                  example: Catalog for Store 123
+                hierarchy_ids:
+                  description: The unique identifiers of the hierarchies to associate with a catalog.
+                  type: array
+                  items:
+                    type: string
+                pricebook_id:
+                  description: 'The unique identifier of the price book to associate with this catalog. You can specify either a `pricebook_id` or `pricebook_ids` but not both. If you specify both a `pricebook_id` and `pricebook_ids`, a `422 Unprocessable Entity` error is displayed.
+
+                    '
+                  type: string
+                pricebook_ids:
+                  $ref: '#/components/schemas/prioritized-pricebooks'
+                locales:
+                  description: Product Experience Manager supports localization of products and hierarchies. If you store supports multiple languages, you can localize product names and descriptions.
+                  type: object
+                  additionalProperties:
+                    description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+                    type: object
+                    additionalProperties:
+                      description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+                      type: string
+                enable_price_segmentation:
+                  description: This indicates whether the catalog will support price segmentation using catalog rules to define which pricebook(s) to use for pricing
+                  type: boolean
+                  example: true
+                  default: false
+                  x-go-name: EnablePriceSegmentation
+                include_draft_products:
+                  description: When `true`, publishing this catalog includes products in `draft` status in the catalog release. When `false` or omitted, only `live` products are included in the release (default).
+                  type: boolean
+                  example: false
+                  default: false
+                  x-go-name: IncludeDraftProducts
+              required:
+              - name
+              - hierarchy_ids
+            type:
+              description: Represents the type of object being returned. Always `Catalog`.
+              type: string
+              example: catalog
+              enum:
+              - catalog
+          required:
+          - type
+          - attributes
+      required:
+      - data
+    error-response:
+      type: object
+      title: ErrorResponse
+      description: ErrorResponse is a json-api style Error response.
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/error'
+          x-go-name: Errors
+      x-go-name: ErrorResponse
+    catalog-data:
+      type: object
+      title: CatalogData
+      description: Container for a single catalog.
+      properties:
+        data:
+          $ref: '#/components/schemas/catalog'
+        links:
+          $ref: '#/components/schemas/links'
+      required:
+      - data
+    catalog-update-data:
+      type: object
+      title: CatalogUpdateData
+      description: A catalog combines price books, product lists, and hierarchies.
+      properties:
+        data:
+          type: object
+          properties:
+            attributes:
+              type: object
+              properties:
+                name:
+                  description: The name of the catalog.
+                  type:
+                  - string
+                  - 'null'
+                  minLength: 1
+                  example: catalog-123
+                description:
+                  description: A brief description of the catalog.
+                  type:
+                  - string
+                  - 'null'
+                  example: Catalog for Store 123
+                hierarchy_ids:
+                  description: The unique identifiers of the hierarchies to associate with a catalog.
+                  type:
+                  - array
+                  - 'null'
+                  items:
+                    type: string
+                pricebook_id:
+                  description: The unique identifier of a price book to associate with a catalog. You can specify a `pricebook_id` or a `pricebook_ids` but not both. If you specify both, a `422 unprocessable entity` error is displayed.
+                  type:
+                  - string
+                  - 'null'
+                pricebook_ids:
+                  $ref: '#/components/schemas/prioritized-pricebooks'
+                locales:
+                  description: Product Experience Manager supports localization of products and hierarchies. If you store supports multiple languages, you can localize product names and descriptions.
+                  type: object
+                  additionalProperties:
+                    description: A [three-letter language code](https://www.loc.gov/standards/iso639-2/) that represents the name of language you have used.
+                    type: object
+                    additionalProperties:
+                      description: A [three-letter language code](https://www.loc.gov/standards/iso639-2/) that represents the name of language you have used.
+                      type: string
+                enable_price_segmentation:
+                  description: This indicates whether the catalog will support price segmentation using catalog rules to define which pricebook(s) to use for pricing
+                  type: boolean
+                  example: true
+                  default: false
+                  x-go-name: EnablePriceSegmentation
+                include_draft_products:
+                  description: When `true`, publishing this catalog includes products in `draft` status in the catalog release. When `false` or omitted, only `live` products are included in the release (default).
+                  type: boolean
+                  example: false
+                  default: false
+                  x-go-name: IncludeDraftProducts
+            id:
+              description: The unique identifier of the catalog to be updated.
+              type: string
+              x-go-name: ID
+              example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
+            type:
+              description: This represents the type of object being returned. Always `catalog`.
+              type: string
+              example: catalog
+              enum:
+              - catalog
+          required:
+          - type
+          - id
+          - attributes
+      required:
+      - data
     catalog:
       type: object
       title: Catalog
@@ -352,13 +569,14 @@ components:
               format: date-time
             owner:
               description: The owner of this resource, can be either `organization` or `store`.
-              type: string
+              type:
+              - string
+              - 'null'
               enum:
               - store
               - organization
               x-go-name: Owner
               default: store
-              nullable: true
             enable_price_segmentation:
               description: This indicates whether the catalog will support price segmentation using catalog rules to define which pricebook(s) to use for pricing
               type: boolean
@@ -408,78 +626,55 @@ components:
       - id
       - type
       - attributes
-    error:
+    catalog-list-data:
       type: object
-      title: APIError
-      description: APIError is a json-api style part of an error response.
-      properties:
-        detail:
-          type: string
-          example: not processable
-          x-go-name: Detail
-        status:
-          type: string
-          example: '422'
-          x-go-name: Status
-        title:
-          type: string
-          example: There was a problem processing your request.
-          x-go-name: Title
-      x-go-name: APIError
-    page-meta:
-      type: object
-      description: Contains the results for the entire collection.
-      title: PageMeta
-      properties:
-        results:
-          description: Total number of results for the entire collection.
-          type: object
-          properties:
-            total:
-              description: Total number of results for the entire collection.
-              type: integer
-              format: int64
-        page:
-          type: object
-          properties:
-            limit:
-              description: The maximum number of records for all pages.
-              type: integer
-              format: int64
-            offset:
-              description: The current offset by number of pages.
-              type: integer
-              format: int64
-            current:
-              description: The current number of pages.
-              type: integer
-              format: int64
-            total:
-              description: The total number of records for the entire collection.
-              type: integer
-              format: int64
-    error-response:
-      type: object
-      title: ErrorResponse
-      description: ErrorResponse is a json-api style Error response.
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/error'
-          x-go-name: Errors
-      x-go-name: ErrorResponse
-    catalog-data:
-      type: object
-      title: CatalogData
-      description: Container for a single catalog.
+      title: CatalogListData
+      description: Container for a list of catalogs.
       properties:
         data:
-          $ref: '#/components/schemas/catalog'
+          type: array
+          items:
+            $ref: '#/components/schemas/catalog'
+        meta:
+          $ref: '#/components/schemas/page-meta'
         links:
           $ref: '#/components/schemas/links'
       required:
       - data
+    links:
+      description: Links allow you to move between requests.
+      type: object
+      properties:
+        self:
+          description: Single entities use a `self` parameter with a link the specific resource.
+          type:
+          - string
+          - 'null'
+          format: uri
+        first:
+          description: Always the first page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        last:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        prev:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        next:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
     prioritized-pricebooks:
       description: If you want multiple price books for different scenarios, such as seasonal sales, business versus retail pricing, and reward programs, when creating a catalog, you can specify up to five price books. You must configure a priority for your price books. Product prices are displayed in the catalog according to the priority of the price books.
       type: array
@@ -498,200 +693,34 @@ components:
         - priority
         - id
         x-go-name: PrioritizedPricebook
-    catalog-update-data:
+    error:
       type: object
-      title: CatalogUpdateData
-      description: A catalog combines price books, product lists, and hierarchies.
+      title: APIError
+      description: APIError is a json-api style part of an error response.
       properties:
-        data:
-          type: object
-          properties:
-            attributes:
-              type: object
-              properties:
-                name:
-                  description: The name of the catalog.
-                  type: string
-                  minLength: 1
-                  example: catalog-123
-                  nullable: true
-                description:
-                  description: A brief description of the catalog.
-                  type: string
-                  example: Catalog for Store 123
-                  nullable: true
-                hierarchy_ids:
-                  description: The unique identifiers of the hierarchies to associate with a catalog.
-                  type: array
-                  items:
-                    type: string
-                  nullable: true
-                pricebook_id:
-                  description: The unique identifier of a price book to associate with a catalog. You can specify a `pricebook_id` or a `pricebook_ids` but not both. If you specify both, a `422 unprocessable entity` error is displayed.
-                  type: string
-                  nullable: true
-                pricebook_ids:
-                  $ref: '#/components/schemas/prioritized-pricebooks'
-                locales:
-                  description: Product Experience Manager supports localization of products and hierarchies. If you store supports multiple languages, you can localize product names and descriptions.
-                  type: object
-                  additionalProperties:
-                    description: A [three-letter language code](https://www.loc.gov/standards/iso639-2/) that represents the name of language you have used.
-                    type: object
-                    additionalProperties:
-                      description: A [three-letter language code](https://www.loc.gov/standards/iso639-2/) that represents the name of language you have used.
-                      type: string
-                enable_price_segmentation:
-                  description: This indicates whether the catalog will support price segmentation using catalog rules to define which pricebook(s) to use for pricing
-                  type: boolean
-                  example: true
-                  default: false
-                  x-go-name: EnablePriceSegmentation
-                include_draft_products:
-                  description: When `true`, publishing this catalog includes products in `draft` status in the catalog release. When `false` or omitted, only `live` products are included in the release (default).
-                  type: boolean
-                  example: false
-                  default: false
-                  x-go-name: IncludeDraftProducts
-            id:
-              description: The unique identifier of the catalog to be updated.
-              type: string
-              x-go-name: ID
-              example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
-            type:
-              description: This represents the type of object being returned. Always `catalog`.
-              type: string
-              example: catalog
-              enum:
-              - catalog
-          required:
-          - type
-          - id
-          - attributes
-      required:
-      - data
-    catalog-list-data:
-      type: object
-      title: CatalogListData
-      description: Container for a list of catalogs.
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/catalog'
-        meta:
-          $ref: '#/components/schemas/page-meta'
-        links:
-          $ref: '#/components/schemas/links'
-      required:
-      - data
-    catalog-create-data:
-      type: object
-      title: CatalogCreateData
-      description: Creates a catalog with the following attributes.
-      properties:
-        data:
-          type: object
-          properties:
-            attributes:
-              type: object
-              properties:
-                name:
-                  description: The name of the catalog.
-                  type: string
-                  minLength: 1
-                  example: catalog-123
-                description:
-                  description: A brief description of the catalog.
-                  type: string
-                  example: Catalog for Store 123
-                  nullable: true
-                hierarchy_ids:
-                  description: The unique identifiers of the hierarchies to associate with a catalog.
-                  type: array
-                  items:
-                    type: string
-                pricebook_id:
-                  description: 'The unique identifier of the price book to associate with this catalog. You can specify either a `pricebook_id` or `pricebook_ids` but not both. If you specify both a `pricebook_id` and `pricebook_ids`, a `422 Unprocessable Entity` error is displayed.
-
-                    '
-                  type: string
-                pricebook_ids:
-                  $ref: '#/components/schemas/prioritized-pricebooks'
-                locales:
-                  description: Product Experience Manager supports localization of products and hierarchies. If you store supports multiple languages, you can localize product names and descriptions.
-                  type: object
-                  additionalProperties:
-                    description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
-                    type: object
-                    additionalProperties:
-                      description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
-                      type: string
-                enable_price_segmentation:
-                  description: This indicates whether the catalog will support price segmentation using catalog rules to define which pricebook(s) to use for pricing
-                  type: boolean
-                  example: true
-                  default: false
-                  x-go-name: EnablePriceSegmentation
-                include_draft_products:
-                  description: When `true`, publishing this catalog includes products in `draft` status in the catalog release. When `false` or omitted, only `live` products are included in the release (default).
-                  type: boolean
-                  example: false
-                  default: false
-                  x-go-name: IncludeDraftProducts
-              required:
-              - name
-              - hierarchy_ids
-            type:
-              description: Represents the type of object being returned. Always `Catalog`.
-              type: string
-              example: catalog
-              enum:
-              - catalog
-          required:
-          - type
-          - attributes
-      required:
-      - data
-    related-link:
-      description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
-      type: object
-      properties:
-        related:
-          description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+        detail:
           type: string
-      required:
-      - related
-    links:
-      description: Links allow you to move between requests.
-      type: object
-      properties:
-        self:
-          description: Single entities use a `self` parameter with a link the specific resource.
+          example: not processable
+          x-go-name: Detail
+        status:
           type: string
-          format: uri
-          nullable: true
-        first:
-          description: Always the first page.
+          example: '422'
+          x-go-name: Status
+        title:
           type: string
-          format: uri
-          nullable: true
-        last:
-          description: This is `null` if there is only one page.
-          type: string
-          format: uri
-          nullable: true
-        prev:
-          description: This is `null` if there is only one page.
-          type: string
-          format: uri
-          nullable: true
-        next:
-          description: This is `null` if there is only one page.
-          type: string
-          format: uri
-          nullable: true
+          example: There was a problem processing your request.
+          x-go-name: Title
+      x-go-name: APIError
   parameters:
+    filter-catalog:
+      name: filter
+      in: query
+      description: 'This endpoint supports filtering, see [Filtering](#filtering).
+
+        '
+      required: false
+      schema:
+        type: string
     offset:
       description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. You would normally increment the page offset by multiples of the page limit to paginate through the results.
       name: page[offset]
@@ -711,16 +740,7 @@ components:
         type: integer
         format: int64
         minimum: 1
-    filter-catalog:
-      name: filter
-      in: query
-      description: 'This endpoint supports filtering, see [Filtering](#filtering).
-
-        '
-      required: false
-      schema:
-        type: string
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

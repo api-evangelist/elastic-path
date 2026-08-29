@@ -1,12 +1,45 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Logs Time to Live Settings API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Personal Data Introduction Logs Time to Live Settings API
+  version: '1.0'
+  description: '
+
+    In Commerce, every change to a user’s personal data is logged.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    Personal data sets are groups of data items that are related to each other. For example, customer, addresses, and authentication information. The contents of a personal data set is dynamic. Data items are attached to each other automatically as they are created or updated.
+
+
+    The API allows you to fetch these logs, including the list of related data items. In other words, the data items that belong to the same personal data set.
+
+
+    Log entries are kept in the system for a limited time. You can configure the retention period using the Logs Time-to-live (TTL) settings API. The default retention period is 365 days for production store types and 7 days for other store types.
+
+
+    ## Personal Data Resource Types
+
+
+    | Entity type                               | Endpoint                                                                                                                                              | Documentation                                                                                                    |
+
+    |-------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+
+    | customer                                  | `v2/customers/{id}`                                                                                                                                   | [Customers](/docs/customer-management/customer-management-api/customer-management-api-overview)                  |
+
+    | account                                   | `v2/accounts/{id}`                                                                                                                                    | [Accounts](/docs/api/accounts/post-v-2-accounts)                                                                 |
+
+    | account-member                            | `v2/account-members/{id}`                                                                                                                             | [Account Members](/docs/api/accounts/account-members)                                                            |
+
+    | account-membership                        | `v2/accounts/{accountId}/account-memberships/{id}`                                                                                                    | [Account Memberships](/docs/api/accounts/account-membership)                                                     |
+
+    | address                                   | `v2/customers/{customerId}/addresses/{id}`; `v2/accounts/{accountId}/addresses/{id}`                                                                  | [Addresses](/docs/api/addresses/addresses-introduction)                                                          |
+
+    | user-authentication-info                  | `v2/authentication-realms/{realmId}/user-authentication-info/{id}`                                                                                    | [User Authentication Info](/docs/api/single-sign-on/user-authentication-infos)                                   |
+
+    | user-authentication-oidc-profile-info     | `v2/authentication-realms/{authenticationRealmId}/user-authentication-info/{userAuthenticationInfoId}/user-authentication-oidc-profile-info/{id}`     | [User Authentication OIDC Profile Info](/docs/api/single-sign-on/user-authentication-oidc-profile-infos)         |
+
+    | user-authentication-password-profile-info | `v2/authentication-realms/{authenticationRealmId}/user-authentication-info/{userAuthenticationInfoId}/user-authentication-password-profile-info/{id}` | [User Authentication Password Profile Info](/docs/api/single-sign-on/user-authentication-password-profile-infos) |
+
+    | order                                     | `v2/orders/{id}`                                                                                                                                      | [Orders](/docs/api/carts/orders)                                                                                 |
 
     '
   contact:
@@ -22,7 +55,7 @@ servers:
 - url: https://euwest.api.elasticpath.com
   description: EU West
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Logs Time to Live Settings
   description: 'You can use the Logs TTL Settings endpoint to retrieve and update settings controlling logs time-to-live (TTL).
@@ -122,6 +155,26 @@ components:
               summary: Internal server error
               value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
   schemas:
+    LogsTtl:
+      properties:
+        days:
+          type: integer
+          description: The number of days to retain the logs. Allowed values are between 1 and 365.
+          minimum: 1
+          maximum: 365
+          example: 10
+        type:
+          type: string
+          const: time_to_live
+          description: The type of the object. Always equal to `time_to_live`.
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     Error:
       required:
       - status
@@ -143,27 +196,7 @@ components:
           description: Optional additional detail about the error.
           examples:
           - The field 'name' is required
-    LogsTtl:
-      properties:
-        days:
-          type: integer
-          description: The number of days to retain the logs. Allowed values are between 1 and 365.
-          minimum: 1
-          maximum: 365
-          example: 10
-        type:
-          type: string
-          const: time_to_live
-          description: The type of the object. Always equal to `time_to_live`.
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

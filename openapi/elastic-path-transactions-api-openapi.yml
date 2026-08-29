@@ -1,28 +1,15 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Transactions API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
-
-
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
-
-    '
-  contact:
-    name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
-  license:
-    url: https://elasticpath.dev
-    name: MIT
+  title: Elastic Path Transactions API
+  version: '1.0'
+  description: 'Operations tagged Transactions across 2 of this provider''s published API definitions: inventory-legacy.yaml, inventory.yaml. Each path carries the servers of the definition it was published in.'
 servers:
-- url: https://useast.api.elasticpath.com
-  description: US East
-- url: https://euwest.api.elasticpath.com
-  description: EU West
+- url: https://euwest.api.elasticpath.com/v2
+  description: EU West cluster
+- url: https://useast.api.elasticpath.com/v2
+  description: US East cluster
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Transactions
   description: Methods to allow you to modify and view a products stock via transactions.
@@ -91,6 +78,11 @@ paths:
           $ref: '#/components/responses/UnprocessableEntityError'
         '500':
           $ref: '#/components/responses/InternalServerError'
+    servers:
+    - url: https://euwest.api.elasticpath.com/v2
+      description: EU West cluster
+    - url: https://useast.api.elasticpath.com/v2
+      description: US East cluster
   /inventories/{product_uuid}/transactions/{transaction_uuid}:
     parameters:
     - name: product_uuid
@@ -125,8 +117,100 @@ paths:
           $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/InternalServerError'
+    servers:
+    - url: https://euwest.api.elasticpath.com/v2
+      description: EU West cluster
+    - url: https://useast.api.elasticpath.com/v2
+      description: US East cluster
 components:
+  responses:
+    UnprocessableEntityError:
+      description: The request was understood, but could not be processed by the server
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Cannot complete request
+                  status: '422'
+                  detail: Your request could not be completed due to insufficient stock levels
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No stock found
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    NotFoundError_2:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No location found
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: Your request was invalid
   schemas:
+    Meta:
+      allOf:
+      - $ref: '#/components/schemas/Timestamps'
+    Timestamps:
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     TransactionCreate:
       required:
       - action
@@ -159,24 +243,6 @@ components:
           format: int64
           example: 5
           minimum: 1
-    UUID:
-      type: string
-      description: The unique identifier.
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 00000000-0000-0000-0000-000000000000
-    Timestamps:
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
     Error:
       type: object
       required:
@@ -201,18 +267,6 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    Meta:
-      allOf:
-      - $ref: '#/components/schemas/Timestamps'
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
     Transaction:
       required:
       - type
@@ -262,6 +316,171 @@ components:
           example: 5
         timestamps:
           $ref: '#/components/schemas/Timestamps'
+    UUID:
+      type: string
+      description: The unique identifier.
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 00000000-0000-0000-0000-000000000000
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    TransactionCreateAttributes:
+      required:
+      - action
+      - quantity
+      properties:
+        product_id:
+          $ref: '#/components/schemas/UUID'
+        action:
+          description: "The type of action being performed by this transaction.\n\n - **increment** - use this when you want to make products available for purchase, for example, when you have received stock from a supplier.\n\n - **decrement** - Use this when you want to remove stock from product inventory.\n\n - **allocate** - Use this when you want to allocate stock, normally to a reseller who sells on the stock.\n\n - **deallocate** - Use this when you want to deallocate any previously allocated stock.\n\n - **set** - Use this when you want to set total stock to a specific value.\n"
+          type: string
+          enum:
+          - increment
+          - decrement
+          - allocate
+          - deallocate
+          - set
+          example: allocate
+          x-go-type: model.TransactionAction
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/inventories.svc/internal/domain/model
+        quantity:
+          description: The amount of stock affected by the stock transaction.
+          type: integer
+          format: int64
+          example: 5
+          minimum: 0
+        location:
+          description: The slug of the location that the transaction should act on.
+          type: string
+          minLength: 1
+          maxLength: 128
+          example: milton-keynes-warehouse
+    TransactionCreate_2:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/StockTransactionType'
+        attributes:
+          $ref: '#/components/schemas/TransactionCreateAttributes'
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    Meta_2:
+      type: object
+      required:
+      - timestamps
+      properties:
+        timestamps:
+          $ref: '#/components/schemas/Timestamps_2'
+    StockTransactionType:
+      type: string
+      enum:
+      - stock-transaction
+      default: stock-transaction
+      example: stock-transaction
+    TransactionResponseAttributes:
+      type: object
+      required:
+      - action
+      - product_id
+      - quantity
+      properties:
+        action:
+          description: 'The type of action performed by this transaction.
+
+
+            - **increment** - use this when you want to make products available for purchase, for example, when you have received stock from a supplier.
+
+
+            - **decrement** - Use this when you want to remove stock from product inventory.
+
+
+            - **allocate** - Use this when you want to allocate stock, normally to a reseller who sells on the stock.
+
+
+            - **deallocate** - Use this when you want to deallocate any previously allocated stock.
+
+            '
+          type: string
+          enum:
+          - increment
+          - decrement
+          - allocate
+          - deallocate
+          example: allocate
+          x-go-type: model.TransactionAction
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/inventories.svc/internal/domain/model
+        product_id:
+          $ref: '#/components/schemas/UUID'
+        quantity:
+          description: The amount of stock affected by the stock transaction.
+          type: integer
+          format: int64
+          example: 5
+        location:
+          description: The slug of the location that the transaction should act on.
+          type: string
+          minLength: 1
+          maxLength: 128
+          example: milton-keynes-warehouse
+    Timestamps_2:
+      required:
+      - created_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    TransactionResponse:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/StockTransactionType'
+        attributes:
+          $ref: '#/components/schemas/TransactionResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
   parameters:
     PageOffset:
       name: page[offset]
@@ -284,46 +503,21 @@ components:
         format: int
         minimum: 0
         example: 100
-  responses:
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No stock found
-    UnprocessableEntityError:
-      description: The request was understood, but could not be processed by the server
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Cannot complete request
-                  status: '422'
-                  detail: Your request could not be completed due to insufficient stock levels
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
+    Filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Inventories API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(location,new-york)
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer
+x-refined-from:
+- inventory-legacy.yaml
+- inventory.yaml

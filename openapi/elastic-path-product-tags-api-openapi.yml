@@ -1,28 +1,42 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Product Tags API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Product Experience Manager Introduction Product Tags API
+  description: '
+
+    Product Experience Manager uses the PIM service to manage product information, hierarchies, and price books. Ideally, Product Experience Manager becomes the single source of truth for product data across your organization.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    In Commerce, the product data is stored separately from pricing, catalogs, and inventory. This separation means that you retrieve all product data only when you are managing product data and assets. Otherwise, when setting prices or managing inventory, you retrieve a reference to the product rather than the entire product, which makes the response times very fast.
+
+
+    You also have the flexibility to create catalogs for different scenarios by combining hierarchies of products with a price book. Scenarios might include:
+
+
+    - **Multiple geographical regions**. Display different catalogs in different regions with suitable pricing or combine product hierarchies from two different regions to display in a third region.
+
+    - **Multiple channels**. Display different catalogs based on how a shopper accesses your store, such as through a mobile app or a web storefront.
+
+    - **Direct to business versus direct to customers**. Offer different products and prices for business customers versus retail customers.
+
+    - **Preferred customers**. Offer special pricing to preferred customers while displaying a standard price catalog to all other shoppers.
+
+    - **Reward programs**. Enable reward programs where catalog prices drop after a certain spending level is reached.
+
+    - **Product sales**. Offer sale items for a limited time.
+
+
+    Scenarios are created by defining the context within which a catalog is displays. Contexts can be a customer ID, a channel, or any other user-defined tag that can be passed to the APIs from the front-end shopper experiences.
 
     '
-  contact:
-    name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
-  license:
-    url: https://elasticpath.dev
-    name: MIT
+  version: 26.0612.7739142
+  x-version-timestamp: 2026-06-12 10:52:50+00:00
 servers:
-- url: https://useast.api.elasticpath.com
-  description: US East
 - url: https://euwest.api.elasticpath.com
-  description: EU West
+  description: EU West Production Server
+- url: https://useast.api.elasticpath.com
+  description: US East Production Server
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Product Tags
   description: '```mdx-code-block
@@ -92,19 +106,6 @@ paths:
           $ref: '#/components/responses/internal'
 components:
   responses:
-    bad_request:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            bad-request:
-              value:
-                errors:
-                - title: Bad Request
-                  detail: Could not parse the supplied filter
-                  status: '400'
     not_found:
       description: Bad Request. Not Found.
       content:
@@ -117,19 +118,6 @@ components:
                 errors:
                 - title: Not Found
                   status: '404'
-    unprocessable_entity:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            failed-validation:
-              value:
-                errors:
-                - title: Failed Validation
-                  status: '422'
-                  detail: <XYZ> can not be empty
     internal:
       description: Internal server error. There was a system failure in the platform.
       content:
@@ -144,16 +132,38 @@ components:
                   title: Internal Server Error
                   detail: There was an internal server error, you can report with your request id.
                   request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
-  parameters:
-    tag_id:
-      name: tagID
-      in: path
-      schema:
-        type: string
-        example: 00000000-0000-0000-0000-000000000000
-      required: true
-      description: A unique identifier for the tag.
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+    bad_request:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            bad-request:
+              value:
+                errors:
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
   schemas:
+    single_tag:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/tag'
     multi_tag:
       type: object
       properties:
@@ -245,12 +255,27 @@ components:
               enum:
               - store
               - organization
-    single_tag:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/tag'
+  parameters:
+    tag_id:
+      name: tagID
+      in: path
+      schema:
+        type: string
+        example: 00000000-0000-0000-0000-000000000000
+      required: true
+      description: A unique identifier for the tag.
   examples:
+    resp_single_tag:
+      value:
+        data:
+          type: tag
+          id: 9879a8f5-0da2-4be6-91f6-a0f09d1c77a9
+          attributes:
+            value: tables
+          meta:
+            created_at: '2024-03-20T18:37:43.398Z'
+            owner: organization
+            updated_at: '2024-03-20T18:37:43.398Z'
     resp_multi_tags:
       value:
         data:
@@ -273,18 +298,7 @@ components:
         meta:
           results:
             total: 2
-    resp_single_tag:
-      value:
-        data:
-          type: tag
-          id: 9879a8f5-0da2-4be6-91f6-a0f09d1c77a9
-          attributes:
-            value: tables
-          meta:
-            created_at: '2024-03-20T18:37:43.398Z'
-            owner: organization
-            updated_at: '2024-03-20T18:37:43.398Z'
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

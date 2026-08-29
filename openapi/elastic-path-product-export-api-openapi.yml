@@ -1,28 +1,42 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Product Export API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Product Experience Manager Introduction Product Export API
+  description: '
+
+    Product Experience Manager uses the PIM service to manage product information, hierarchies, and price books. Ideally, Product Experience Manager becomes the single source of truth for product data across your organization.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    In Commerce, the product data is stored separately from pricing, catalogs, and inventory. This separation means that you retrieve all product data only when you are managing product data and assets. Otherwise, when setting prices or managing inventory, you retrieve a reference to the product rather than the entire product, which makes the response times very fast.
+
+
+    You also have the flexibility to create catalogs for different scenarios by combining hierarchies of products with a price book. Scenarios might include:
+
+
+    - **Multiple geographical regions**. Display different catalogs in different regions with suitable pricing or combine product hierarchies from two different regions to display in a third region.
+
+    - **Multiple channels**. Display different catalogs based on how a shopper accesses your store, such as through a mobile app or a web storefront.
+
+    - **Direct to business versus direct to customers**. Offer different products and prices for business customers versus retail customers.
+
+    - **Preferred customers**. Offer special pricing to preferred customers while displaying a standard price catalog to all other shoppers.
+
+    - **Reward programs**. Enable reward programs where catalog prices drop after a certain spending level is reached.
+
+    - **Product sales**. Offer sale items for a limited time.
+
+
+    Scenarios are created by defining the context within which a catalog is displays. Contexts can be a customer ID, a channel, or any other user-defined tag that can be passed to the APIs from the front-end shopper experiences.
 
     '
-  contact:
-    name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
-  license:
-    url: https://elasticpath.dev
-    name: MIT
+  version: 26.0612.7739142
+  x-version-timestamp: 2026-06-12 10:52:50+00:00
 servers:
-- url: https://useast.api.elasticpath.com
-  description: US East
 - url: https://euwest.api.elasticpath.com
-  description: EU West
+  description: EU West Production Server
+- url: https://useast.api.elasticpath.com
+  description: US East Production Server
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Product Export
   description: "```mdx-code-block\nimport ProductExport from '/docs/partials/pxm/import/export.mdx';\n\n<ProductExport />\n```\n\n### Characteristics of Exporting Products\n\n- Product exports are an asynchronous operation. When you send a request to the Export API, it triggers an asynchronous job to build the `.csv` file containing the product entries.\n- Jobs are processed one at a time. You can continue to send product export requests, but those jobs are queued. In other words, Commerce looks for any jobs that have a status of PENDING and starts the job with the earliest created date. This process is repeated until all jobs are processed. See [**Jobs**](/docs/api/pxm/products/jobs).\n- The Export API response includes a job resource. In the response, you can verify the job status; if the status is successful, the response includes a link to the location where the `.csv` file is stored. See [**Product Export CSV File**](#product-export-csv-file). A single CSV file contains 10,000 rows, excluding the header. If you are exporting 50,000 products, the job endpoint response contains links to five `.csv` files; each `.csv` file including 10,000 products.\n- You might have specified custom extension data in a `.csv` file when you imported the products. These modifications are all exported. So, when you send a request to the Export API, the `.csv` file, included in the Job endpoint response, reflects any changes that you have made.\n- You cannot export product bundles.\n\n### Product Export CSV File\n\nThe Product Export API generates a Comma Separated Values (CSV) file that you can use to import/update products, main image files, and custom extension data. \n\nThe `.csv` file is:\n\n - Comma-separated.\n - Header-based.\n   - Header attributes must be the same as the product attributes.\n   - Header names can be in any order.\n - Each row after the first line represents a single product.\n\nThe following table describes the headers that are supported.\n\n| Header                           | Required | Description |                                                             \n|:---------------------------------|:---------|:-----------------------------------------------------|\n| id                               | Optional | A unique product ID that is generated when you create the product. The `id` is used to look up products in the `.csv` file and matches them to the products in your storefront that you want to update.                                                    |\n| external_ref                     | Optional | A unique attribute associated with a product. This could be an external reference from a separate company system, for example. The maximum length is 2048 characters.  |                                                                                          \n| name                             | Required | The name of a product.     |                                                                              \n| description                      | Required | A description for a product. You can include quotes in your product description, if you want to emphasize a word, for example. To do this, put quotes around the product description. For example, \"This product description describes my \"product\" and the product \"version\".\" |\n| slug                             | Required | A label for the product that is used in the URL paths. A slug can contain any combination of letters, numbers, periods, hyphens, and underscores. NO spaces or other characters are allowed. By default, the product name is used as the slug.                |\n| status                           | Required | The status of a product, either `Draft` or `Live`.    |                                                  \n| commodity_type                   | Required | The commodity type, either `physical` or `digital`.    |                                                 \n| upc_ean                          | Optional | The universal product code or european article number of the product.     |                               \n| mpn                              | Optional | The manufacturer part number of a product.       |                                                        \n| sku                              | Optional | The unique stock keeping unit of the product.   |   \n| tags                             | Optional | The product tags used to store or assign a key word against a product. A product can have up to 20 product tags. A product tag can be up to 255 characters. See [**Product Tags**](/docs/api/pxm/products/product-tags\n).                                                   |\n| main_image_id                    | Optional | Specifies a unique ID of a main image file for a product. See [Exporting Main Image Files](#exporting-main-image-files).  |                                                                                                                       \n| `_created_at`                      | Optional| The date and time a product was created. **Note**: This field does not populate any data; it is provided solely for informational purposes.      |                                                                                                               \n| `_updated_at`                      | Optional | The date and time a product was updated. **Note**: This field does not populate any data; it is provided solely for informational purposes.        |                                                                                                             \n| `template:<templateID>:created_at` | Optional | The date and time a template was created. **Note**: This field does not populate any data; it is provided solely for informational purposes.         |                                                                                                           \n| `template:<templateID>:updated_at` | Optional | The date and time a template was updated. **Note**: This field does not populate any data; it is provided solely for informational purposes.      |                                                                                                              \n| `template:<flowID>:<fieldName>`  | Optional | Custom extension data includes the flow `ID` or `slug` and the field `name`. See [Exporting Custom Data (Flows)](#exporting-custom-data-flows).   |                                                                                                              \n\n### Exporting Main Image Files\n\nThe main images that you have previously uploaded Commerce are exported. A `main_image_id` header is added to your `.csv` file. The ID in `main_image_id` is the ID of a file that has already been uploaded to Commerce using [create a file](/docs/api/pxm/files/create-a-file).\n\n### Exporting Custom Data (Flows)\n\nCustom extension data is exported in a `.csv` file by creating a header that includes the flow `ID` or `slug` and the field `name` as shown below:\n\n- `template:<flowSlug>:<fieldName>`\n- `template:<flowID>:<fieldName>`\n\nwhere:\n\n- `template` must be `template`.\n- one of the following for the template that contains the field whose data you want to export:\n  - `flowID` is the ID of the flow.\n  - `flowSlug` is the flow slug.\n- `fieldName` is the name of the field whose data you want to export.\n\nIn the following example, for a flow with ID `82c10a02-1851-4992-8ecb-d44f2782d09b` and a field with the name `condition`:\n\n- the header is `template:82c10a02-1851-4992-8ecb-d44f2782d09b:condition`.\n- the updated custom data is `as-new`.\n\n| name | slug | sku | status | template:82c10a02-1851-4992-8ecb-d44f2782d09b:condition |\n| :--- | :--- | :--- | :--- | :--- |\n| BestEver Range | bestever-range-1a1a-30 | BE-Range-1a1a-30 | draft | as-new |\n"
@@ -100,38 +114,6 @@ paths:
       - $ref: '#/components/parameters/useTemplateSlugs'
       - $ref: '#/components/parameters/filterexport'
 components:
-  parameters:
-    useTemplateSlugs:
-      name: useTemplateSlugs
-      description: Set to `true` if you want to use a template slug instead of a template ID when exporting products that have custom data.
-      in: query
-      style: form
-      explode: true
-      schema:
-        type: boolean
-        default: false
-    filterexport:
-      name: filter
-      in: query
-      description: '
-
-        Many Commerce API endpoints support filtering. The general syntax is described [**here**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
-
-
-        For more information about the attributes and operators that this endpoint supports, see [Export Products](/docs/api/pxm/products/export-products).
-
-        '
-      style: form
-      explode: true
-      schema:
-        type: string
-      examples:
-        eq:
-          value: eq(name,some-name)
-        like:
-          value: like(name,*some-name*)
-        in:
-          value: in(id,some-id)
   schemas:
     single:
       type: object
@@ -201,15 +183,17 @@ components:
           properties:
             started_at:
               description: The date and time a job is started.
-              type: string
+              type:
+              - string
+              - 'null'
               example: '2020-09-22T09:00:00.000Z'
               format: date-time
-              nullable: true
             completed_at:
-              type: string
+              type:
+              - string
+              - 'null'
               example: '2020-09-22T09:00:00.000Z'
               format: date-time
-              nullable: true
               description: The date and time a job is completed.
             created_at:
               type: string
@@ -268,42 +252,18 @@ components:
               type: string
               description: Applies to `hierarchy-duplicate` job types. The duplicated hierarchy ID.
             file_locations:
-              type: array
-              nullable: true
+              type:
+              - array
+              - 'null'
               description: If the job type is `product_export`, a link to the file is created when running a job.
               items:
                 type: string
             filter:
-              type: string
-              nullable: true
+              type:
+              - string
+              - 'null'
               description: The entities included in the job. For example, if the job type is `product-export`, the PXM products included in the export.
   responses:
-    bad_request:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            bad-request:
-              value:
-                errors:
-                - title: Bad Request
-                  detail: Could not parse the supplied filter
-                  status: '400'
-    unprocessable_entity:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            failed-validation:
-              value:
-                errors:
-                - title: Failed Validation
-                  status: '422'
-                  detail: <XYZ> can not be empty
     internal:
       description: Internal server error. There was a system failure in the platform.
       content:
@@ -318,6 +278,64 @@ components:
                   title: Internal Server Error
                   detail: There was an internal server error, you can report with your request id.
                   request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+    bad_request:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            bad-request:
+              value:
+                errors:
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
+  parameters:
+    useTemplateSlugs:
+      name: useTemplateSlugs
+      description: Set to `true` if you want to use a template slug instead of a template ID when exporting products that have custom data.
+      in: query
+      style: form
+      explode: true
+      schema:
+        type: boolean
+        default: false
+    filterexport:
+      name: filter
+      in: query
+      description: '
+
+        Many Commerce API endpoints support filtering. The general syntax is described [**here**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+
+        For more information about the attributes and operators that this endpoint supports, see [Export Products](/docs/api/pxm/products/export-products).
+
+        '
+      style: form
+      explode: true
+      schema:
+        type: string
+      examples:
+        eq:
+          value: eq(name,some-name)
+        like:
+          value: like(name,*some-name*)
+        in:
+          value: in(id,some-id)
   examples:
     export:
       value:
@@ -336,6 +354,6 @@ components:
             filter: eq(sku,product-1)
             x_request_id: fad8c5c0-9546-4e0c-b68e-8a2d809891e5
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

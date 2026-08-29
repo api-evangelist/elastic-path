@@ -1,28 +1,37 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Releases API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Catalogs Introduction Releases API
+  description: 'Use the catalog-view Service API to create your catalogs.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    You also have the flexibility to create catalogs for different scenarios by combining hierarchies of products with a price book. Scenarios might include:
+
+
+    - Multiple geographical regions. Display different catalogs in different regions with suitable pricing or combine product hierarchies from two different regions to display in a third region.
+
+    - Multiple channels. Display different catalogs based on how a shopper accesses your store, such as through a mobile app or a web storefront.
+
+    - Direct to business versus direct to customers. Offer different products and prices for business customers versus retail customers.
+
+    - Preferred customers. Offer special pricing to preferred customers while displaying a standard price catalog to all other shoppers.
+
+    - Reward programs. Enable reward programs where catalog prices drop after a certain spending level is reached.
+
+    - Product sales. Offer sale items for a limited time.
+
+
+    Scenarios are created by defining the context within which a catalog is displays. Contexts can be a customer ID, a channel, or any other user-defined tag that can be passed to the APIs from the front-end shopper experiences.
 
     '
-  contact:
-    name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
-  license:
-    url: https://elasticpath.dev
-    name: MIT
+  version: 26.0508.7574130
+  x-version-timestamp: 2026-05-08 11:06:53+00:00
 servers:
-- url: https://useast.api.elasticpath.com
-  description: US East
 - url: https://euwest.api.elasticpath.com
-  description: EU West
+  description: EU West Production Server
+- url: https://useast.api.elasticpath.com
+  description: US East Production Server
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Releases
   description: 'When a catalog is published, a catalog release is created. A catalog release provides a snapshot of the product information taken at the time of publication. You can have one or more catalog releases available in your organization or in your store. If you publish a catalog for your organization, the catalog is available when the store is launched.
@@ -314,53 +323,15 @@ paths:
                 $ref: '#/components/schemas/error-response'
 components:
   schemas:
-    release:
+    related-link:
+      description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
       type: object
-      title: Release
-      description: A catalog release represents a collection of hierarchical product data, price books and catalogs rules.
       properties:
-        id:
-          description: A unique identifier for the catalog release.
+        related:
+          description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
           type: string
-          x-go-name: ID
-          example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
-        attributes:
-          type: object
-          properties:
-            name:
-              description: The name of a release.
-              type: string
-              example: Clothing
-            published_at:
-              description: The date and time a release was published.
-              type: string
-              format: date-time
-              example: '1970-01-01T00:00:00.000'
-              nullable: true
-            catalog_id:
-              description: A unique identifier for the catalog.
-              type: string
-              example: 0194f54d-f2a1-4e33-9a6e-9ec366152490
-            description:
-              description: A description of the catalog release.
-              type: string
-              example: Catalog for Store 123
-              default: ''
-            hierarchies:
-              description: An array of hierarchy IDs associated with the release.
-              type: array
-              items:
-                $ref: '#/components/schemas/node-reference'
-              x-go-name: RootNodes
-        relationships:
-          $ref: '#/components/schemas/release-relationships'
-        type:
-          description: This represents the type of object being returned. Always `catalog-release`.
-          type: string
-          x-go-name: Type
-        meta:
-          $ref: '#/components/schemas/release-meta'
-      x-go-name: Release
+      required:
+      - related
     node-reference:
       type: object
       title: NodeReference
@@ -382,63 +353,6 @@ components:
           example: Formal dresswear
           x-go-name: Name
       x-go-name: NodeReference
-    release-data:
-      type: object
-      title: Release Data
-      description: Container for a catalog release.
-      properties:
-        data:
-          $ref: '#/components/schemas/release'
-        links:
-          $ref: '#/components/schemas/links'
-    error:
-      type: object
-      title: APIError
-      description: APIError is a json-api style part of an error response.
-      properties:
-        detail:
-          type: string
-          example: not processable
-          x-go-name: Detail
-        status:
-          type: string
-          example: '422'
-          x-go-name: Status
-        title:
-          type: string
-          example: There was a problem processing your request.
-          x-go-name: Title
-      x-go-name: APIError
-    catalog-release-create-data:
-      type: object
-      title: CatalogReleaseCreateData
-      description: Creates a catalog release with the following attributes.
-      properties:
-        data:
-          type: object
-          properties:
-            export_full_delta:
-              type: boolean
-              description: 'Set to `true` if you want to export all the data from a catalog release in a delta link. The `is_full_delta` attribute is returned from the `get a release of a catalog` endpoint. The `is_full_delta` attribute tells you if the delta file contains the full content of a catalog release. You can use the `is_full_delta` to determine if you need to refresh the data in your company system before publishing a catalog release with fresh data in a delta link. Using a search service as an example, if the `is_full_delta` attribute is true, you should remove all data about that catalog from the search service before publishing a catalog release and injecting fresh data from the delta file. If the `is_full_delta` attribute is false, then data from the previous catalog overlays the existing data in the delta file. The `is_full_delta` attribute is always `true` the first time a catalog is published.
-
-                '
-              x-go-name: ExportFullDelta
-            include_organization_resources:
-              type: boolean
-              description: If you are publishing a catalog in a store that contains resources from an organization, you must set this to true and you must enable the **Include Organization Resources in Catalog Publishes** checkbox in Commerce Manager. See [**Multi-Store Management Solutions**](/docs/api/pxm/catalog/publish-release).
-              x-go-name: IncludeOrganizationResources
-              nullable: true
-    release-list-data:
-      type: object
-      title: ReleaseListData
-      description: Container for a list of catalog releases.
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/release'
-        links:
-          $ref: '#/components/schemas/links'
     error-response:
       type: object
       title: ErrorResponse
@@ -462,16 +376,18 @@ components:
           example: '1970-01-01T00:00:00.000'
         started_at:
           description: The date and time a release is available for use. In other words, the date and time the status of a catalog release changes to PUBLISHED, rather than IN PROGRESS.
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           example: '1970-01-01T00:00:00.000'
-          nullable: true
         updated_at:
           description: The date and time a release is updated.
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           example: '1970-01-01T00:00:00.000'
-          nullable: true
         release_status:
           description: The status of the current release.
           type: string
@@ -502,30 +418,34 @@ components:
           x-go-name: IsFullDelta
         total_products:
           description: The total number of products displayed in a catalog release.
-          type: integer
+          type:
+          - integer
+          - 'null'
           format: int64
           x-go-name: TotalProducts
-          nullable: true
         total_nodes:
           description: The total number of hierarchy nodes displayed in a catalog release.
-          type: integer
+          type:
+          - integer
+          - 'null'
           format: int64
           x-go-name: TotalNodes
-          nullable: true
         percent_completed:
           description: An integer that represents the progress of a catalog publish. The attribute starts at `0` and reaches `100` when publishing is complete.
-          type: integer
+          type:
+          - integer
+          - 'null'
           format: int32
           x-go-name: PercentCompleted
-          nullable: true
         owner:
           description: The owner of the resource, can be either `organization` or `store`.
-          type: string
+          type:
+          - string
+          - 'null'
           enum:
           - store
           - organization
           x-go-name: Owner
-          nullable: true
         price_segmentation_enabled:
           description: This indicates whether the catalog release will support price segmentation using catalog rules to define which pricebook(s) to use for pricing
           type: boolean
@@ -537,15 +457,63 @@ components:
           x-go-name: IncludesDraftProducts
       x-go-name: ReleaseMeta
       x-omitempty: true
-    related-link:
-      description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+    release-data:
       type: object
+      title: Release Data
+      description: Container for a catalog release.
       properties:
-        related:
-          description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+        data:
+          $ref: '#/components/schemas/release'
+        links:
+          $ref: '#/components/schemas/links'
+    release:
+      type: object
+      title: Release
+      description: A catalog release represents a collection of hierarchical product data, price books and catalogs rules.
+      properties:
+        id:
+          description: A unique identifier for the catalog release.
           type: string
-      required:
-      - related
+          x-go-name: ID
+          example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
+        attributes:
+          type: object
+          properties:
+            name:
+              description: The name of a release.
+              type: string
+              example: Clothing
+            published_at:
+              description: The date and time a release was published.
+              type:
+              - string
+              - 'null'
+              format: date-time
+              example: '1970-01-01T00:00:00.000'
+            catalog_id:
+              description: A unique identifier for the catalog.
+              type: string
+              example: 0194f54d-f2a1-4e33-9a6e-9ec366152490
+            description:
+              description: A description of the catalog release.
+              type: string
+              example: Catalog for Store 123
+              default: ''
+            hierarchies:
+              description: An array of hierarchy IDs associated with the release.
+              type: array
+              items:
+                $ref: '#/components/schemas/node-reference'
+              x-go-name: RootNodes
+        relationships:
+          $ref: '#/components/schemas/release-relationships'
+        type:
+          description: This represents the type of object being returned. Always `catalog-release`.
+          type: string
+          x-go-name: Type
+        meta:
+          $ref: '#/components/schemas/release-meta'
+      x-go-name: Release
     release-relationships:
       type: object
       title: ReleaseRelationships
@@ -578,34 +546,88 @@ components:
       properties:
         self:
           description: Single entities use a `self` parameter with a link the specific resource.
-          type: string
+          type:
+          - string
+          - 'null'
           format: uri
-          nullable: true
         first:
           description: Always the first page.
-          type: string
+          type:
+          - string
+          - 'null'
           format: uri
-          nullable: true
         last:
           description: This is `null` if there is only one page.
-          type: string
+          type:
+          - string
+          - 'null'
           format: uri
-          nullable: true
         prev:
           description: This is `null` if there is only one page.
-          type: string
+          type:
+          - string
+          - 'null'
           format: uri
-          nullable: true
         next:
           description: This is `null` if there is only one page.
-          type: string
+          type:
+          - string
+          - 'null'
           format: uri
-          nullable: true
+    catalog-release-create-data:
+      type: object
+      title: CatalogReleaseCreateData
+      description: Creates a catalog release with the following attributes.
+      properties:
+        data:
+          type: object
+          properties:
+            export_full_delta:
+              type: boolean
+              description: 'Set to `true` if you want to export all the data from a catalog release in a delta link. The `is_full_delta` attribute is returned from the `get a release of a catalog` endpoint. The `is_full_delta` attribute tells you if the delta file contains the full content of a catalog release. You can use the `is_full_delta` to determine if you need to refresh the data in your company system before publishing a catalog release with fresh data in a delta link. Using a search service as an example, if the `is_full_delta` attribute is true, you should remove all data about that catalog from the search service before publishing a catalog release and injecting fresh data from the delta file. If the `is_full_delta` attribute is false, then data from the previous catalog overlays the existing data in the delta file. The `is_full_delta` attribute is always `true` the first time a catalog is published.
+
+                '
+              x-go-name: ExportFullDelta
+            include_organization_resources:
+              type:
+              - boolean
+              - 'null'
+              description: If you are publishing a catalog in a store that contains resources from an organization, you must set this to true and you must enable the **Include Organization Resources in Catalog Publishes** checkbox in Commerce Manager. See [**Multi-Store Management Solutions**](/docs/api/pxm/catalog/publish-release).
+              x-go-name: IncludeOrganizationResources
+    error:
+      type: object
+      title: APIError
+      description: APIError is a json-api style part of an error response.
+      properties:
+        detail:
+          type: string
+          example: not processable
+          x-go-name: Detail
+        status:
+          type: string
+          example: '422'
+          x-go-name: Status
+        title:
+          type: string
+          example: There was a problem processing your request.
+          x-go-name: Title
+      x-go-name: APIError
+    release-list-data:
+      type: object
+      title: ReleaseListData
+      description: Container for a list of catalog releases.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/release'
+        links:
+          $ref: '#/components/schemas/links'
   parameters:
-    tag:
-      description: Tags are used to refine the eligibility criteria for a rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
+    accept-language:
+      description: The language and locale your storefront prefers. See [Accept-Language](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
       in: header
-      name: EP-Context-Tag
+      name: accept-language
       required: false
       schema:
         type: string
@@ -616,14 +638,14 @@ components:
       required: false
       schema:
         type: string
-    accept-language:
-      description: The language and locale your storefront prefers. See [Accept-Language](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
+    tag:
+      description: Tags are used to refine the eligibility criteria for a rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
       in: header
-      name: accept-language
+      name: EP-Context-Tag
       required: false
       schema:
         type: string
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

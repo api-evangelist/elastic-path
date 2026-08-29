@@ -1,28 +1,16 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Integrations API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
-
-
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
-
-    '
-  contact:
-    name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
-  license:
-    url: https://elasticpath.dev
-    name: MIT
+  version: 26.0212.7184796
+  x-version-timestamp: 2026-02-12 09:09:12+00:00
+  title: Introduction Integrations API
+  description: "You can integrate Commerce with your external systems like enterprise resource planning, order management, fulfilment, and other systems, ensuring that buying is quick and easy for your shoppers.\n \nEvents are actions that occur in your commerce workflow, such as a customer changing their address or an order changing status from created to paid. You can create custom functions that perform additional processing outside of Commerce, and create integrations so that when an event occurs in your store, the custom function is run.\n\nFor example:\n\n- When a customer updates their address, the Customer Relationship Management system is updated with the change.\n- When an order status changes to paid, the affected stock in an inventory management system is reduced by the number of items in the order.\n \nEvents are processed concurrently. This means that events may not be delivered in the order they are created. For example, if the status of an order is updated multiple times, the events may not be delivered in the same sequence they were updated. Integration events operate on an \"at least once\" delivery policy. We aim to deliver messages within 15 seconds except in cases of high load. Ensure that you design your receiving code accordingly.\n\n:::note\n \nFor a list of all the events that can be used, see [Observable Events](#observable-events).\n \n:::\n\nYou can integrate Commerce with your external systems using:\n\n- Webhooks\n- Message Queuing Services\n \n### Webhooks\n \nYou can use Webhooks to deliver Commerce events to a configured HTTP endpoint.\n \n### Message Queuing Services\n \nYou can deliver Commerce events to messages queues through the following message queuing services:\n \n- Amazon Simple Queuing Service (SQS)\n- Message queuing services that support the Message Simple Text Orientated Messaging Protocol (STOMP), for example, Amazon MQ.\n \n:::note\n \nYou can integrate Amazon SQS and message queuing services that support STOMP through the Integrations API. You can view the integration details in Commerce Manager > **SYSTEM** > **Store Settings** > **Webhooks**. For more information, see [Create an integration](/docs/api/integrations/create-integration).\n \n:::\n \n### Integration Types\n \nCommerce supports the following integration types:\n\n- Using [webhooks](/docs/api/integrations/create-integration), you can have Commerce deliver events to a configured HTTP endpoint.\n \n:::caution\n \nWebhooks that return anything other than a 2XX status code, or take more than 10 seconds to respond, are considered failed.\n\n- Using [message queuing services](#message-queuing-services), you can deliver Commerce events to a message queue. The advantages of using message queuing services over webhooks are:\n\n     - A temporary failure of a webhook endpoint can result in lost events. However, if messages are on your own queue, you can leave the event on the queue to retry later.\n     - If events take a long time to process, a webhook can timeout, but delivery to a queue is always going to take the same amount of time.\n \n:::\n\n### Webhooks\n\nAn integration with an `integration_type` of [`webhook`](/docs/api/integrations/create-integration) delivers its events to a configured HTTP endpoint.\n \n### Message Queuing Services\n\nElastic Path allows you to integrate with the following message queuing services:\n\n- Amazon Simple Message Queuing Service (SQS).\n- Message queuing services that use Simple Text Orientated Messaging Protocol (STOMP), for example, Amazon MQ.\n\n:::caution\n \nYou can integrate Amazon SQS and message queuing services that support STOMP through the Integrations API. You can view the integration details in Commerce Manager > **SYSTEM** > **Store Settings** > **Webhooks**. For more information, see [Create an integration](/docs/api/integrations/create-integration).\n \n:::\n \n#### Amazon Simple Message Queuing Service (SQS)\n\nAn integration with an `integration_type` of [`aws_sqs`](/docs/api/integrations/create-integration) delivers its events directly into the configured AWS SQS queue. These messages can be processed by any appropriate means, such as a Lambda function.\n\nFor more information about creating Simple Queue Service (SQS) queues, see the [Simple Queue Service (SQS)](https://elasticpath.dev/guides/How-To/Integrations/sqs-queues) and [SQS Events with CloudFormation](https://elasticpath.dev/guides/How-To/Integrations/sqs-queues-cloudformation) sections.\n \n#### Simple Text Orientated Messaging Protocol (STOMP)\n\nAn integration with the [`stomp`](/docs/api/integrations/create-integration) integration type delivers its events directly into a configured queue. Any message queuing service that uses STOMP, such as Amazon MQ, can process these messages.\n\nFor more information, see the documentation provided with the message queuing service you are using.\n \n### Webhooks\n\nThe payload delivered to your webhook `url` contains information about the fired event.\n\nThe payload attributes and types are defined in the following table.\n\n| Attribute      | Type                             | Description                                                                                       |\n| :------------- | :------------------------------- | :------------------------------------------------------------------------------------------------ |\n| `id`           | `string`                         | A unique ID for this event.                                                                       |\n| `integration`  | `object`                         | The events `integration_type` being fired.                                                        |\n| `triggered_by` | `string` | The [observable events](#observable-events) that triggered this event.                           |\n| `attempt`      | `integer`                        | The number of attempts to deliver this event.                                                     |\n| `resources`    | `string`                         | The resources affected by this event. This field is now deprecated. Please use `payload` instead. |\n| `payload`      | `object`                         | The resources affected by this event.                                                             |\n\n:::note\nStore-level events contain `store_id` and `org_id` whereas, organization-level events contain only `org_id`.\n \n:::\n\n### Example: Typical payload\n\nThe following example payload [observes](#observable-events) the `order.paid` event. The configured URL receives the following payload.\n \n```javascript\n{\n \"id\": \"21a361c9-b117-4d16-be2d-5ed2dbdaa95b\",\n \"triggered_by\": \"order.paid\",\n \"attempt\": 1,\n \"integration\": {\n   \"id\": \"af7bbcc7-f77f-4a8f-abdb-4f039c5c9d81\",\n   \"integration_type\": \"webhook\",\n   \"name\": \"Order paid notification\",\n   \"description\": \"Fire an event on order paid\"\n },\n \"resources\": \"{\\\"data\\\":{\\\"type\\\":\\\"order\\\",\\\"id\\\":\\\"1d67160d-dacb-43ed-80ef-c3c4e7ddf764\\\",\\\"status\\\":\\\"complete\\\",\\\"payment\\\":\\\"paid\\\",\\\"shipping\\\":\\\"unfulfilled\\\",\\\"customer\\\":{\\\"name\\\":\\\"Ron Swanson\\\",\\\"email\\\":\\\"ron.swanson@moltin.com\\\"},\\\"shipping_address\\\":{\\\"first_name\\\":\\\"Jack\\\",\\\"last_name\\\":\\\"Macdowall\\\",\\\"phone_number\\\":\\\"123456789\\\",\\\"company_name\\\":\\\"Macdowalls\\\",\\\"line_1\\\":\\\"Second Floor, British India House\\\",\\\"line_2\\\":\\\"15 Carliol Square\\\",\\\"city\\\":\\\"Newcastle upon Tyne\\\",\\\"postcode\\\":\\\"NE1 6UF\\\",\\\"county\\\":\\\"Tyne and Wear\\\",\\\"country\\\":\\\"GB\\\",\\\"instructions\\\":\\\"Leave in porch\\\"},\\\"billing_address\\\":{\\\"first_name\\\":\\\"Jack\\\",\\\"last_name\\\":\\\"Macdowall\\\",\\\"company_name\\\":\\\"Macdowalls\\\",\\\"line_1\\\":\\\"Second Floor, British India House\\\",\\\"line_2\\\":\\\"15 Carliol Square\\\",\\\"city\\\":\\\"Newcastle upon Tyne\\\",\\\"postcode\\\":\\\"NE1 6UF\\\",\\\"county\\\":\\\"Tyne and Wear\\\",\\\"country\\\":\\\"GB\\\"},\\\"links\\\":{},\\\"meta\\\":{\\\"display_price\\\":{\\\"with_tax\\\":{\\\"amount\\\":10000,\\\"currency\\\":\\\"GBP\\\",\\\"formatted\\\":\\\"£100.00\\\"},\\\"without_tax\\\":{\\\"amount\\\":10000,\\\"currency\\\":\\\"GBP\\\",\\\"formatted\\\":\\\"£100.00\\\"},\\\"tax\\\":{\\\"amount\\\":0,\\\"currency\\\":\\\"GBP\\\",\\\"formatted\\\":\\\"£0.00\\\"}},\\\"timestamps\\\":{\\\"created_at\\\":\\\"2019-07-04T11:12:23Z\\\",\\\"updated_at\\\":\\\"2019-07-04T11:12:23Z\\\"}},\\\"relationships\\\":{\\\"items\\\":{\\\"data\\\":[{\\\"type\\\":\\\"item\\\",\\\"id\\\":\\\"395763ee-1878-4aa0-a7a2-8d4877310d6b\\\"}]}}},\\\"included\\\":{\\\"items\\\":[{\\\"type\\\":\\\"order_item\\\",\\\"id\\\":\\\"395763ee-1878-4aa0-a7a2-8d4877310d6b\\\",\\\"quantity\\\":1,\\\"product_id\\\":\\\"4f28f222-aa5b-442c-9ce9-c223dc7cf15a\\\",\\\"name\\\":\\\"Spam Fritters\\\",\\\"sku\\\":\\\"spam-fritters-0716\\\",\\\"unit_price\\\":{\\\"amount\\\":10000,\\\"currency\\\":\\\"GBP\\\",\\\"includes_tax\\\":false},\\\"value\\\":{\\\"amount\\\":10000,\\\"currency\\\":\\\"GBP\\\",\\\"includes_tax\\\":false},\\\"links\\\":{},\\\"meta\\\":{\\\"display_price\\\":{\\\"with_tax\\\":{\\\"unit\\\":{\\\"amount\\\":10000,\\\"currency\\\":\\\"GBP\\\",\\\"formatted\\\":\\\"£100.00\\\"},\\\"value\\\":{\\\"amount\\\":10000,\\\"currency\\\":\\\"GBP\\\",\\\"formatted\\\":\\\"£100.00\\\"}},\\\"without_tax\\\":{\\\"unit\\\":{\\\"amount\\\":10000,\\\"currency\\\":\\\"GBP\\\",\\\"formatted\\\":\\\"£100.00\\\"},\\\"value\\\":{\\\"amount\\\":10000,\\\"currency\\\":\\\"GBP\\\",\\\"formatted\\\":\\\"£100.00\\\"}},\\\"tax\\\":{\\\"unit\\\":{\\\"amount\\\":0,\\\"currency\\\":\\\"GBP\\\",\\\"formatted\\\":\\\"£0.00\\\"},\\\"value\\\":{\\\"amount\\\":0,\\\"currency\\\":\\\"GBP\\\",\\\"formatted\\\":\\\"£0.00\\\"}}},\\\"timestamps\\\":{\\\"created_at\\\":\\\"2019-07-04T11:12:23Z\\\",\\\"updated_at\\\":\\\"2019-07-04T11:12:23Z\\\"}},\\\"relationships\\\":{\\\"cart_item\\\":{\\\"data\\\":{\\\"type\\\":\\\"cart_item\\\",\\\"id\\\":\\\"a498b15a-2cc7-49ea-93b3-22143bb403ac\\\"}}}}]}}\",\n \"payload\": {\n   \"data\": {\n     \"type\": \"order\",\n     \"id\": \"1d67160d-dacb-43ed-80ef-c3c4e7ddf764\",\n     \"status\": \"complete\",\n     \"payment\": \"paid\",\n     \"shipping\": \"unfulfilled\",\n     \"customer\": {\n       \"name\": \"Ron Swanson\",\n       \"email\": \"ron.swanson@moltin.com\"\n     },\n     \"shipping_address\": {\n       \"first_name\": \"Jack\",\n       \"last_name\": \"Macdowall\",\n       \"phone_number\": \"123456789\",\n       \"company_name\": \"Macdowalls\",\n       \"line_1\": \"Second Floor, British India House\",\n       \"line_2\": \"15 Carliol Square\",\n       \"city\": \"Newcastle upon Tyne\",\n       \"postcode\": \"NE1 6UF\",\n       \"county\": \"Tyne and Wear\",\n       \"country\": \"GB\",\n       \"instructions\": \"Leave in porch\"\n     },\n     \"billing_address\": {\n       \"first_name\": \"Jack\",\n       \"last_name\": \"Macdowall\",\n       \"company_name\": \"Macdowalls\",\n       \"line_1\": \"Second Floor, British India House\",\n       \"line_2\": \"15 Carliol Square\",\n       \"city\": \"Newcastle upon Tyne\",\n       \"postcode\": \"NE1 6UF\",\n       \"county\": \"Tyne and Wear\",\n       \"country\": \"GB\"\n     },\n     \"links\": {},\n     \"meta\": {\n       \"display_price\": {\n         \"with_tax\": {\n           \"amount\": 10000,\n           \"currency\": \"GBP\",\n           \"formatted\": \"£100.00\"\n         },\n         \"without_tax\": {\n           \"amount\": 10000,\n           \"currency\": \"GBP\",\n           \"formatted\": \"£100.00\"\n         },\n         \"tax\": {\n           \"amount\": 0,\n           \"currency\": \"GBP\",\n           \"formatted\": \"£0.00\"\n         }\n       },\n       \"timestamps\": {\n         \"created_at\": \"2019-07-04T11:12:23Z\",\n         \"updated_at\": \"2019-07-04T11:12:23Z\"\n       }\n     },\n     \"relationships\": {\n       \"items\": {\n         \"data\": [\n           {\n             \"type\": \"item\",\n             \"id\": \"395763ee-1878-4aa0-a7a2-8d4877310d6b\"\n           }\n         ]\n       }\n     }\n   },\n   \"included\": {\n     \"items\": [\n       {\n         \"type\": \"order_item\",\n         \"id\": \"395763ee-1878-4aa0-a7a2-8d4877310d6b\",\n         \"quantity\": 1,\n         \"product_id\": \"4f28f222-aa5b-442c-9ce9-c223dc7cf15a\",\n         \"name\": \"Spam Fritters\",\n         \"sku\": \"spam-fritters-0716\",\n         \"unit_price\": {\n           \"amount\": 10000,\n           \"currency\": \"GBP\",\n           \"includes_tax\": false\n         },\n         \"value\": {\n           \"amount\": 10000,\n           \"currency\": \"GBP\",\n           \"includes_tax\": false\n         },\n         \"links\": {},\n         \"meta\": {\n           \"display_price\": {\n             \"with_tax\": {\n               \"unit\": {\n                 \"amount\": 10000,\n                 \"currency\": \"GBP\",\n                 \"formatted\": \"£100.00\"\n               },\n               \"value\": {\n                 \"amount\": 10000,\n                 \"currency\": \"GBP\",\n                 \"formatted\": \"£100.00\"\n               }\n             },\n             \"without_tax\": {\n               \"unit\": {\n                 \"amount\": 10000,\n                 \"currency\": \"GBP\",\n                 \"formatted\": \"£100.00\"\n               },\n               \"value\": {\n                 \"amount\": 10000,\n                 \"currency\": \"GBP\",\n                 \"formatted\": \"£100.00\"\n               }\n             },\n             \"tax\": {\n               \"unit\": {\n                 \"amount\": 0,\n                 \"currency\": \"GBP\",\n                 \"formatted\": \"£0.00\"\n               },\n               \"value\": {\n                 \"amount\": 0,\n                 \"currency\": \"GBP\",\n                 \"formatted\": \"£0.00\"\n               }\n             }\n           },\n           \"timestamps\": {\n             \"created_at\": \"2019-07-04T11:12:23Z\",\n             \"updated_at\": \"2019-07-04T11:12:23Z\"\n           }\n         },\n         \"relationships\": {\n           \"cart_item\": {\n             \"data\": {\n               \"type\": \"cart_item\",\n               \"id\": \"a498b15a-2cc7-49ea-93b3-22143bb403ac\"\n             }\n           }\n         }\n       }\n     ]\n   }\n },\n \"configuration\": {\n   \"secret_key\": \"secret_squirrel\",\n   \"url\": \"https://webhook.url\"\n }\n}\n```\n\n### Example: Deleted resources payload\n\n\nWhen resources are deleted and you observe an event, you receive a payload which **only** contains the resource type and ID.\n \n```javascript\n{\n \"id\": \"c138854a-5311-4543-a368-01e099f5519b\",\n \"triggered_by\": \"product.deleted\",\n \"attempt\": 1,\n \"integration\": {\n   \"id\": \"4596d5e1-26b6-444a-964d-2b6ec46477fd\",\n   \"integration_type\": \"webhook\",\n   \"name\": \"Product deleted notification\",\n   \"description\": \"Let me know when products are deleted from my store.\"\n },\n \"resources\": {\n   \"id\": \"a34a378b-2c39-41e4-a240-6b7e65f5bb55\",\n   \"type\": \"product\"\n },\n \"payload\": {\n   \"type\": \"product\",\n   \"id\": \"a34a378b-2c39-41e4-a240-6b7e65f5bb55\"\n },\n \"configuration\": {\n   \"secret_key\": \"secret_squirrel\",\n   \"url\": \"https://webhook.url\"\n }\n}\n```\n\n### Message Queue Services\n\nThe payload of messages delivered to your message queue contains information about the fired event. The information takes the form of a standard cloud event.\n\nThe following table defines the payload attributes and types:\n\n| Attribute       | Type                             | Description                                                             |\n| :-------------- | :------------------------------- | :---------------------------------------------------------------------- |\n| `id`            | `string`                         | A unique ID for this event.                                             |\n| `integrationid` | `string`                         | The ID of the integration being fired.                                  |\n| `type`          | `string` | The [observable event](#observable-events) that triggered this event. |\n| `data`          | `object`                         | The resource affected by this event.                                    |\n\n#### Example: Typical payload\n\nThe following example payload [observes](#observable-events) the `cart.updated` event. The configured queue receives the following message payload:\n \n```javascript\n{\n \"data\": {\n   \"description\": \"\",\n   \"id\": \"a-cart-id\",\n   \"links\": {\n     \"self\": \"https://epcc-integration.global.ssl.fastly.net/v2/carts/a-cart-id\"\n   },\n   \"meta\": {\n     \"display_price\": {\n       \"discount\": {\n         \"amount\": 0,\n         \"currency\": \"USD\",\n         \"formatted\": \"$0.00\"\n       },\n       \"tax\": {\n         \"amount\": 0,\n         \"currency\": \"USD\",\n         \"formatted\": \"$0.00\"\n       },\n       \"with_tax\": {\n         \"amount\": 200,\n         \"currency\": \"USD\",\n         \"formatted\": \"$2.00\"\n       },\n       \"without_tax\": {\n         \"amount\": 200,\n         \"currency\": \"USD\",\n         \"formatted\": \"$2.00\"\n       }\n     },\n     \"timestamps\": {\n       \"created_at\": \"2021-05-17T11:30:07Z\",\n       \"expires_at\": \"2021-05-24T11:31:08Z\",\n       \"updated_at\": \"2021-05-17T11:31:08Z\"\n     }\n   },\n   \"name\": \"Cart\",\n   \"relationships\": {\n     \"customers\": {},\n     \"items\": {\n       \"data\": [\n         {\n           \"id\": \"4d28bc2b-9db3-4c96-801b-df0ac5b41552\",\n           \"type\": \"custom_item\"\n         }\n       ]\n     }\n   },\n   \"type\": \"cart\"\n },\n \"datacontenttype\": \"application/json\",\n \"id\": \"9a21fb54-6c3b-432a-bade-82a60da6b59a\",\n \"integrationid\": \"e17db0d8-467b-4bf3-9c26-3dfe8b96e9d7\",\n \"source\": \"https://epcc-integration.global.ssl.fastly.net\",\n \"specversion\": \"1.0\",\n \"storeid\": \"b33e328f-31a8-4d57-b0a3-ebf1039b3756\",\n \"type\": \"cart.updated\"\n}\n```\n\n### Example: Deleted resources payload\n\nWhen resources are deleted, and you observe an event, the resource delivered in the message only contains the resource type and ID.\n\n```javascript\n{\n \"data\": {\n   \"id\": \"a2733958-1273-4385-9a05-f1ca7684f760\",\n   \"type\": \"product\"\n },\n \"datacontenttype\": \"application/json\",\n \"id\": \"efca76df-9fc1-4434-ba26-82339d9b723c\",\n \"integrationid\": \"e17db0d8-467b-4bf3-9c26-3dfe8b96e9d7\",\n \"source\": \"https://epcc-integration.global.ssl.fastly.net\",\n \"specversion\": \"1.0\",\n \"storeid\": \"b33e328f-31a8-4d57-b0a3-ebf1039b3756\",\n \"type\": \"product.deleted\"\n}\n```\n \n### Observable Events\n \nYou can pass multiple observable keys to the `observes` field of the [integration object](/docs/api/integrations/create-integration), or you can create individual events. You can use an array when you handle multiple webhooks at the same URL.\n\n   <table>\n     <tr>\n         <th>Entity/Resource</th>\n         <th>Action</th>\n         <th>Observable Key</th>\n         <th>Store/Organization</th>\n     </tr>\n     <tr>\n         <td><a href=\"/docs/api/addresses/addresses-introduction\"><strong>Address</strong></a></td>\n         <td>Created</td>\n         <td><code>address.created</code></td>\n         <td>Store</td>\n     </tr>\n     <tr>\n         <td></td>\n         <td>Updated</td>\n         <td><code>address.updated</code></td>\n         <td>Store</td>\n     </tr>\n     <tr>\n         <td></td>\n         <td>Deleted</td>\n         <td><code>address.deleted</code></td>\n         <td>Store</td>\n     </tr>\n     <tr>\n         <td><a href=\"/docs/api/accounts/account-management-introduction\"><strong>Account</strong></a></td>\n         <td>Created</td>\n         <td><code>account.created</code></td>\n         <td>Store</td>\n     </tr>\n     <tr>\n         <td></td>\n         <td>Updated</td>\n         <td><code>account.updated</code></td>\n         <td>Store</td>\n     </tr>\n     <tr>\n         <td></td>\n         <td>Deleted</td>\n         <td><code>account.deleted</code></td>\n         <td>Store</td>\n     </tr>\n     <tr>\n         <td><a href=\"/docs/api/accounts/account-members\"><strong>Account Member</strong></a></td>\n         <td>Created</td>\n         <td><code>account-member.created</code></td>\n         <td>Store</td>\n     </tr>\n     <tr>\n         <td></td>\n         <td>Updated</td>\n         <td><code>account-member.updated</code></td>\n         <td>Store</td>\n     </tr>\n     <tr>\n         <td></td>\n         <td>Deleted</td>\n         <td><code>account-member.deleted</code></td>\n         <td>Store</td>\n     </tr>\n     <tr>\n         <td><a href=\"/docs/api/accounts/account-membership\"><strong>Account Membership</strong></a></td>\n         <td>Created</td>\n         <td><code>account-membership.created</code></td>\n         <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Updated</td>\n          <td><code>account-membership.updated</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Deleted</td>\n          <td><code>account-membership.deleted</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/carts/cart-management\"><strong>Carts</strong></a></td>\n          <td>Updated</td>\n          <td><code>cart.updated</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Deleted</td>\n          <td><code>cart.deleted</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/pxm/currencies/currencies\"><strong>Currency</strong></a></td>\n          <td>Created</td>\n          <td><code>currency.created</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Updated</td>\n          <td><code>currency.updated</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Deleted</td>\n          <td><code>currency.deleted</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/customer-management/customer-management-api/customer-management-api-overview\"><strong>Customer</strong></a></td>\n          <td>Created</td>\n          <td><code>customer.created</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Updated</td>\n          <td><code>customer.updated</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Deleted</td>\n          <td><code>customer.deleted</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/commerce-extensions/custom-api-entries\">Custom API Entries</a></td>\n          <td>Created</td>\n          <td><code>customAPIEntryType.created</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Updated</td>\n          <td><code>customAPIEntryType.updated</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Deleted</td>\n          <td><code>customAPIEntryType.deleted</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/pxm/files/files\"><strong>File</strong></a></td>\n          <td>Created</td>\n          <td><code>file.created</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Deleted</td>\n          <td><code>file.deleted</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/integrations/create-integration\"><strong>Integration (events)</strong></a></td>\n          <td>Created</td>\n          <td><code>integration.created</code></td>\n          <td>Store, Organization</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Updated</td>\n          <td><code>integration.updated</code></td>\n          <td>Store, Organization</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Deleted</td>\n          <td><code>integration.deleted</code></td>\n          <td>Store, Organization</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/authentication/single-sign-on/password-profiles-api/create-one-time-password-token-request\"><strong>One-Time Password Token Request</strong></a></td>\n          <td>Created</td>\n          <td><code>one-time-password-token-request.created</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/carts/orders\"><strong>Order Events</strong></a></td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/carts/checkout-api\">Checkout</a></td>\n          <td>Created</td>\n          <td><code>order.created</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/carts/payments\">Payments</a></td>\n          <td>Updated</td>\n          <td><code>order.updated</code> / <code>order.paid</code>. The event <code>order.paid</code> is triggered when the payment status is <code>paid</code>. The event <code>order.updated</code> is triggered when the order is captured, completed, refunded, anonymized, or updated.</td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Authorized</td>\n          <td><code>order.authorized</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/carts/orders\">Orders</a></td>\n          <td>Fulfilled</td>\n          <td><code>order.fulfilled</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Canceled</td>\n          <td><code>order.cancelled</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/carts/capture-a-transaction\">Capture Transaction</a></td>\n          <td>Paid</td>\n          <td><code>order.paid</code>. The event <code>order.paid</code> is triggered when the order status is completed and captured, and the payment status is <code>paid</code>.</td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Captured</td>\n          <td><code>order.updated</code>. The event <code>order.updated</code> is triggered when the order is captured, completed, refunded, anonymized, or updated.</td>\n          <td>Store</td>\n     </tr>\n     <tr>\n         <td><a href=\"/docs/api/carts/refund-a-transaction\">Refund Transaction</a></td>\n          <td>Refunded</td>\n          <td><code>order.refunded</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/payments/gateways\"><strong>Payment Gateway</strong></a></td>\n          <td>Updated</td>\n          <td><code>payment-gateway.updated</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/pxm/catalog/releases\"><strong>Catalog releases</strong></a></td>\n          <td>Created</td>\n          <td><code>catalog-release.created</code></td>\n          <td>Store, Organization</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Updated</td>\n          <td><code>catalog-release.updated</code></td>\n          <td>Store, Organization</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Deleted</td>\n          <td><code>catalog-release.deleted</code></td>\n          <td>Store, Organization</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/pxm/catalog/rules\"><strong>Catalog rules</strong></a></td>\n          <td>Created</td>\n          <td><code>catalog-rule.created</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Updated</td>\n          <td><code>catalog-rule.updated</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Deleted</td>\n          <td><code>catalog-rule.deleted</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/settings/settings\"><strong>Settings</strong></a></td>\n          <td>Created</td>\n          <td><code>settings.created</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Updated</td>\n          <td><code>settings.updated</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/pxm/inventory/get-single-stock-transaction\"><strong>Stock Transaction</strong></a></td>\n          <td>Created</td>\n          <td><code>stock-transaction.created</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/pxm/inventory/transactions\"><strong>Transaction</strong></a></td>\n          <td>Created</td>\n          <td><code>transaction.created</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Updated</td>\n          <td><code>transaction.updated</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/api/carts/tax-items\"><strong>Tax Items</strong></a></td>\n          <td>Updated</td>\n          <td><code>cart.updated</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/subscriptions/observable-events\"><strong>Subscriptions</strong></a></td>\n          <td colspan=\"3\">You can integrate Subscriptions with external systems like enterprise resource planning, fulfilment and other systems. For example, when a subscriber updates their address, the Customer Relationship Management system is updated with the change. See <a href=\"/docs/subscriptions/observable-events\"><strong>Subscriptions</strong></a>.</td>\n     </tr>\n     <tr>\n          <td><a href=\"/docs/authentication/single-sign-on/user-authentication-info-api/overview\"><strong>User Authentication Info</strong></a></td>\n          <td>Created</td>\n          <td><code>user-authentication-info.created</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Updated</td>\n          <td><code>user-authentication-info.updated</code></td>\n          <td>Store</td>\n     </tr>\n     <tr>\n          <td></td>\n          <td>Deleted</td>\n          <td><code>user-authentication-info.deleted</code></td>\n          <td>Store</td>\n     </tr>\n  </table>\n\n \n:::note\n \nStore-level events contain `store_id` and `org_id` whereas, organization-level events contain only `org_id`.\n \n:::\n"
 servers:
-- url: https://useast.api.elasticpath.com
-  description: US East
-- url: https://euwest.api.elasticpath.com
-  description: EU West
+- url: https://euwest.api.elasticpath.com/v2
+  description: US West Cluster
+- url: https://useast.api.elasticpath.com/v2
+  description: US East Cluster
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Integrations
   description: Setting up and managing integrations.
@@ -273,6 +261,30 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
+    LinkURI:
+      type: string
+      format: uri
+      example: ?page[offset]=0&page[limit]=25
+    PaginationLinks:
+      type: object
+      description: Links are used to allow you to move between pages.
+      properties:
+        first:
+          description: Always the first page. This is not present on the first page.
+          type: string
+          example: /integrations?page[offset]=0&page[limit]=10
+        last:
+          description: This is not present if there is only one page.
+          type: string
+          example: /integrations?page[offset]=20&page[limit]=10
+        next:
+          description: This is not present if there is no next page.
+          type: string
+          example: /integrations?page[offset]=10&page[limit]=10
+        prev:
+          description: This is not present on the first page.
+          type: string
+          example: /integrations?page[offset]=8&page[limit]=10
     WebhookConfigurationObject:
       required:
       - url
@@ -286,166 +298,14 @@ components:
           type: string
           example: secret_key_to_validate_on_your_endpoint
           description: An optional header. Useful to authenticate the response came from Elastic Path. This is sent as `X-MOLTIN-SECRET-KEY`.
-    AWSSQSConfigurationObject:
-      required:
-      - url
-      - aws_access_key_id
-      - aws_secret_access_key
-      - region
-      properties:
-        url:
-          type: string
-          format: uri
-          example: https://sqs.eu-west-1.amazonaws.com/123456789/epcc-external-queue
-          description: The required SQS queue URL.
-        aws_access_key_id:
-          type: string
-          example: '****************JIMB'
-          description: The required AWS access key ID.
-        aws_secret_access_key:
-          type: string
-          example: '************************************HK4o'
-          description: The required AWS secret key ID.
-        region:
-          type: string
-          example: eu-west-1
-          description: The required AWS region.
-    IntegrationUpdate:
-      required:
-      - type
-      properties:
-        type:
-          description: The type represents the object being returned. Always `integration`.
-          type: string
-          example: integration
-          enum:
-          - integration
-          default: integration
-        name:
-          type: string
-          example: Order shipping notification
-          description: The name of the integration.
-        description:
-          type: string
-          example: Send a shipping notification via email with discount code
-          description: A description of what the integration is for.
-        enabled:
-          type: boolean
-          example: true
-          description: Whether the integration is enabled.
-        integration_type:
-          type: string
-          example: webhook
-          enum:
-          - webhook
-          - aws_sqs
-          - stomp
-          default: webhook
-        observes:
-          type: array
-          description: The list of events you want to observe. See [**Observable Events**](#observable-events).
-          items:
-            type: string
-        configuration:
-          description: The content of the configuration object depends on the value of `integration_type`.
-          type: object
-          oneOf:
-          - $ref: '#/components/schemas/AWSSQSConfigurationObject'
-          - $ref: '#/components/schemas/WebhookConfigurationObject'
-          - $ref: '#/components/schemas/STOMPConfigurationObject'
-    Timestamps:
-      description: The date and time a transaction is created.
-      properties:
-        created_at:
-          description: The date and time an integration is updated.
-          type: string
-          format: date-time
-          example: '2017-07-21T17:32:28Z'
-        updated_at:
-          description: The date and time an integration is updated.
-          type: string
-          format: date-time
-          example: '2017-07-21T17:32:28Z'
-    IntegrationCreate:
-      required:
-      - type
-      - observers
-      - integration_type
-      - name
-      - configuration
-      properties:
-        type:
-          description: The type represents the object being returned. Always `integration`.
-          type: string
-          example: integration
-          enum:
-          - integration
-          default: integration
-        name:
-          type: string
-          example: Order shipping notification
-          description: The name of the integration.
-        description:
-          type: string
-          example: Send a shipping notification via email with discount code
-          description: A description of what the integration is for.
-        enabled:
-          type: boolean
-          example: true
-          description: Whether the integration is enabled.
-        integration_type:
-          type: string
-          description: Specifies how the event is delivered. The options are `webhook`, `aws-sqs`, or `stomp`.
-          example: webhook
-          enum:
-          - webhook
-          - aws_sqs
-          - stomp
-          default: webhook
-        observes:
-          description: The list of events you want to observe. See [**Observable Events**](#observable-events).
-          type: array
-          items:
-            type: string
-        configuration:
-          description: The content of the configuration object depends on the value of `integration_type`.
-          type: object
-          oneOf:
-          - $ref: '#/components/schemas/AWSSQSConfigurationObject'
-          - $ref: '#/components/schemas/WebhookConfigurationObject'
-          - $ref: '#/components/schemas/STOMPConfigurationObject'
-    Meta:
+    Results:
+      description: The results for this response for the entire collection.
       type: object
       properties:
-        meta:
-          type: object
-          properties:
-            timestamps:
-              $ref: '#/components/schemas/Timestamps'
-    LogsPaginationLinks:
-      type: object
-      description: Links are used to allow you to move between pages.
-      properties:
-        first:
-          description: Always the first page. This is not present on the first page.
-          type: string
-          example: /integrations/logs?page[offset]=0&page[limit]=10
-        next:
-          description: Next page link.
-          type: string
-          example: /integrations/logs?page[offset]=10&page[limit]=10
-        prev:
-          description: This is not present on the first page.
-          type: string
-          example: /integrations/logs?page[offset]=8&page[limit]=10
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ErrorBody'
+        total:
+          description: The total number of records for this response for the entire collection.
+          type: integer
+          example: 1
     IntegrationLog:
       description: As integrations can fail over time, Commerce provides the ability to browse all logs for your integrations.
       properties:
@@ -512,16 +372,39 @@ components:
                       type: string
                       description: This represents the resource type of the object being returned. Always `integration-job`.
                       example: job
-    Links:
+    STOMPConfigurationObject:
+      required:
+      - url
+      properties:
+        username:
+          type: string
+          example: epcc-integration-1
+          description: The username used to authenticate against a STOMP server.
+        password:
+          type: string
+          example: '****************************CDKn'
+          description: The password used to authenticate against a STOMP server.
+        destination:
+          type: string
+          example: /queue/epcc-integrations.order-created
+          description: The destination in the messaging queuing system.
+        addresses:
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+          - stomp+ssl://b-618354a5-e04f-4eff-99c7-734e9d8b91a5-2.mq.us-west-2.amazonaws.com:61614
+          - stomp+ssl://b-618354a5-e04f-4eff-99c7-734e9d8b91a5-1.mq.us-west-2.amazonaws.com:61614
+          description: The addresses that correspond with the destination name.
+    Meta:
       type: object
       properties:
-        links:
-          description: Links are used to allow you to move between requests.
+        meta:
           type: object
           properties:
-            self:
-              description: Single entities use a self parameter with a link to that specific resource.
-              $ref: '#/components/schemas/LinkURI'
+            timestamps:
+              $ref: '#/components/schemas/Timestamps'
     Integration:
       properties:
         id:
@@ -567,6 +450,170 @@ components:
           - $ref: '#/components/schemas/AWSSQSConfigurationObject'
           - $ref: '#/components/schemas/WebhookConfigurationObject'
           - $ref: '#/components/schemas/STOMPConfigurationObject'
+    IntegrationCreate:
+      required:
+      - type
+      - observers
+      - integration_type
+      - name
+      - configuration
+      properties:
+        type:
+          description: The type represents the object being returned. Always `integration`.
+          type: string
+          example: integration
+          enum:
+          - integration
+          default: integration
+        name:
+          type: string
+          example: Order shipping notification
+          description: The name of the integration.
+        description:
+          type: string
+          example: Send a shipping notification via email with discount code
+          description: A description of what the integration is for.
+        enabled:
+          type: boolean
+          example: true
+          description: Whether the integration is enabled.
+        integration_type:
+          type: string
+          description: Specifies how the event is delivered. The options are `webhook`, `aws-sqs`, or `stomp`.
+          example: webhook
+          enum:
+          - webhook
+          - aws_sqs
+          - stomp
+          default: webhook
+        observes:
+          description: The list of events you want to observe. See [**Observable Events**](#observable-events).
+          type: array
+          items:
+            type: string
+        configuration:
+          description: The content of the configuration object depends on the value of `integration_type`.
+          type: object
+          oneOf:
+          - $ref: '#/components/schemas/AWSSQSConfigurationObject'
+          - $ref: '#/components/schemas/WebhookConfigurationObject'
+          - $ref: '#/components/schemas/STOMPConfigurationObject'
+    IntegrationUpdate:
+      required:
+      - type
+      properties:
+        type:
+          description: The type represents the object being returned. Always `integration`.
+          type: string
+          example: integration
+          enum:
+          - integration
+          default: integration
+        name:
+          type: string
+          example: Order shipping notification
+          description: The name of the integration.
+        description:
+          type: string
+          example: Send a shipping notification via email with discount code
+          description: A description of what the integration is for.
+        enabled:
+          type: boolean
+          example: true
+          description: Whether the integration is enabled.
+        integration_type:
+          type: string
+          example: webhook
+          enum:
+          - webhook
+          - aws_sqs
+          - stomp
+          default: webhook
+        observes:
+          type: array
+          description: The list of events you want to observe. See [**Observable Events**](#observable-events).
+          items:
+            type: string
+        configuration:
+          description: The content of the configuration object depends on the value of `integration_type`.
+          type: object
+          oneOf:
+          - $ref: '#/components/schemas/AWSSQSConfigurationObject'
+          - $ref: '#/components/schemas/WebhookConfigurationObject'
+          - $ref: '#/components/schemas/STOMPConfigurationObject'
+    AWSSQSConfigurationObject:
+      required:
+      - url
+      - aws_access_key_id
+      - aws_secret_access_key
+      - region
+      properties:
+        url:
+          type: string
+          format: uri
+          example: https://sqs.eu-west-1.amazonaws.com/123456789/epcc-external-queue
+          description: The required SQS queue URL.
+        aws_access_key_id:
+          type: string
+          example: '****************JIMB'
+          description: The required AWS access key ID.
+        aws_secret_access_key:
+          type: string
+          example: '************************************HK4o'
+          description: The required AWS secret key ID.
+        region:
+          type: string
+          example: eu-west-1
+          description: The required AWS region.
+    LogsPaginationLinks:
+      type: object
+      description: Links are used to allow you to move between pages.
+      properties:
+        first:
+          description: Always the first page. This is not present on the first page.
+          type: string
+          example: /integrations/logs?page[offset]=0&page[limit]=10
+        next:
+          description: Next page link.
+          type: string
+          example: /integrations/logs?page[offset]=10&page[limit]=10
+        prev:
+          description: This is not present on the first page.
+          type: string
+          example: /integrations/logs?page[offset]=8&page[limit]=10
+    IntegrationJob:
+      properties:
+        id:
+          description: The ID of the integration job processed.
+          type: string
+          example: 8848646b-2745-469e-8cc1-ee3b04738f8f
+        type:
+          type: string
+          description: This represents the type of resource object being returned. Always `integration-job`.
+          enum:
+          - integration-job
+          example: integration-job
+    Timestamps:
+      description: The date and time a transaction is created.
+      properties:
+        created_at:
+          description: The date and time an integration is updated.
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+        updated_at:
+          description: The date and time an integration is updated.
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorBody'
     ErrorBody:
       required:
       - title
@@ -584,75 +631,16 @@ components:
           type: string
           description: Optional additional detail about the error.
           example: An internal error has occurred.
-    Results:
-      description: The results for this response for the entire collection.
+    Links:
       type: object
       properties:
-        total:
-          description: The total number of records for this response for the entire collection.
-          type: integer
-          example: 1
-    LinkURI:
-      type: string
-      format: uri
-      example: ?page[offset]=0&page[limit]=25
-    STOMPConfigurationObject:
-      required:
-      - url
-      properties:
-        username:
-          type: string
-          example: epcc-integration-1
-          description: The username used to authenticate against a STOMP server.
-        password:
-          type: string
-          example: '****************************CDKn'
-          description: The password used to authenticate against a STOMP server.
-        destination:
-          type: string
-          example: /queue/epcc-integrations.order-created
-          description: The destination in the messaging queuing system.
-        addresses:
-          type: array
-          items:
-            type: string
-            format: uri
-          example:
-          - stomp+ssl://b-618354a5-e04f-4eff-99c7-734e9d8b91a5-2.mq.us-west-2.amazonaws.com:61614
-          - stomp+ssl://b-618354a5-e04f-4eff-99c7-734e9d8b91a5-1.mq.us-west-2.amazonaws.com:61614
-          description: The addresses that correspond with the destination name.
-    IntegrationJob:
-      properties:
-        id:
-          description: The ID of the integration job processed.
-          type: string
-          example: 8848646b-2745-469e-8cc1-ee3b04738f8f
-        type:
-          type: string
-          description: This represents the type of resource object being returned. Always `integration-job`.
-          enum:
-          - integration-job
-          example: integration-job
-    PaginationLinks:
-      type: object
-      description: Links are used to allow you to move between pages.
-      properties:
-        first:
-          description: Always the first page. This is not present on the first page.
-          type: string
-          example: /integrations?page[offset]=0&page[limit]=10
-        last:
-          description: This is not present if there is only one page.
-          type: string
-          example: /integrations?page[offset]=20&page[limit]=10
-        next:
-          description: This is not present if there is no next page.
-          type: string
-          example: /integrations?page[offset]=10&page[limit]=10
-        prev:
-          description: This is not present on the first page.
-          type: string
-          example: /integrations?page[offset]=8&page[limit]=10
+        links:
+          description: Links are used to allow you to move between requests.
+          type: object
+          properties:
+            self:
+              description: Single entities use a self parameter with a link to that specific resource.
+              $ref: '#/components/schemas/LinkURI'
   responses:
     NotFoundError:
       description: Not found. The requested entity does not exist.
@@ -708,6 +696,6 @@ components:
       schema:
         type: string
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

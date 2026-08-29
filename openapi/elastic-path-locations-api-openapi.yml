@@ -1,28 +1,15 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Locations API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
-
-
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
-
-    '
-  contact:
-    name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
-  license:
-    url: https://elasticpath.dev
-    name: MIT
+  version: 2.0.0
+  title: Inventories Introduction Locations API
+  description: "The Inventory API allows you to manage stock for products at both organization and store levels. Stock can be optionally managed in [multiple locations](#multi-location-inventories) representing different stores or warehouses.\n\n:::note\n\nThis version of the inventories service is not entirely compatible with the [basic version](/docs/api/pxm/inventory) and so must be enabled by setting the following HTTP header when making requests:\n\n```\n  EP-Inventories-Multi-Location: true\n```\n\nThe two systems operate on the same database and may be used interchangeably for stock that does not use multiple locations.\n\n:::\n\nInventory is the quantity of each product that you have in stock. The inventory service allows you and your business to keep track of inventory, including a transactional historic log. \n\nInventory for each product is tracked using the following values:\n\n- **Total**: The amount of product in stock. (Total = Available + Allocated)\n- **Available**: The amount of product available in stock minus allocated products. (Available = Total - Allocated)\n- **Allocated**: The amount of reserved product in stock.\n\n:::note\n\nIn Commerce Manager, you can manage the inventory while creating a new product in Product Experience Manager. Go to **Products** > **Inventory** and you can specify the inventory details (**allocate**, **deallocate**, **increment**, and **decrement**). \n\n:::\n\n### Order flow\n\nThere are three mandatory steps to complete an order in relation to inventory:\n\n1. Added to a cart\n2. Checked out\n3. Paid\n4. Shipped (optional)\n\n#### Unpaid order flow\n\nThe following flowchart depicts the process of an unpaid order.\n\n![The order is created from the cart during the checkout process.](/assets/order-flow.png)\n\n#### Payment flow\n\nThe following flowchart depicts the process of paying for an order.\n\n![The payment workflow.](/assets/payment-workflow-1.png)\n\n### How stock is managed\n\nStock is managed as follows:\n\n1. When a customer attempts to add products to a cart, the inventory service checks if there is enough available stock. If there is not enough stock available, you receive a 400 HTTP response with a warning. The response does not describe what products cannot be added, nor does it return how many products are in stock.\n2. If a customer successfully adds products to a cart, the customer can checkout to create an unpaid order.\n3. A final check on the available stock is performed. \n4. After creating the unpaid order, the payment for an order can be taken. When a customer attempts to pay for an order, the inventory service reserves the stock before the payment is processed internally. At any time before the point of payment, a customer might lose their order, if the customer is slower than everyone else.\n\n    If the payment fails, the temporary stock allocation is removed, and the stock becomes available again for anyone to buy. \n\n    If the payment succeeds, that stock is still allocated, and the items belong to the customer, unless for any reason they are reallocated before shipment. For example, if the customer cancels, or you realize the order is fraudulent, then you can reallocate the inventory. \n5. Finally, when the order is marked as shipped, that stock is fully decremented. This means the allocation number is reduced, and therefore the total, and the products are no longer in the warehouse.\n\nDuring split payments, stocks are allocated only if the first transaction for an order is complete. If the transaction fails, the stocks are deallocated. Once the first transaction is complete, the stocks are not allocated for the subsequent transactions as they are already reserved for the order. The stocks are deallocated and return to available when then the order is canceled.\n\n### Implications of the inventories API\n\n- It is possible for more products to be in carts than there are in stock if the `add to cart` request quantity is less than available stocks. For example, when available stocks are 100, a user can add 60 to cart 1 and then 50 to cart 1, or user A can add 80 to cart 1, while user B can add 30 to cart 2.\n- It is possible for more products to be checked out than there are in stock if the `add to cart` request quantity is less than the available stocks.\n- It is not possible for more stock to be paid for than is in stock.\n- It is a race for your customers to pay for an order, and whoever does not pay fast enough, is left disappointed.\n\n### Multi-location inventories\n\nIf you wish to manage stock in multiple locations you can [create a number of locations](/docs/api/pxm/inventory_mli/create-location) and then when [creating stock inventory](/docs/api/pxm/inventory_mli/create-stock), specify a different stock position for each location.\n\nThen, when adding to cart, one can specify the location that will supply the inventory for that product and the system will manage stock in that location, checking stock levels and allocating and decrementing the correct stock position through the life cycle of the order.\n"
 servers:
-- url: https://useast.api.elasticpath.com
-  description: US East
-- url: https://euwest.api.elasticpath.com
-  description: EU West
+- url: https://euwest.api.elasticpath.com/v2
+  description: EU West cluster
+- url: https://useast.api.elasticpath.com/v2
+  description: US East cluster
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Locations
 paths:
@@ -224,17 +211,6 @@ paths:
           description: Success. The location is deleted
 components:
   parameters:
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [**page length**](https://elasticpath.dev/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int
-        minimum: 0
-        maximum: 10000
-        example: 10
     Filter:
       name: filter
       in: query
@@ -246,6 +222,17 @@ components:
 
           '
         example: eq(location,new-york)
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [**page length**](https://elasticpath.dev/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int
+        minimum: 0
+        maximum: 10000
+        example: 10
     PageLimit:
       description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the the [**page length**](https://elasticpath.dev/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
       name: page[limit]
@@ -264,34 +251,196 @@ components:
         type: string
         pattern: ^-?\d+(\.\d+)?,-?\d+(\.\d+)?$
       example: 49.2847027,-123.1109329
-  responses:
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No location found
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: Your request was invalid
   schemas:
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    LocationRequest:
+      type: object
+      required:
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/InventoryLocationType'
+        attributes:
+          $ref: '#/components/schemas/LocationAttributes'
+    GeolocationDetails:
+      type:
+      - object
+      - 'null'
+      description: The longitude and latitude of a location.
+      required:
+      - lat
+      - lon
+      properties:
+        lat:
+          type: number
+          format: double
+          example: 51.477928
+        lon:
+          type: number
+          format: double
+          example: -0.001545
+      example:
+        lat: 51.477928
+        lon: -0.001545
+    InventoryLocationType:
+      type: string
+      enum:
+      - inventory_location
+      example: inventory_location
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    LocationUpdateRequest:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/InventoryLocationType'
+        attributes:
+          $ref: '#/components/schemas/LocationUpdateAttributes'
+    Meta:
+      type: object
+      required:
+      - timestamps
+      properties:
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    LocationUpdateAttributes:
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 1024
+          example: Milton Keynes Warehouse
+        external_ref:
+          type:
+          - string
+          - 'null'
+          minLength: 3
+          maxLength: 1024
+          example: mk-stock-warehouse-walnut-tree
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 128
+          example: milton-keynes-warehouse
+        description:
+          type:
+          - string
+          - 'null'
+          minLength: 3
+          maxLength: 1024
+          example: Southern dispatch location for all inventory
+        address:
+          type:
+          - array
+          - 'null'
+          minItems: 1
+          maxItems: 8
+          items:
+            type:
+            - string
+            - 'null'
+            maxLength: 1024
+        geolocation:
+          $ref: '#/components/schemas/GeolocationDetails'
+    Location:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/InventoryLocationType'
+        attributes:
+          $ref: '#/components/schemas/LocationAttributes'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    UUID:
+      type: string
+      description: The unique identifier.
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 00000000-0000-0000-0000-000000000000
+    Timestamps:
+      required:
+      - created_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
     LocationAttributes:
       required:
       - name
@@ -326,192 +475,34 @@ components:
             maxLength: 1024
         geolocation:
           $ref: '#/components/schemas/GeolocationDetails'
-    Timestamps:
-      required:
-      - created_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    LocationRequest:
-      type: object
-      required:
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/InventoryLocationType'
-        attributes:
-          $ref: '#/components/schemas/LocationAttributes'
-    Error:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    Meta:
-      type: object
-      required:
-      - timestamps
-      properties:
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    LocationUpdateRequest:
-      type: object
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/InventoryLocationType'
-        attributes:
-          $ref: '#/components/schemas/LocationUpdateAttributes'
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    Location:
-      type: object
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/InventoryLocationType'
-        attributes:
-          $ref: '#/components/schemas/LocationAttributes'
-        meta:
-          $ref: '#/components/schemas/Meta'
-    LocationUpdateAttributes:
-      properties:
-        name:
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: Milton Keynes Warehouse
-        external_ref:
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: mk-stock-warehouse-walnut-tree
-          nullable: true
-        slug:
-          type: string
-          minLength: 1
-          maxLength: 128
-          example: milton-keynes-warehouse
-        description:
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: Southern dispatch location for all inventory
-          nullable: true
-        address:
-          type: array
-          minItems: 1
-          maxItems: 8
-          nullable: true
-          items:
-            type: string
-            maxLength: 1024
-            nullable: true
-        geolocation:
-          $ref: '#/components/schemas/GeolocationDetails'
-    UUID:
-      type: string
-      description: The unique identifier.
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 00000000-0000-0000-0000-000000000000
-    LinkURI:
-      type: string
-      format: uri
-      example: http://example.com/articles/1/comments
-      nullable: true
-    InventoryLocationType:
-      type: string
-      enum:
-      - inventory_location
-      example: inventory_location
-    GeolocationDetails:
-      type: object
-      nullable: true
-      description: The longitude and latitude of a location.
-      required:
-      - lat
-      - lon
-      properties:
-        lat:
-          type: number
-          format: double
-          nullable: false
-          example: 51.477928
-        lon:
-          type: number
-          format: double
-          nullable: false
-          example: -0.001545
-      example:
-        lat: 51.477928
-        lon: -0.001545
+  responses:
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No location found
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: Your request was invalid
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

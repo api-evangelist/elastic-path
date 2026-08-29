@@ -1,28 +1,24 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Promotion Jobs API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
-
-
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
-
-    '
+  title: Promotions Standard Introduction Promotion Jobs API
+  description: "Promotions Standard offer the flexibility to provide different types of discounts to all your customers or specific customers. You can apply promotions automatically to all purchases, or alternatively, create promotion codes that customers must enter to receive a discount.\n\nYou can have multiple promotions active at the same time. Promotions are active in a fixed duration, with defined start and end dates. However, you can manually stop a promotion at any time.\n\nFor testing your promotions when scheduling a future date for your shopping cart, you can use the [Preview Cart API](/docs/api/carts/create-a-cart#preview-cart).\n\nWhen [Creating a Free Gift Promotion](/docs/api/promotions/create-a-promotion), set the promotion to automatic and enable the `auto_add_free_gift` feature. This way, the shopper will see the free gift in their shopping cart when the target product is added to the cart, and the discount will be applied. This eliminates the need for an additional step to apply the code for the gift discount. However, if you desire more control over when or how the free gift is added, you can choose to use a promotion code and disable the **Automatically add free gift items to the cart** toggle in Commerce Manager. See [Creating Free Gift Promotions](/docs/commerce-manager/promotions-standard/item-level-promotions/free-gift-promotions). For a seamless process, ensure that the currencies of automatically added gift items match with those of the items that initiate free gifts. Additionally, ensure that the free gift item is within the same catalog as the eligible items.\n\nFor inventory-managed products, ensure that you have sufficient inventory available to run the promotion. If there is insufficient stock of free gift items for all eligible free products, the free gifts won't be added to the cart.\n\nPromotions Standard can be:\n\n- [Cart-level promotions](#cart-level-promotions): The promotion applies to the entire cart.\n- [Item-level promotions](#item-level-promotions): The promotion applies to individual items in a cart.\n\n:::note\n\nThe shipping prices do not impact eligibility for item-level and cart-level promotions.\n\n:::\n\nAll items in the cart are eligible for cart-level promotions, even if they already have item-level promotions applied. You can select a few products and exclude them from a cart-level promotion. However, the store that uses a simple calculation method does not support promotions with the exclude setting.\n\n### Cart-level Promotions\n\nCart-level promotions are applied to all items in the cart. Cart-level promotions include:\n\n- Fixed discount: Reduces the cart total by a fixed amount, such as $5.00 off.\n- Percentage discount: Reduces the cart total e by a specific percentage, such as 10% off.\n\nThe following image shows a cart before and after applying a 10% Off promotion. With the discount applied, the price for each item is reduced by 10% and the cart total reflects the reduction.\n\n![Each item in the cart shows a price that is 10% less than the catalog price.](/assets/promotions-cart-10-percent-off.png)\n\nAll items in the cart are eligible for cart-level promotions, even if they already have item-level promotions applied. You can select a few products and exclude them from a cart-level promotion. However, the store that uses a [simple calculation method](https://elasticpath.dev/guides/How-To/Carts/calculate-totals#simple-calculation-method) does not support promotions with the `exclude` setting.\n\n### Item-level Promotions\n\nItem-level promotions are applied to each item that qualifies for the promotion. In a shopping cart, the price of each item reflects the discount applied to each item. With the `max_applications_per_cart` setting, you can limit the number of purchases of an item at the sale price in a cart. For more information, see the Promotions API section.\n\nItem-level promotions include the following promotion types:\n\n- X for Y: Offers bulk discount based on unit price, such as 2-for-1 sales.\n- X for amount: Offers a bulk discount based on a fixed price, such as 3-for-$20 sales.\n- Bundle: Offers bulk discount when selected products are purchased together. For example, Buy any two items from the list for $100.\n- Item fixed discount: Reduces the price of multiple items by a fixed amount, such as $5.00 off.\n- Percentage item discount: Reduces the product price for multiple items by a specific percentage, such as 10% off. You can also count the number of usages of the promotion per SKU item and limit the usage of the promotion per item. For example, if the usage of the promotion is limited to ten and the shopper purchases two of the same item and three of the another item, five uses of the promotion is deducted from the total usage limit.\n- Free Gift: Offers a free item when a specific product or a group of products are purchased.\n\n  :::caution\n\n  - Item-level promotions are only supported by the line calculation method. For more information about this method, see the [Calculation Method](/docs/api/settings/settings-introduction#calculation-method) section.\n  - The `max_discount_value` setting specifies the maximum possible discount for the cart. To avoid the conflict with the promotions and the promotion to work, we recommend not to use this setting for the following promotions:\n\n    - Cart-level fixed discount\n    - Item fixed discount\n    - X for Y discount\n    - X for amount discount\n    - Bundle\n    - Free gift\n\n  - The `max_applications_per_cart` setting, which specifies the maximum number of applications of a promotion per cart, is applicable to line-item promotions only. For example, in a store that offers *buy SKU1 get a free gift* promotion with maximum application per cart set to one, the buyer can only use the free gift promotion once per cart. If maximum application per cart is not set, the buyer can use the promotion multiple times. You can also set maximum application per cart to zero to remove any usage limit.\n  - The `exclude` array consists of productIDs or SKUs of products to be excluded from the cart-level promotions, such as `fixed_discount` and `percent_discount`. However, the stores that use simple calculation method do not support excluding products from promotions.\n  - Already existing promotions created before September 28, 2022 will not have `created_by` and `updated_by` attributes in their response body.\n\n  :::\n\nYou can create codes for a promotion so that customers receive the discount only when the code is provided.\n\n### Multiple promotions for the same SKU\n\nYou can have multiple promotions for the same SKU. However, each instance of the SKU in the cart is eligible for only one item-level promotion.\n\n:::note\n\nThe promotions are applied in the order of date of creation of the promotions. The oldest promotion is applied first and the newest promotion is applied last. For each instance of a SKU that matches the criteria in the oldest promotion, the promotion is applied. For the remaining instances of the SKU, each instance is compared to the criteria for the next oldest promotion.\n\n:::\n\nFor example, a cart consists of 1 *BestEver Coffee Maker* and 2 *BestEver Coffee Grinders*. The following promotions are available and applied automatically without a code:\n\n- An existing *BestEver Coffee Maker* + *Grinder* bundle promotion for $200.00. The bundle discount is distributed among the items in the bundle depending on the price of each item.\n- A newly added *BestEver Coffee Grinders* 10% Off percentage item discount promotion.\n\nIn this example, *BestEver Coffee Maker* costs $150 and *BestEver Coffee Grinder* costs $100. The promotions work in the following order:\n\n1. The $50 bundle discount is distributed among the items depending on the cost. In this example, the cost proportion of products is 3:2 and the *BestEver Coffee Maker* gets $30 discount and *BestEver Coffee Grinder* gets $20 discount.\n2. The second promotion is applied to the remaining *BestEver Coffee Grinders* item, and the price is reduced to $90.\n3. The cart total after both discounts is $290 instead of $350.\n\n### Understanding how Promotions work with Bundles\n\n#### Discounting Promotion Bundles\n\nBundles offer a bulk discount when selected products are purchased together. For example, for a bundle promotion, (SKU1 or SKU2 ) + SKU3, the promotion is applied if the bundle includes either SKU1 and SKU3 or SKU2 and SKU3. This setup encourages the purchase of multiple items together at a discounted rate.\n\n#### Discounting Product Bundles via promotions\n\nFor both Cart-level promotions and Item-level promotions, discounts are applied at the bundle level that can have fixed bundle price or automatic/cumulative pricing.\n\nIt is important to note that promotions do not apply to components within a bundle even if the individual item within the components qualifies for promotion. See the following examples:\n\n  - **Example 1**: Consider that Playtend Games offers a bundle that includes a game console, the Playtend Invaders Game, and the Invaders Controller. If there is an existing Item Percent Discount for the Playtend Invaders Game when sold separately, this discount will not apply when the game is part of the bundle. This ensures that the bundle pricing strategy is maintained.\n  - **Example 2**: In the case of Attribute-based promotions, consider a bundle that consists of *Item A* with attribute *Brand A* and *Item B* with attribute *Brand B*. If *Item A* with attribute *Brand A* qualifies for Item Percent Discount promotion, this discount is not applied to the bundle since the *Item A* is a component item within the bundle.\n\nTo learn how to create a bundle, see [Create a Bundle](/docs/api/pxm/products/create-product).\n\n### Condensed Promotion\n\nA condensed promotion is essentially an object that contains specific meta information about a promotion applied to the cart or order.\n\nCondensed promotions can be retrieved from the following endpoints:\n\n- [Get a Cart](/docs/carts-orders/Includes#get-retrieve-promotions-from-a-cart): This endpoint displays cart-level condensed promotions within the included object. If `?include=items` is specified, the included object also contains cart item-level promotions. The relationships field at the cart level has a promotions section only when `?include=promotions` is specified.\n- [Get Cart Items](/docs/carts-orders/Includes#get-retrieve-promotions-from-cart-items): This endpoint shows both cart-level and item-level discounts in a condensed format within the included object.\n- [Get an Order](/docs/carts-orders/Includes#get-retrieve-promotions-from-an-order): This endpoint displays order-level condensed promotions within the included object.\n- [Get Order items](/docs/carts-orders/Includes#get-retrieve-promotions-from-order-items): This endpoint displays both order-level and item-level promotions in the included object.\n\nThis applies to both Promotions Standard and [Rule Promotions](/docs/promotions-builder/overview).\n"
   contact:
     name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
+    url: https://elasticpath.com
   license:
-    url: https://elasticpath.dev
     name: MIT
+    url: assets/LICENSE
+  version: 26.0504.7552059
+  x-version-timestamp: 2026-05-04 17:39:21+00:00
 servers:
 - url: https://useast.api.elasticpath.com
-  description: US East
+  description: US East Production Server
+  variables: {}
 - url: https://euwest.api.elasticpath.com
-  description: EU West
+  description: EU West Production Server
+  variables: {}
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Promotion Jobs
   description: 'Use Jobs API to initiate a job within a promotion. Jobs operate asynchronously and have a different status based on their progress. The following are the job statuses:
@@ -225,6 +221,15 @@ components:
         type: string
         format: Bearer
   responses:
+    PromotionJobCanceledResponse:
+      description: Job canceled successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/PromotionJob'
     PromotionJobsListResponse:
       description: Successful response
       content:
@@ -236,15 +241,6 @@ components:
                 type: array
                 items:
                   $ref: '#/components/schemas/PromotionJob'
-    PromotionJobCanceledResponse:
-      description: Job canceled successfully
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              data:
-                $ref: '#/components/schemas/PromotionJob'
     PromotionCodeExportedFileResponse:
       description: Successful response
       content:
@@ -304,6 +300,6 @@ components:
                   type: string
                   format: date-time
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

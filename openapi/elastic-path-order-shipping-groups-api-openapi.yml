@@ -1,28 +1,53 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Order Shipping Groups API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Carts, Checkout, Orders Introduction Order Shipping Groups API
+  description: 'A cart contains a list of the products that a shopper adds to the cart while browsing your catalog. In the context of a cart, a selected product is called a cart item.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    A cart item identifies the product, the product price, the quantity selected, and the total price for the quantity selected. The cart displays a running total of the cost for the selected products plus the calculated tax.
+
+
+    You can allow your shoppers to add custom text to a product when adding an item to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized. See [Add product to cart](/docs/api/carts/manage-carts#add-product-to-cart).
+
+
+    After a shopper checks out, the cart is converted to an order, and you can manually delete the cart. If you don''t delete the cart, it is purged automatically after seven days.
+
+
+    The preview cart feature allows you to set a future date for your shopping cart and view the promotions that will be available during that time period. This feature enables you to validate your promotion settings and observe how they will be applied in the cart. See [Create a Preview Cart](/docs/api/carts/create-a-cart#preview-cart).
+
+
+    The following diagram shows a typical cart workflow:
+
+
+    ![Shows a cart workflow, starting from adding the first item to a cart, through cart creation and checkout](/assets/cart-workflow.png)
+
+
+    ### Multiple Carts
+
+
+    Buyers often make purchases based on jobs that they need to perform or outcomes they need to achieve and therefore require more than one shopping cart. For example, a corporate buyer places orders for multiple locations. Each location has a different frequency of ordering and require different products. The buyer can create one cart per location, fill the carts, and then check out the carts quickly. Similarly, shoppers can also create multiple carts for the ease of managing various shopping experiences, such as birthdays or holidays.
+
+
+    Each cart is discrete and separate. Any updates or changes to one cart has no effect on the other carts. A cart persists, that is, it stays with the buyer or shopper even after they use the cart in a checkout. Carts remain available after a checkout.
 
     '
   contact:
     name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
+    url: https://elasticpath.com
+  version: 26.0313.7324347
+  x-version-timestamp: 2026-03-13 21:22:42+00:00
   license:
-    url: https://elasticpath.dev
     name: MIT
+    url: assets/LICENSE
 servers:
 - url: https://useast.api.elasticpath.com
-  description: US East
+  description: US East Production Server
+  variables: {}
 - url: https://euwest.api.elasticpath.com
-  description: EU West
+  description: EU West Production Server
+  variables: {}
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Order Shipping Groups
 paths:
@@ -397,6 +422,25 @@ paths:
                   detail: Group with ID [7cfa5b07-092e-4dbe-bbad-55a771a34117] not found for order [abc123]
 components:
   schemas:
+    OrderPriceData:
+      title: OrderPriceData
+      type: object
+      properties:
+        amount:
+          description: The amount for this item.
+          type: number
+          examples:
+          - 10000
+        currency:
+          description: The currency this item.
+          type: string
+          examples:
+          - USD
+        includes_tax:
+          description: Whether this price is tax inclusive.
+          type: boolean
+          examples:
+          - false
     Money:
       type: object
       properties:
@@ -413,6 +457,141 @@ components:
       - amount
       - currency
       - includes_tax
+    AddressCommon:
+      type: object
+      required:
+      - first_name
+      - last_name
+      - line_1
+      - postcode
+      - country
+      properties:
+        first_name:
+          description: First name of the recipient.
+          type: string
+          examples:
+          - John
+        last_name:
+          description: Last name of the recipient.
+          type: string
+          examples:
+          - Doe
+        company_name:
+          description: Company of the recipient.
+          type: string
+          examples:
+          - John Doe Enterprises
+        line_1:
+          description: First line of the address.
+          type: string
+          examples:
+          - 1 Sunny Street
+        line_2:
+          description: Second line of the address.
+          type: string
+          examples:
+          - Apartment 123
+        city:
+          description: City of the address.
+          type: string
+          examples:
+          - Los Angeles
+        postcode:
+          description: Post code of the address.
+          type: string
+          examples:
+          - '92802'
+        county:
+          description: County of the address.
+          type: string
+          examples:
+          - Orange
+        country:
+          description: Country of the address.
+          type: string
+          examples:
+          - US
+        region:
+          description: State, province, or region of the address.
+          type: string
+          examples:
+          - CA
+    RelationshipItem:
+      title: RelationshipItem
+      description: Relationship data entry
+      required:
+      - type
+      - id
+      type: object
+      properties:
+        type:
+          description: The type of related resource.
+          type: string
+        id:
+          description: The ID of the related resource.
+          type: string
+          format: uuid
+    CustomAttributes:
+      title: CustomAttributes
+      type: object
+      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
+      additionalProperties:
+        type: object
+        required:
+        - type
+        - value
+        properties:
+          type:
+            type: string
+            description: The type of the custom attribute value.
+            enum:
+            - string
+            - integer
+            - boolean
+            - float
+          value:
+            description: The value of the custom attribute.
+            type:
+            - string
+            - boolean
+            - number
+    ShippingPriceResponse:
+      type: object
+      properties:
+        total:
+          $ref: '#/components/schemas/FormattedPriceData'
+        base:
+          $ref: '#/components/schemas/FormattedPriceData'
+        tax:
+          $ref: '#/components/schemas/FormattedPriceData'
+        fees:
+          $ref: '#/components/schemas/FormattedPriceData'
+        discount:
+          $ref: '#/components/schemas/FormattedPriceData'
+      required:
+      - total
+      - base
+    ShippingGroupEntityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/ShippingGroupResponse'
+        included:
+          type: object
+          description: Related objects that are included in the response when using the include query parameter.
+          properties:
+            items:
+              description: Array of order items associated with this shipping group.
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItemResponse'
+          additionalProperties: false
+        errors:
+          type: array
+          description: Array of validation or processing errors
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
     OrderPriceWrapperMeta:
       description: Order pricing information.
       type: object
@@ -448,6 +627,43 @@ components:
       - without_discount
       - shipping
       - shipping_discount
+    UpdateOrderShippingGroupRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              const: shipping_group
+            shipping_type:
+              type: string
+            tracking_reference:
+              type: string
+            external_ref:
+              description: An optional external ID reference for a shipping group. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters.
+              type: string
+              maxLength: 64
+            address:
+              $ref: '#/components/schemas/ShippingAddress'
+            delivery_estimate:
+              $ref: '#/components/schemas/DeliveryEstimate'
+    DeliveryEstimate:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+    ShippingGroupMeta:
+      type: object
+      properties:
+        shipping_display_price:
+          $ref: '#/components/schemas/ShippingPriceResponse'
+        total_display_price:
+          $ref: '#/components/schemas/OrderPriceWrapperMeta'
     OrderItemResponse:
       title: OrderItemResponse
       type: object
@@ -693,47 +909,6 @@ components:
             pricing_option:
               description: Pricing option for the subscription
               type: string
-    DiscountFormattedPriceData:
-      title: DiscountFormattedPriceData
-      type: object
-      properties:
-        amount:
-          description: The discount amount. Must be non-positive (zero or negative).
-          type: number
-          maximum: 0
-          examples:
-          - -1000
-          - 0
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - -$10.00
-          - $0.00
-    FormattedPriceData:
-      title: FormattedPriceData
-      type: object
-      properties:
-        amount:
-          description: The raw total.
-          type: number
-          examples:
-          - 10000
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - $10.00
     Response.ErrorItem:
       type: object
       required:
@@ -817,117 +992,15 @@ components:
               - type: object
                 additionalProperties: true
               - type: array
-    Timestamps:
+    Response.ErrorResponse:
       type: object
-      properties:
-        created_at:
-          description: The date this was created.
-          type: string
-        updated_at:
-          description: The date this was last updated.
-          type: string
-    ShippingAddress:
-      title: ShippingAddress
-      description: 'Shipping address information. You must specify at least one of region (state/province) or county.
-
-        '
-      allOf:
-      - anyOf:
-        - $ref: '#/components/schemas/AddressWithRegion'
-        - $ref: '#/components/schemas/AddressWithCounty'
-      - type: object
-        properties:
-          phone_number:
-            description: Phone number of the shipping recipient.
-            type: string
-          instructions:
-            description: Delivery instructions.
-            type: string
-      examples:
-      - first_name: John
-        last_name: Doe
-        line_1: 1 Sunny Street
-        line_2: Apartment 123
-        city: Los Angeles
-        postcode: '92802'
-        region: CA
-        country: US
-        instructions: Please leave on porch
-      - first_name: Jane
-        last_name: Smith
-        line_1: 123 Main Street
-        city: London
-        postcode: SW1A 1AA
-        county: Greater London
-        country: GB
-        phone_number: +44 20 7946 0958
-    RelationshipItem:
-      title: RelationshipItem
-      description: Relationship data entry
       required:
-      - type
-      - id
-      type: object
+      - errors
       properties:
-        type:
-          description: The type of related resource.
-          type: string
-        id:
-          description: The ID of the related resource.
-          type: string
-          format: uuid
-    AddressWithRegion:
-      title: Address with Region
-      allOf:
-      - $ref: '#/components/schemas/AddressCommon'
-      - type: object
-        required:
-        - region
-        properties:
-          region:
-            description: State, province, or region of the address.
-            type: string
-    DiscountData:
-      title: DiscountData
-      type: object
-      properties:
-        amount:
-          $ref: '#/components/schemas/OrderPriceData'
-        code:
-          type: string
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        promotion_source:
-          type: string
-          description: The source or origin of the promotion, if applicable.
-        is_cart_discount:
-          type: boolean
-          description: Indicates whether the discount applies to the entire cart.
-        ordinal:
-          type: integer
-          description: Order in which the discount was applied.
-    ShippingPriceResponse:
-      type: object
-      properties:
-        total:
-          $ref: '#/components/schemas/FormattedPriceData'
-        base:
-          $ref: '#/components/schemas/FormattedPriceData'
-        tax:
-          $ref: '#/components/schemas/FormattedPriceData'
-        fees:
-          $ref: '#/components/schemas/FormattedPriceData'
-        discount:
-          $ref: '#/components/schemas/FormattedPriceData'
-      required:
-      - total
-      - base
-    Discounts:
-      type: array
-      items:
-        $ref: '#/components/schemas/Discount'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
     AddressWithCounty:
       title: Address with County
       allOf:
@@ -946,79 +1019,6 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/RelationshipItem'
-    Discount:
-      type: object
-      properties:
-        amount:
-          $ref: '#/components/schemas/Money'
-        code:
-          type: string
-          description: The discount code used, if applicable.
-        id:
-          type: string
-          description: Unique identifier for the discount.
-        promotion_source:
-          type: string
-          description: The source or origin of the promotion, if applicable.
-        is_cart_discount:
-          type: boolean
-          description: Indicates whether the discount applies to the entire cart.
-        ordinal:
-          type: integer
-          description: Order in which the discount was applied.
-      required:
-      - amount
-      - id
-    NonNegativeFormattedPriceData:
-      title: NonNegativeFormattedPriceData
-      type: object
-      properties:
-        amount:
-          description: The raw total. Must be non-negative.
-          type: number
-          minimum: 0
-          examples:
-          - 10000
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - $10.00
-    Response.ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    ShippingGroupEntityResponse:
-      type: object
-      properties:
-        data:
-          type: object
-          $ref: '#/components/schemas/ShippingGroupResponse'
-        included:
-          type: object
-          description: Related objects that are included in the response when using the include query parameter.
-          properties:
-            items:
-              description: Array of order items associated with this shipping group.
-              type: array
-              items:
-                $ref: '#/components/schemas/OrderItemResponse'
-          additionalProperties: false
-        errors:
-          type: array
-          description: Array of validation or processing errors
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
     ShippingGroupResponse:
       title: Shipping Group Response
       type: object
@@ -1065,22 +1065,124 @@ components:
           $ref: '#/components/schemas/Discounts'
         meta:
           $ref: '#/components/schemas/ShippingGroupMeta'
-    DeliveryEstimate:
+    AddressWithRegion:
+      title: Address with Region
+      allOf:
+      - $ref: '#/components/schemas/AddressCommon'
+      - type: object
+        required:
+        - region
+        properties:
+          region:
+            description: State, province, or region of the address.
+            type: string
+    NonNegativeFormattedPriceData:
+      title: NonNegativeFormattedPriceData
       type: object
       properties:
-        start:
+        amount:
+          description: The raw total. Must be non-negative.
+          type: number
+          minimum: 0
+          examples:
+          - 10000
+        currency:
+          description: The currency set for this amount.
           type: string
-          format: date-time
-        end:
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
           type: string
-          format: date-time
-    ShippingGroupMeta:
+          examples:
+          - $10.00
+    ShippingAddress:
+      title: ShippingAddress
+      description: 'Shipping address information. You must specify at least one of region (state/province) or county.
+
+        '
+      allOf:
+      - anyOf:
+        - $ref: '#/components/schemas/AddressWithRegion'
+        - $ref: '#/components/schemas/AddressWithCounty'
+      - type: object
+        properties:
+          phone_number:
+            description: Phone number of the shipping recipient.
+            type: string
+          instructions:
+            description: Delivery instructions.
+            type: string
+      examples:
+      - first_name: John
+        last_name: Doe
+        line_1: 1 Sunny Street
+        line_2: Apartment 123
+        city: Los Angeles
+        postcode: '92802'
+        region: CA
+        country: US
+        instructions: Please leave on porch
+      - first_name: Jane
+        last_name: Smith
+        line_1: 123 Main Street
+        city: London
+        postcode: SW1A 1AA
+        county: Greater London
+        country: GB
+        phone_number: +44 20 7946 0958
+    DiscountData:
+      title: DiscountData
       type: object
       properties:
-        shipping_display_price:
-          $ref: '#/components/schemas/ShippingPriceResponse'
-        total_display_price:
-          $ref: '#/components/schemas/OrderPriceWrapperMeta'
+        amount:
+          $ref: '#/components/schemas/OrderPriceData'
+        code:
+          type: string
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        promotion_source:
+          type: string
+          description: The source or origin of the promotion, if applicable.
+        is_cart_discount:
+          type: boolean
+          description: Indicates whether the discount applies to the entire cart.
+        ordinal:
+          type: integer
+          description: Order in which the discount was applied.
+    Timestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this was created.
+          type: string
+        updated_at:
+          description: The date this was last updated.
+          type: string
+    DiscountFormattedPriceData:
+      title: DiscountFormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The discount amount. Must be non-positive (zero or negative).
+          type: number
+          maximum: 0
+          examples:
+          - -1000
+          - 0
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - -$10.00
+          - $0.00
     OrderItemFormattedUnitPriceData:
       title: OrderItemFormattedUnitPriceData
       type: object
@@ -1089,130 +1191,53 @@ components:
           $ref: '#/components/schemas/FormattedPriceData'
         value:
           $ref: '#/components/schemas/FormattedPriceData'
-    CustomAttributes:
-      title: CustomAttributes
-      type: object
-      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
-      additionalProperties:
-        type: object
-        required:
-        - type
-        - value
-        properties:
-          type:
-            type: string
-            description: The type of the custom attribute value.
-            enum:
-            - string
-            - integer
-            - boolean
-            - float
-          value:
-            description: The value of the custom attribute.
-            type:
-            - string
-            - boolean
-            - number
-    UpdateOrderShippingGroupRequest:
-      type: object
-      properties:
-        data:
-          type: object
-          properties:
-            type:
-              type: string
-              const: shipping_group
-            shipping_type:
-              type: string
-            tracking_reference:
-              type: string
-            external_ref:
-              description: An optional external ID reference for a shipping group. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters.
-              type: string
-              maxLength: 64
-            address:
-              $ref: '#/components/schemas/ShippingAddress'
-            delivery_estimate:
-              $ref: '#/components/schemas/DeliveryEstimate'
-    OrderPriceData:
-      title: OrderPriceData
+    Discounts:
+      type: array
+      items:
+        $ref: '#/components/schemas/Discount'
+    Discount:
       type: object
       properties:
         amount:
-          description: The amount for this item.
+          $ref: '#/components/schemas/Money'
+        code:
+          type: string
+          description: The discount code used, if applicable.
+        id:
+          type: string
+          description: Unique identifier for the discount.
+        promotion_source:
+          type: string
+          description: The source or origin of the promotion, if applicable.
+        is_cart_discount:
+          type: boolean
+          description: Indicates whether the discount applies to the entire cart.
+        ordinal:
+          type: integer
+          description: Order in which the discount was applied.
+      required:
+      - amount
+      - id
+    FormattedPriceData:
+      title: FormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The raw total.
           type: number
           examples:
           - 10000
         currency:
-          description: The currency this item.
+          description: The currency set for this amount.
           type: string
           examples:
           - USD
-        includes_tax:
-          description: Whether this price is tax inclusive.
-          type: boolean
-          examples:
-          - false
-    AddressCommon:
-      type: object
-      required:
-      - first_name
-      - last_name
-      - line_1
-      - postcode
-      - country
-      properties:
-        first_name:
-          description: First name of the recipient.
+        formatted:
+          description: The formatted total based on the amount and currency.
           type: string
           examples:
-          - John
-        last_name:
-          description: Last name of the recipient.
-          type: string
-          examples:
-          - Doe
-        company_name:
-          description: Company of the recipient.
-          type: string
-          examples:
-          - John Doe Enterprises
-        line_1:
-          description: First line of the address.
-          type: string
-          examples:
-          - 1 Sunny Street
-        line_2:
-          description: Second line of the address.
-          type: string
-          examples:
-          - Apartment 123
-        city:
-          description: City of the address.
-          type: string
-          examples:
-          - Los Angeles
-        postcode:
-          description: Post code of the address.
-          type: string
-          examples:
-          - '92802'
-        county:
-          description: County of the address.
-          type: string
-          examples:
-          - Orange
-        country:
-          description: Country of the address.
-          type: string
-          examples:
-          - US
-        region:
-          description: State, province, or region of the address.
-          type: string
-          examples:
-          - CA
+          - $10.00
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

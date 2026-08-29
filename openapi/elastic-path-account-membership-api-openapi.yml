@@ -1,12 +1,61 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Account Membership API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Account Management Introduction Account Membership API
+  description: 'An Account represents the entity that participates in a Commerce transaction. Accounts can have Carts, Orders,
+
+    Subscriptions, and Addresses.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    Each account can have multiple account members, which represent users and can transact on behalf of the account.
+
+
+    In a typical B2C scenario, an account usually has a single account member. However, this functionality can also be
+
+    used to support use cases such as family accounts, allowing multiple family members to transact on behalf of their
+
+    shared account. In a B2B scenario, an account will have multiple members from a business unit, all of whom can
+
+    transact on behalf of their organization.
+
+
+    Accounts can be grouped together using Account Tags, and those tags can be used to apply discounts and promotions.
+
+
+    ## Accounts vs Customers
+
+
+    Accounts is the next generation of [Customers](/docs/customer-management/customers). Customers are not going
+
+    anywhere, but accounts offers more capabilities. We recommend using Accounts for any of your new use cases.
+
+
+    | Feature                                                                                     | Customers | Accounts |
+
+    |---------------------------------------------------------------------------------------------|-----------|----------|
+
+    | B2C Accounts                                                                                | ✅         | ✅        |
+
+    | Family Accounts                                                                             | ⛔️        | ✅        |
+
+    | B2B Accounts                                                                                | ⛔️        | ✅        |
+
+    | Authentication: Shopper impersonation                                                       | ⛔️        | ✅        |
+
+    | Authentication: OpenID support                                                              | ✅         | ✅        |
+
+    | Authentication: One time passwords, and password reset                                      | ⛔️        | ✅        |
+
+    | Authentication: Configurable token expiry                                                   | ⛔️        | ✅        |
+
+    | Cart association                                                                            | ✅         | ✅        |
+
+    | Shopper specific Promotions                                                                 | Limited   | ✅        |
+
+    | Shopper specific Catalogs                                                                   | ✅         | ✅        |
+
+    | Addresses                                                                                   | ✅         | ✅        |
+
+    | [Personal Data Support (GDPR,CCPA,...)](/docs/api/personal-data/personal-data-introduction) | ✅         | ✅        |
 
     '
   contact:
@@ -14,8 +63,10 @@ info:
     url: https://www.elasticpath.com
     email: support@elasticpath.com
   license:
-    url: https://elasticpath.dev
     name: MIT
+    url: assets/LICENSE
+  version: 26.0208.7165720
+  x-version-timestamp: 2026-02-08 16:13:08+00:00
 servers:
 - url: https://useast.api.elasticpath.com
   description: US East
@@ -582,45 +633,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    AccountMember:
-      type: object
-      properties:
-        id:
-          description: The unique identifier for the account member.
-          type: string
-          format: uuid
-          example: 908f7849-60da-4e4a-a3b1-51d4cbe3b953
-        type:
-          description: The type of the object that is returned.
-          type: string
-          const: account_member
-        name:
-          description: The name of the account member.
-          type: string
-          example: Ron Swanson
-        given_name:
-          description: The given name of the account member. This field is optional and not computed or extracted from the name field.
-          type:
-          - string
-          - 'null'
-          example: Ron
-        middle_name:
-          description: The middle name of the account member. This field is optional and not computed or extracted from the name field.
-          type:
-          - string
-          - 'null'
-          example: Ulysses
-        family_name:
-          description: The family name of the account member. This field is optional and not computed or extracted from the name field.
-          type:
-          - string
-          - 'null'
-          example: Swanson
-        email:
-          description: The email address of the account member.
-          type: string
-          format: email
-          example: ron@swanson.com
     AccountMembershipResponseUsingAccountMemberId:
       type: object
       properties:
@@ -661,86 +673,6 @@ components:
               type: string
               format: uri
               example: https://useast.api.elasticpath.com/v2/accounts/5b495058-9ffc-4b9b-810a-c9d43ffc6500/account-memberships/24e939f6-178f-497b-9d64-5bf2b5a70a2e
-    Error:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
-    MetaListPage:
-      type: object
-      properties:
-        limit:
-          type: integer
-          description: The maximum number of records per page for this response. You can set this value up to 100.
-          example: 25
-        current:
-          type: integer
-          description: The current page.
-          example: 0
-        offset:
-          type: integer
-          description: The current offset by number of records, not pages. Offset is zero-based.
-          example: 0
-        total:
-          type: integer
-          description: The total page count.
-          example: 1
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    MetaTimestamps:
-      type: object
-      properties:
-        timestamps:
-          type: object
-          properties:
-            created_at:
-              description: The date the resource is created.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-            updated_at:
-              description: The date the resource is updated.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-    MetaList:
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/MetaListPage'
-        results:
-          $ref: '#/components/schemas/MetaListResults'
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: deb6b25f-8451-4211-9a22-95610333df23
     AccountMembershipResponse:
       type: object
       properties:
@@ -781,13 +713,45 @@ components:
               type: string
               format: uri
               example: https://useast.api.elasticpath.com/v2/accounts/5b495058-9ffc-4b9b-810a-c9d43ffc6500/account-memberships/24e939f6-178f-497b-9d64-5bf2b5a70a2e
-    MetaListResults:
+    AccountMember:
       type: object
       properties:
-        total:
-          type: integer
-          description: The total number of results after applying filters, if any, or all results.
-          example: 1
+        id:
+          description: The unique identifier for the account member.
+          type: string
+          format: uuid
+          example: 908f7849-60da-4e4a-a3b1-51d4cbe3b953
+        type:
+          description: The type of the object that is returned.
+          type: string
+          const: account_member
+        name:
+          description: The name of the account member.
+          type: string
+          example: Ron Swanson
+        given_name:
+          description: The given name of the account member. This field is optional and not computed or extracted from the name field.
+          type:
+          - string
+          - 'null'
+          example: Ron
+        middle_name:
+          description: The middle name of the account member. This field is optional and not computed or extracted from the name field.
+          type:
+          - string
+          - 'null'
+          example: Ulysses
+        family_name:
+          description: The family name of the account member. This field is optional and not computed or extracted from the name field.
+          type:
+          - string
+          - 'null'
+          example: Swanson
+        email:
+          description: The email address of the account member.
+          type: string
+          format: email
+          example: ron@swanson.com
     AccountMemberResponse:
       allOf:
       - $ref: '#/components/schemas/AccountMember'
@@ -802,6 +766,39 @@ components:
                 description: A URL to the specific resource.
                 type: string
                 example: https://useast.api.elasticpath.com/v2/account-members/908f7849-60da-4e4a-a3b1-51d4cbe3b953
+    MetaTimestamps:
+      type: object
+      properties:
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              description: The date the resource is created.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+            updated_at:
+              description: The date the resource is updated.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+    MetaListPage:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
+        total:
+          type: integer
+          description: The total page count.
+          example: 1
     AccountMembership:
       type: object
       properties:
@@ -814,20 +811,61 @@ components:
           type: string
           const: account_membership
           description: Specifies the type of the object. Set this value to `account_membership`.
-  responses:
-    NotFoundError:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
           examples:
-            not-found-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: account not found
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    MetaList:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/MetaListPage'
+        results:
+          $ref: '#/components/schemas/MetaListResults'
+  responses:
     ConflictError:
       description: Conflict
       content:
@@ -841,6 +879,32 @@ components:
                 - title: Conflict
                   status: '409'
                   detail: account membership with the given account id and account member id already exists
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: account not found
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
     UnprocessableEntity:
       description: Unprocessable Entity
       content:
@@ -868,29 +932,14 @@ components:
                 - title: Internal Server Error
                   status: '500'
                   detail: there was a problem processing your request
-    BadRequestError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              value:
-                errors:
-                - title: Bad Request
-                  status: '400'
-                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
   parameters:
-    filter:
-      name: filter
+    include-account:
+      name: include
       in: query
-      description: Specifies the filter attributes.
-      required: false
+      description: Parameter to retrieve more information about any related resources like accounts.
       schema:
         type: string
-        format: string
-        example: ilike(name,"*swan*")
+        example: account
     page-limit:
       name: page[limit]
       in: query
@@ -908,13 +957,15 @@ components:
       schema:
         type: string
         example: account_member
-    include-account:
-      name: include
+    filter:
+      name: filter
       in: query
-      description: Parameter to retrieve more information about any related resources like accounts.
+      description: Specifies the filter attributes.
+      required: false
       schema:
         type: string
-        example: account
+        format: string
+        example: ilike(name,"*swan*")
     page-offset:
       name: page[offset]
       in: query

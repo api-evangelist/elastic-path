@@ -1,26 +1,114 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Search API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Catalog Introduction Search API
+  version: 26.0604.7696948
+  x-version-timestamp: 2026-06-04 10:33:46+00:00
+  description: 'Elastic Path Catalog Search provides fast, relevant product search capabilities for your published catalogs. Catalog Search enables shoppers to find products quickly using full-text search, filtering, faceting, and sorting, while giving merchandisers powerful tools to customize search relevance and ranking.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    You can integrate Catalog Search into your storefront using the Catalog Search API or manage search settings through Commerce Manager.
+
+
+    ### How Catalog Search Works
+
+
+    Catalog Search works alongside your Product Experience Manager catalogs to provide optimized search functionality.
+
+
+    When creating or updating a catalog, enable search to allow the catalog''s products to be indexed. See [Catalogs](/docs/api/pxm/catalog/catalogs). Then when a search-enabled catalog is published, the products are automatically indexed for search. The search index contains product data optimized for fast querying.
+
+
+    Use the Search API to query products with full-text search, filtering, faceting, and sorting. The results of the search contain the full product information, not just the indexed fields, reducing the need for further API calls.
+
+
+    ### Key Capabilities
+
+
+    - **Full-text search**: Search across product names, descriptions, SKUs, and custom fields with typo tolerance and relevance ranking
+
+    - **Filtering**: Narrow results using conditions on product attributes, categories, prices, and custom fields
+
+    - **Faceting**: Get aggregated counts for attribute values to build dynamic navigation and refinement options
+
+    - **Sorting**: Order results by price, name, custom fields, or relevance score
+
+    - **Search Profiles**: Configure search behavior including field weights, filters, and boost rules without code changes
+
+    - **Custom Fields**: Extend the search schema with your own product attributes for filtering, faceting, and sorting
+
+    - **Fully Hydrated Responses**: Search results contain complete information about the products, reducing the requirement for follow-up API calls.
+
+
+    ### Personalized Search Results
+
+
+    Search results are automatically personalized based on the shopper''s context. The system determines which catalog and prices to show based on:
+
+
+    - **Channel**: The shopping experience, such as a web storefront or mobile app
+
+    - **Account**: For B2B scenarios, the shopper''s account and any parent accounts
+
+    - **Customer**: The logged-in customer''s segment or tier
+
+    - **Tags**: Custom context tags for advanced segmentation scenarios
+
+
+    See [**Characteristics of Shopper Catalogs**](/docs/api/pxm/catalog/shopper-catalog-api#characteristics-of-shopper-catalogs) for more information.
+
+
+    ### Search Profiles
+
+
+    Search Profiles give merchandisers control over search behavior without requiring code changes. With Search Profiles, you can:
+
+
+    - **Configure field weights**: Control which product fields are most important for relevance ranking
+
+    - **Apply default filters**: Enforce business rules like only showing live products
+
+    - **Boost products**: Promote featured products, specific brands, or categories to the top of results
+
+    - **A/B test**: Create multiple profiles to test different search configurations
+
+
+    See [**Search Profiles**](/docs/api/pxm/catalog-search/search-profiles) for more information.
+
+
+    ### Extending the Search Schema
+
+
+    By default, the search index includes standard product fields like name, description, SKU, and categories. You can extend the schema by adding custom fields using [Indexable Fields](/docs/api/pxm/catalog-search/indexable-fields).
+
+
+    Two types of custom fields can be indexed:
+
+
+    - **Product extension fields** (`extensions.products(<slug>).<field>`): Fields from your product extension templates.
+
+    - **Product custom attributes** (`shopper_attributes.<attribute>` and `admin_attributes.<attribute>`): Merchant-defined key/value attributes on products.
+
+
+    This allows you to:
+
+
+    - Search on custom product attributes like brand, material, or specifications
+
+    - Filter products by custom fields like color, size, or rating
+
+    - Display facets for custom field values in your navigation
+
+    - Sort results by custom numeric fields like rating or popularity
+
+
+    See [**Indexable Fields**](/docs/api/pxm/catalog-search/indexable-fields) for more information.
 
     '
-  contact:
-    name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
-  license:
-    url: https://elasticpath.dev
-    name: MIT
 servers:
-- url: https://useast.api.elasticpath.com
-  description: US East
-- url: https://euwest.api.elasticpath.com
-  description: EU West
+- url: https://euwest.api.elasticpath.com/v2
+  description: EU west cluster
+- url: https://useast.api.elasticpath.com/v2
+  description: US east cluster
 security:
 - BearerToken: []
 tags:
@@ -353,36 +441,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   parameters:
-    search-query-param-filter-by:
-      in: query
-      name: filter_by
-      description: Applies conditions to narrow down search results based on specific field values. See [filtering](/guides/How-To/Catalogs/Search/filtering) for more details.
-      example: meta.search.nodes.name:=Electronics && price.float_price:>=10.00
-      schema:
-        type: string
-    pricebook-ids-for-price-segmentation-preview:
-      in: header
-      name: EP-Pricebook-IDs-For-Price-Segmentation-Preview
-      description: Supply a comma delimited list of pricebook ids to be used to lookup product prices from when the catalog supports price segmentation. The first pricebook will be highest priority (if more than one is supplied) and the rest in descending priority order. Used only for admin endpoints that dont support shopper context lookup.
-      schema:
-        type: array
-        maxItems: 5
-        items:
-          type: string
-    search-query-param-facet-by:
-      in: query
-      name: facet_by
-      description: Specifies which fields to use for generating facets in search results. See [faceting](/guides/How-To/Catalogs/Search/faceting) for more details.
-      example: meta.search.nodes.name
-      schema:
-        type: string
-    search-query-param-max-facet-values:
-      in: query
-      name: max_facet_values
-      description: Maximum number of facet values to return
-      schema:
-        type: integer
-      example: 10
     search-profile:
       in: query
       name: search_profile
@@ -392,14 +450,6 @@ components:
         pattern: ^[a-zA-Z0-9_.-]+$
       example: clothing
       x-go-name: SearchProfileSlug
-    search-query-param-q:
-      in: query
-      name: q
-      description: Search query
-      schema:
-        type: string
-      required: true
-      example: search query
     accept-language:
       description: The language and locale your storefront prefers. See [Accept-Language](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
       in: header
@@ -408,11 +458,11 @@ components:
         type: string
       example: en-US
       required: false
-    search-query-param-sort-by:
+    search-query-param-facet-by:
       in: query
-      name: sort_by
-      description: Orders search results by specified fields. See [sorting](/guides/How-To/Catalogs/Search/sorting) for more details.
-      example: price.amount:asc,extensions.products(Specification).rating:desc
+      name: facet_by
+      description: Specifies which fields to use for generating facets in search results. See [faceting](/guides/How-To/Catalogs/Search/faceting) for more details.
+      example: meta.search.nodes.name
       schema:
         type: string
     products-include:
@@ -448,19 +498,6 @@ components:
         maxItems: 5
         items:
           type: string
-    simulated-shopper-date:
-      in: header
-      name: EP-Simulated-Shopper-Date
-      schema:
-        type: string
-      required: false
-    tag:
-      description: Tags are used to refine the eligibility criteria for a rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
-      in: header
-      name: EP-Context-Tag
-      schema:
-        type: string
-      required: false
     channel:
       description: The list of channels in which this catalog can be displayed. A channel is the shopping experience, such as a mobile app or web storefront. If empty, the catalog rule matches all channels. The channel will eventually be included in the bearer token that is used for authorization, but currently, you must set the `EP-Channel` header in your requests.
       in: header
@@ -468,6 +505,26 @@ components:
       schema:
         type: string
       required: false
+    simulated-shopper-date:
+      in: header
+      name: EP-Simulated-Shopper-Date
+      schema:
+        type: string
+      required: false
+    search-query-param-highlight-full-fields:
+      in: query
+      name: highlight_full_fields
+      description: Comma-separated list of fields to highlight
+      schema:
+        type: string
+      example: name,description
+    search-query-param-filter-by:
+      in: query
+      name: filter_by
+      description: Applies conditions to narrow down search results based on specific field values. See [filtering](/guides/How-To/Catalogs/Search/filtering) for more details.
+      example: meta.search.nodes.name:=Electronics && price.float_price:>=10.00
+      schema:
+        type: string
     search-query-param-type:
       in: query
       name: type
@@ -478,66 +535,45 @@ components:
         - search
         - autocomplete
       example: search
-    search-query-param-highlight-full-fields:
+    search-query-param-max-facet-values:
       in: query
-      name: highlight_full_fields
-      description: Comma-separated list of fields to highlight
+      name: max_facet_values
+      description: Maximum number of facet values to return
+      schema:
+        type: integer
+      example: 10
+    search-query-param-sort-by:
+      in: query
+      name: sort_by
+      description: Orders search results by specified fields. See [sorting](/guides/How-To/Catalogs/Search/sorting) for more details.
+      example: price.amount:asc,extensions.products(Specification).rating:desc
       schema:
         type: string
-      example: name,description
-  schemas:
-    IncludedResponse:
-      type: object
-      description: Included is an array of resources that are included in the response.
-      additionalProperties:
+    search-query-param-q:
+      in: query
+      name: q
+      description: Search query
+      schema:
+        type: string
+      required: true
+      example: search query
+    pricebook-ids-for-price-segmentation-preview:
+      in: header
+      name: EP-Pricebook-IDs-For-Price-Segmentation-Preview
+      description: Supply a comma delimited list of pricebook ids to be used to lookup product prices from when the catalog supports price segmentation. The first pricebook will be highest priority (if more than one is supplied) and the rest in descending priority order. Used only for admin endpoints that dont support shopper context lookup.
+      schema:
         type: array
+        maxItems: 5
         items:
-          type: object
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        status:
           type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    Hit:
-      type: object
-      properties:
-        document:
-          oneOf:
-          - $ref: '#/components/schemas/Product'
-          - $ref: '#/components/schemas/AutocompleteResponse'
-          description: Document object - either a Product or AutocompleteResponse
-        highlight:
-          type: object
-        highlights:
-          type: array
-          items:
-            type: object
+    tag:
+      description: Tags are used to refine the eligibility criteria for a rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
+      in: header
+      name: EP-Context-Tag
+      schema:
+        type: string
+      required: false
+  schemas:
     AutocompleteResponse:
       type: object
       title: AutocompleteResponse
@@ -558,13 +594,81 @@ components:
           type: integer
           example: 42
           x-go-name: Count
-    SearchResponse:
-      allOf:
-      - $ref: '#/components/schemas/SearchResult'
-      - type: object
-        properties:
-          included:
-            $ref: '#/components/schemas/IncludedResponse'
+    SearchResultType:
+      type: string
+      enum:
+      - search
+      - autocomplete
+      example: search
+      description: Type of search operation to performed
+    SearchResult:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/SearchResultType'
+        facet_counts:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacetCount'
+        found:
+          type: integer
+          example: 150
+        hits:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hit'
+        out_of:
+          type: integer
+          example: 150
+        page:
+          type: integer
+          example: 1
+        request_params:
+          type: object
+        search_cutoff:
+          type: boolean
+          example: false
+        search_time_ms:
+          type: integer
+          example: 25
+    FacetValue:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 42
+        highlighted:
+          type: string
+          example: <em>electronics</em>
+        value:
+          type: string
+          example: electronics
+    MultiSearchRequest:
+      type: object
+      required:
+      - searches
+      properties:
+        searches:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SearchQuery'
+    IncludedResponse:
+      type: object
+      description: Included is an array of resources that are included in the response.
+      additionalProperties:
+        type: array
+        items:
+          type: object
+    MultiSearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        included:
+          $ref: '#/components/schemas/IncludedResponse'
     SearchQuery:
       type: object
       properties:
@@ -596,58 +700,17 @@ components:
         per_page:
           type: integer
           example: 20
-    SearchResult:
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/SearchResultType'
-        facet_counts:
-          type: array
-          items:
-            $ref: '#/components/schemas/FacetCount'
-        found:
-          type: integer
-          example: 150
-        hits:
-          type: array
-          items:
-            $ref: '#/components/schemas/Hit'
-        out_of:
-          type: integer
-          example: 150
-        page:
-          type: integer
-          example: 1
-        request_params:
-          type: object
-        search_cutoff:
-          type: boolean
-          example: false
-        search_time_ms:
-          type: integer
-          example: 25
     FacetByField:
       type: string
       description: Specifies which fields to use for generating facets in search results. See [faceting](/guides/How-To/Catalogs/Search/faceting) for more details.
       example: meta.search.nodes.name
-    SortByField:
-      type: string
-      description: Orders search results by specified fields. See [sorting](/guides/How-To/Catalogs/Search/sorting) for more details.
-      example: price.amount:asc,extensions.products(Specification).rating:desc
-    FilterByField:
-      type: string
-      description: Applies conditions to narrow down search results based on specific field values. See [filtering](/guides/How-To/Catalogs/Search/filtering) for more details.
-      example: meta.search.nodes.name:=Electronics && price.float_price:>=10.00
-    MultiSearchRequest:
-      type: object
-      required:
-      - searches
-      properties:
-        searches:
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/SearchQuery'
+    SearchResponse:
+      allOf:
+      - $ref: '#/components/schemas/SearchResult'
+      - type: object
+        properties:
+          included:
+            $ref: '#/components/schemas/IncludedResponse'
     FacetCount:
       type: object
       properties:
@@ -663,18 +726,43 @@ components:
           example: false
         stats:
           type: object
-    FacetValue:
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    Hit:
       type: object
       properties:
-        count:
-          type: integer
-          example: 42
-        highlighted:
-          type: string
-          example: <em>electronics</em>
-        value:
-          type: string
-          example: electronics
+        document:
+          oneOf:
+          - $ref: '#/components/schemas/Product'
+          - $ref: '#/components/schemas/AutocompleteResponse'
+          description: Document object - either a Product or AutocompleteResponse
+        highlight:
+          type: object
+        highlights:
+          type: array
+          items:
+            type: object
     Product:
       type: object
       title: Product
@@ -699,22 +787,22 @@ components:
         meta:
           type: object
           description: Arbitrary document object
-    MultiSearchResponse:
-      type: object
+    SortByField:
+      type: string
+      description: Orders search results by specified fields. See [sorting](/guides/How-To/Catalogs/Search/sorting) for more details.
+      example: price.amount:asc,extensions.products(Specification).rating:desc
+    FilterByField:
+      type: string
+      description: Applies conditions to narrow down search results based on specific field values. See [filtering](/guides/How-To/Catalogs/Search/filtering) for more details.
+      example: meta.search.nodes.name:=Electronics && price.float_price:>=10.00
+    ErrorResponse:
+      required:
+      - errors
       properties:
-        results:
+        errors:
           type: array
           items:
-            $ref: '#/components/schemas/SearchResult'
-        included:
-          $ref: '#/components/schemas/IncludedResponse'
-    SearchResultType:
-      type: string
-      enum:
-      - search
-      - autocomplete
-      example: search
-      description: Type of search operation to performed
+            $ref: '#/components/schemas/Error'
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.
@@ -730,5 +818,5 @@ components:
                   status: '500'
   securitySchemes:
     BearerToken:
-      type: http
       scheme: bearer
+      type: http

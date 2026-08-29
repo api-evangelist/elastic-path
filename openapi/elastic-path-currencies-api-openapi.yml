@@ -1,28 +1,34 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Currencies API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Introduction Currencies API
+  description: '
+
+    In your store, you can display prices to customers in their local currency. You can configure up to ten currencies per store.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    Configure currencies only for the locales in which you do business, and select one of the currencies to be the default currency. If a default currency is not selected, the store uses the United States Dollar (USD).
+
+
+    After a customer selects a locale, the product prices in the catalog, carts, and orders are displayed in the currency for that locale. Order totals and taxes are calculated in the same currency. You cannot have a cart or order where product prices are in mixed currencies.
 
     '
   contact:
     name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
+    url: https://elasticpath.com
   license:
-    url: https://elasticpath.dev
     name: MIT
+    url: assets/LICENSE
+  version: 26.0225.7248250
+  x-version-timestamp: 2026-02-25 21:31:11+00:00
 servers:
 - url: https://useast.api.elasticpath.com
-  description: US East
+  description: US East Production Server
+  variables: {}
 - url: https://euwest.api.elasticpath.com
-  description: EU West
+  description: EU West Production Server
+  variables: {}
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Currencies
   description: ':::caution
@@ -375,11 +381,58 @@ paths:
       deprecated: false
 components:
   schemas:
-    Request.UpdateCurrencies:
+    Data.UpdateCurrencies:
+      title: Data.UpdateCurrencies
+      type: object
+      properties:
+        default:
+          description: Specifies whether this is the default currency or not. Either `true` or `false`.
+          type: boolean
+          example: true
+    Response.Meta.Currency:
+      type: object
+      properties:
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+        owner:
+          description: Indicates whether the owner is store or org.
+          example: store
+          type: string
+    Response.Error:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                description: An application-specific error code.
+                example: '1'
+              detail:
+                type: string
+              status:
+                type: integer
+                example: 400
+              title:
+                type: string
+    Request.CreateCurrencies:
+      title: Request.CreateCurrencies
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/Data.UpdateCurrencies'
+          $ref: '#/components/schemas/Data.CreateCurrencies'
+    Timestamps:
+      type: object
+      properties:
+        created_at:
+          description: Indicates the creation date of this currency.
+          type: string
+          example: '2023-11-07T23:04:18.845Z'
+        updated_at:
+          description: Indicates the updated date of this currency.
+          example: '2023-11-07T23:04:18.845Z'
     Response.Currency:
       type: object
       properties:
@@ -427,35 +480,15 @@ components:
           $ref: '#/components/schemas/SelfLink'
         meta:
           $ref: '#/components/schemas/Response.Meta.Currency'
-    Response.Meta.Currency:
-      type: object
-      properties:
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-        owner:
-          description: Indicates whether the owner is store or org.
-          example: store
-          type: string
     Response.Data:
       type: object
       properties:
         data: {}
-    Timestamps:
-      type: object
-      properties:
-        created_at:
-          description: Indicates the creation date of this currency.
-          type: string
-          example: '2023-11-07T23:04:18.845Z'
-        updated_at:
-          description: Indicates the updated date of this currency.
-          example: '2023-11-07T23:04:18.845Z'
-    Request.CreateCurrencies:
-      title: Request.CreateCurrencies
+    Request.UpdateCurrencies:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/Data.CreateCurrencies'
+          $ref: '#/components/schemas/Data.UpdateCurrencies'
     Data.CreateCurrencies:
       required:
       - type
@@ -515,34 +548,7 @@ components:
         self:
           description: Specifies the URL of this currency.
           type: string
-    Data.UpdateCurrencies:
-      title: Data.UpdateCurrencies
-      type: object
-      properties:
-        default:
-          description: Specifies whether this is the default currency or not. Either `true` or `false`.
-          type: boolean
-          example: true
-    Response.Error:
-      type: object
-      properties:
-        errors:
-          type: array
-          items:
-            type: object
-            properties:
-              code:
-                type: string
-                description: An application-specific error code.
-                example: '1'
-              detail:
-                type: string
-              status:
-                type: integer
-                example: 400
-              title:
-                type: string
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

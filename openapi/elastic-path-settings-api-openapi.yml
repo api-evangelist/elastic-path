@@ -1,14 +1,9 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Settings API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
-
-
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
-
-    '
+  version: 26.0224.7243587
+  x-version-timestamp: 2026-02-24 23:34:24+00:00
+  title: Introduction Settings API
+  description: "The Settings API allow you to configure global settings for your project. You can define:\n\n- [page length when paginating results](/docs/api/settings/settings-introduction#page-length)\n- [the calculation method you want to use for cart and order totals](/docs/api/settings/settings-introduction#calculation-method)\n- [mandatory address fields](/docs/api/settings/settings-introduction#address-mandatory-fields)\n- [shopper address limit](/docs/api/settings/settings-introduction#shopper-address-limit)\n- [readonly store settings for internal stores](/docs/api/settings/settings-introduction#readonly-settings)\n\n### Page Length\n\nThis defines the number of results per page when paginating results (max: 100).\n\n| Name          | Type      | Default | Max |\n|--------------|-----------|--------- |-----|\n| `page_length` | `integer` | 25       | 100 |\n\nFor more information on pagination including a list of which resources support pagination, see [Pagination](/guides/Getting-Started/pagination).\n\n### Calculation Method\n\nThis option defines the method used to calculate cart and order totals. Currently there are two methods: `simple` and `line`.\n\nThe `simple` method is our previous method for calculating cart and order totals which focuses on the total value of the cart. This should only be used in the case where Composable Commerce is not used for tax calculations. The `line` method treats each line item individually resulting in more accurate figures after taxes and promotions are applied.\n\n| Name         | Type      | Value |\n|--------------|-----------|-------|\n| `calculation_method` | `string` | `line`   |\n| `calculation_method` | `string` | `simple` |\n\n:::note\n\n- For stores created since February 2020, `line` is the default calculation method. Stores created before February 2020 use `simple` as their calculation method.\n- Line-item discount promotions, such as item percent discount and item fixed discount, are only supported by the line calculation method. For more information, see [Promotions Standard](/docs/api/promotions/promotions-standard-introduction).\n\n:::\n\n### Address Mandatory Fields\n\nYou can create an address to associate with an account in your storefront. This defines the address fields that you can use when creating an address in Commerce Manager. For more information, see [Addresses](/docs/api/addresses/addresses-introduction).\n\nAddress fields can be required or optional. You can choose which optional address fields to use in your address, depending on your requirements. To change which fields are mandatory for creating an address, see [Update Settings](/docs/api/settings/put-v-2-settings). Changing the mandatory fields does not impact the addresses of customers made before the change.\n\nThe following table describes the address fields, their type and whether they are required by default.\n\n| Name | Type | Required |\n| :--- | :--- |:---------|\n| `type` |`string` | Default  |\n| `first_name` |`string` | Default  |\n| `last_name` |`string` | Default  |\n| `name` |`string` | Optional |\n| `phone_number` |`string` | Optional |\n| `instructions` |`string` | Optional |\n| `company_name` |`string` | Optional |\n| `line_1` |`string` | Default  |\n| `line_2` |`string` | Optional |\n| `city` |`string` | Optional |\n| `county` |`string` | Default  |\n| `region` |`string` | Optional |\n| `postcode` |`string` | Default  |\n| `country` |`string` | Default  |\n\n### Shopper Address Limit\n\nThis defines the maximum number of addresses a shopper can create per resource (account). This helps prevent abuse and maintains database performance.\n\n| Name          | Type      | Default | Min | Max   |\n|--------------|-----------|---------|-----|-------|\n| `shopper_address_limit` | `integer` | 25  | 1   | 25000 |\n\n:::note\nOnly values up to 500 can be set by callers. Please [contact Support](https://support.elasticpath.com/hc/en-us#composable_commerce) if you require a higher limit. \n:::\n\n### Readonly Settings\n\nFor internal store configurations, read-only settings are used and updating these settings fails without returning any error.\n\n:::note\n\n- Refer to the [Performance](/guides/Getting-Started/pagination#performance) section in the Pagination documentation, which outlines patterns for retrieving all documents without using a higher page offset limit.\n- To change any predefined configuration, contact [Elastic Path support team](https://support.elasticpath.com/hc/en-us).\n\n:::\n\n\n| Name                    | Type      | Default                                              |\n|:------------------------|:----------|:-----------------------------------------------------|\n| `currency_limit`        | `integer` | `10`                                                 |\n| `field_limit`           | `integer` | `100`                                                |\n| `integration_limit`     | `integer` | `100`                                                |\n| `event_limit`           | `integer` | `5`                                                  |\n| `filter_limit`          | `integer` | `10`                                                 |\n| `tax_item_limit`        | `integer` | `5`                                                  |\n| `promotions_limit`      | `integer` | `1000`                                               |\n| `promotion_codes_limit` | `integer` | `1000`                                               |\n| `page_offset_limit`     | `integer` | `10000`                                              |\n"
   contact:
     name: Elastic Path
     url: https://www.elasticpath.com
@@ -120,6 +115,14 @@ components:
               summary: Internal server error
               value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
   schemas:
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     SettingsResponse:
       allOf:
       - $ref: '#/components/schemas/SettingsData'
@@ -184,43 +187,6 @@ components:
           maximum: 25000
       required:
       - type
-    Error:
-      required:
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: integer
-          description: The HTTP response code of the error.
-          examples:
-          - 400
-        code:
-          type: integer
-          description: An application-specific error code.
-          examples:
-          - 10
-        source:
-          type: string
-          description: The field that caused the validation error.
-          examples:
-          - data.page_length
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
     SettingsData:
       properties:
         data:
@@ -280,6 +246,35 @@ components:
                 description: The page offset limit.
                 type: integer
                 example: 10000
+    Error:
+      required:
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: integer
+          description: The HTTP response code of the error.
+          examples:
+          - 400
+        code:
+          type: integer
+          description: An application-specific error code.
+          examples:
+          - 10
+        source:
+          type: string
+          description: The field that caused the validation error.
+          examples:
+          - data.page_length
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
   securitySchemes:
     BearerToken:
       type: http

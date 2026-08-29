@@ -1,28 +1,42 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Product Image Relationships API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Product Experience Manager Introduction Product Image Relationships API
+  description: '
+
+    Product Experience Manager uses the PIM service to manage product information, hierarchies, and price books. Ideally, Product Experience Manager becomes the single source of truth for product data across your organization.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    In Commerce, the product data is stored separately from pricing, catalogs, and inventory. This separation means that you retrieve all product data only when you are managing product data and assets. Otherwise, when setting prices or managing inventory, you retrieve a reference to the product rather than the entire product, which makes the response times very fast.
+
+
+    You also have the flexibility to create catalogs for different scenarios by combining hierarchies of products with a price book. Scenarios might include:
+
+
+    - **Multiple geographical regions**. Display different catalogs in different regions with suitable pricing or combine product hierarchies from two different regions to display in a third region.
+
+    - **Multiple channels**. Display different catalogs based on how a shopper accesses your store, such as through a mobile app or a web storefront.
+
+    - **Direct to business versus direct to customers**. Offer different products and prices for business customers versus retail customers.
+
+    - **Preferred customers**. Offer special pricing to preferred customers while displaying a standard price catalog to all other shoppers.
+
+    - **Reward programs**. Enable reward programs where catalog prices drop after a certain spending level is reached.
+
+    - **Product sales**. Offer sale items for a limited time.
+
+
+    Scenarios are created by defining the context within which a catalog is displays. Contexts can be a customer ID, a channel, or any other user-defined tag that can be passed to the APIs from the front-end shopper experiences.
 
     '
-  contact:
-    name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
-  license:
-    url: https://elasticpath.dev
-    name: MIT
+  version: 26.0612.7739142
+  x-version-timestamp: 2026-06-12 10:52:50+00:00
 servers:
-- url: https://useast.api.elasticpath.com
-  description: US East
 - url: https://euwest.api.elasticpath.com
-  description: EU West
+  description: EU West Production Server
+- url: https://useast.api.elasticpath.com
+  description: US East Production Server
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Product Image Relationships
   description: 'Products are the items or services that you might want to sell in your store. In Product Experience Manager, products can also have associated rich media assets, such as product images or a file containing additional product details.
@@ -159,6 +173,18 @@ paths:
           $ref: '#/components/responses/internal'
 components:
   responses:
+    not_found:
+      description: Bad Request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
     bad_request:
       description: Bad request. The request failed validation.
       content:
@@ -172,57 +198,6 @@ components:
                 - title: Bad Request
                   detail: Could not parse the supplied filter
                   status: '400'
-    write_conflict:
-      description: Write conflict detected
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Conflict
-                  status: '409'
-                  detail: write conflict detected
-    not_found:
-      description: Bad Request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-    unprocessable_entity:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            failed-validation:
-              value:
-                errors:
-                - title: Failed Validation
-                  status: '422'
-                  detail: <XYZ> can not be empty
-    forbidden:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Forbidden
-                  status: '403'
-                  detail: entity owned by organization
     internal:
       description: Internal server error. There was a system failure in the platform.
       content:
@@ -237,7 +212,60 @@ components:
                   title: Internal Server Error
                   detail: There was an internal server error, you can report with your request id.
                   request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+    write_conflict:
+      description: Write conflict detected
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Conflict
+                  status: '409'
+                  detail: write conflict detected
+    forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Forbidden
+                  status: '403'
+                  detail: entity owned by organization
   schemas:
+    replace_main_image_request:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              description: The ID of the new image file.
+              example: 00000000-0000-0000-0000-000000000000
+            type:
+              type: string
+              enum:
+              - file
     error:
       required:
       - errors
@@ -271,6 +299,23 @@ components:
                 example:
                   missing_ids:
                   - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    main_image_response:
+      type: object
+      properties:
+        data:
+          description: A file object representing the main image, or null if no main image is set.
+          type:
+          - object
+          - 'null'
+          properties:
+            id:
+              description: A unique identifier for the image file generated automatically when a file is created.
+              type: string
+            type:
+              description: This represents the type of resource object being returned. Always `file`.
+              type: string
+              enum:
+              - file
     main_image_request:
       type: object
       properties:
@@ -286,36 +331,6 @@ components:
               type: string
               enum:
               - file
-    replace_main_image_request:
-      type: object
-      properties:
-        data:
-          type: object
-          properties:
-            id:
-              type: string
-              description: The ID of the new image file.
-              example: 00000000-0000-0000-0000-000000000000
-            type:
-              type: string
-              enum:
-              - file
-    main_image_response:
-      type: object
-      properties:
-        data:
-          description: A file object representing the main image, or null if no main image is set.
-          type: object
-          nullable: true
-          properties:
-            id:
-              description: A unique identifier for the image file generated automatically when a file is created.
-              type: string
-            type:
-              description: This represents the type of resource object being returned. Always `file`.
-              type: string
-              enum:
-              - file
   parameters:
     product_id:
       name: productID
@@ -327,6 +342,6 @@ components:
       required: true
       description: A unique identifier for the product.
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

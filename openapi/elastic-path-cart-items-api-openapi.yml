@@ -1,28 +1,53 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Cart Items API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Carts, Checkout, Orders Introduction Cart Items API
+  description: 'A cart contains a list of the products that a shopper adds to the cart while browsing your catalog. In the context of a cart, a selected product is called a cart item.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    A cart item identifies the product, the product price, the quantity selected, and the total price for the quantity selected. The cart displays a running total of the cost for the selected products plus the calculated tax.
+
+
+    You can allow your shoppers to add custom text to a product when adding an item to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized. See [Add product to cart](/docs/api/carts/manage-carts#add-product-to-cart).
+
+
+    After a shopper checks out, the cart is converted to an order, and you can manually delete the cart. If you don''t delete the cart, it is purged automatically after seven days.
+
+
+    The preview cart feature allows you to set a future date for your shopping cart and view the promotions that will be available during that time period. This feature enables you to validate your promotion settings and observe how they will be applied in the cart. See [Create a Preview Cart](/docs/api/carts/create-a-cart#preview-cart).
+
+
+    The following diagram shows a typical cart workflow:
+
+
+    ![Shows a cart workflow, starting from adding the first item to a cart, through cart creation and checkout](/assets/cart-workflow.png)
+
+
+    ### Multiple Carts
+
+
+    Buyers often make purchases based on jobs that they need to perform or outcomes they need to achieve and therefore require more than one shopping cart. For example, a corporate buyer places orders for multiple locations. Each location has a different frequency of ordering and require different products. The buyer can create one cart per location, fill the carts, and then check out the carts quickly. Similarly, shoppers can also create multiple carts for the ease of managing various shopping experiences, such as birthdays or holidays.
+
+
+    Each cart is discrete and separate. Any updates or changes to one cart has no effect on the other carts. A cart persists, that is, it stays with the buyer or shopper even after they use the cart in a checkout. Carts remain available after a checkout.
 
     '
   contact:
     name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
+    url: https://elasticpath.com
+  version: 26.0313.7324347
+  x-version-timestamp: 2026-03-13 21:22:42+00:00
   license:
-    url: https://elasticpath.dev
     name: MIT
+    url: assets/LICENSE
 servers:
 - url: https://useast.api.elasticpath.com
-  description: US East
+  description: US East Production Server
+  variables: {}
 - url: https://euwest.api.elasticpath.com
-  description: EU West
+  description: EU West Production Server
+  variables: {}
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Cart Items
   description: Products added to a cart are referred to as a `cart_item`.
@@ -1321,46 +1346,46 @@ paths:
       deprecated: false
 components:
   schemas:
-    SubscriptionItemObjectData:
-      title: Subscription Item Object Data
+    Money:
       type: object
-      required:
-      - id
-      - type
-      - quantity
-      - subscription_configuration
       properties:
-        type:
-          description: The type of object being returned.
+        amount:
+          type: integer
+          description: Amount in minor currency units (e.g., cents).
+        currency:
           type: string
-          const: subscription_item
-        quantity:
-          description: The number of items added to the cart.
-          type: number
+          description: ISO 4217 currency code (e.g., "USD").
+        includes_tax:
+          type: boolean
+          description: Whether the amount includes tax.
+      required:
+      - amount
+      - currency
+      - includes_tax
+    UpdateAllOrNothingOptionsObject:
+      title: Update All Or Nothing Options Object
+      type: object
+      properties:
+        update_all_or_nothing:
+          description: When set to`true`, if an error occurs for any item, no items are updated in the cart. When set to `false`, valid items are updated in the cart and the items with errors are reported in the response. Default is `true`.
+          type: boolean
           examples:
-          - 1
-        id:
-          type: string
-          format: uuid
-          description: Specifies the ID of the subscription offering you want to add to cart.
-          examples:
-          - 4ca958bc-7d69-4e2d-b5d4-c74bd5a6cde6
-        subscription_configuration:
-          type: object
-          description: Specifies how the subscription offering should be configured.
-          required:
-          - pricing_option
-          - plan
-          properties:
-            pricing_option:
-              type: string
-              format: uuid
-              description: The ID of the pricing option within the offering to use for the subscription.
-            plan:
-              type: string
-              format: uuid
-              description: The ID of the plan within the offering to use for the subscription.
-              deprecated: true
+          - false
+    BulkAddItemsRequest:
+      title: Bulk Add Items Request
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/CartItemObjectData'
+            - $ref: '#/components/schemas/CartMergeObject'
+            - $ref: '#/components/schemas/CustomItemObjectData'
+            - $ref: '#/components/schemas/ReOrderObject'
+            - $ref: '#/components/schemas/PromotionItemObjectData'
+        options:
+          $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
     BulkUpdateCartsItemsCommon:
       title: Bulk Update Carts Items (Common Properties)
       type: object
@@ -1389,202 +1414,121 @@ components:
           description: Specifies the shipping group ID for the cart item.
           type: string
           format: uuid
-    Money:
-      type: object
-      properties:
-        amount:
-          type: integer
-          description: Amount in minor currency units (e.g., cents).
-        currency:
-          type: string
-          description: ISO 4217 currency code (e.g., "USD").
-        includes_tax:
-          type: boolean
-          description: Whether the amount includes tax.
+    RelationshipItem:
+      title: RelationshipItem
+      description: Relationship data entry
       required:
-      - amount
-      - currency
-      - includes_tax
-    CustomDiscountResponse:
-      title: CustomDiscountResponse
+      - type
+      - id
       type: object
       properties:
         type:
-          description: Specifies the type of the resource. Always `custom_discount`.
+          description: The type of related resource.
           type: string
-          const: custom_discount
         id:
-          description: Specifies the UUID of the custom discount.
+          description: The ID of the related resource.
+          type: string
+          format: uuid
+    CartMergeObject:
+      title: Cart Merge Object
+      type: object
+      required:
+      - type
+      - cart_id
+      properties:
+        type:
+          description: The type of object being returned. Must be `cart_items`.
+          type: string
+          const: cart_items
+        cart_id:
+          description: The original cart to be merged from.
           type: string
           format: uuid
           examples:
-          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
-        external_id:
-          description: Specifies an external id for the custom discount.
-          type: string
-          examples:
-          - custom-discount-external-id
-        discount_engine:
-          description: 'Specifies from where the custom discount is applied.
-
-            '
-          type: string
-          examples:
-          - Custom Discount Engine
-        amount:
-          description: The amount of the custom discount.
-          $ref: '#/components/schemas/FormattedPriceData'
-        description:
-          description: Specifies a description for the custom discount.
-          type: string
-          examples:
-          - Custom discount description
-        discount_code:
-          description: Specifies the discount code used for the custom discount.
-          type: string
-          examples:
-          - cart-custom-promo-code
-        relationships:
-          description: Relationships to other resources like cart items
-          type: object
-          properties:
-            item:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                      description: The cart item ID this discount is related to
-                    type:
-                      type: string
-                      enum:
-                      - cart_item
-                      - custom_item
-    BulkUpdateCartsItemsWithQuantity:
-      title: Update Cart Item Quantity
+          - 78d7b5c2-c852-40ad-87bb-beb161f61f37
+    CustomAttributes:
+      title: CustomAttributes
+      type: object
+      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
+      additionalProperties:
+        type: object
+        required:
+        - type
+        - value
+        properties:
+          type:
+            type: string
+            description: The type of the custom attribute value.
+            enum:
+            - string
+            - integer
+            - boolean
+            - float
+          value:
+            description: The value of the custom attribute.
+            type:
+            - string
+            - boolean
+            - number
+    BulkUpdateCartsItemsWithCustomInputs:
+      title: Update Cart Item Custom Inputs
       allOf:
       - $ref: '#/components/schemas/BulkUpdateCartsItemsCommon'
       - type: object
         required:
-        - quantity
+        - custom_inputs
         - id
         properties:
-          quantity: {}
+          custom_inputs: {}
           id: {}
-    FormattedPriceData:
-      title: FormattedPriceData
+    ReOrderObjectRequest:
+      title: Re-Order Object Request
+      type: object
+      properties:
+        data:
+          allOf:
+          - $ref: '#/components/schemas/ReOrderObject'
+        options:
+          $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
+    ItemPriceData:
+      title: Order Price Data
       type: object
       properties:
         amount:
-          description: The raw total.
+          description: The amount for this item as an integer.
           type: number
+          readOnly: true
           examples:
           - 10000
         currency:
-          description: The currency set for this amount.
+          description: The currency this item was added to the cart as.
           type: string
+          readOnly: true
           examples:
           - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
+        includes_tax:
+          description: Whether or not this price is tax inclusive.
+          type: boolean
+          readOnly: true
           examples:
-          - $10.00
-    Timestamps:
-      type: object
-      properties:
-        created_at:
-          description: The date this was created.
-          type: string
-        updated_at:
-          description: The date this was last updated.
-          type: string
-    Response.ErrorItem:
+          - false
+    ReOrderObject:
+      title: Re Order Object
       type: object
       required:
-      - status
-      - title
+      - type
+      - order_id
       properties:
-        title:
+        type:
+          description: The type of resource being returned. Use `order_items`.
           type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type:
-          - string
-          - integer
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
+          const: order_items
+        order_id:
+          description: The unique identifier of the order.
           type: string
-          description: Optional additional detail about the error.
+          format: uuid
           examples:
-          - The field 'name' is required
-        source:
-          type: string
-          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
-        meta:
-          type: object
-          description: Additional metadata associated with the error. May include arbitrary keys.
-          properties:
-            id:
-              type: string
-              description: The resource id associated with the error
-            ids:
-              type: array
-              items:
-                type: string
-                description: The resource ids associated with the error
-            item_ids:
-              type: array
-              items:
-                type: string
-                description: The cart_item ids associated with the error
-            shipping_group_id:
-              type: string
-              description: The shipping group id associated with the error
-            shipping_group_ids:
-              type: array
-              items:
-                type: string
-                description: The shipping group ids associated with the error
-            cart_id:
-              type: string
-              description: The cart id associated with the error
-            code:
-              type: string
-              description: The code associated with the error.
-            order_id:
-              type: string
-              description: The order id associated with the error.
-            sku:
-              type: string
-              description: The SKU associated with the error.
-            email:
-              type: string
-              format: email
-              description: The email address associated with the error.
-            component_product_id:
-              type: string
-              format: uuid
-              description: The component product ID associated with the error.
-            error-meta-key:
-              type: string
-              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
-            value:
-              description: The value associated with the error.
-              oneOf:
-              - type: string
-              - type: integer
-              - type: boolean
-              - type: object
-                additionalProperties: true
-              - type: array
+          - 78d7b5c2-c852-40ad-87bb-beb161f61f37
     CustomItemObjectData:
       title: Custom Item Object Data
       type: object
@@ -1639,383 +1583,15 @@ components:
           type: string
         custom_attributes:
           $ref: '#/components/schemas/CustomAttributes'
-    RelationshipItem:
-      title: RelationshipItem
-      description: Relationship data entry
-      required:
-      - type
-      - id
+    AddAllOrNothingOptionsObject:
+      title: Add All Or Nothing Options Object
       type: object
       properties:
-        type:
-          description: The type of related resource.
-          type: string
-        id:
-          description: The ID of the related resource.
-          type: string
-          format: uuid
-    TaxItemResponse:
-      title: TaxItemResponse
-      type: object
-      properties:
-        type:
-          description: Specifies the type of the resource. Always `tax_item`.
-          type: string
-          const: tax_item
-        id:
-          description: Specifies the UUID of the tax item.
-          type: string
-          format: uuid
-          readOnly: true
-          examples:
-          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
-        jurisdiction:
-          description: The jurisdiction for the tax item.
-          type: string
-          examples:
-          - US-CA
-        code:
-          description: The tax code for the tax item.
-          type: string
-          examples:
-          - CA_SALES_TAX
-        name:
-          description: The name of the tax item.
-          type: string
-          examples:
-          - California Sales Tax
-        rate:
-          description: The tax rate as a decimal (e.g., 0.085 for 8.5%).
-          type: number
-          format: float
-          examples:
-          - 0.085
-        amount:
-          description: The tax amount in the smallest currency unit.
-          type: integer
-          examples:
-          - 850
-    BulkUpdateCartsItemsWithShippingGroup:
-      title: Update Cart Item Shipping Group
-      allOf:
-      - $ref: '#/components/schemas/BulkUpdateCartsItemsCommon'
-      - type: object
-        required:
-        - shipping_group_id
-        - id
-        properties:
-          shipping_group_id: {}
-          id: {}
-    CartItemObjectData:
-      title: Cart Item Object Data
-      allOf:
-      - type: object
-        required:
-        - type
-        properties:
-          type:
-            description: The type of object being returned. Must be `cart_item` for cart items.
-            type: string
-            const: cart_item
-      - $ref: '#/components/schemas/BaseItemObjectData'
-    CartTimestamps:
-      type: object
-      properties:
-        created_at:
-          description: The date this was created.
-          type: string
-        updated_at:
-          description: The date this was last updated.
-          type: string
-        expires_at:
-          description: The date this expires.
-          type: string
-    CartItemObjectRequest:
-      title: Cart Item Object Request
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/CartItemObjectData'
-    CartMergeObject:
-      title: Cart Merge Object
-      type: object
-      required:
-      - type
-      - cart_id
-      properties:
-        type:
-          description: The type of object being returned. Must be `cart_items`.
-          type: string
-          const: cart_items
-        cart_id:
-          description: The original cart to be merged from.
-          type: string
-          format: uuid
-          examples:
-          - 78d7b5c2-c852-40ad-87bb-beb161f61f37
-    ReOrderObjectRequest:
-      title: Re-Order Object Request
-      type: object
-      properties:
-        data:
-          allOf:
-          - $ref: '#/components/schemas/ReOrderObject'
-        options:
-          $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
-    BulkAddItemsRequest:
-      title: Bulk Add Items Request
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            anyOf:
-            - $ref: '#/components/schemas/CartItemObjectData'
-            - $ref: '#/components/schemas/CartMergeObject'
-            - $ref: '#/components/schemas/CustomItemObjectData'
-            - $ref: '#/components/schemas/ReOrderObject'
-            - $ref: '#/components/schemas/PromotionItemObjectData'
-        options:
-          $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
-    BulkUpdateCartsItemsWithCustomInputs:
-      title: Update Cart Item Custom Inputs
-      allOf:
-      - $ref: '#/components/schemas/BulkUpdateCartsItemsCommon'
-      - type: object
-        required:
-        - custom_inputs
-        - id
-        properties:
-          custom_inputs: {}
-          id: {}
-    Discount:
-      type: object
-      properties:
-        amount:
-          $ref: '#/components/schemas/Money'
-        code:
-          type: string
-          description: The discount code used, if applicable.
-        id:
-          type: string
-          description: Unique identifier for the discount.
-        promotion_source:
-          type: string
-          description: The source or origin of the promotion, if applicable.
-        is_cart_discount:
+        add_all_or_nothing:
+          description: When `true`, if an error occurs for any item, no items are added to the cart. When `false`, valid items are added to the cart and the items with errors are reported in the response. Default is `false`.
           type: boolean
-          description: Indicates whether the discount applies to the entire cart.
-        ordinal:
-          type: integer
-          description: Order in which the discount was applied.
-      required:
-      - amount
-      - id
-    CartItemCollectionResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/CartItemResponse'
-        included:
-          type: object
-          description: Related objects that are included in the response.
-          properties:
-            custom_discounts:
-              type: array
-              items:
-                $ref: '#/components/schemas/CustomDiscountResponse'
-            promotions:
-              type: array
-              items:
-                type: object
-                properties:
-                  automatic:
-                    type: boolean
-                  description:
-                    type: string
-                  end:
-                    type: string
-                    format: date-time
-                  id:
-                    type: string
-                    format: uuid
-                  name:
-                    type: string
-                  promotion_type:
-                    type: string
-                  promotion_source:
-                    type: string
-                    description: The source of the promotion
-                  start:
-                    type: string
-                    format: date-time
-                  type:
-                    type: string
-                    const: promotion
-            tax_items:
-              description: Array of tax items included in the response.
-              type: array
-              items:
-                $ref: '#/components/schemas/TaxItemResponse'
-        meta:
-          type: object
-          description: Additional meta information about the cart items collection.
-          properties:
-            display_price:
-              type: object
-              properties:
-                with_tax:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                without_tax:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                tax:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                discount:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                without_discount:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                shipping:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                shipping_discount:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                authorized:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                balance_owing:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                paid:
-                  $ref: '#/components/schemas/FormattedPriceData'
-            timestamps:
-              $ref: '#/components/schemas/CartTimestamps'
-            messages:
-              type: array
-              description: 'Optional array of informational messages that provide feedback about operations performed on the cart items, such as promotions added or discounts applied. This field is only present when there are relevant messages to display.
-
-                '
-              items:
-                type: object
-                properties:
-                  source:
-                    type: object
-                    description: Identifies the cart item that triggered this message
-                    properties:
-                      type:
-                        type: string
-                        description: The type of the source item
-                      id:
-                        type: string
-                        description: The unique identifier of the source item
-                      code:
-                        type: string
-                        description: The promotion code (present when source type is promotion)
-                    required:
-                    - type
-                    - id
-                  title:
-                    type: string
-                    description: A short descriptive title for the message
-                  description:
-                    type: string
-                    description: A detailed description of the message
-                required:
-                - title
-                - description
-            promotion_suggestions:
-              description: Array of promotion suggestions
-              type: array
-              items:
-                type: object
-                properties:
-                  bundle:
-                    description: Bundle configuration with promotion targets
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        auto_add_free_gift:
-                          description: Whether to automatically add free gift
-                          type: boolean
-                        cart_item_id:
-                          description: Cart item ID for the target
-                          type: string
-                        quantity:
-                          description: Quantity for the promotion
-                          type: integer
-                        targets:
-                          description: Array of target SKUs
-                          type: array
-                          items:
-                            type: string
-                      additionalProperties: true
-                  code:
-                    type: string
-                  info:
-                    type: string
-                  message:
-                    type: string
-                  promotion_id:
-                    type: string
-                  auto_add:
-                    type: boolean
-                    description: Whether this promotion should be automatically added
-                  targets:
-                    description: Array of promotion targets (alternative structure)
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        cart_item_id:
-                          type: string
-                          description: The cart item ID for this target
-                        quantity:
-                          type: integer
-                          description: The quantity for this target
-                        skus:
-                          type: array
-                          description: Array of SKU codes for this target
-                          items:
-                            type: string
-        errors:
-          type: array
-          description: Array of error objects, if any errors occurred.
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-      required:
-      - data
-    Response.ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    SubscriptionItemObject:
-      title: Subscription Item Object
-      type: object
-      properties:
-        data:
-          allOf:
-          - $ref: '#/components/schemas/SubscriptionItemObjectData'
-          - $ref: '#/components/schemas/CartItemResponse'
-    PromotionItemObjectData:
-      title: Promotion Item Object Data
-      type: object
-      required:
-      - type
-      - code
-      properties:
-        type:
-          description: Specifies the type of resource, which is `promotion_item`.
-          type: string
-          const: promotion_item
-        code:
-          description: Specifies the promotion code. For more information about codes[].user[], see the [Create Promotion codes](/docs/api/promotions/create-promotion-codes) section.
-          type: string
           examples:
-          - PROMO_CODE
+          - false
     CustomItemObject:
       title: Custom Item Object
       type: object
@@ -2024,68 +1600,16 @@ components:
           allOf:
           - $ref: '#/components/schemas/CustomItemObjectData'
           description: ''
-    BaseItemObjectData:
-      title: Base Item Object Data
-      type: object
-      required:
-      - quantity
-      properties:
-        quantity:
-          description: The number of items to add.
-          type: number
-          examples:
-          - 2
-        id:
-          type: string
-          format: uuid
-          description: Specifies the ID of the product you want to add. (use this OR sku)
-          examples:
-          - 78d7b5c2-c852-40ad-87bb-beb161f61f37
-        sku:
-          type: string
-          description: Specifies the item SKU that you want to add. (use this OR id)
-          examples:
-          - my-item
-        name:
-          type: string
-          description: Optional name for the product item. If not provided, the product name from catalog will be used.
-          examples:
-          - Custom Product Name
-        custom_inputs:
-          description: The custom text to be added to a product.
-          type: object
-        bundle_configuration:
-          description: Object used to describe the bundle options selected.
-          type: object
-          properties:
-            selected_options:
-              description: Specifies selected options.
-              type: object
-            component_products:
-              description: Array of component products for the selected options.
-              type: array
-        shipping_group_id:
-          description: Identifier for a Shipping Group
-          type: string
-        location:
-          description: The slug of a stock location.
-          type: string
-        custom_attributes:
-          $ref: '#/components/schemas/CustomAttributes'
-    CartItemFormattedPriceData:
-      title: CartItemFormattedPriceData
+    CartMergeObjectRequest:
+      title: Cart Merge Object Request
       type: object
       properties:
-        unit:
-          type: object
+        data:
           allOf:
-          - $ref: '#/components/schemas/FormattedPriceData'
-          description: The amount per each single unit.
-        value:
-          type: object
-          allOf:
-          - $ref: '#/components/schemas/FormattedPriceData'
-          description: The total amount of the item (i.e., unit * quantity).
+          - $ref: '#/components/schemas/CartMergeObject'
+          description: ''
+        options:
+          $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
     CartItemResponse:
       title: Cart Item Response
       type: object
@@ -2423,49 +1947,529 @@ components:
           description: Custom attributes attached to the cart item.
           readOnly: true
           $ref: '#/components/schemas/CustomAttributes'
-    CartMergeObjectRequest:
-      title: Cart Merge Object Request
+    Response.ErrorItem:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type:
+          - string
+          - integer
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+        source:
+          type: string
+          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
+        meta:
+          type: object
+          description: Additional metadata associated with the error. May include arbitrary keys.
+          properties:
+            id:
+              type: string
+              description: The resource id associated with the error
+            ids:
+              type: array
+              items:
+                type: string
+                description: The resource ids associated with the error
+            item_ids:
+              type: array
+              items:
+                type: string
+                description: The cart_item ids associated with the error
+            shipping_group_id:
+              type: string
+              description: The shipping group id associated with the error
+            shipping_group_ids:
+              type: array
+              items:
+                type: string
+                description: The shipping group ids associated with the error
+            cart_id:
+              type: string
+              description: The cart id associated with the error
+            code:
+              type: string
+              description: The code associated with the error.
+            order_id:
+              type: string
+              description: The order id associated with the error.
+            sku:
+              type: string
+              description: The SKU associated with the error.
+            email:
+              type: string
+              format: email
+              description: The email address associated with the error.
+            component_product_id:
+              type: string
+              format: uuid
+              description: The component product ID associated with the error.
+            error-meta-key:
+              type: string
+              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
+            value:
+              description: The value associated with the error.
+              oneOf:
+              - type: string
+              - type: integer
+              - type: boolean
+              - type: object
+                additionalProperties: true
+              - type: array
+    SubscriptionItemObjectData:
+      title: Subscription Item Object Data
+      type: object
+      required:
+      - id
+      - type
+      - quantity
+      - subscription_configuration
+      properties:
+        type:
+          description: The type of object being returned.
+          type: string
+          const: subscription_item
+        quantity:
+          description: The number of items added to the cart.
+          type: number
+          examples:
+          - 1
+        id:
+          type: string
+          format: uuid
+          description: Specifies the ID of the subscription offering you want to add to cart.
+          examples:
+          - 4ca958bc-7d69-4e2d-b5d4-c74bd5a6cde6
+        subscription_configuration:
+          type: object
+          description: Specifies how the subscription offering should be configured.
+          required:
+          - pricing_option
+          - plan
+          properties:
+            pricing_option:
+              type: string
+              format: uuid
+              description: The ID of the pricing option within the offering to use for the subscription.
+            plan:
+              type: string
+              format: uuid
+              description: The ID of the plan within the offering to use for the subscription.
+              deprecated: true
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    CartItemCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItemResponse'
+        included:
+          type: object
+          description: Related objects that are included in the response.
+          properties:
+            custom_discounts:
+              type: array
+              items:
+                $ref: '#/components/schemas/CustomDiscountResponse'
+            promotions:
+              type: array
+              items:
+                type: object
+                properties:
+                  automatic:
+                    type: boolean
+                  description:
+                    type: string
+                  end:
+                    type: string
+                    format: date-time
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  promotion_type:
+                    type: string
+                  promotion_source:
+                    type: string
+                    description: The source of the promotion
+                  start:
+                    type: string
+                    format: date-time
+                  type:
+                    type: string
+                    const: promotion
+            tax_items:
+              description: Array of tax items included in the response.
+              type: array
+              items:
+                $ref: '#/components/schemas/TaxItemResponse'
+        meta:
+          type: object
+          description: Additional meta information about the cart items collection.
+          properties:
+            display_price:
+              type: object
+              properties:
+                with_tax:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                without_tax:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                tax:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                discount:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                without_discount:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                shipping:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                shipping_discount:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                authorized:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                balance_owing:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                paid:
+                  $ref: '#/components/schemas/FormattedPriceData'
+            timestamps:
+              $ref: '#/components/schemas/CartTimestamps'
+            messages:
+              type: array
+              description: 'Optional array of informational messages that provide feedback about operations performed on the cart items, such as promotions added or discounts applied. This field is only present when there are relevant messages to display.
+
+                '
+              items:
+                type: object
+                properties:
+                  source:
+                    type: object
+                    description: Identifies the cart item that triggered this message
+                    properties:
+                      type:
+                        type: string
+                        description: The type of the source item
+                      id:
+                        type: string
+                        description: The unique identifier of the source item
+                      code:
+                        type: string
+                        description: The promotion code (present when source type is promotion)
+                    required:
+                    - type
+                    - id
+                  title:
+                    type: string
+                    description: A short descriptive title for the message
+                  description:
+                    type: string
+                    description: A detailed description of the message
+                required:
+                - title
+                - description
+            promotion_suggestions:
+              description: Array of promotion suggestions
+              type: array
+              items:
+                type: object
+                properties:
+                  bundle:
+                    description: Bundle configuration with promotion targets
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        auto_add_free_gift:
+                          description: Whether to automatically add free gift
+                          type: boolean
+                        cart_item_id:
+                          description: Cart item ID for the target
+                          type: string
+                        quantity:
+                          description: Quantity for the promotion
+                          type: integer
+                        targets:
+                          description: Array of target SKUs
+                          type: array
+                          items:
+                            type: string
+                      additionalProperties: true
+                  code:
+                    type: string
+                  info:
+                    type: string
+                  message:
+                    type: string
+                  promotion_id:
+                    type: string
+                  auto_add:
+                    type: boolean
+                    description: Whether this promotion should be automatically added
+                  targets:
+                    description: Array of promotion targets (alternative structure)
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cart_item_id:
+                          type: string
+                          description: The cart item ID for this target
+                        quantity:
+                          type: integer
+                          description: The quantity for this target
+                        skus:
+                          type: array
+                          description: Array of SKU codes for this target
+                          items:
+                            type: string
+        errors:
+          type: array
+          description: Array of error objects, if any errors occurred.
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+      required:
+      - data
+    CartTimestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this was created.
+          type: string
+        updated_at:
+          description: The date this was last updated.
+          type: string
+        expires_at:
+          description: The date this expires.
+          type: string
+    BaseItemObjectData:
+      title: Base Item Object Data
+      type: object
+      required:
+      - quantity
+      properties:
+        quantity:
+          description: The number of items to add.
+          type: number
+          examples:
+          - 2
+        id:
+          type: string
+          format: uuid
+          description: Specifies the ID of the product you want to add. (use this OR sku)
+          examples:
+          - 78d7b5c2-c852-40ad-87bb-beb161f61f37
+        sku:
+          type: string
+          description: Specifies the item SKU that you want to add. (use this OR id)
+          examples:
+          - my-item
+        name:
+          type: string
+          description: Optional name for the product item. If not provided, the product name from catalog will be used.
+          examples:
+          - Custom Product Name
+        custom_inputs:
+          description: The custom text to be added to a product.
+          type: object
+        bundle_configuration:
+          description: Object used to describe the bundle options selected.
+          type: object
+          properties:
+            selected_options:
+              description: Specifies selected options.
+              type: object
+            component_products:
+              description: Array of component products for the selected options.
+              type: array
+        shipping_group_id:
+          description: Identifier for a Shipping Group
+          type: string
+        location:
+          description: The slug of a stock location.
+          type: string
+        custom_attributes:
+          $ref: '#/components/schemas/CustomAttributes'
+    PromotionItemObject:
+      title: Promotion Item Object
       type: object
       properties:
         data:
           allOf:
-          - $ref: '#/components/schemas/CartMergeObject'
-          description: ''
-        options:
-          $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
-    UpdateAllOrNothingOptionsObject:
-      title: Update All Or Nothing Options Object
+          - $ref: '#/components/schemas/PromotionItemObjectData'
+    SubscriptionItemObject:
+      title: Subscription Item Object
       type: object
       properties:
-        update_all_or_nothing:
-          description: When set to`true`, if an error occurs for any item, no items are updated in the cart. When set to `false`, valid items are updated in the cart and the items with errors are reported in the response. Default is `true`.
-          type: boolean
-          examples:
-          - false
-    CustomAttributes:
-      title: CustomAttributes
+        data:
+          allOf:
+          - $ref: '#/components/schemas/SubscriptionItemObjectData'
+          - $ref: '#/components/schemas/CartItemResponse'
+    BulkUpdateCartsItems:
+      title: Bulk Update Carts Items
       type: object
-      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
-      additionalProperties:
-        type: object
+      properties:
+        data:
+          type: array
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/BulkUpdateCartsItemsWithQuantity'
+            - $ref: '#/components/schemas/BulkUpdateCartsItemsWithShippingGroup'
+            - $ref: '#/components/schemas/BulkUpdateCartsItemsWithCustomInputs'
+        options:
+          $ref: '#/components/schemas/UpdateAllOrNothingOptionsObject'
+    CartItemFormattedPriceData:
+      title: CartItemFormattedPriceData
+      type: object
+      properties:
+        unit:
+          type: object
+          allOf:
+          - $ref: '#/components/schemas/FormattedPriceData'
+          description: The amount per each single unit.
+        value:
+          type: object
+          allOf:
+          - $ref: '#/components/schemas/FormattedPriceData'
+          description: The total amount of the item (i.e., unit * quantity).
+    PromotionItemObjectData:
+      title: Promotion Item Object Data
+      type: object
+      required:
+      - type
+      - code
+      properties:
+        type:
+          description: Specifies the type of resource, which is `promotion_item`.
+          type: string
+          const: promotion_item
+        code:
+          description: Specifies the promotion code. For more information about codes[].user[], see the [Create Promotion codes](/docs/api/promotions/create-promotion-codes) section.
+          type: string
+          examples:
+          - PROMO_CODE
+    TaxItemResponse:
+      title: TaxItemResponse
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the resource. Always `tax_item`.
+          type: string
+          const: tax_item
+        id:
+          description: Specifies the UUID of the tax item.
+          type: string
+          format: uuid
+          readOnly: true
+          examples:
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        jurisdiction:
+          description: The jurisdiction for the tax item.
+          type: string
+          examples:
+          - US-CA
+        code:
+          description: The tax code for the tax item.
+          type: string
+          examples:
+          - CA_SALES_TAX
+        name:
+          description: The name of the tax item.
+          type: string
+          examples:
+          - California Sales Tax
+        rate:
+          description: The tax rate as a decimal (e.g., 0.085 for 8.5%).
+          type: number
+          format: float
+          examples:
+          - 0.085
+        amount:
+          description: The tax amount in the smallest currency unit.
+          type: integer
+          examples:
+          - 850
+    Timestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this was created.
+          type: string
+        updated_at:
+          description: The date this was last updated.
+          type: string
+    BulkUpdateCartsItemsWithShippingGroup:
+      title: Update Cart Item Shipping Group
+      allOf:
+      - $ref: '#/components/schemas/BulkUpdateCartsItemsCommon'
+      - type: object
         required:
-        - type
-        - value
+        - shipping_group_id
+        - id
         properties:
-          type:
-            type: string
-            description: The type of the custom attribute value.
-            enum:
-            - string
-            - integer
-            - boolean
-            - float
-          value:
-            description: The value of the custom attribute.
-            type:
-            - string
-            - boolean
-            - number
+          shipping_group_id: {}
+          id: {}
+    BulkUpdateCartsItemsWithQuantity:
+      title: Update Cart Item Quantity
+      allOf:
+      - $ref: '#/components/schemas/BulkUpdateCartsItemsCommon'
+      - type: object
+        required:
+        - quantity
+        - id
+        properties:
+          quantity: {}
+          id: {}
+    CartItemObjectRequest:
+      title: Cart Item Object Request
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/CartItemObjectData'
+    Discount:
+      type: object
+      properties:
+        amount:
+          $ref: '#/components/schemas/Money'
+        code:
+          type: string
+          description: The discount code used, if applicable.
+        id:
+          type: string
+          description: Unique identifier for the discount.
+        promotion_source:
+          type: string
+          description: The source or origin of the promotion, if applicable.
+        is_cart_discount:
+          type: boolean
+          description: Indicates whether the discount applies to the entire cart.
+        ordinal:
+          type: integer
+          description: Order in which the discount was applied.
+      required:
+      - amount
+      - id
     UpdateCartsItems:
       title: Update Carts Items
       type: object
@@ -2500,75 +2504,96 @@ components:
               format: uuid
               examples:
               - 900ab9c1-4b39-43fe-b080-0dc2806065d9
-    ReOrderObject:
-      title: Re Order Object
+    CustomDiscountResponse:
+      title: CustomDiscountResponse
       type: object
-      required:
-      - type
-      - order_id
       properties:
         type:
-          description: The type of resource being returned. Use `order_items`.
+          description: Specifies the type of the resource. Always `custom_discount`.
           type: string
-          const: order_items
-        order_id:
-          description: The unique identifier of the order.
+          const: custom_discount
+        id:
+          description: Specifies the UUID of the custom discount.
           type: string
           format: uuid
           examples:
-          - 78d7b5c2-c852-40ad-87bb-beb161f61f37
-    AddAllOrNothingOptionsObject:
-      title: Add All Or Nothing Options Object
-      type: object
-      properties:
-        add_all_or_nothing:
-          description: When `true`, if an error occurs for any item, no items are added to the cart. When `false`, valid items are added to the cart and the items with errors are reported in the response. Default is `false`.
-          type: boolean
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        external_id:
+          description: Specifies an external id for the custom discount.
+          type: string
           examples:
-          - false
-    BulkUpdateCartsItems:
-      title: Bulk Update Carts Items
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            anyOf:
-            - $ref: '#/components/schemas/BulkUpdateCartsItemsWithQuantity'
-            - $ref: '#/components/schemas/BulkUpdateCartsItemsWithShippingGroup'
-            - $ref: '#/components/schemas/BulkUpdateCartsItemsWithCustomInputs'
-        options:
-          $ref: '#/components/schemas/UpdateAllOrNothingOptionsObject'
-    PromotionItemObject:
-      title: Promotion Item Object
-      type: object
-      properties:
-        data:
-          allOf:
-          - $ref: '#/components/schemas/PromotionItemObjectData'
-    ItemPriceData:
-      title: Order Price Data
+          - custom-discount-external-id
+        discount_engine:
+          description: 'Specifies from where the custom discount is applied.
+
+            '
+          type: string
+          examples:
+          - Custom Discount Engine
+        amount:
+          description: The amount of the custom discount.
+          $ref: '#/components/schemas/FormattedPriceData'
+        description:
+          description: Specifies a description for the custom discount.
+          type: string
+          examples:
+          - Custom discount description
+        discount_code:
+          description: Specifies the discount code used for the custom discount.
+          type: string
+          examples:
+          - cart-custom-promo-code
+        relationships:
+          description: Relationships to other resources like cart items
+          type: object
+          properties:
+            item:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: The cart item ID this discount is related to
+                    type:
+                      type: string
+                      enum:
+                      - cart_item
+                      - custom_item
+    CartItemObjectData:
+      title: Cart Item Object Data
+      allOf:
+      - type: object
+        required:
+        - type
+        properties:
+          type:
+            description: The type of object being returned. Must be `cart_item` for cart items.
+            type: string
+            const: cart_item
+      - $ref: '#/components/schemas/BaseItemObjectData'
+    FormattedPriceData:
+      title: FormattedPriceData
       type: object
       properties:
         amount:
-          description: The amount for this item as an integer.
+          description: The raw total.
           type: number
-          readOnly: true
           examples:
           - 10000
         currency:
-          description: The currency this item was added to the cart as.
+          description: The currency set for this amount.
           type: string
-          readOnly: true
           examples:
           - USD
-        includes_tax:
-          description: Whether or not this price is tax inclusive.
-          type: boolean
-          readOnly: true
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
           examples:
-          - false
+          - $10.00
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer

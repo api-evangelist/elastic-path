@@ -1,26 +1,114 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Stopword Sets API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Catalog Search Introduction Stopword Sets API
+  version: 26.0604.7696948
+  x-version-timestamp: 2026-06-04 10:33:46+00:00
+  description: 'Elastic Path Catalog Search provides fast, relevant product search capabilities for your published catalogs. Catalog Search enables shoppers to find products quickly using full-text search, filtering, faceting, and sorting, while giving merchandisers powerful tools to customize search relevance and ranking.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    You can integrate Catalog Search into your storefront using the Catalog Search API or manage search settings through Commerce Manager.
+
+
+    ### How Catalog Search Works
+
+
+    Catalog Search works alongside your Product Experience Manager catalogs to provide optimized search functionality.
+
+
+    When creating or updating a catalog, enable search to allow the catalog''s products to be indexed. See [Catalogs](/docs/api/pxm/catalog/catalogs). Then when a search-enabled catalog is published, the products are automatically indexed for search. The search index contains product data optimized for fast querying.
+
+
+    Use the Search API to query products with full-text search, filtering, faceting, and sorting. The results of the search contain the full product information, not just the indexed fields, reducing the need for further API calls.
+
+
+    ### Key Capabilities
+
+
+    - **Full-text search**: Search across product names, descriptions, SKUs, and custom fields with typo tolerance and relevance ranking
+
+    - **Filtering**: Narrow results using conditions on product attributes, categories, prices, and custom fields
+
+    - **Faceting**: Get aggregated counts for attribute values to build dynamic navigation and refinement options
+
+    - **Sorting**: Order results by price, name, custom fields, or relevance score
+
+    - **Search Profiles**: Configure search behavior including field weights, filters, and boost rules without code changes
+
+    - **Custom Fields**: Extend the search schema with your own product attributes for filtering, faceting, and sorting
+
+    - **Fully Hydrated Responses**: Search results contain complete information about the products, reducing the requirement for follow-up API calls.
+
+
+    ### Personalized Search Results
+
+
+    Search results are automatically personalized based on the shopper''s context. The system determines which catalog and prices to show based on:
+
+
+    - **Channel**: The shopping experience, such as a web storefront or mobile app
+
+    - **Account**: For B2B scenarios, the shopper''s account and any parent accounts
+
+    - **Customer**: The logged-in customer''s segment or tier
+
+    - **Tags**: Custom context tags for advanced segmentation scenarios
+
+
+    See [**Characteristics of Shopper Catalogs**](/docs/api/pxm/catalog/shopper-catalog-api#characteristics-of-shopper-catalogs) for more information.
+
+
+    ### Search Profiles
+
+
+    Search Profiles give merchandisers control over search behavior without requiring code changes. With Search Profiles, you can:
+
+
+    - **Configure field weights**: Control which product fields are most important for relevance ranking
+
+    - **Apply default filters**: Enforce business rules like only showing live products
+
+    - **Boost products**: Promote featured products, specific brands, or categories to the top of results
+
+    - **A/B test**: Create multiple profiles to test different search configurations
+
+
+    See [**Search Profiles**](/docs/api/pxm/catalog-search/search-profiles) for more information.
+
+
+    ### Extending the Search Schema
+
+
+    By default, the search index includes standard product fields like name, description, SKU, and categories. You can extend the schema by adding custom fields using [Indexable Fields](/docs/api/pxm/catalog-search/indexable-fields).
+
+
+    Two types of custom fields can be indexed:
+
+
+    - **Product extension fields** (`extensions.products(<slug>).<field>`): Fields from your product extension templates.
+
+    - **Product custom attributes** (`shopper_attributes.<attribute>` and `admin_attributes.<attribute>`): Merchant-defined key/value attributes on products.
+
+
+    This allows you to:
+
+
+    - Search on custom product attributes like brand, material, or specifications
+
+    - Filter products by custom fields like color, size, or rating
+
+    - Display facets for custom field values in your navigation
+
+    - Sort results by custom numeric fields like rating or popularity
+
+
+    See [**Indexable Fields**](/docs/api/pxm/catalog-search/indexable-fields) for more information.
 
     '
-  contact:
-    name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
-  license:
-    url: https://elasticpath.dev
-    name: MIT
 servers:
-- url: https://useast.api.elasticpath.com
-  description: US East
-- url: https://euwest.api.elasticpath.com
-  description: EU West
+- url: https://euwest.api.elasticpath.com/v2
+  description: EU west cluster
+- url: https://useast.api.elasticpath.com/v2
+  description: US east cluster
 security:
 - BearerToken: []
 tags:
@@ -220,6 +308,48 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
+    StopwordSetType:
+      type: string
+      description: Represents the type of object being returned. Always `catalog_search_stopword_set`.
+      example: catalog_search_stopword_set
+      enum:
+      - catalog_search_stopword_set
+    CreateStopwordSetRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - attributes
+          properties:
+            type:
+              $ref: '#/components/schemas/StopwordSetType'
+            attributes:
+              $ref: '#/components/schemas/StopwordSetAttributes'
+    UpdateStopwordSetRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - id
+          - type
+          - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 550e8400-e29b-41d4-a716-446655440000
+              x-go-name: ID
+            type:
+              $ref: '#/components/schemas/StopwordSetType'
+            attributes:
+              $ref: '#/components/schemas/UpdateStopwordSetAttributes'
     ResourceOwner:
       description: The resource owner, either `organization` or `store`.
       type: string
@@ -230,20 +360,6 @@ components:
       x-go-type: tenancy.Owner
       x-go-type-import:
         path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
-    ListResponseMeta:
-      type: object
-      required:
-      - results
-      properties:
-        results:
-          $ref: '#/components/schemas/ListResponseMetaResults'
-    StopwordSetResponse:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          $ref: '#/components/schemas/StopwordSet'
     UpdateStopwordSetAttributes:
       type: object
       required:
@@ -267,113 +383,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-    ListResponseMetaResults:
-      description: Contains the results for the entire collection.
-      type: object
-      required:
-      - total
-      properties:
-        total:
-          description: Total number of results for the entire collection.
-          type: integer
-          example: 100
-    ListStopwordSetsResponse:
-      type: object
-      required:
-      - data
-      - meta
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/StopwordSet'
-        meta:
-          $ref: '#/components/schemas/ListResponseMeta'
-    UpdateStopwordSetRequest:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: object
-          required:
-          - id
-          - type
-          - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              example: 550e8400-e29b-41d4-a716-446655440000
-              x-go-name: ID
-            type:
-              $ref: '#/components/schemas/StopwordSetType'
-            attributes:
-              $ref: '#/components/schemas/UpdateStopwordSetAttributes'
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    CreateStopwordSetRequest:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: object
-          required:
-          - type
-          - attributes
-          properties:
-            type:
-              $ref: '#/components/schemas/StopwordSetType'
-            attributes:
-              $ref: '#/components/schemas/StopwordSetAttributes'
-    StopwordSetType:
-      type: string
-      description: Represents the type of object being returned. Always `catalog_search_stopword_set`.
-      example: catalog_search_stopword_set
-      enum:
-      - catalog_search_stopword_set
-    StopwordSet:
-      type: object
-      required:
-      - id
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          description: The unique identifier for the stopword set.
-          type: string
-          format: uuid
-          example: 550e8400-e29b-41d4-a716-446655440000
-          x-go-name: ID
-        type:
-          $ref: '#/components/schemas/StopwordSetType'
-        attributes:
-          $ref: '#/components/schemas/StopwordSetAttributes'
-        meta:
-          $ref: '#/components/schemas/StopwordSetMeta'
     StopwordSetAttributes:
       type: object
       required:
@@ -434,6 +443,85 @@ components:
           format: date-time
           description: The date and time the stopword set was last successfully synced.
           example: '2026-03-05T12:01:00Z'
+    StopwordSet:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: The unique identifier for the stopword set.
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/StopwordSetType'
+        attributes:
+          $ref: '#/components/schemas/StopwordSetAttributes'
+        meta:
+          $ref: '#/components/schemas/StopwordSetMeta'
+    ListStopwordSetsResponse:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StopwordSet'
+        meta:
+          $ref: '#/components/schemas/ListResponseMeta'
+    ListResponseMeta:
+      type: object
+      required:
+      - results
+      properties:
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
+    ListResponseMetaResults:
+      description: Contains the results for the entire collection.
+      type: object
+      required:
+      - total
+      properties:
+        total:
+          description: Total number of results for the entire collection.
+          type: integer
+          example: 100
+    StopwordSetResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/StopwordSet'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.
@@ -449,5 +537,5 @@ components:
                   status: '500'
   securitySchemes:
     BearerToken:
-      type: http
       scheme: bearer
+      type: http

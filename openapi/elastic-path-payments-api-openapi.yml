@@ -1,28 +1,53 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  version: 25.1126.6886238
-  x-version-timestamp: 2025-11-26 19:10:23+00:00
-  title: Addresses Introduction Account Addresses Payments API
-  description: 'The Addresses API allows you to organize account addresses. Addresses are a sub-resource of `account` resources, an account can have multiple addresses, such as home, work, and neighbour.
+  title: Carts, Checkout, Orders Introduction Payments API
+  description: 'A cart contains a list of the products that a shopper adds to the cart while browsing your catalog. In the context of a cart, a selected product is called a cart item.
 
 
-    You can use an account address with either [client_credentials access token](/docs/api/authentication/create-an-access-token) or a combination of [implicit access token](/docs/api/authentication/create-an-access-token) and [Account Management authentication](/docs/api/accounts/post-v-2-account-members-tokens) token.
+    A cart item identifies the product, the product price, the quantity selected, and the total price for the quantity selected. The cart displays a running total of the cost for the selected products plus the calculated tax.
+
+
+    You can allow your shoppers to add custom text to a product when adding an item to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized. See [Add product to cart](/docs/api/carts/manage-carts#add-product-to-cart).
+
+
+    After a shopper checks out, the cart is converted to an order, and you can manually delete the cart. If you don''t delete the cart, it is purged automatically after seven days.
+
+
+    The preview cart feature allows you to set a future date for your shopping cart and view the promotions that will be available during that time period. This feature enables you to validate your promotion settings and observe how they will be applied in the cart. See [Create a Preview Cart](/docs/api/carts/create-a-cart#preview-cart).
+
+
+    The following diagram shows a typical cart workflow:
+
+
+    ![Shows a cart workflow, starting from adding the first item to a cart, through cart creation and checkout](/assets/cart-workflow.png)
+
+
+    ### Multiple Carts
+
+
+    Buyers often make purchases based on jobs that they need to perform or outcomes they need to achieve and therefore require more than one shopping cart. For example, a corporate buyer places orders for multiple locations. Each location has a different frequency of ordering and require different products. The buyer can create one cart per location, fill the carts, and then check out the carts quickly. Similarly, shoppers can also create multiple carts for the ease of managing various shopping experiences, such as birthdays or holidays.
+
+
+    Each cart is discrete and separate. Any updates or changes to one cart has no effect on the other carts. A cart persists, that is, it stays with the buyer or shopper even after they use the cart in a checkout. Carts remain available after a checkout.
 
     '
   contact:
     name: Elastic Path
-    url: https://www.elasticpath.com
-    email: support@elasticpath.com
+    url: https://elasticpath.com
+  version: 26.0313.7324347
+  x-version-timestamp: 2026-03-13 21:22:42+00:00
   license:
-    url: https://elasticpath.dev
     name: MIT
+    url: assets/LICENSE
 servers:
 - url: https://useast.api.elasticpath.com
-  description: US East
+  description: US East Production Server
+  variables: {}
 - url: https://euwest.api.elasticpath.com
-  description: EU West
+  description: EU West Production Server
+  variables: {}
 security:
-- BearerToken: []
+- bearerAuth: []
 tags:
 - name: Payments
   description: 'When you [checkout](/docs/api/carts/checkout) a [cart](/docs/api/carts/cart-management), an unpaid [order](/docs/api/carts/orders) is returned. You can process the payment for the order though a payment gateway.
@@ -635,83 +660,295 @@ paths:
       deprecated: false
 components:
   schemas:
-    TransactionListResponse:
+    BaseCartResponse:
+      title: BaseCartResponse
+      type: object
+      properties:
+        id:
+          description: The unique identifier for the cart. Use SDK or create it yourself.
+          type: string
+        name:
+          description: The name of this cart.
+          type: string
+          examples:
+          - cart name
+        description:
+          description: A description of the cart.
+          type: string
+          examples:
+          - cart description
+        contact:
+          $ref: '#/components/schemas/CartContact'
+        discount_settings:
+          $ref: '#/components/schemas/DiscountSettings'
+        inventory_settings:
+          $ref: '#/components/schemas/InventorySettings'
+        item_settings:
+          $ref: '#/components/schemas/ItemSettings'
+        payment_intent_id:
+          description: Stripe-assigned unique identifier for the linked Payment Intent
+          type: string
+        custom_attributes:
+          $ref: '#/components/schemas/CustomAttributes'
+        snapshot_date:
+          description: The snapshot date for the cart.
+          type: string
+          format: date-time
+        links:
+          type: object
+          properties:
+            self:
+              description: A link to that specific resource.
+              type: string
+          examples:
+          - https://useast.api.elasticpath.com/v2/carts/1
+        meta:
+          type: object
+          properties:
+            display_price:
+              type: object
+              properties:
+                with_tax:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                without_tax:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                tax:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                discount:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                without_discount:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                shipping:
+                  $ref: '#/components/schemas/FormattedPriceData'
+                shipping_discount:
+                  $ref: '#/components/schemas/FormattedPriceData'
+            timestamps:
+              $ref: '#/components/schemas/CartTimestamps'
+            promotion_suggestions:
+              description: Array of promotion suggestions
+              type: array
+              items:
+                type: object
+                properties:
+                  bundle:
+                    description: Bundle configuration with promotion targets
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        auto_add_free_gift:
+                          description: Whether to automatically add free gift
+                          type: boolean
+                        cart_item_id:
+                          description: Cart item ID for the target
+                          type: string
+                        quantity:
+                          description: Quantity for the promotion
+                          type: integer
+                        targets:
+                          description: Array of target SKUs
+                          type: array
+                          items:
+                            type: string
+                      additionalProperties: true
+                  code:
+                    type: string
+                  info:
+                    type: string
+                  message:
+                    type: string
+                  promotion_id:
+                    type: string
+        relationships:
+          type: object
+          properties:
+            customers:
+              anyOf:
+              - $ref: '#/components/schemas/RelationshipArray'
+              - type: object
+                maxProperties: 0
+            items:
+              anyOf:
+              - $ref: '#/components/schemas/RelationshipArray'
+              - type: object
+                properties:
+                  data:
+                    oneOf:
+                    - type: 'null'
+                    - type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          type:
+                            type: string
+                required:
+                - data
+            accounts:
+              anyOf:
+              - $ref: '#/components/schemas/RelationshipArray'
+              - type: object
+                maxProperties: 0
+            custom_discounts:
+              $ref: '#/components/schemas/RelationshipArray'
+            promotions:
+              $ref: '#/components/schemas/RelationshipArray'
+    OrdersTransactionsConfirmRequest:
+      title: OrdersTransactionsConfirmRequest
       type: object
       properties:
         data:
-          type: array
-          items:
-            $ref: '#/components/schemas/TransactionResponse'
+          type: object
+    RelationshipItem:
+      title: RelationshipItem
+      description: Relationship data entry
       required:
-      - data
-    CustomDiscountResponse:
-      title: CustomDiscountResponse
+      - type
+      - id
       type: object
       properties:
         type:
-          description: Specifies the type of the resource. Always `custom_discount`.
+          description: The type of related resource.
           type: string
-          const: custom_discount
         id:
-          description: Specifies the UUID of the custom discount.
+          description: The ID of the related resource.
           type: string
           format: uuid
-          examples:
-          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
-        external_id:
-          description: Specifies an external id for the custom discount.
+    RelationshipArray:
+      title: RelationshipArray
+      description: Array of relationships
+      type: object
+      properties:
+        data:
+          description: Individual relationships
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipItem'
+    Data.BasePayments:
+      title: Data.BasePayments
+      type: object
+      required:
+      - gateway
+      - method
+      properties:
+        gateway:
           type: string
-          examples:
-          - custom-discount-external-id
-        discount_engine:
-          description: 'Specifies from where the custom discount is applied.
-
-            '
+          enum:
+          - adyen
+          - authorize_net
+          - braintree
+          - card_connect
+          - cyber_source
+          - elastic_path_payments_stripe
+          - manual
+          - paypal_express_checkout
+          - stripe
+          - stripe_payment_intents
+        method:
+          description: Specifies the transaction method, such as `purchase` or `authorize`.
           type: string
-          examples:
-          - Custom Discount Engine
+          enum:
+          - authorize
+          - purchase
+          - purchase_setup
+          - authorize_setup
         amount:
-          description: The amount of the custom discount.
-          $ref: '#/components/schemas/FormattedPriceData'
-        description:
-          description: Specifies a description for the custom discount.
-          type: string
+          description: The amount to be paid for the transaction.
+          type: number
           examples:
-          - Custom discount description
-        discount_code:
-          description: Specifies the discount code used for the custom discount.
-          type: string
-          examples:
-          - cart-custom-promo-code
-        relationships:
-          description: Relationships to other resources like cart items
-          type: object
-          properties:
-            item:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                      description: The cart item ID this discount is related to
-                    type:
-                      type: string
-                      enum:
-                      - cart_item
-                      - custom_item
-    CartResponse:
-      title: CartResponse
+          - 10000
+    Data.PayPalExpressCheckoutPayment:
+      title: Data.PayPalExpressCheckoutPayment
+      required:
+      - gateway
       allOf:
-      - $ref: '#/components/schemas/BaseCartResponse'
+      - $ref: '#/components/schemas/Data.BasePayments'
       - type: object
         properties:
-          type:
-            description: The type of object being returned.
+          gateway:
+            description: Specifies the type of payment gateway. You must use `paypal_express_checkout`.
             type: string
-            const: cart
+            const: paypal_express_checkout
+          options:
+            type: object
+            properties:
+              description:
+                description: The description for the payment.
+                type: string
+              soft_descriptor:
+                description: The descriptor appended to PayPal generated descriptor that is visible on the card statement of the payer.
+                type: string
+              application_context:
+                type: object
+                properties:
+                  brand_name:
+                    description: The label that overrides the business name in the PayPal account on the PayPal site.
+                    type: string
+                  locale:
+                    description: The locale pages that appear based on language and country code. PayPal supports a five-character code. For example, ja-JP.
+                    type: string
+                  landing_page:
+                    description: The type of landing page to show on the PayPal site for customer checkout. Use values LOGIN, BILLING, or NO_PREFERENCE.
+                    type: string
+                  shipping_preference:
+                    description: The shipping preference. Use SET_PROVIDED_ADDRESS value. This parameter does allow the user to change their address on PayPal site.
+                    type: string
+                  user_action:
+                    description: If you set `useraction=commit` in the query string, the flow redirects the buyer to the PayPal payment page and displays a Pay Now button. When the shopper clicks **Pay Now**, call `DoExpressCheckoutPayment` to complete the payment without additional interaction from the shopper. Choose this flow when you know the final payment amount when you initiate the checkout flow.
+                    type: string
+                  return_url:
+                    description: The callback URL for PayPal to redirect the user in the case of approved payment.
+                    type: string
+                  cancel_url:
+                    description: The callback URL for PayPal to redirect user in the case a cancelled payment.
+                    type: string
+    OrdersTransactionsCaptureRequest:
+      title: OrdersTransactionsCaptureRequest
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            options:
+              type: object
+              properties:
+                soft_descriptor:
+                  type: string
+                note_to_payer:
+                  type: string
+    CustomAttributes:
+      title: CustomAttributes
+      type: object
+      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
+      additionalProperties:
+        type: object
+        required:
+        - type
+        - value
+        properties:
+          type:
+            type: string
+            description: The type of the custom attribute value.
+            enum:
+            - string
+            - integer
+            - boolean
+            - float
+          value:
+            description: The value of the custom attribute.
+            type:
+            - string
+            - boolean
+            - number
+    TransactionEntityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/TransactionResponse'
+      required:
+      - data
     Data.PaymentObject:
       oneOf:
       - $ref: '#/components/schemas/Data.AdyenPayment'
@@ -724,25 +961,186 @@ components:
       - $ref: '#/components/schemas/Data.PayPalExpressCheckoutPayment'
       - $ref: '#/components/schemas/Data.StripePayment'
       - $ref: '#/components/schemas/Data.StripePaymentIntentsPayment'
-    FormattedPriceData:
-      title: FormattedPriceData
+    PaymentsRequest:
+      title: PaymentsRequest
       type: object
       properties:
-        amount:
-          description: The raw total.
-          type: number
+        data:
+          $ref: '#/components/schemas/Data.PaymentObject'
+    ElasticPathPaymentsPoweredByStripePayment:
+      title: Elastic Path Payments Powered By Stripe
+      type: object
+      properties:
+        data:
+          allOf:
+          - $ref: '#/components/schemas/Data.BasePayments'
+          - type: object
+            properties:
+              gateway:
+                description: Specifies the gateway. You must use `elastic_path_payments_stripe`.
+                type: string
+                const: elastic_path_payments_stripe
+              options:
+                type: object
+                properties:
+                  receipt_email:
+                    description: Provides the email address to which you want to send the Stripe receipts for the transactions within the store. This feature is available only in the live mode.
+                    type: string
+                  automatic_payment_methods:
+                    type: object
+                    description: Parent object determining whether to use Stripe's `automatic_payment_methods` setting.
+                    properties:
+                      enabled:
+                        type: boolean
+                        description: When set to true, it displays all enabled payment methods from the Stripe dashboard. When set to false, the Stripe default, which is card, is used.
+              payment_method_types:
+                type: array
+                items:
+                  type: string
+                description: Specifies the Stripe payment method types configured for the store. See [Stripe Documentation](https://docs.stripe.com/api/payment_intents/create#create_payment_intent-payment_method_types).
+                examples:
+                - - card
+              payment:
+                description: Specifies the Stripe token or source.
+                type: string
+    Data.BraintreePayment:
+      title: Data.BraintreePayment
+      required:
+      - payment
+      - gateway
+      allOf:
+      - $ref: '#/components/schemas/Data.BasePayments'
+      - type: object
+        properties:
+          gateway:
+            description: Specifies the gateway. You must use `braintree`.
+            type: string
+            const: braintree
+          payment:
+            description: The Braintree Customer ID that you want to bill.
+            type: string
+    Data.CardConnectPayment:
+      title: Data.CardConnectPayment
+      required:
+      - payment
+      - gateway
+      allOf:
+      - $ref: '#/components/schemas/Data.BasePayments'
+      - type: object
+        properties:
+          gateway:
+            description: Specifies the gateway. You must use `card_connect`.
+            type: string
+            const: card_connect
+          payment:
+            description: Enter account_id, profile_id from CardPointe API. For example, 1|16178397535388255208.
+            type: string
+    Data.StripePaymentIntentsPayment:
+      title: Data.StripePaymentIntentsPayment
+      required:
+      - gateway
+      allOf:
+      - $ref: '#/components/schemas/Data.BasePayments'
+      - type: object
+        properties:
+          gateway:
+            description: Specifies the type of payment gateway. You must use `stripe_payment_intents`.
+            type: string
+            const: stripe_payment_intents
+          options:
+            type: object
+            properties:
+              receipt_email:
+                description: Provides the email address to which you want to send the Stripe receipts for the transactions within the store. This feature is available only in the live mode.
+                type: string
+          payment:
+            description: Specifies the Stripe token or source.
+            type: string
+    ItemSettings:
+      title: ItemSettings
+      type: object
+      properties:
+        separate_items_by_location:
+          description: When set to true, cart items with the same SKU but different locations are kept as separate line items instead of being merged. When false (default), items with the same SKU are merged and the location is updated to the most recent value.
+          type: boolean
           examples:
-          - 10000
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - $10.00
+          - false
+    Data.ManualPayment:
+      title: Data.ManualPayment
+      required:
+      - gateway
+      allOf:
+      - $ref: '#/components/schemas/Data.BasePayments'
+      - type: object
+        properties:
+          gateway:
+            description: Specifies the type of payment gateway. You must use `manual`.
+            type: string
+            const: manual
+          paymentmethod_meta:
+            type: object
+            properties:
+              custom_reference:
+                description: A reference associated with the payment method. This might include loyalty points or gift card identifiers. We recommend not to include personal information in this field.
+                type: string
+              name:
+                description: A custom name associated with the payment method.
+                type: string
+    Data.AdyenPayment:
+      title: Data.AdyenPayment
+      required:
+      - payment
+      - gateway
+      allOf:
+      - $ref: '#/components/schemas/Data.BasePayments'
+      - type: object
+        properties:
+          gateway:
+            description: Specifies the gateway. You must use `adyen`.
+            type: string
+            const: adyen
+          options:
+            type: object
+            properties:
+              shopper_reference:
+                description: The shopper reference token associated with the saved payment method.
+                type: string
+              recurring_processing_model:
+                description: Enter CardOnFile for a one-time purchase.
+                type: string
+          payment:
+            description: The Adyen recurringDetailReference payment method identifier.
+            type: string
+    CartEntityResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/CartResponse'
+        included:
+          type: object
+          description: Related objects that are included in the response.
+          properties:
+            custom_discounts:
+              type: array
+              items:
+                $ref: '#/components/schemas/CustomDiscountResponse'
+            promotions:
+              type: array
+              items:
+                $ref: '#/components/schemas/CondensedPromotionResponse'
+        meta:
+          type: object
+          description: Additional metadata for the cart response.
+          properties:
+            payment_intent:
+              type: object
+              description: Payment intent details with nested structure including status and other Stripe payment intent fields
+              additionalProperties: true
+        errors:
+          type: array
+          description: Array of error objects, if any errors occurred.
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
     Response.ErrorItem:
       type: object
       required:
@@ -826,72 +1224,16 @@ components:
               - type: object
                 additionalProperties: true
               - type: array
-    Timestamps:
-      type: object
-      properties:
-        created_at:
-          description: The date this was created.
-          type: string
-        updated_at:
-          description: The date this was last updated.
-          type: string
-    ElasticPathPaymentsPoweredByStripePayment:
-      title: Elastic Path Payments Powered By Stripe
-      type: object
-      properties:
-        data:
-          allOf:
-          - $ref: '#/components/schemas/Data.BasePayments'
-          - type: object
-            properties:
-              gateway:
-                description: Specifies the gateway. You must use `elastic_path_payments_stripe`.
-                type: string
-                const: elastic_path_payments_stripe
-              options:
-                type: object
-                properties:
-                  receipt_email:
-                    description: Provides the email address to which you want to send the Stripe receipts for the transactions within the store. This feature is available only in the live mode.
-                    type: string
-                  automatic_payment_methods:
-                    type: object
-                    description: Parent object determining whether to use Stripe's `automatic_payment_methods` setting.
-                    properties:
-                      enabled:
-                        type: boolean
-                        description: When set to true, it displays all enabled payment methods from the Stripe dashboard. When set to false, the Stripe default, which is card, is used.
-              payment_method_types:
-                type: array
-                items:
-                  type: string
-                description: Specifies the Stripe payment method types configured for the store. See [Stripe Documentation](https://docs.stripe.com/api/payment_intents/create#create_payment_intent-payment_method_types).
-                examples:
-                - - card
-              payment:
-                description: Specifies the Stripe token or source.
-                type: string
-    Data.StripePaymentIntentsPayment:
-      title: Data.StripePaymentIntentsPayment
-      required:
-      - gateway
+    CartResponse:
+      title: CartResponse
       allOf:
-      - $ref: '#/components/schemas/Data.BasePayments'
+      - $ref: '#/components/schemas/BaseCartResponse'
       - type: object
         properties:
-          gateway:
-            description: Specifies the type of payment gateway. You must use `stripe_payment_intents`.
+          type:
+            description: The type of object being returned.
             type: string
-            const: stripe_payment_intents
-          options:
-            type: object
-            properties:
-              receipt_email:
-                description: Provides the email address to which you want to send the Stripe receipts for the transactions within the store. This feature is available only in the live mode.
-                type: string
-          payment:
-            description: Specifies the Stripe token or source.
-            type: string
+            const: cart
     CondensedPromotionResponse:
       title: CondensedPromotionResponse
       type: object
@@ -946,6 +1288,120 @@ components:
           format: date-time
           examples:
           - '2024-08-31T23:59:59Z'
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    InventorySettings:
+      title: InventorySettings
+      type: object
+      properties:
+        defer_inventory_check:
+          description: This parameter enables deferring inventory checks on the cart. This allows items to be added to or updating in the cart without checking stock levels. Inventory checks are still performed as normal on checkout
+          type: boolean
+          examples:
+          - false
+    Data.CyberSourcePayment:
+      title: Data.CyberSourcePayment
+      required:
+      - payment
+      - gateway
+      allOf:
+      - $ref: '#/components/schemas/Data.BasePayments'
+      - type: object
+        properties:
+          gateway:
+            description: Specifies the gateway. You must use `cyber_source`.
+            type: string
+            const: cyber_source
+          payment:
+            description: The CyberSource token.
+            type: string
+    CartTimestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this was created.
+          type: string
+        updated_at:
+          description: The date this was last updated.
+          type: string
+        expires_at:
+          description: The date this expires.
+          type: string
+    TransactionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionResponse'
+      required:
+      - data
+    Data.StripePayment:
+      title: Data.StripePayment
+      required:
+      - gateway
+      allOf:
+      - $ref: '#/components/schemas/Data.BasePayments'
+      - type: object
+        properties:
+          gateway:
+            description: Specifies the type of payment gateway. You must use `stripe`.
+            type: string
+            const: stripe
+          options:
+            type: object
+            properties:
+              receipt_email:
+                description: The option to provide an email for Stripe receipts. Specify live mode to access this feature.
+                type: string
+          payment:
+            description: The Stripe token or source.
+            type: string
+    Timestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this was created.
+          type: string
+        updated_at:
+          description: The date this was last updated.
+          type: string
+    DiscountSettings:
+      title: DiscountSettings
+      type: object
+      properties:
+        custom_discounts_enabled:
+          description: This parameter enables custom discounts for a cart. When set to true, Elastic Path promotions will not be applied to the new carts. Default is set from cart discount settings for the store. See [Cart Settings](/docs/api/carts/put-v-2-settings-cart).
+          type: boolean
+          examples:
+          - false
+        use_rule_promotions:
+          description: When set to true, this parameter allows the cart to use rule promotions.
+          type: boolean
+          examples:
+          - false
+    FailureDetails:
+      title: FailureDetails
+      description: Non-PII payment failure information from the payment gateway. Only present on failed transactions where the gateway provided structured failure details.
+      type: object
+      properties:
+        code:
+          description: Machine-readable failure or error code from the payment gateway.
+          type: string
+          examples:
+          - '2'
+        reason:
+          description: Human-readable failure reason or error message from the payment gateway.
+          type: string
+          examples:
+          - This transaction has been declined.
     TransactionResponse:
       title: TransactionResponse
       type: object
@@ -1102,244 +1558,6 @@ components:
           format: email
           examples:
           - tester@email.com
-    BaseCartResponse:
-      title: BaseCartResponse
-      type: object
-      properties:
-        id:
-          description: The unique identifier for the cart. Use SDK or create it yourself.
-          type: string
-        name:
-          description: The name of this cart.
-          type: string
-          examples:
-          - cart name
-        description:
-          description: A description of the cart.
-          type: string
-          examples:
-          - cart description
-        contact:
-          $ref: '#/components/schemas/CartContact'
-        discount_settings:
-          $ref: '#/components/schemas/DiscountSettings'
-        inventory_settings:
-          $ref: '#/components/schemas/InventorySettings'
-        item_settings:
-          $ref: '#/components/schemas/ItemSettings'
-        payment_intent_id:
-          description: Stripe-assigned unique identifier for the linked Payment Intent
-          type: string
-        custom_attributes:
-          $ref: '#/components/schemas/CustomAttributes'
-        snapshot_date:
-          description: The snapshot date for the cart.
-          type: string
-          format: date-time
-        links:
-          type: object
-          properties:
-            self:
-              description: A link to that specific resource.
-              type: string
-          examples:
-          - https://useast.api.elasticpath.com/v2/carts/1
-        meta:
-          type: object
-          properties:
-            display_price:
-              type: object
-              properties:
-                with_tax:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                without_tax:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                tax:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                discount:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                without_discount:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                shipping:
-                  $ref: '#/components/schemas/FormattedPriceData'
-                shipping_discount:
-                  $ref: '#/components/schemas/FormattedPriceData'
-            timestamps:
-              $ref: '#/components/schemas/CartTimestamps'
-            promotion_suggestions:
-              description: Array of promotion suggestions
-              type: array
-              items:
-                type: object
-                properties:
-                  bundle:
-                    description: Bundle configuration with promotion targets
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        auto_add_free_gift:
-                          description: Whether to automatically add free gift
-                          type: boolean
-                        cart_item_id:
-                          description: Cart item ID for the target
-                          type: string
-                        quantity:
-                          description: Quantity for the promotion
-                          type: integer
-                        targets:
-                          description: Array of target SKUs
-                          type: array
-                          items:
-                            type: string
-                      additionalProperties: true
-                  code:
-                    type: string
-                  info:
-                    type: string
-                  message:
-                    type: string
-                  promotion_id:
-                    type: string
-        relationships:
-          type: object
-          properties:
-            customers:
-              anyOf:
-              - $ref: '#/components/schemas/RelationshipArray'
-              - type: object
-                maxProperties: 0
-            items:
-              anyOf:
-              - $ref: '#/components/schemas/RelationshipArray'
-              - type: object
-                properties:
-                  data:
-                    oneOf:
-                    - type: 'null'
-                    - type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                          type:
-                            type: string
-                required:
-                - data
-            accounts:
-              anyOf:
-              - $ref: '#/components/schemas/RelationshipArray'
-              - type: object
-                maxProperties: 0
-            custom_discounts:
-              $ref: '#/components/schemas/RelationshipArray'
-            promotions:
-              $ref: '#/components/schemas/RelationshipArray'
-    CartEntityResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/CartResponse'
-        included:
-          type: object
-          description: Related objects that are included in the response.
-          properties:
-            custom_discounts:
-              type: array
-              items:
-                $ref: '#/components/schemas/CustomDiscountResponse'
-            promotions:
-              type: array
-              items:
-                $ref: '#/components/schemas/CondensedPromotionResponse'
-        meta:
-          type: object
-          description: Additional metadata for the cart response.
-          properties:
-            payment_intent:
-              type: object
-              description: Payment intent details with nested structure including status and other Stripe payment intent fields
-              additionalProperties: true
-        errors:
-          type: array
-          description: Array of error objects, if any errors occurred.
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    RelationshipItem:
-      title: RelationshipItem
-      description: Relationship data entry
-      required:
-      - type
-      - id
-      type: object
-      properties:
-        type:
-          description: The type of related resource.
-          type: string
-        id:
-          description: The ID of the related resource.
-          type: string
-          format: uuid
-    CartTimestamps:
-      type: object
-      properties:
-        created_at:
-          description: The date this was created.
-          type: string
-        updated_at:
-          description: The date this was last updated.
-          type: string
-        expires_at:
-          description: The date this expires.
-          type: string
-    Data.CyberSourcePayment:
-      title: Data.CyberSourcePayment
-      required:
-      - payment
-      - gateway
-      allOf:
-      - $ref: '#/components/schemas/Data.BasePayments'
-      - type: object
-        properties:
-          gateway:
-            description: Specifies the gateway. You must use `cyber_source`.
-            type: string
-            const: cyber_source
-          payment:
-            description: The CyberSource token.
-            type: string
-    Data.CardConnectPayment:
-      title: Data.CardConnectPayment
-      required:
-      - payment
-      - gateway
-      allOf:
-      - $ref: '#/components/schemas/Data.BasePayments'
-      - type: object
-        properties:
-          gateway:
-            description: Specifies the gateway. You must use `card_connect`.
-            type: string
-            const: card_connect
-          payment:
-            description: Enter account_id, profile_id from CardPointe API. For example, 1|16178397535388255208.
-            type: string
-    FailureDetails:
-      title: FailureDetails
-      description: Non-PII payment failure information from the payment gateway. Only present on failed transactions where the gateway provided structured failure details.
-      type: object
-      properties:
-        code:
-          description: Machine-readable failure or error code from the payment gateway.
-          type: string
-          examples:
-          - '2'
-        reason:
-          description: Human-readable failure reason or error message from the payment gateway.
-          type: string
-          examples:
-          - This transaction has been declined.
     OrdersTransactionsCancelRequest:
       title: OrdersTransactionsCancelRequest
       type: object
@@ -1354,79 +1572,10 @@ components:
               type: string
               examples:
               - requested_by_customer
-    Data.BasePayments:
-      title: Data.BasePayments
-      type: object
-      required:
-      - gateway
-      - method
-      properties:
-        gateway:
-          type: string
-          enum:
-          - adyen
-          - authorize_net
-          - braintree
-          - card_connect
-          - cyber_source
-          - elastic_path_payments_stripe
-          - manual
-          - paypal_express_checkout
-          - stripe
-          - stripe_payment_intents
-        method:
-          description: Specifies the transaction method, such as `purchase` or `authorize`.
-          type: string
-          enum:
-          - authorize
-          - purchase
-          - purchase_setup
-          - authorize_setup
-        amount:
-          description: The amount to be paid for the transaction.
-          type: number
-          examples:
-          - 10000
-    OrdersTransactionsRefundRequest:
-      title: OrdersTransactionsRefundRequest
+    Response.Data:
       type: object
       properties:
-        data:
-          type: object
-          properties:
-            amount:
-              description: The amount value to be refunded. If this field is not provided, it will be considered as manual refund (Mark as Refunded) and the refund process must be manually handled via payment provider. If the amount value is same as payment value, then it will be treated as a full refund and sent to the payment provider to process refund automatically.
-              type: number
-              examples:
-              - 1000
-            options:
-              type: object
-              properties:
-                note:
-                  description: Provides comments about the refund. It is used by PayPal Express.
-                  type: string
-    OrdersTransactionsConfirmRequest:
-      title: OrdersTransactionsConfirmRequest
-      type: object
-      properties:
-        data:
-          type: object
-    Data.BraintreePayment:
-      title: Data.BraintreePayment
-      required:
-      - payment
-      - gateway
-      allOf:
-      - $ref: '#/components/schemas/Data.BasePayments'
-      - type: object
-        properties:
-          gateway:
-            description: Specifies the gateway. You must use `braintree`.
-            type: string
-            const: braintree
-          payment:
-            description: The Braintree Customer ID that you want to bill.
-            type: string
+        data: {}
     Data.AuthorizeNetPayment:
       title: Data.AuthorizeNetPayment
       required:
@@ -1449,226 +1598,102 @@ components:
           payment:
             description: The Authorize.net customer profile ID.
             type: string
-    Data.AdyenPayment:
-      title: Data.AdyenPayment
-      required:
-      - payment
-      - gateway
-      allOf:
-      - $ref: '#/components/schemas/Data.BasePayments'
-      - type: object
-        properties:
-          gateway:
-            description: Specifies the gateway. You must use `adyen`.
-            type: string
-            const: adyen
-          options:
-            type: object
-            properties:
-              shopper_reference:
-                description: The shopper reference token associated with the saved payment method.
-                type: string
-              recurring_processing_model:
-                description: Enter CardOnFile for a one-time purchase.
-                type: string
-          payment:
-            description: The Adyen recurringDetailReference payment method identifier.
-            type: string
-    DiscountSettings:
-      title: DiscountSettings
-      type: object
-      properties:
-        custom_discounts_enabled:
-          description: This parameter enables custom discounts for a cart. When set to true, Elastic Path promotions will not be applied to the new carts. Default is set from cart discount settings for the store. See [Cart Settings](/docs/api/carts/put-v-2-settings-cart).
-          type: boolean
-          examples:
-          - false
-        use_rule_promotions:
-          description: When set to true, this parameter allows the cart to use rule promotions.
-          type: boolean
-          examples:
-          - false
-    OrdersTransactionsCaptureRequest:
-      title: OrdersTransactionsCaptureRequest
+    OrdersTransactionsRefundRequest:
+      title: OrdersTransactionsRefundRequest
       type: object
       properties:
         data:
           type: object
           properties:
+            amount:
+              description: The amount value to be refunded. If this field is not provided, it will be considered as manual refund (Mark as Refunded) and the refund process must be manually handled via payment provider. If the amount value is same as payment value, then it will be treated as a full refund and sent to the payment provider to process refund automatically.
+              type: number
+              examples:
+              - 1000
             options:
               type: object
               properties:
-                soft_descriptor:
+                note:
+                  description: Provides comments about the refund. It is used by PayPal Express.
                   type: string
-                note_to_payer:
-                  type: string
-    TransactionEntityResponse:
+    CustomDiscountResponse:
+      title: CustomDiscountResponse
       type: object
       properties:
-        data:
+        type:
+          description: Specifies the type of the resource. Always `custom_discount`.
+          type: string
+          const: custom_discount
+        id:
+          description: Specifies the UUID of the custom discount.
+          type: string
+          format: uuid
+          examples:
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        external_id:
+          description: Specifies an external id for the custom discount.
+          type: string
+          examples:
+          - custom-discount-external-id
+        discount_engine:
+          description: 'Specifies from where the custom discount is applied.
+
+            '
+          type: string
+          examples:
+          - Custom Discount Engine
+        amount:
+          description: The amount of the custom discount.
+          $ref: '#/components/schemas/FormattedPriceData'
+        description:
+          description: Specifies a description for the custom discount.
+          type: string
+          examples:
+          - Custom discount description
+        discount_code:
+          description: Specifies the discount code used for the custom discount.
+          type: string
+          examples:
+          - cart-custom-promo-code
+        relationships:
+          description: Relationships to other resources like cart items
           type: object
-          $ref: '#/components/schemas/TransactionResponse'
-      required:
-      - data
-    Response.ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    PaymentsRequest:
-      title: PaymentsRequest
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/Data.PaymentObject'
-    Data.PayPalExpressCheckoutPayment:
-      title: Data.PayPalExpressCheckoutPayment
-      required:
-      - gateway
-      allOf:
-      - $ref: '#/components/schemas/Data.BasePayments'
-      - type: object
-        properties:
-          gateway:
-            description: Specifies the type of payment gateway. You must use `paypal_express_checkout`.
-            type: string
-            const: paypal_express_checkout
-          options:
-            type: object
-            properties:
-              description:
-                description: The description for the payment.
-                type: string
-              soft_descriptor:
-                description: The descriptor appended to PayPal generated descriptor that is visible on the card statement of the payer.
-                type: string
-              application_context:
-                type: object
-                properties:
-                  brand_name:
-                    description: The label that overrides the business name in the PayPal account on the PayPal site.
-                    type: string
-                  locale:
-                    description: The locale pages that appear based on language and country code. PayPal supports a five-character code. For example, ja-JP.
-                    type: string
-                  landing_page:
-                    description: The type of landing page to show on the PayPal site for customer checkout. Use values LOGIN, BILLING, or NO_PREFERENCE.
-                    type: string
-                  shipping_preference:
-                    description: The shipping preference. Use SET_PROVIDED_ADDRESS value. This parameter does allow the user to change their address on PayPal site.
-                    type: string
-                  user_action:
-                    description: If you set `useraction=commit` in the query string, the flow redirects the buyer to the PayPal payment page and displays a Pay Now button. When the shopper clicks **Pay Now**, call `DoExpressCheckoutPayment` to complete the payment without additional interaction from the shopper. Choose this flow when you know the final payment amount when you initiate the checkout flow.
-                    type: string
-                  return_url:
-                    description: The callback URL for PayPal to redirect the user in the case of approved payment.
-                    type: string
-                  cancel_url:
-                    description: The callback URL for PayPal to redirect user in the case a cancelled payment.
-                    type: string
-    CustomAttributes:
-      title: CustomAttributes
-      type: object
-      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
-      additionalProperties:
-        type: object
-        required:
-        - type
-        - value
-        properties:
-          type:
-            type: string
-            description: The type of the custom attribute value.
-            enum:
-            - string
-            - integer
-            - boolean
-            - float
-          value:
-            description: The value of the custom attribute.
-            type:
-            - string
-            - boolean
-            - number
-    ItemSettings:
-      title: ItemSettings
+          properties:
+            item:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: The cart item ID this discount is related to
+                    type:
+                      type: string
+                      enum:
+                      - cart_item
+                      - custom_item
+    FormattedPriceData:
+      title: FormattedPriceData
       type: object
       properties:
-        separate_items_by_location:
-          description: When set to true, cart items with the same SKU but different locations are kept as separate line items instead of being merged. When false (default), items with the same SKU are merged and the location is updated to the most recent value.
-          type: boolean
+        amount:
+          description: The raw total.
+          type: number
           examples:
-          - false
-    Data.ManualPayment:
-      title: Data.ManualPayment
-      required:
-      - gateway
-      allOf:
-      - $ref: '#/components/schemas/Data.BasePayments'
-      - type: object
-        properties:
-          gateway:
-            description: Specifies the type of payment gateway. You must use `manual`.
-            type: string
-            const: manual
-          paymentmethod_meta:
-            type: object
-            properties:
-              custom_reference:
-                description: A reference associated with the payment method. This might include loyalty points or gift card identifiers. We recommend not to include personal information in this field.
-                type: string
-              name:
-                description: A custom name associated with the payment method.
-                type: string
-    Response.Data:
-      type: object
-      properties:
-        data: {}
-    InventorySettings:
-      title: InventorySettings
-      type: object
-      properties:
-        defer_inventory_check:
-          description: This parameter enables deferring inventory checks on the cart. This allows items to be added to or updating in the cart without checking stock levels. Inventory checks are still performed as normal on checkout
-          type: boolean
+          - 10000
+        currency:
+          description: The currency set for this amount.
+          type: string
           examples:
-          - false
-    RelationshipArray:
-      title: RelationshipArray
-      description: Array of relationships
-      type: object
-      properties:
-        data:
-          description: Individual relationships
-          type: array
-          items:
-            $ref: '#/components/schemas/RelationshipItem'
-    Data.StripePayment:
-      title: Data.StripePayment
-      required:
-      - gateway
-      allOf:
-      - $ref: '#/components/schemas/Data.BasePayments'
-      - type: object
-        properties:
-          gateway:
-            description: Specifies the type of payment gateway. You must use `stripe`.
-            type: string
-            const: stripe
-          options:
-            type: object
-            properties:
-              receipt_email:
-                description: The option to provide an email for Stripe receipts. Specify live mode to access this feature.
-                type: string
-          payment:
-            description: The Stripe token or source.
-            type: string
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - $10.00
   securitySchemes:
-    BearerToken:
+    bearerAuth:
       type: http
       scheme: bearer
