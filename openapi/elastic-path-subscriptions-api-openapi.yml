@@ -3,50 +3,7 @@ info:
   version: 26.0427.7514362
   x-version-timestamp: 2026-04-27 13:44:44+00:00
   title: Introduction Subscriptions API
-  description: 'Elastic Path Subscriptions allows you to offer your customers subscriptions and recurring billing for your plans and services. Elastic Path Subscriptions gives you the flexibility to pause, update, or reactivate your subscription offerings, change subscription cycles and apply discounts.
-
-
-    You can create subscriptions using the Elastic Path Subscriptions API or Commerce Manager See [Subscriptions](/docs/commerce-manager/subscriptions/overview).
-
-
-    Scenarios include:
-
-
-    - repeat products that your customers purchase on a recurring basis.
-
-    - membership subscriptions where your customers pay a recurring fee to become members of a particular service, program or organization.
-
-    - subscribe and save that allows your customers to subscribe to regular deliveries of products they use frequently, for example, household essentials, or personal care items.
-
-
-    ### How Subscriptions Work
-
-
-    Elastic Path Subscriptions enables you to manage your subscriptions plans and pricing options, using offerings. Offerings can contain any combination of plans and pricing options.
-
-
-    Here''s how a typical subscription works:
-
-
-    1. Create your offerings. Offerings are the plan and pricing options that a customer can choose. An offering can consist of many combinations of a plan or pricing options, depending on the plans and services you offer. See [**Offerings**](/docs/api/subscriptions/offerings).
-
-    2. When a [**customer**](/docs/api/subscriptions/subscribers) chooses a pricing option, a subscription is created. See [**Subscriptions**](/docs/api/subscriptions/subscriptions).
-
-    3. Elastic Path Subscriptions manages the billing and recurring payments associated with the subscription. See [**Invoicing and Payments**](/docs/api/subscriptions/invoices).
-
-
-    ### Subscriber Management
-
-
-    Elastic Path Subscriptions enables you to create customer accounts that you can use to manage their subscription details, including payment methods and billing information. See [**Subscribers**](/docs/api/subscriptions/subscribers).
-
-
-    ### Invoicing & Payments
-
-
-    Elastic Path Subscriptions enables you to manage the billing and recurring payments associated with your customers subscriptions. Elastic Path Subscriptions provides seamless integration with Elastic Path Payments powered by Stripe. See [**Invoicing and Payments**](/docs/api/subscriptions/invoices).
-
-    '
+  description: Elastic Path Subscriptions allows you to offer your customers subscriptions and recurring billing for your plans and services.
 servers:
 - url: https://euwest.api.elasticpath.com
   description: EU west cluster
@@ -56,7 +13,7 @@ security:
 - BearerToken: []
 tags:
 - name: Subscriptions
-  description: "Elastic Path Subscriptions enables you to manage your subscriptions plans and pricing options, using offerings. Offerings can contain any combination of pricing options and a plan. When a customer chooses a pricing option, a subscription is created.  \n\n### Managing the Subscription Lifecycle\n\nThe subscription lifecycle is the states that a subscription can go through when a customer subscribes to a service or a plan. \n\nA subscription can have the following states:\n\n- `pending`\n- `canceled`\n- `paused`\n- `resumed`\n\n#### Creating a pending subscription \n\nA subscription can be created in a `pending` state. This is useful for several reasons.\n\n- If there are subscriptions that require user setup or onboarding, for example, installing software or setting up preferences. This helps reduce shopper frustration during the onboarding process, as the shopper is not paying for a service that they cannot use yet.\n- When offering a free trial or promotion, keeping the subscription in a pending state until the trial or promotion starts or ends allows you to manage transitions more smoothly. \n- Before a subscription becomes active, you may need to verify the payment method or authorize the first payment. Keeping the subscription in a pending state allows time to complete these steps without activating the subscription.\n\nFor a subscription with a `pending` state, you can also configure a `go_live_after` date. The subscription starts from the `go_live_after` date. This is useful as it ensures both the subscription provider and subscriber are clear about when a subscription officially begins. Once the `go_live_after` date is passed, the subscription becomes `active`, initiating the billing and payment runs. If a subscription is activated this way, you can see this in the `timestamp` meta.   \n\nYou can configure a `go_live_after` date to be a past date. This is useful, for example, for backdating a subscription or managing a delay in activating a subscription. Setting the `go_live_after` date in the past ensures the subscriptions timeline correctly aligns with the agreed-upon service start date. \n\n:::caution\n\nAlthough, billing runs generate one invoice per subscription, if a `go_live_date` is set far in the past, multiple invoices could be generated over the course of several billing runs, which could be frustrating and confusing to your subscribers. \n\n:::\n\nSee [create a subscription](/docs/api/subscriptions/create-subscription).\n\n#### Cancelling or pausing and resuming subscriptions\n\nA subscriber can decide to cancel or pause and/or resume a subscription. The following example describes pausing or canceling and resuming a subscription.\n\n1. The subscriber pauses or cancels the subscription. \n   - The subscription status is `active`. \n   - either `paused` or `cancelled` is set to `true`.\n   - either the `paused_at` or `cancelled_at` timestamp is populated with the date and time the subscription is paused or cancelled.\n   - for cancelled subscriptions, `end_date` indicates when the subscription will expire and end.\n2. When the next billing run is due, the billing run checks the subscription state. If the subscription state is paused or cancelled then no invoice is created and the subscription status is updated to `inactive`.\n3. Subsequent billing runs skip that subscription completely as the subscription status is `inactive`.\n4. If the subscriber resumes the subscription:\n   - either `paused` or `cancelled` is set to `false`.\n   - the `resumed_at` timestamp is populated with the date and time the subscription is resumed.\n5. When the next billing run is due, the billing run checks the subscription state. If the `paused` or `cancelled` is set to `false` then the billing run creates an invoice.\n6. The payment run processes the invoice. Once the payment succeeds then the payment run updates the status of the subscription to `active`.\n\n### Orders\n\nWhen a customer chooses a subscription, they need to add the subscription to a cart, checkout the cart and then pay for the order. \n\n1. When a customer adds a subscription to cart, this is handled using the `Add subscription to cart` endpoint. \n2. Once a subscription has been added to a cart, the [**Checkout API**](/docs/api/carts/checkout-api) converts the cart to an order. \n3. Once the order is created, payment needs to be taken. This is handled by Elastic Path Payments Powered by Stripe. See [**Payments**](/docs/api/subscriptions/invoices#payments).\n"
+  description: Elastic Path Subscriptions enables you to manage your subscriptions plans and pricing options, using offerings.
 paths:
   /v2/subscriptions/subscriptions:
     parameters:
@@ -99,7 +56,45 @@ paths:
       - $ref: '#/components/parameters/PageLimit'
       - $ref: '#/components/parameters/SubscriptionInclude'
       operationId: ListSubscriptions
-      description: "Retrieves a list of all subscriptions.\n\n### Filtering\n\nThis endpoint supports filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering).\n\nThe following attributes and operators are supported.\n\n| Operator | Attribute | Description |\n| --- | --- | --- | \n| `eq` | `account_id`, `name`, `email`, `external_ref` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. |\n| `in` | `account_id`, `name`, `email`, `external_ref` | In. Checks if the value is in the specified list. If it is, the condition is true. |\n\n### Including Resources\n\nYou can use the `include` parameter to include the following resources with this endpoint.\n\n| Resource | Required | Description |\n| --- | --- | --- |\n| `pricing_options, plans` | Optional | Retrieves all pricing options and plans associated with a subscription. |\n| `plans` | Optional | Retrieves all plans associated with a subscription. |\n| `pricing_options` | Optional | Retrieves all pricing options associated with a subscription. |\n\nSee [Characteristics of Include Parameter](/guides/Getting-Started/includes#characteristics-of-include-parameter).\n"
+      description: 'Retrieves a list of all subscriptions.
+
+
+        ### Filtering
+
+
+        This endpoint supports filtering. For the general syntax, see **Filtering**.
+
+
+        The following attributes and operators are supported.
+
+
+        | Operator | Attribute | Description |
+
+        | --- | --- | --- |
+
+        | `eq` | `account_id`, `name`, `email`, `external_ref` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. |
+
+        | `in` | `account_id`, `name`, `email`, `external_ref` | In. Checks if the value is in the specified list. If it is, the condition is true. |
+
+
+        ### Including Resources
+
+
+        You can use the `include` parameter to include the following resources with this endpoint.
+
+
+        | Resource | Required | Description |
+
+        | --- | --- | --- |
+
+        | `pricing_options, plans` | Optional | Retrieves all pricing options and plans associated with a subscription. |
+
+        | `plans` | Optional | Retrieves all plans associated with a subscription. |
+
+        | `pricing_options` | Optional | Retrieves all pricing options associated with a subscription. |
+
+
+        See Characteristics of Include Parameter.'
       responses:
         '200':
           description: Success. A list of subscriptions is returned.
@@ -157,9 +152,7 @@ paths:
       tags:
       - Subscriptions
       summary: Update a subscription
-      description: 'Updates a subscription. For example, a subscriber can switch from one pricing option to another in a subscription.
-
-        '
+      description: Updates a subscription. For example, a subscriber can switch from one pricing option to another in a subscription.
       operationId: UpdateSubscription
       requestBody:
         content:
@@ -194,9 +187,7 @@ paths:
       - Subscriptions
       summary: Delete a subscription
       operationId: DeleteSubscription
-      description: 'Deletes a subscription
-
-        '
+      description: Deletes a subscription
       responses:
         '204':
           description: Success. The subscription is removed.
@@ -459,7 +450,24 @@ paths:
       tags:
       - Subscriptions
       summary: Create a subscription state
-      description: "The subscription lifecycle is the states that a subscription can go through when a customer subscribes to a service or a plan. \n\nA subscription can have the following states:\n\n- `pending` \n- `canceled`\n- `paused`\n- `resumed`\nFor more information, see [Managing the Subscription Lifecycle](/docs/api/subscriptions/subscriptions#managing-the-subscription-lifecycle).\n\nImmediate cancellation (`cancel` with `cancel_immediately: true`) ends the subscription and updates entitlements in this request; it does **not** issue refunds or modify paid invoices. Use payments refund flows separately if needed.\n"
+      description: 'The subscription lifecycle is the states that a subscription can go through when a customer subscribes to a service or a plan.
+
+
+        A subscription can have the following states:
+
+
+        - `pending`
+
+        - `canceled`
+
+        - `paused`
+
+        - `resumed`
+
+        For more information, see Managing the Subscription Lifecycle.
+
+
+        Immediate cancellation (`cancel` with `cancel_immediately: true`) ends the subscription and updates entitlements in this request; it does **not** issue refunds or modify paid invoices. Use payments refund flows separately if needed.'
       operationId: CreateSubscriptionState
       requestBody:
         content:
@@ -686,90 +694,126 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    OfferingPlanResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/PlanResponseAttributes'
-      - $ref: '#/components/schemas/OfferingPlanResponseExtraAttributes'
-    PaymentAuthority:
-      type: object
-      oneOf:
-      - $ref: '#/components/schemas/PaymentAuthorityEPPayments'
-      - $ref: '#/components/schemas/PaymentAuthorityStripe'
-      - $ref: '#/components/schemas/PaymentAuthorityAuthorizeNet'
-      discriminator:
-        propertyName: type
-        mapping:
-          elastic_path_payments_stripe: '#/components/schemas/PaymentAuthorityEPPayments'
-          stripe_payment_intents: '#/components/schemas/PaymentAuthorityStripe'
-          authorize_net: '#/components/schemas/PaymentAuthorityAuthorizeNet'
+    SubscriptionInvoicePayment:
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionInvoicePaymentType'
+        attributes:
+          $ref: '#/components/schemas/SubscriptionInvoicePaymentAttributes'
+        meta:
+          $ref: '#/components/schemas/SubscriptionInvoicePaymentMeta'
+    SubscriptionMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      - status
+      - canceled
+      - paused
+      - closed
+      - pending
+      - suspended
+      - invoice_after
+      - manual_payments
+      - first_invoice_prepaid
+      properties:
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/SubscriptionTimestamps'
+        status:
+          $ref: '#/components/schemas/Status'
+        state:
+          $ref: '#/components/schemas/SubscriptionState'
+        manual_payments:
+          $ref: '#/components/schemas/ManualPayments'
+        first_invoice_prepaid:
+          type: boolean
+          description: Indicates that the first billing period of this subscription was paid for outside of the subscriptions service.
+          example: false
+        canceled:
+          type: boolean
+          description: Whether a subscription is canceled or not.
+          example: true
+        paused:
+          type: boolean
+          description: Whether a subscription is paused or not.
+          example: true
+        closed:
+          type: boolean
+          description: Whether a subscription is closed or not.
+          example: true
+        suspended:
+          type: boolean
+          description: Whether a subscription is suspended or not.
+          example: false
+        pending:
+          type: boolean
+          description: Whether a subscription is pending activation or not.
+          example: false
+        invoice_after:
+          description: The time when the subscription becomes eligible for a new invoice. The next invoice will be generated at the next billing run after this point.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        pending_price_change:
+          $ref: '#/components/schemas/SubscriptionPriceChanges'
+        price_update_history:
+          description: A history of price updates that have been applied to this subscription.
+          type: array
+          x-go-type-skip-optional-pointer: true
+          items:
+            $ref: '#/components/schemas/SubscriptionPriceUpdateHistoryEntry'
+    FeatureConfigAccessAttributes:
+      description: Configures an access feature against a plan in an offering, indicating that the referenced feature is a benefit of that plan.
       required:
       - type
       properties:
         type:
-          description: The name of the payment gateway facilitating the secure transmission of payment data.
           type: string
-          example: elastic_path_payments_stripe
           enum:
-          - authorize_net
-          - elastic_path_payments_stripe
-          - stripe_payment_intents
-          x-go-type: paymentgateways.GatewayName
-          x-go-type-import:
-            name: paymentgateways
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
-    Relationship:
-      anyOf:
-      - $ref: '#/components/schemas/SingleRelationship'
-      - $ref: '#/components/schemas/ManyRelationship'
-    LeadTime:
+          - access
+          example: access
+    FeatureResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/FeatureAttributes'
+    FeatureTag:
+      type: string
+      description: A tag to add to the customer's account when entitled to the feature.
+      minLength: 1
+      maxLength: 64
+      pattern: ^[0-9A-Za-z_-]+$
+      example: digital_library_access
+    ManageSubscriptionPlans:
       type: object
-      description: Configuration of the lead time to generate an invoice ahead of time in a pro-forma state
+      required:
+      - type
+      - plans
       properties:
         type:
           type: string
-          description: The unit of time that lead time is measured in.
-          example: day
           enum:
-          - day
-          - week
-          x-go-type: model.LeadTimeType
+          - detach
+          example: detach
+          x-go-type: model.ManagePlansAction
           x-go-type-import:
             name: model
             path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-        time:
-          type: integer
-          description: The lead time to generate an invoice ahead of time in a pro-forma state
-          example: 14
-          minimum: 1
-      required:
-      - type
-      - time
-    FeaturePromotion:
-      required:
-      - name
-      - tag
+        plans:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/UUID'
+    SelectedMeta:
       properties:
-        name:
-          type: string
-          description: The name of the feature.
-          minLength: 3
-          maxLength: 1024
-          example: Digital library access
-        tag:
-          $ref: '#/components/schemas/FeatureTag'
-        promotion_id:
-          $ref: '#/components/schemas/UUID'
-    OfferingPlanExternalRefMeta:
-      readOnly: true
-      type: string
-      format: string
-      description: The offerings plan external_ref value
-      example: 97dddc65-eabd-45d8-b45b-2ece5cfc8c50
-    SubscriptionOfferingFeatureType:
-      type: string
-      example: subscription_offering_feature
-      enum:
-      - subscription_offering_feature
+        meta:
+          $ref: '#/components/schemas/SelectedMetaAttributes'
     SubscriptionInvoiceAttributes:
       required:
       - billing_period
@@ -845,20 +889,284 @@ components:
           type: boolean
           description: Whether there is a manual pending payment pending on the invoice.
           example: true
-    LinkObject:
-      type: object
+    TimePeriod:
+      description: A period of time between a start and end point.
+      required:
+      - start
+      - end
       properties:
-        href:
+        start:
+          description: The date and time a billing period started.
           type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+        end:
+          description: The date and time a billing period ended.
           type: string
-          example: Comments
-        describedby:
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+    PlanResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/PlanAttributes'
+      - $ref: '#/components/schemas/Timestamps'
+    Timestamps:
+      required:
+      - created_at
+      - updated_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
           type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    SubscriptionInvoiceItem:
+      required:
+      - description
+      - price
+      properties:
+        description:
+          type: string
+          description: A description of the subscribed item.
+          example: Magazine issue
+        price:
+          $ref: '#/components/schemas/SingleCurrencyPrice'
+        plan_id:
+          $ref: '#/components/schemas/UUID'
+        from_time_period:
+          description: The start date and time of the billing period in this price
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        until_time_period:
+          description: The end date and time of the billing period in this price
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    DisplayPrice:
+      properties:
+        without_tax:
+          $ref: '#/components/schemas/PriceFormatting'
+        with_tax:
+          $ref: '#/components/schemas/PriceFormatting'
+        tax:
+          description: 'Tax component when itemized (for example on subscription invoices). Omitted for catalog prices
+
+            that only expose with/without tax.
+
+            '
+          $ref: '#/components/schemas/PriceFormatting'
+      example:
+        without_tax:
+          amount: 100
+          currency: USD
+          formatted: $1.00
+        with_tax:
+          amount: 110
+          currency: USD
+          formatted: $1.10
+        tax:
+          amount: 10
+          currency: USD
+          formatted: $0.10
+    PricingOptionResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/PricingOptionAttributes'
+      - $ref: '#/components/schemas/Timestamps'
+    SubscriptionTimestamps:
+      allOf:
+      - $ref: '#/components/schemas/Timestamps'
+      - properties:
+          canceled_at:
+            description: The date and time a subscription was cancelled.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+          paused_at:
+            description: The date and time a subscription was paused.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+          resumed_at:
+            description: The date and time a subscription was resumed.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+          end_date:
+            description: 'The date and time a subscription will end.
+
+              - If the subscription offering pricing option end behavior is `close`, `end_date` is set to the billing period end date upon subscription creation.
+
+              - If the subscription offering pricing option end behavior is "roll": `end_date` is set to the billing period end date when the subscription is cancelled.
+
+              '
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+          go_live_after:
+            description: The date and time a subscription will go live and become active.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+          go_live:
+            description: The date and time a subscription was released from the pending state and made active.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+    SubscriptionOfferingPricingOptionType:
+      type: string
+      example: subscription_offering_pricing_option
+      enum:
+      - subscription_offering_pricing_option
+    OfferingMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      - external_plan_refs
+      properties:
+        external_plan_refs:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfferingPlanExternalRefMeta'
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    PaymentFailureDetail:
+      type: object
+      description: The reason the payment failed.
+      properties:
+        reason:
+          type: string
+          example: Card Failure
+    FeatureConfigPromotionAttributes:
+      description: Configures a promotion feature against a plan in an offering, indicating that the referenced feature is a benefit of that plan. The tag of the specific promotion that it to be made available must be supplied.
+      required:
+      - type
+      - tag
+      properties:
+        type:
+          type: string
+          enum:
+          - promotion
+          example: promotion
+        tag:
+          $ref: '#/components/schemas/FeatureTag'
+    PlanMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      properties:
+        prices:
+          $ref: '#/components/schemas/OfferingPlanPrices'
+        display_price:
+          $ref: '#/components/schemas/DisplayPrice'
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+        active_plan:
+          $ref: '#/components/schemas/ActivePlan'
+    Price:
+      additionalProperties:
+        type: object
+        description: The base price.
+        required:
+        - amount
+        properties:
+          amount:
+            type: integer
+            format: int64
+            minimum: 0
+            example: 100
+            description: The value as a whole number of the currency's smallest subdivision.
+          includes_tax:
+            type: boolean
+            example: true
+            description: Indicates whether the amount includes any taxes.
+      example:
+        USD:
+          amount: 100
+          includes_tax: false
+        GBP:
+          amount: 90
+          includes_tax: true
+    FeaturePromotionAttributes:
+      required:
+      - type
+      - promotions
+      properties:
+        type:
+          type: string
+          enum:
+          - promotion
+          example: promotion
+        promotions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeaturePromotion'
+    PaymentAuthorityEPPayments:
+      writeOnly: true
+      type: object
+      required:
+      - type
+      properties:
+        type:
+          description: The name of the payment gateway facilitating the secure transmission of payment data.
+          type: string
+          example: elastic_path_payments_stripe
+          enum:
+          - elastic_path_payments_stripe
+          x-go-type: paymentgateways.GatewayName
+          x-go-type-import:
+            name: paymentgateways
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
+        customer_id:
+          description: The unique identifier for a customer.
+          type: string
+          minLength: 3
+          maxLength: 1024
+          example: cus_OPfKlxWV3hp9h6
+        card_id:
+          description: The unique identifier of the card used to facilitate payment of the subscription. If a card payment fails, you can use the `card_id` and `customer_id` attributes to program your front-end implementation to allow your preferred payment service provider to update a subscription with new card details. See [Card declines](/docs/api/subscriptions/invoices#card-declines).
+          type: string
+          minLength: 3
+          maxLength: 1024
+          example: card_8Diw3FQPhxK27WADPVMeXieP
+    SingleCurrencyPrice:
+      description: A price in a single currency.
+      required:
+      - amount
+      - currency
+      properties:
+        currency:
+          type: string
+          description: The three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html) in uppercase, associated with a price.
+          example: USD
+          maxLength: 1024
+        amount:
+          type: integer
+          format: int64
+          description: The value as a whole number of the currency's smallest subdivision.
+          example: 100
+        includes_tax:
+          type: boolean
+          description: Whether the amount includes any taxes.
+          example: true
+      example:
+        currency: USD
+        amount: 100
+        includes_tax: false
+    BuildSubscriptionOrder:
+      description: A subscription may optionally be associated with an item in an order by supplying both the order ID and the ID of the item within that order.
+      required:
+      - order_id
+      - order_item_id
+      properties:
+        order_id:
+          $ref: '#/components/schemas/UUID'
+        order_item_id:
+          $ref: '#/components/schemas/UUID'
+    ActivePlan:
+      type: boolean
+      description: Whether a plan is active on a subscription using that offering. The `active_plan` attribute is null if a plan is not active in a subscription.
+      example: true
     TaxItem:
       required:
       - type
@@ -890,83 +1198,204 @@ components:
           type: string
           maxLength: 1024
           example: USA
-    PricingOptionPrice:
-      properties:
-        base_price_percentage:
-          type: number
-          format: double
-          description: A percentage discount on the total cost of any plans within an offering. For example, you can configure a percentage that equates the cost of a pricing option to the total value of all plans within the offering, reduced by a percentage. For example, if you specify `10`, a 10% discount is applied to the total value of all repeat plans in an offering.
-          example: 90
-          minimum: 0
-          maximum: 100
-        fixed_price:
-          $ref: '#/components/schemas/Price'
-    OwnerMeta:
-      readOnly: true
+    SubscriptionType:
       type: string
-      format: string
-      description: The owner of a resource, either `store` or `organization`.
-      example: store
-    InvoiceTimestamps:
-      allOf:
-      - $ref: '#/components/schemas/Timestamps'
-      - properties:
-          taxes_added_at:
-            description: The date and time taxes were added to an invoice.
-            type: string
-            example: '2017-01-10T11:41:19.244842Z'
-    SubscriptionInvoiceType:
-      description: This represents the type of resource object being returned. Always `subscription_invoice`.
-      type: string
-      example: subscription_invoice
+      example: subscription
       enum:
-      - subscription_invoice
-    SubscriptionPriceUpdateHistoryEntry:
-      description: A record of the previous prices of a subscription before a price change was applied
-      required:
-      - price_changes
-      - valid_until
+      - subscription
+    Status:
+      type: string
+      description: The status of a subscription, either `active` or `inactive`.
+      example: active
+      enum:
+      - active
+      - inactive
+      x-go-type: model.SubscriptionStatus
+      x-go-type-import:
+        name: model
+        path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+    SubscriptionIncludes:
+      readOnly: true
       properties:
-        price_changes:
-          $ref: '#/components/schemas/SubscriptionPriceChanges'
-        valid_until:
-          description: The date and time when the prices were changed (when these previous prices stopped being active)
+        plans:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfferingPlan'
+        pricing_options:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfferingPricingOption'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
           type: string
-          format: date-time
-          example: '2017-01-10T11:41:19.244842Z'
-    OfferingFeature:
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    OfferingBuildPricingOptionAssociations:
+      type: object
+      description: A map of plans keyed by plan UUID or external_ref to a list of associated pricing options, similarly keyed.
+      additionalProperties:
+        $ref: '#/components/schemas/OfferingBuildPlanPricingOptions'
+    ChangeState:
       required:
       - type
       - attributes
-      - meta
       properties:
-        id:
-          $ref: '#/components/schemas/UUID'
         type:
-          $ref: '#/components/schemas/SubscriptionOfferingFeatureType'
+          $ref: '#/components/schemas/SubscriptionStateType'
         attributes:
-          $ref: '#/components/schemas/FeatureResponseAttributes'
-        relationships:
-          $ref: '#/components/schemas/Relationships'
-        meta:
-          $ref: '#/components/schemas/FeatureMeta'
-    ExternalRef:
-      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-      type: string
-      example: abc123
-      maxLength: 2048
-    SubscriptionStateType:
-      type: string
-      description: This represents the type of resource object being returned. Always `subscription_state`.
-      example: subscription_state
-      enum:
-      - subscription_state
-    OfferingPricingOptionPrices:
+          $ref: '#/components/schemas/SubscriptionStateAttributes'
+    RelationshipLinks:
+      description: "Links are used to allow you, as an API consumer, to move between requests. Single entities use a self parameter with a link to that specific resource. Sometimes, there aren’t enough entities for a project to fill multiple pages. In this situation, we return some defaults, instead of expecting you to check for these special cases. \n\n - current - Always the current page.\n - first - Always the first page.\n - last - always `null`.\n - next - `null` if the user is on the first page.\n - previous - `null` if there is only one page.\n"
       type: object
-      description: The price of each plan within the offering that this pricing option may be applied to.
-      readOnly: true
+      properties:
+        related:
+          type: string
+          example: foo.bar
+    SubscriptionStateAction:
+      type: string
+      description: 'The subscription lifecycle is the states that a subscription can go through when a customer subscribes to a service or a plan.
+
+
+        A subscription can have the following states; `canceled`, `paused`, or `resumed`.
+
+
+        See [**Managing the subscription lifecycle**](/docs/api/subscriptions/subscriptions#managing-the-subscription-lifecycle).
+
+        '
+      example: cancel
+      enum:
+      - cancel
+      - pause
+      - resume
+      - pending
+      x-go-type: model.SubscriptionAction
+      x-go-type-import:
+        name: model
+        path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+    Relationships:
+      description: Relationships are established between different subscription entities. For example, a plan and a pricing option are related to an offering, as both are attached to it.
       additionalProperties:
-        $ref: '#/components/schemas/OfferingPricingOptionPriceForPlan'
+        $ref: '#/components/schemas/Relationship'
+      example:
+        pricing-options:
+          links:
+            related: /offerings/:offering-id/pricing-options
+            self: /offerings/:offering-id
+          data:
+            type: offering-pricing-option
+            id: 625fe958-7b4b-40a0-a2c0-dbb8f31eec0d
+    OfferingPricingOptionMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      properties:
+        prices:
+          $ref: '#/components/schemas/OfferingPricingOptionPrices'
+        price:
+          $ref: '#/components/schemas/Price'
+        display_price:
+          $ref: '#/components/schemas/DisplayPrice'
+        active_pricing_option:
+          $ref: '#/components/schemas/ActivePricingOption'
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    FeaturePromotion:
+      required:
+      - name
+      - tag
+      properties:
+        name:
+          type: string
+          description: The name of the feature.
+          minLength: 3
+          maxLength: 1024
+          example: Digital library access
+        tag:
+          $ref: '#/components/schemas/FeatureTag'
+        promotion_id:
+          $ref: '#/components/schemas/UUID'
+    FeatureUsageAttributes:
+      required:
+      - type
+      - tag
+      - label
+      - default_value
+      properties:
+        type:
+          type: string
+          enum:
+          - usage
+          example: usage
+        tag:
+          $ref: '#/components/schemas/FeatureTag'
+        label:
+          type: string
+          description: The property that has a usage limit.
+          minLength: 3
+          maxLength: 1024
+          example: Digital downloads
+        default_value:
+          type: integer
+          description: The default initial value
+          example: 10
+    ProrationEvent:
+      required:
+      - proration_policy_id
+      - billing_cost_before_proration
+      - refunded_amount_for_unused_pricing_option
+      - new_pricing_option_cost
+      - prorated_at
+      properties:
+        proration_policy_id:
+          $ref: '#/components/schemas/UUID'
+        billing_cost_before_proration:
+          type: integer
+          format: int64
+          description: The value as a whole number of the currency's smallest subdivision
+          example: 100
+        refunded_amount_for_unused_pricing_option:
+          type: integer
+          format: int64
+          description: The value as a whole number of the currency's smallest subdivision.
+          example: 100
+        new_pricing_option_cost:
+          type: integer
+          format: int64
+          description: The value as a whole number of the currency's smallest subdivision.
+          example: 100
+        prorated_at:
+          description: The date and time the subscription was prorated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     UUID:
       type: string
       description: The unique identifier.
@@ -976,12 +1405,288 @@ components:
         name: uuid
         path: github.com/google/uuid
       example: 11111111-2222-3333-4444-555555555555
-    CreatePaymentAuthorityAuthorizeNet:
+    InvoiceNotification:
+      description: A notification scheduled for an invoice.
+      required:
+      - name
+      - due
+      properties:
+        name:
+          description: The name of the notification schedule that generated this notification.
+          type: string
+          example: 7 days before renewal
+        due:
+          description: The date and time when the notification is due to be sent.
+          type: string
+          format: date-time
+          example: '2024-01-24T00:00:00Z'
+        sent_at:
+          description: The date and time when the notification was sent.
+          type: string
+          format: date-time
+          example: '2024-01-24T00:00:00Z'
+    SubscriptionInvoicePaymentMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      - invoice_id
+      - subscription_id
+      - job_id
+      - manual_payment
+      properties:
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        subscription_id:
+          $ref: '#/components/schemas/UUID'
+        invoice_id:
+          $ref: '#/components/schemas/UUID'
+        job_id:
+          $ref: '#/components/schemas/UUID'
+        timestamps:
+          $ref: '#/components/schemas/InvoicePaymentTimestamps'
+        manual_payment:
+          type: boolean
+          example: false
+          description: Whether manual payments are enabled or the payment will be handled by the configured gateway.
+    Relationship:
+      anyOf:
+      - $ref: '#/components/schemas/SingleRelationship'
+      - $ref: '#/components/schemas/ManyRelationship'
+    SubscriptionStateType:
+      type: string
+      description: This represents the type of resource object being returned. Always `subscription_state`.
+      example: subscription_state
+      enum:
+      - subscription_state
+    FeatureConfiguration:
       type: object
       required:
       - type
-      - payment_profile_id
-      - customer_profile_id
+      properties:
+        type:
+          description: The type of feature, one of access, promotion or usage.
+          enum:
+          - access
+          - promotion
+          - usage
+          example: access
+          x-go-type: string
+      oneOf:
+      - $ref: '#/components/schemas/FeatureAccessAttributes'
+      - $ref: '#/components/schemas/FeaturePromotionAttributes'
+      - $ref: '#/components/schemas/FeatureUsageAttributes'
+      discriminator:
+        propertyName: type
+        mapping:
+          access: '#/components/schemas/FeatureAccessAttributes'
+          promotion: '#/components/schemas/FeaturePromotionAttributes'
+          usage: '#/components/schemas/FeatureUsageAttributes'
+    SubscriptionInvoicePaymentAttributes:
+      required:
+      - success
+      - amount
+      - gateway
+      properties:
+        success:
+          type: boolean
+          example: true
+          description: Whether the payment was successful.
+        pending:
+          type: boolean
+          example: true
+          description: Whether the payment is pending (only for manual payments).
+        gateway:
+          type: string
+          maxLength: 1024
+          example: elastic_path_payments_stripe
+          description: Specifies the payment gateway.
+        external_payment_id:
+          type: string
+          maxLength: 1024
+          example: 33e7ec6b-8b34-4c92-a95b-2e2647922e47
+          description: An optional external ID that is specific to the gateway used.
+        failure_detail:
+          $ref: '#/components/schemas/PaymentFailureDetail'
+        amount:
+          $ref: '#/components/schemas/SingleCurrencyPrice'
+    SubscriptionState:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionStateType'
+        attributes:
+          $ref: '#/components/schemas/SubscriptionStateAttributes'
+        meta:
+          $ref: '#/components/schemas/StateMeta'
+    OfferingBuildPlanPricingOptions:
+      type: array
+      items:
+        type: string
+        description: The unique ID or external ref of the pricing option
+        example: 11111111-2222-3333-4444-555555555555
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    SubscriptionPriceChanges:
+      properties:
+        plan_prices:
+          x-go-type-skip-optional-pointer: true
+          additionalProperties:
+            $ref: '#/components/schemas/Price'
+          example:
+            197a11f4-d341-4594-9574-7fbfbe6a671d:
+              USD:
+                amount: 100
+                includes_tax: false
+              GBP:
+                amount: 90
+                includes_tax: true
+        pricing_option_prices:
+          x-go-type-skip-optional-pointer: true
+          additionalProperties:
+            $ref: '#/components/schemas/PricingOptionPrice'
+          example:
+            83f6b8e3-031c-4f2a-a1d7-b1c83cb5ac3c:
+              base_price_percentage: 90
+            197a11f4-d341-4594-9574-7fbfbe6a671d:
+              USD:
+                amount: 100
+                includes_tax: false
+              GBP:
+                amount: 90
+                includes_tax: true
+    FeatureConfigUsageAttributes:
+      description: Configures a usage feature against a plan in an offering, indicating that the referenced feature is a benefit of that plan. The default value that the usage metrics adopts must be supplied.
+      required:
+      - type
+      - default_value
+      properties:
+        type:
+          type: string
+          enum:
+          - usage
+          example: usage
+        default_value:
+          type: integer
+          description: The default initial value
+          example: 10
+    SingleRelationship:
+      description: The subscription resource that is related.
+      properties:
+        data:
+          $ref: '#/components/schemas/RelationshipData'
+        links:
+          $ref: '#/components/schemas/RelationshipLinks'
+    ManyRelationship:
+      description: The list of resources that are related.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipData'
+        links:
+          $ref: '#/components/schemas/RelationshipLinks'
+    Subscription:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionType'
+        attributes:
+          $ref: '#/components/schemas/SubscriptionAttributes'
+        relationships:
+          $ref: '#/components/schemas/Relationships'
+        meta:
+          $ref: '#/components/schemas/SubscriptionMeta'
+    SubscriptionOfferingType:
+      type: string
+      example: subscription_offering
+      enum:
+      - subscription_offering
+    LeadTime:
+      type: object
+      description: Configuration of the lead time to generate an invoice ahead of time in a pro-forma state
+      properties:
+        type:
+          type: string
+          description: The unit of time that lead time is measured in.
+          example: day
+          enum:
+          - day
+          - week
+          x-go-type: model.LeadTimeType
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+        time:
+          type: integer
+          description: The lead time to generate an invoice ahead of time in a pro-forma state
+          example: 14
+          minimum: 1
+      required:
+      - type
+      - time
+    PaymentAuthority:
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/PaymentAuthorityEPPayments'
+      - $ref: '#/components/schemas/PaymentAuthorityStripe'
+      - $ref: '#/components/schemas/PaymentAuthorityAuthorizeNet'
+      discriminator:
+        propertyName: type
+        mapping:
+          elastic_path_payments_stripe: '#/components/schemas/PaymentAuthorityEPPayments'
+          stripe_payment_intents: '#/components/schemas/PaymentAuthorityStripe'
+          authorize_net: '#/components/schemas/PaymentAuthorityAuthorizeNet'
+      required:
+      - type
+      properties:
+        type:
+          description: The name of the payment gateway facilitating the secure transmission of payment data.
+          type: string
+          example: elastic_path_payments_stripe
+          enum:
+          - authorize_net
+          - elastic_path_payments_stripe
+          - stripe_payment_intents
+          x-go-type: paymentgateways.GatewayName
+          x-go-type-import:
+            name: paymentgateways
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
+    OfferingPlanPriceForPricingOption:
+      properties:
+        price:
+          $ref: '#/components/schemas/Price'
+        display_price:
+          $ref: '#/components/schemas/DisplayPrice'
+    StateMeta:
+      readOnly: true
+      required:
+      - created_at
+      properties:
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    ActivePricingOption:
+      type: boolean
+      description: Whether a pricing option is active on a subscription using that offering. The `active_pricing_option` attribute is null if a pricing option is not active in a subscription.
+      example: true
+    PaymentAuthorityAuthorizeNet:
+      type: object
+      required:
+      - type
       properties:
         type:
           description: The name of the payment gateway facilitating the secure transmission of payment data.
@@ -1005,232 +1710,6 @@ components:
           minLength: 3
           maxLength: 1024
           example: '1511736979'
-    SingleCurrencyPrice:
-      description: A price in a single currency.
-      required:
-      - amount
-      - currency
-      properties:
-        currency:
-          type: string
-          description: The three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html) in uppercase, associated with a price.
-          example: USD
-          maxLength: 1024
-        amount:
-          type: integer
-          format: int64
-          description: The value as a whole number of the currency's smallest subdivision.
-          example: 100
-        includes_tax:
-          type: boolean
-          description: Whether the amount includes any taxes.
-          example: true
-      example:
-        currency: USD
-        amount: 100
-        includes_tax: false
-    OfferingPricingOption:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionOfferingPricingOptionType'
-        attributes:
-          $ref: '#/components/schemas/PricingOptionResponseAttributes'
-        relationships:
-          $ref: '#/components/schemas/Relationships'
-        meta:
-          $ref: '#/components/schemas/OfferingPricingOptionMeta'
-    FeatureAccessAttributes:
-      required:
-      - type
-      - tag
-      properties:
-        type:
-          type: string
-          enum:
-          - access
-          example: access
-        tag:
-          $ref: '#/components/schemas/FeatureTag'
-    SubscriptionMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      - status
-      - canceled
-      - paused
-      - closed
-      - pending
-      - suspended
-      - invoice_after
-      - manual_payments
-      - first_invoice_prepaid
-      properties:
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/SubscriptionTimestamps'
-        status:
-          $ref: '#/components/schemas/Status'
-        state:
-          $ref: '#/components/schemas/SubscriptionState'
-        manual_payments:
-          $ref: '#/components/schemas/ManualPayments'
-        first_invoice_prepaid:
-          type: boolean
-          description: Indicates that the first billing period of this subscription was paid for outside of the subscriptions service.
-          example: false
-        canceled:
-          type: boolean
-          description: Whether a subscription is canceled or not.
-          example: true
-        paused:
-          type: boolean
-          description: Whether a subscription is paused or not.
-          example: true
-        closed:
-          type: boolean
-          description: Whether a subscription is closed or not.
-          example: true
-        suspended:
-          type: boolean
-          description: Whether a subscription is suspended or not.
-          example: false
-        pending:
-          type: boolean
-          description: Whether a subscription is pending activation or not.
-          example: false
-        invoice_after:
-          description: The time when the subscription becomes eligible for a new invoice. The next invoice will be generated at the next billing run after this point.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        pending_price_change:
-          $ref: '#/components/schemas/SubscriptionPriceChanges'
-        price_update_history:
-          description: A history of price updates that have been applied to this subscription.
-          type: array
-          x-go-type-skip-optional-pointer: true
-          items:
-            $ref: '#/components/schemas/SubscriptionPriceUpdateHistoryEntry'
-    Offering:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionOfferingType'
-        attributes:
-          $ref: '#/components/schemas/OfferingResponseAttributes'
-        relationships:
-          $ref: '#/components/schemas/Relationships'
-        meta:
-          $ref: '#/components/schemas/OfferingMeta'
-    Timestamps:
-      required:
-      - created_at
-      - updated_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    SubscriptionIncludes:
-      readOnly: true
-      properties:
-        plans:
-          type: array
-          items:
-            $ref: '#/components/schemas/OfferingPlan'
-        pricing_options:
-          type: array
-          items:
-            $ref: '#/components/schemas/OfferingPricingOption'
-    SubscriptionInvoicePayment:
-      required:
-      - id
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionInvoicePaymentType'
-        attributes:
-          $ref: '#/components/schemas/SubscriptionInvoicePaymentAttributes'
-        meta:
-          $ref: '#/components/schemas/SubscriptionInvoicePaymentMeta'
-    Subscription:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionType'
-        attributes:
-          $ref: '#/components/schemas/SubscriptionAttributes'
-        relationships:
-          $ref: '#/components/schemas/Relationships'
-        meta:
-          $ref: '#/components/schemas/SubscriptionMeta'
-    ChangeState:
-      required:
-      - type
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/SubscriptionStateType'
-        attributes:
-          $ref: '#/components/schemas/SubscriptionStateAttributes'
-    TimePeriod:
-      description: A period of time between a start and end point.
-      required:
-      - start
-      - end
-      properties:
-        start:
-          description: The date and time a billing period started.
-          type: string
-          format: date-time
-          example: '2017-07-21T17:32:28Z'
-        end:
-          description: The date and time a billing period ended.
-          type: string
-          format: date-time
-          example: '2017-07-21T17:32:28Z'
-    PaymentFailureDetail:
-      type: object
-      description: The reason the payment failed.
-      properties:
-        reason:
-          type: string
-          example: Card Failure
-    ActivePlan:
-      type: boolean
-      description: Whether a plan is active on a subscription using that offering. The `active_plan` attribute is null if a plan is not active in a subscription.
-      example: true
-    SelectedMetaAttributes:
-      properties:
-        selected:
-          type: boolean
-          example: true
-          description: One item must be selected for use in the subscription
     PricingOptionAttributes:
       required:
       - name
@@ -1322,41 +1801,75 @@ components:
           maximum: 100
         fixed_price:
           $ref: '#/components/schemas/Price'
-    SelectedMeta:
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
+    FeatureAttributes:
+      required:
+      - name
+      - configuration
       properties:
-        meta:
-          $ref: '#/components/schemas/SelectedMetaAttributes'
-    OfferingPlan:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+        name:
+          type: string
+          description: The name of the feature.
+          minLength: 3
+          maxLength: 1024
+          example: Digital library access
+        description:
+          type: string
+          description: The feature description to display to customers.
+          maxLength: 1024
+          example: Access to over 100 ebooks via the digital library.
+        configuration:
+          $ref: '#/components/schemas/FeatureConfiguration'
+    SubscriptionStateAttributes:
+      required:
+      - action
+      properties:
+        action:
+          $ref: '#/components/schemas/SubscriptionStateAction'
+        cancel_immediately:
+          type: boolean
+          default: false
+          example: false
+          description: 'When `action` is `cancel`, if `true`, the subscription moves to `inactive` immediately with entitlements updated in this request,
+
+            and a `canceled` event is emitted (not `pending_cancel`). Omitted or `false` preserves end-of-period cancellation.
+
+            Subscribers may not set this to `true` and will receive a 403.
+
+
+            Immediate cancellation does **not** trigger any sort of refund; those require separate API flows.
+
+            '
+    FeaturePlanConfiguration:
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/FeatureConfigAccessAttributes'
+      - $ref: '#/components/schemas/FeatureConfigPromotionAttributes'
+      - $ref: '#/components/schemas/FeatureConfigUsageAttributes'
+      discriminator:
+        propertyName: type
+        mapping:
+          access: '#/components/schemas/FeatureConfigAccessAttributes'
+          promotion: '#/components/schemas/FeatureConfigPromotionAttributes'
+          usage: '#/components/schemas/FeatureConfigUsageAttributes'
       required:
       - type
-      - attributes
-      - meta
       properties:
-        id:
-          $ref: '#/components/schemas/UUID'
         type:
-          $ref: '#/components/schemas/SubscriptionOfferingPlanType'
-        attributes:
-          $ref: '#/components/schemas/OfferingPlanResponseAttributes'
-        relationships:
-          $ref: '#/components/schemas/Relationships'
-        meta:
-          $ref: '#/components/schemas/PlanMeta'
-    OfferingBuildConfiguredFeatures:
-      type: object
-      description: Map of feature configurations keyed by plan UUID or external_ref
-      additionalProperties:
-        $ref: '#/components/schemas/OfferingBuildPlanFeatures'
-    BuildSubscriptionOrder:
-      description: A subscription may optionally be associated with an item in an order by supplying both the order ID and the ID of the item within that order.
-      required:
-      - order_id
-      - order_item_id
-      properties:
-        order_id:
-          $ref: '#/components/schemas/UUID'
-        order_item_id:
-          $ref: '#/components/schemas/UUID'
+          description: The type of feature, one of access, promotion or usage.
+          enum:
+          - access
+          - promotion
+          - usage
+          example: access
+          x-go-type: string
     PlanAttributes:
       required:
       - name
@@ -1389,13 +1902,46 @@ components:
           $ref: '#/components/schemas/Price'
         price_units:
           $ref: '#/components/schemas/PriceUnits'
-    CreatePaymentAuthorityStripe:
+    CreatePaymentAuthorityEPPayments:
       writeOnly: true
       type: object
       required:
       - type
       - customer_id
       - card_id
+      properties:
+        type:
+          description: The name of the payment gateway facilitating the secure transmission of payment data.
+          type: string
+          example: elastic_path_payments_stripe
+          enum:
+          - elastic_path_payments_stripe
+          x-go-type: paymentgateways.GatewayName
+          x-go-type-import:
+            name: paymentgateways
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
+        customer_id:
+          description: The unique identifier for a customer.
+          type: string
+          minLength: 3
+          maxLength: 1024
+          example: cus_OPfKlxWV3hp9h6
+        card_id:
+          description: The unique identifier of the card used to facilitate payment of the subscription.
+          type: string
+          minLength: 3
+          maxLength: 1024
+          example: card_8Diw3FQPhxK27WADPVMeXieP
+    OfferingBuildPlanFeatures:
+      type: object
+      description: A map of configurations indicating which features are available for the plan
+      additionalProperties:
+        $ref: '#/components/schemas/FeaturePlanConfiguration'
+    PaymentAuthorityStripe:
+      writeOnly: true
+      type: object
+      required:
+      - type
       properties:
         type:
           description: The name of the payment gateway facilitating the secure transmission of payment data.
@@ -1414,18 +1960,162 @@ components:
           maxLength: 1024
           example: cus_OPfKlxWV3hp9h6
         card_id:
-          description: The unique identifier of the card used to facilitate payment of the subscription.
+          description: The unique identifier of the card used to facilitate payment of the subscription. If a card payment fails, you can use the `card_id` and `customer_id` attributes to program your front-end implementation to allow your preferred payment service provider to update a subscription with new card details. See [Card declines](/docs/api/subscriptions/invoices#card-declines).
           type: string
           minLength: 3
           maxLength: 1024
           example: card_8Diw3FQPhxK27WADPVMeXieP
-    RelationshipLinks:
-      description: "Links are used to allow you, as an API consumer, to move between requests. Single entities use a self parameter with a link to that specific resource. Sometimes, there aren’t enough entities for a project to fill multiple pages. In this situation, we return some defaults, instead of expecting you to check for these special cases. \n\n - current - Always the current page.\n - first - Always the first page.\n - last - always `null`.\n - next - `null` if the user is on the first page.\n - previous - `null` if there is only one page.\n"
-      type: object
+    InvoiceTimestamps:
+      allOf:
+      - $ref: '#/components/schemas/Timestamps'
+      - properties:
+          taxes_added_at:
+            description: The date and time taxes were added to an invoice.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+    SelectedMetaAttributes:
       properties:
-        related:
+        selected:
+          type: boolean
+          example: true
+          description: One item must be selected for use in the subscription
+    PriceFormatting:
+      required:
+      - amount
+      - currency
+      - formatted
+      properties:
+        amount:
+          type: integer
+          format: int64
+          example: 100
+          description: The unformatted amount for the objects.
+        currency:
           type: string
-          example: foo.bar
+          format: string
+          example: USD
+          description: The three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html) in uppercase, associated with a price.
+        formatted:
+          type: string
+          format: string
+          example: $1.00
+          description: The formatted amount for the objects.
+    RelationshipData:
+      type: object
+      required:
+      - id
+      - type
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          type: string
+          description: This represents the type of resource being returned.
+          example: 11111111-2222-3333-4444-555555555555
+    OfferingPlanResponseExtraAttributes:
+      required:
+      - feature_configurations
+      properties:
+        feature_configurations:
+          type: object
+          description: A map of configurations indicating which features are available for the plan
+          additionalProperties:
+            $ref: '#/components/schemas/FeaturePlanConfiguration'
+    SubscriptionInvoice:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionInvoiceType'
+        attributes:
+          $ref: '#/components/schemas/SubscriptionInvoiceAttributes'
+        relationships:
+          $ref: '#/components/schemas/Relationships'
+        meta:
+          $ref: '#/components/schemas/SubscriptionInvoiceMeta'
+    ManualPayments:
+      type: boolean
+      example: false
+      default: false
+      description: When configured to true, no payment gateway is used and a pending payment is created. See [External Payments](/docs/api/subscriptions/invoices#external-payments).
+    SubscriptionInvoiceType:
+      description: This represents the type of resource object being returned. Always `subscription_invoice`.
+      type: string
+      example: subscription_invoice
+      enum:
+      - subscription_invoice
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    PricingOptionAttributesAndSelectedMeta:
+      allOf:
+      - $ref: '#/components/schemas/PricingOptionAttributes'
+      - $ref: '#/components/schemas/SelectedMeta'
+    ExternalRef:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    InvoicePaymentTimestamps:
+      allOf:
+      - $ref: '#/components/schemas/Timestamps'
+      - properties:
+          payment_taken_at:
+            description: The date and time a payment was taken.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+    NotificationSchedule:
+      type: object
+      required:
+      - name
+      - unit
+      - amount
+      properties:
+        name:
+          type: string
+          description: The name of the schedule.
+          minLength: 1
+          maxLength: 1024
+          example: Daily billing run.
+        unit:
+          type: string
+          description: The unit of time that the schedule is measured in.
+          example: day
+          enum:
+          - day
+          - week
+          - month
+          x-go-type: model.NotificationScheduleUnit
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+        amount:
+          type: integer
+          format: int64
+          description: The number of units between each notification.
+          example: 100
+          minimum: 1
+    OfferingPlanExternalRefMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The offerings plan external_ref value
+      example: 97dddc65-eabd-45d8-b45b-2ece5cfc8c50
+    PlanAttributesAndSelectedMeta:
+      allOf:
+      - $ref: '#/components/schemas/PlanAttributes'
+      - $ref: '#/components/schemas/SelectedMeta'
     SubscriptionInvoiceMeta:
       readOnly: true
       required:
@@ -1472,446 +2162,150 @@ components:
           format: int64
           description: The pro-rated remaining value for the billing period
           example: 500
-    FeatureConfigPromotionAttributes:
-      description: Configures a promotion feature against a plan in an offering, indicating that the referenced feature is a benefit of that plan. The tag of the specific promotion that it to be made available must be supplied.
-      required:
-      - type
-      - tag
-      properties:
-        type:
-          type: string
-          enum:
-          - promotion
-          example: promotion
-        tag:
-          $ref: '#/components/schemas/FeatureTag'
-    InvoicePaymentTimestamps:
-      allOf:
-      - $ref: '#/components/schemas/Timestamps'
-      - properties:
-          payment_taken_at:
-            description: The date and time a payment was taken.
-            type: string
-            example: '2017-01-10T11:41:19.244842Z'
-    ManyRelationship:
-      description: The list of resources that are related.
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/RelationshipData'
-        links:
-          $ref: '#/components/schemas/RelationshipLinks'
-    SubscriptionStateAction:
+    SubscriptionOfferingFeatureType:
       type: string
-      description: 'The subscription lifecycle is the states that a subscription can go through when a customer subscribes to a service or a plan.
-
-
-        A subscription can have the following states; `canceled`, `paused`, or `resumed`.
-
-
-        See [**Managing the subscription lifecycle**](/docs/api/subscriptions/subscriptions#managing-the-subscription-lifecycle).
-
-        '
-      example: cancel
+      example: subscription_offering_feature
       enum:
-      - cancel
-      - pause
-      - resume
-      - pending
-      x-go-type: model.SubscriptionAction
-      x-go-type-import:
-        name: model
-        path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+      - subscription_offering_feature
+    PricingOptionPrice:
+      properties:
+        base_price_percentage:
+          type: number
+          format: double
+          description: A percentage discount on the total cost of any plans within an offering. For example, you can configure a percentage that equates the cost of a pricing option to the total value of all plans within the offering, reduced by a percentage. For example, if you specify `10`, a 10% discount is applied to the total value of all repeat plans in an offering.
+          example: 90
+          minimum: 0
+          maximum: 100
+        fixed_price:
+          $ref: '#/components/schemas/Price'
+    CurrencyIdentifier:
+      type: string
+      description: The three-letter [**ISO currency code**](https://www.iso.org/iso-4217-currency-codes.html) in uppercase.
+      maxLength: 1024
+      example: USD
     OfferingPlanPrices:
       type: object
       description: A list of plan prices for each of its pricing options.
       additionalProperties:
         $ref: '#/components/schemas/OfferingPlanPriceForPricingOption'
-    OfferingPlanResponseExtraAttributes:
-      required:
-      - feature_configurations
-      properties:
-        feature_configurations:
-          type: object
-          description: A map of configurations indicating which features are available for the plan
-          additionalProperties:
-            $ref: '#/components/schemas/FeaturePlanConfiguration'
-    FeatureResponseAttributes:
+    OfferingPlanResponseAttributes:
       allOf:
-      - $ref: '#/components/schemas/FeatureAttributes'
-    PlanResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/PlanAttributes'
-      - $ref: '#/components/schemas/Timestamps'
-    FeatureMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    FeaturePromotionAttributes:
-      required:
-      - type
-      - promotions
-      properties:
-        type:
-          type: string
-          enum:
-          - promotion
-          example: promotion
-        promotions:
-          type: array
-          items:
-            $ref: '#/components/schemas/FeaturePromotion'
-    SubscriptionAttributes:
-      required:
-      - account_id
-      - pricing_option_id
-      - plan_id
-      - offering
-      - currency
-      - name
-      - email
-      properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRef'
-        account_id:
-          $ref: '#/components/schemas/UUID'
-        address_id:
-          $ref: '#/components/schemas/UUID'
-        offering:
-          $ref: '#/components/schemas/Offering'
-        pricing_option_id:
-          $ref: '#/components/schemas/UUID'
-        plan_id:
-          $ref: '#/components/schemas/UUID'
-        currency:
-          $ref: '#/components/schemas/CurrencyIdentifier'
-        payment_authority:
-          $ref: '#/components/schemas/PaymentAuthority'
-    FeatureTag:
-      type: string
-      description: A tag to add to the customer's account when entitled to the feature.
-      minLength: 1
-      maxLength: 64
-      pattern: ^[0-9A-Za-z_-]+$
-      example: digital_library_access
-    PaymentAuthorityStripe:
-      writeOnly: true
+      - $ref: '#/components/schemas/PlanResponseAttributes'
+      - $ref: '#/components/schemas/OfferingPlanResponseExtraAttributes'
+    OfferingBuildConfiguredFeatures:
       type: object
+      description: Map of feature configurations keyed by plan UUID or external_ref
+      additionalProperties:
+        $ref: '#/components/schemas/OfferingBuildPlanFeatures'
+    CreatePaymentAuthority:
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/CreatePaymentAuthorityEPPayments'
+      - $ref: '#/components/schemas/CreatePaymentAuthorityStripe'
+      - $ref: '#/components/schemas/CreatePaymentAuthorityAuthorizeNet'
+      discriminator:
+        propertyName: type
+        mapping:
+          elastic_path_payments_stripe: '#/components/schemas/CreatePaymentAuthorityEPPayments'
+          stripe_payment_intents: '#/components/schemas/CreatePaymentAuthorityStripe'
+          authorize_net: '#/components/schemas/CreatePaymentAuthorityAuthorizeNet'
       required:
       - type
       properties:
         type:
           description: The name of the payment gateway facilitating the secure transmission of payment data.
           type: string
-          example: stripe_payment_intents
+          example: elastic_path_payments_stripe
           enum:
+          - authorize_net
+          - elastic_path_payments_stripe
           - stripe_payment_intents
           x-go-type: paymentgateways.GatewayName
           x-go-type-import:
             name: paymentgateways
             path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
-        customer_id:
-          description: The unique identifier for a customer.
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: cus_OPfKlxWV3hp9h6
-        card_id:
-          description: The unique identifier of the card used to facilitate payment of the subscription. If a card payment fails, you can use the `card_id` and `customer_id` attributes to program your front-end implementation to allow your preferred payment service provider to update a subscription with new card details. See [Card declines](/docs/api/subscriptions/invoices#card-declines).
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: card_8Diw3FQPhxK27WADPVMeXieP
-    PaymentAuthorityAuthorizeNet:
+    OfferingPricingOptionPrices:
       type: object
-      required:
-      - type
-      properties:
-        type:
-          description: The name of the payment gateway facilitating the secure transmission of payment data.
-          type: string
-          example: authorize_net
-          enum:
-          - authorize_net
-          x-go-type: paymentgateways.GatewayName
-          x-go-type-import:
-            name: paymentgateways
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
-        payment_profile_id:
-          description: The customer's payment profile id, unique to Authorize.net, used to facilitate payment of the subscription.
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: '1511660856'
-        customer_profile_id:
-          description: The customer's profile id, unique to Authorize.net, used to facilitate payment of the subscription.
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: '1511736979'
-    SubscriptionStateAttributes:
-      required:
-      - action
-      properties:
-        action:
-          $ref: '#/components/schemas/SubscriptionStateAction'
-        cancel_immediately:
-          type: boolean
-          default: false
-          example: false
-          description: 'When `action` is `cancel`, if `true`, the subscription moves to `inactive` immediately with entitlements updated in this request,
-
-            and a `canceled` event is emitted (not `pending_cancel`). Omitted or `false` preserves end-of-period cancellation.
-
-            Subscribers may not set this to `true` and will receive a 403.
-
-
-            Immediate cancellation does **not** trigger any sort of refund; those require separate API flows.
-
-            '
-    OfferingBuildPricingOptionAssociations:
-      type: object
-      description: A map of plans keyed by plan UUID or external_ref to a list of associated pricing options, similarly keyed.
-      additionalProperties:
-        $ref: '#/components/schemas/OfferingBuildPlanPricingOptions'
-    SubscriptionInvoicePaymentAttributes:
-      required:
-      - success
-      - amount
-      - gateway
-      properties:
-        success:
-          type: boolean
-          example: true
-          description: Whether the payment was successful.
-        pending:
-          type: boolean
-          example: true
-          description: Whether the payment is pending (only for manual payments).
-        gateway:
-          type: string
-          maxLength: 1024
-          example: elastic_path_payments_stripe
-          description: Specifies the payment gateway.
-        external_payment_id:
-          type: string
-          maxLength: 1024
-          example: 33e7ec6b-8b34-4c92-a95b-2e2647922e47
-          description: An optional external ID that is specific to the gateway used.
-        failure_detail:
-          $ref: '#/components/schemas/PaymentFailureDetail'
-        amount:
-          $ref: '#/components/schemas/SingleCurrencyPrice'
-    NotificationSchedule:
-      type: object
-      required:
-      - name
-      - unit
-      - amount
-      properties:
-        name:
-          type: string
-          description: The name of the schedule.
-          minLength: 1
-          maxLength: 1024
-          example: Daily billing run.
-        unit:
-          type: string
-          description: The unit of time that the schedule is measured in.
-          example: day
-          enum:
-          - day
-          - week
-          - month
-          x-go-type: model.NotificationScheduleUnit
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-        amount:
-          type: integer
-          format: int64
-          description: The number of units between each notification.
-          example: 100
-          minimum: 1
-    SubscriptionInvoicePaymentMeta:
+      description: The price of each plan within the offering that this pricing option may be applied to.
       readOnly: true
-      required:
-      - owner
-      - timestamps
-      - invoice_id
-      - subscription_id
-      - job_id
-      - manual_payment
-      properties:
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        subscription_id:
-          $ref: '#/components/schemas/UUID'
-        invoice_id:
-          $ref: '#/components/schemas/UUID'
-        job_id:
-          $ref: '#/components/schemas/UUID'
-        timestamps:
-          $ref: '#/components/schemas/InvoicePaymentTimestamps'
-        manual_payment:
-          type: boolean
-          example: false
-          description: Whether manual payments are enabled or the payment will be handled by the configured gateway.
-    OfferingPlanPriceForPricingOption:
-      properties:
-        price:
-          $ref: '#/components/schemas/Price'
-        display_price:
-          $ref: '#/components/schemas/DisplayPrice'
-    FeatureAttributes:
-      required:
-      - name
-      - configuration
-      properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRef'
-        name:
-          type: string
-          description: The name of the feature.
-          minLength: 3
-          maxLength: 1024
-          example: Digital library access
-        description:
-          type: string
-          description: The feature description to display to customers.
-          maxLength: 1024
-          example: Access to over 100 ebooks via the digital library.
-        configuration:
-          $ref: '#/components/schemas/FeatureConfiguration'
-    ManualPayments:
-      type: boolean
-      example: false
-      default: false
-      description: When configured to true, no payment gateway is used and a pending payment is created. See [External Payments](/docs/api/subscriptions/invoices#external-payments).
-    FeaturePlanConfiguration:
-      type: object
-      oneOf:
-      - $ref: '#/components/schemas/FeatureConfigAccessAttributes'
-      - $ref: '#/components/schemas/FeatureConfigPromotionAttributes'
-      - $ref: '#/components/schemas/FeatureConfigUsageAttributes'
-      discriminator:
-        propertyName: type
-        mapping:
-          access: '#/components/schemas/FeatureConfigAccessAttributes'
-          promotion: '#/components/schemas/FeatureConfigPromotionAttributes'
-          usage: '#/components/schemas/FeatureConfigUsageAttributes'
-      required:
-      - type
-      properties:
-        type:
-          description: The type of feature, one of access, promotion or usage.
-          enum:
-          - access
-          - promotion
-          - usage
-          example: access
-          x-go-type: string
-    FeatureConfigAccessAttributes:
-      description: Configures an access feature against a plan in an offering, indicating that the referenced feature is a benefit of that plan.
-      required:
-      - type
-      properties:
-        type:
-          type: string
-          enum:
-          - access
-          example: access
-    FeatureUsageAttributes:
-      required:
-      - type
-      - tag
-      - label
-      - default_value
-      properties:
-        type:
-          type: string
-          enum:
-          - usage
-          example: usage
-        tag:
-          $ref: '#/components/schemas/FeatureTag'
-        label:
-          type: string
-          description: The property that has a usage limit.
-          minLength: 3
-          maxLength: 1024
-          example: Digital downloads
-        default_value:
-          type: integer
-          description: The default initial value
-          example: 10
-    InvoiceNotification:
-      description: A notification scheduled for an invoice.
-      required:
-      - name
-      - due
-      properties:
-        name:
-          description: The name of the notification schedule that generated this notification.
-          type: string
-          example: 7 days before renewal
-        due:
-          description: The date and time when the notification is due to be sent.
-          type: string
-          format: date-time
-          example: '2024-01-24T00:00:00Z'
-        sent_at:
-          description: The date and time when the notification was sent.
-          type: string
-          format: date-time
-          example: '2024-01-24T00:00:00Z'
-    Relationships:
-      description: Relationships are established between different subscription entities. For example, a plan and a pricing option are related to an offering, as both are attached to it.
       additionalProperties:
-        $ref: '#/components/schemas/Relationship'
-      example:
-        pricing-options:
-          links:
-            related: /offerings/:offering-id/pricing-options
-            self: /offerings/:offering-id
-          data:
-            type: offering-pricing-option
-            id: 625fe958-7b4b-40a0-a2c0-dbb8f31eec0d
-    PaymentAuthorityEPPayments:
-      writeOnly: true
-      type: object
+        $ref: '#/components/schemas/OfferingPricingOptionPriceForPlan'
+    OfferingFeature:
       required:
       - type
+      - attributes
+      - meta
       properties:
+        id:
+          $ref: '#/components/schemas/UUID'
         type:
-          description: The name of the payment gateway facilitating the secure transmission of payment data.
-          type: string
-          example: elastic_path_payments_stripe
-          enum:
-          - elastic_path_payments_stripe
-          x-go-type: paymentgateways.GatewayName
-          x-go-type-import:
-            name: paymentgateways
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
-        customer_id:
-          description: The unique identifier for a customer.
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: cus_OPfKlxWV3hp9h6
-        card_id:
-          description: The unique identifier of the card used to facilitate payment of the subscription. If a card payment fails, you can use the `card_id` and `customer_id` attributes to program your front-end implementation to allow your preferred payment service provider to update a subscription with new card details. See [Card declines](/docs/api/subscriptions/invoices#card-declines).
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: card_8Diw3FQPhxK27WADPVMeXieP
+          $ref: '#/components/schemas/SubscriptionOfferingFeatureType'
+        attributes:
+          $ref: '#/components/schemas/FeatureResponseAttributes'
+        relationships:
+          $ref: '#/components/schemas/Relationships'
+        meta:
+          $ref: '#/components/schemas/FeatureMeta'
+    Offering:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionOfferingType'
+        attributes:
+          $ref: '#/components/schemas/OfferingResponseAttributes'
+        relationships:
+          $ref: '#/components/schemas/Relationships'
+        meta:
+          $ref: '#/components/schemas/OfferingMeta'
+    OfferingPricingOption:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionOfferingPricingOptionType'
+        attributes:
+          $ref: '#/components/schemas/PricingOptionResponseAttributes'
+        relationships:
+          $ref: '#/components/schemas/Relationships'
+        meta:
+          $ref: '#/components/schemas/OfferingPricingOptionMeta'
+    SubscriptionUpdate:
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionType'
+        attributes:
+          $ref: '#/components/schemas/SubscriptionUpdateAttributes'
+    OfferingPlan:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionOfferingPlanType'
+        attributes:
+          $ref: '#/components/schemas/OfferingPlanResponseAttributes'
+        relationships:
+          $ref: '#/components/schemas/Relationships'
+        meta:
+          $ref: '#/components/schemas/PlanMeta'
     PriceUnits:
       type: object
       description: The timeframe during which the plan price is applicable. For example, for a streaming service, the price is $12.99 and the `unit` is `months` and the `amount` is `1`. In other words, the streaming service is available for $12.99 a month. You may want to specify a unit price if you have many plans that all have different prices. Rather than having to create separate pricing options for each plan, you can specify the timeframe during which the plan price is applicable and then create one pricing option that determines the billing frequency for those plans.
@@ -1935,34 +2329,133 @@ components:
           description: The number of days or months the period covers.
           example: 7
           minimum: 1
-    OfferingBuildPlanFeatures:
+    CreatePaymentAuthorityAuthorizeNet:
       type: object
-      description: A map of configurations indicating which features are available for the plan
-      additionalProperties:
-        $ref: '#/components/schemas/FeaturePlanConfiguration'
-    Status:
-      type: string
-      description: The status of a subscription, either `active` or `inactive`.
-      example: active
-      enum:
-      - active
-      - inactive
-      x-go-type: model.SubscriptionStatus
-      x-go-type-import:
-        name: model
-        path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-    SubscriptionOfferingPricingOptionType:
-      type: string
-      example: subscription_offering_pricing_option
-      enum:
-      - subscription_offering_pricing_option
-    SingleRelationship:
-      description: The subscription resource that is related.
+      required:
+      - type
+      - payment_profile_id
+      - customer_profile_id
       properties:
-        data:
-          $ref: '#/components/schemas/RelationshipData'
-        links:
-          $ref: '#/components/schemas/RelationshipLinks'
+        type:
+          description: The name of the payment gateway facilitating the secure transmission of payment data.
+          type: string
+          example: authorize_net
+          enum:
+          - authorize_net
+          x-go-type: paymentgateways.GatewayName
+          x-go-type-import:
+            name: paymentgateways
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
+        payment_profile_id:
+          description: The customer's payment profile id, unique to Authorize.net, used to facilitate payment of the subscription.
+          type: string
+          minLength: 3
+          maxLength: 1024
+          example: '1511660856'
+        customer_profile_id:
+          description: The customer's profile id, unique to Authorize.net, used to facilitate payment of the subscription.
+          type: string
+          minLength: 3
+          maxLength: 1024
+          example: '1511736979'
+    SubscriptionUpdateAttributes:
+      properties:
+        pricing_option_id:
+          type: string
+          format: uuid
+          x-go-type: uuid.UUID
+          x-go-type-import:
+            name: uuid
+            path: github.com/google/uuid
+          example: 00000000-0000-0000-0000-000000000001
+        plan_id:
+          type: string
+          format: uuid
+          x-go-type: uuid.UUID
+          x-go-type-import:
+            name: uuid
+            path: github.com/google/uuid
+          example: 00000000-0000-0000-0000-000000000001
+        address_id:
+          type:
+          - string
+          - 'null'
+          format: UUID
+          x-go-type: uuid.UUID
+          x-go-type-import:
+            name: uuid
+            path: github.com/google/uuid
+          example: 00000000-0000-0000-0000-000000000001
+        payment_authority:
+          $ref: '#/components/schemas/PaymentAuthority'
+        go_live_after:
+          description: The date and time a `pending` subscription goes live and becomes active. See [Creating a pending subscription](/docs/api/subscriptions/subscriptions#creating-a-pending-subscription).
+          type:
+          - string
+          - 'null'
+          example: '2017-01-10T11:41:19.244842Z'
+    SubscriptionPriceUpdateHistoryEntry:
+      description: A record of the previous prices of a subscription before a price change was applied
+      required:
+      - price_changes
+      - valid_until
+      properties:
+        price_changes:
+          $ref: '#/components/schemas/SubscriptionPriceChanges'
+        valid_until:
+          description: The date and time when the prices were changed (when these previous prices stopped being active)
+          type: string
+          format: date-time
+          example: '2017-01-10T11:41:19.244842Z'
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    SubscriptionInvoicePaymentType:
+      type: string
+      description: This represents the type of resource object being returned. Always `subscription_invoice_payment`.
+      example: subscription_invoice_payment
+      enum:
+      - subscription_invoice_payment
+    OfferingAttributes:
+      required:
+      - name
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+        name:
+          type: string
+          description: The name of the offering.
+          minLength: 3
+          maxLength: 1024
+          example: Magazine
+        description:
+          type: string
+          description: The offering description to display to customers.
+          maxLength: 1024
+          example: A lovely magazine that is published every month.
+    FeatureAccessAttributes:
+      required:
+      - type
+      - tag
+      properties:
+        type:
+          type: string
+          enum:
+          - access
+          example: access
+        tag:
+          $ref: '#/components/schemas/FeatureTag'
     BuildSubscription:
       required:
       - account_id
@@ -2052,32 +2545,55 @@ components:
           $ref: '#/components/schemas/BuildSubscriptionOrder'
         meta:
           $ref: '#/components/schemas/SubscriptionMeta'
-    PricingOptionResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/PricingOptionAttributes'
-      - $ref: '#/components/schemas/Timestamps'
-    SubscriptionInvoiceItem:
-      required:
-      - description
-      - price
+    OfferingPricingOptionPriceForPlan:
+      readOnly: true
       properties:
-        description:
-          type: string
-          description: A description of the subscribed item.
-          example: Magazine issue
         price:
-          $ref: '#/components/schemas/SingleCurrencyPrice'
+          $ref: '#/components/schemas/Price'
+        display_price:
+          $ref: '#/components/schemas/DisplayPrice'
+    SubscriptionOfferingPlanType:
+      type: string
+      example: subscription_offering_plan
+      enum:
+      - subscription_offering_plan
+    SubscriptionAttributes:
+      required:
+      - account_id
+      - pricing_option_id
+      - plan_id
+      - offering
+      - currency
+      - name
+      - email
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+        account_id:
+          $ref: '#/components/schemas/UUID'
+        address_id:
+          $ref: '#/components/schemas/UUID'
+        offering:
+          $ref: '#/components/schemas/Offering'
+        pricing_option_id:
+          $ref: '#/components/schemas/UUID'
         plan_id:
           $ref: '#/components/schemas/UUID'
-        from_time_period:
-          description: The start date and time of the billing period in this price
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        until_time_period:
-          description: The end date and time of the billing period in this price
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    CreatePaymentAuthorityEPPayments:
+        currency:
+          $ref: '#/components/schemas/CurrencyIdentifier'
+        payment_authority:
+          $ref: '#/components/schemas/PaymentAuthority'
+    FeatureMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      properties:
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    CreatePaymentAuthorityStripe:
       writeOnly: true
       type: object
       required:
@@ -2088,9 +2604,9 @@ components:
         type:
           description: The name of the payment gateway facilitating the secure transmission of payment data.
           type: string
-          example: elastic_path_payments_stripe
+          example: stripe_payment_intents
           enum:
-          - elastic_path_payments_stripe
+          - stripe_payment_intents
           x-go-type: paymentgateways.GatewayName
           x-go-type-import:
             name: paymentgateways
@@ -2107,583 +2623,10 @@ components:
           minLength: 3
           maxLength: 1024
           example: card_8Diw3FQPhxK27WADPVMeXieP
-    FeatureConfigUsageAttributes:
-      description: Configures a usage feature against a plan in an offering, indicating that the referenced feature is a benefit of that plan. The default value that the usage metrics adopts must be supplied.
-      required:
-      - type
-      - default_value
-      properties:
-        type:
-          type: string
-          enum:
-          - usage
-          example: usage
-        default_value:
-          type: integer
-          description: The default initial value
-          example: 10
-    OfferingAttributes:
-      required:
-      - name
-      properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRef'
-        name:
-          type: string
-          description: The name of the offering.
-          minLength: 3
-          maxLength: 1024
-          example: Magazine
-        description:
-          type: string
-          description: The offering description to display to customers.
-          maxLength: 1024
-          example: A lovely magazine that is published every month.
-    SubscriptionUpdateAttributes:
-      properties:
-        pricing_option_id:
-          type: string
-          format: uuid
-          x-go-type: uuid.UUID
-          x-go-type-import:
-            name: uuid
-            path: github.com/google/uuid
-          example: 00000000-0000-0000-0000-000000000001
-        plan_id:
-          type: string
-          format: uuid
-          x-go-type: uuid.UUID
-          x-go-type-import:
-            name: uuid
-            path: github.com/google/uuid
-          example: 00000000-0000-0000-0000-000000000001
-        address_id:
-          type:
-          - string
-          - 'null'
-          format: UUID
-          x-go-type: uuid.UUID
-          x-go-type-import:
-            name: uuid
-            path: github.com/google/uuid
-          example: 00000000-0000-0000-0000-000000000001
-        payment_authority:
-          $ref: '#/components/schemas/PaymentAuthority'
-        go_live_after:
-          description: The date and time a `pending` subscription goes live and becomes active. See [Creating a pending subscription](/docs/api/subscriptions/subscriptions#creating-a-pending-subscription).
-          type:
-          - string
-          - 'null'
-          example: '2017-01-10T11:41:19.244842Z'
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
-    PlanAttributesAndSelectedMeta:
-      allOf:
-      - $ref: '#/components/schemas/PlanAttributes'
-      - $ref: '#/components/schemas/SelectedMeta'
-    SubscriptionPriceChanges:
-      properties:
-        plan_prices:
-          x-go-type-skip-optional-pointer: true
-          additionalProperties:
-            $ref: '#/components/schemas/Price'
-          example:
-            197a11f4-d341-4594-9574-7fbfbe6a671d:
-              USD:
-                amount: 100
-                includes_tax: false
-              GBP:
-                amount: 90
-                includes_tax: true
-        pricing_option_prices:
-          x-go-type-skip-optional-pointer: true
-          additionalProperties:
-            $ref: '#/components/schemas/PricingOptionPrice'
-          example:
-            83f6b8e3-031c-4f2a-a1d7-b1c83cb5ac3c:
-              base_price_percentage: 90
-            197a11f4-d341-4594-9574-7fbfbe6a671d:
-              USD:
-                amount: 100
-                includes_tax: false
-              GBP:
-                amount: 90
-                includes_tax: true
-    PlanMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        prices:
-          $ref: '#/components/schemas/OfferingPlanPrices'
-        display_price:
-          $ref: '#/components/schemas/DisplayPrice'
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-        active_plan:
-          $ref: '#/components/schemas/ActivePlan'
-    RelationshipData:
-      type: object
-      required:
-      - id
-      - type
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          type: string
-          description: This represents the type of resource being returned.
-          example: 11111111-2222-3333-4444-555555555555
-    SubscriptionInvoice:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionInvoiceType'
-        attributes:
-          $ref: '#/components/schemas/SubscriptionInvoiceAttributes'
-        relationships:
-          $ref: '#/components/schemas/Relationships'
-        meta:
-          $ref: '#/components/schemas/SubscriptionInvoiceMeta'
-    OfferingPricingOptionPriceForPlan:
-      readOnly: true
-      properties:
-        price:
-          $ref: '#/components/schemas/Price'
-        display_price:
-          $ref: '#/components/schemas/DisplayPrice'
-    SubscriptionType:
-      type: string
-      example: subscription
-      enum:
-      - subscription
-    SubscriptionOfferingType:
-      type: string
-      example: subscription_offering
-      enum:
-      - subscription_offering
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    CreatePaymentAuthority:
-      type: object
-      oneOf:
-      - $ref: '#/components/schemas/CreatePaymentAuthorityEPPayments'
-      - $ref: '#/components/schemas/CreatePaymentAuthorityStripe'
-      - $ref: '#/components/schemas/CreatePaymentAuthorityAuthorizeNet'
-      discriminator:
-        propertyName: type
-        mapping:
-          elastic_path_payments_stripe: '#/components/schemas/CreatePaymentAuthorityEPPayments'
-          stripe_payment_intents: '#/components/schemas/CreatePaymentAuthorityStripe'
-          authorize_net: '#/components/schemas/CreatePaymentAuthorityAuthorizeNet'
-      required:
-      - type
-      properties:
-        type:
-          description: The name of the payment gateway facilitating the secure transmission of payment data.
-          type: string
-          example: elastic_path_payments_stripe
-          enum:
-          - authorize_net
-          - elastic_path_payments_stripe
-          - stripe_payment_intents
-          x-go-type: paymentgateways.GatewayName
-          x-go-type-import:
-            name: paymentgateways
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
-    ManageSubscriptionPlans:
-      type: object
-      required:
-      - type
-      - plans
-      properties:
-        type:
-          type: string
-          enum:
-          - detach
-          example: detach
-          x-go-type: model.ManagePlansAction
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-        plans:
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/UUID'
-    StateMeta:
-      readOnly: true
-      required:
-      - created_at
-      properties:
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    OfferingMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      - external_plan_refs
-      properties:
-        external_plan_refs:
-          type: array
-          items:
-            $ref: '#/components/schemas/OfferingPlanExternalRefMeta'
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    SubscriptionOfferingPlanType:
-      type: string
-      example: subscription_offering_plan
-      enum:
-      - subscription_offering_plan
-    Price:
-      additionalProperties:
-        type: object
-        description: The base price.
-        required:
-        - amount
-        properties:
-          amount:
-            type: integer
-            format: int64
-            minimum: 0
-            example: 100
-            description: The value as a whole number of the currency's smallest subdivision.
-          includes_tax:
-            type: boolean
-            example: true
-            description: Indicates whether the amount includes any taxes.
-      example:
-        USD:
-          amount: 100
-          includes_tax: false
-        GBP:
-          amount: 90
-          includes_tax: true
-    SubscriptionUpdate:
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionType'
-        attributes:
-          $ref: '#/components/schemas/SubscriptionUpdateAttributes'
-    FeatureConfiguration:
-      type: object
-      required:
-      - type
-      properties:
-        type:
-          description: The type of feature, one of access, promotion or usage.
-          enum:
-          - access
-          - promotion
-          - usage
-          example: access
-          x-go-type: string
-      oneOf:
-      - $ref: '#/components/schemas/FeatureAccessAttributes'
-      - $ref: '#/components/schemas/FeaturePromotionAttributes'
-      - $ref: '#/components/schemas/FeatureUsageAttributes'
-      discriminator:
-        propertyName: type
-        mapping:
-          access: '#/components/schemas/FeatureAccessAttributes'
-          promotion: '#/components/schemas/FeaturePromotionAttributes'
-          usage: '#/components/schemas/FeatureUsageAttributes'
-    PricingOptionAttributesAndSelectedMeta:
-      allOf:
-      - $ref: '#/components/schemas/PricingOptionAttributes'
-      - $ref: '#/components/schemas/SelectedMeta'
-    OfferingPricingOptionMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        prices:
-          $ref: '#/components/schemas/OfferingPricingOptionPrices'
-        price:
-          $ref: '#/components/schemas/Price'
-        display_price:
-          $ref: '#/components/schemas/DisplayPrice'
-        active_pricing_option:
-          $ref: '#/components/schemas/ActivePricingOption'
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    ProrationEvent:
-      required:
-      - proration_policy_id
-      - billing_cost_before_proration
-      - refunded_amount_for_unused_pricing_option
-      - new_pricing_option_cost
-      - prorated_at
-      properties:
-        proration_policy_id:
-          $ref: '#/components/schemas/UUID'
-        billing_cost_before_proration:
-          type: integer
-          format: int64
-          description: The value as a whole number of the currency's smallest subdivision
-          example: 100
-        refunded_amount_for_unused_pricing_option:
-          type: integer
-          format: int64
-          description: The value as a whole number of the currency's smallest subdivision.
-          example: 100
-        new_pricing_option_cost:
-          type: integer
-          format: int64
-          description: The value as a whole number of the currency's smallest subdivision.
-          example: 100
-        prorated_at:
-          description: The date and time the subscription was prorated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    SubscriptionTimestamps:
-      allOf:
-      - $ref: '#/components/schemas/Timestamps'
-      - properties:
-          canceled_at:
-            description: The date and time a subscription was cancelled.
-            type: string
-            example: '2017-01-10T11:41:19.244842Z'
-          paused_at:
-            description: The date and time a subscription was paused.
-            type: string
-            example: '2017-01-10T11:41:19.244842Z'
-          resumed_at:
-            description: The date and time a subscription was resumed.
-            type: string
-            example: '2017-01-10T11:41:19.244842Z'
-          end_date:
-            description: 'The date and time a subscription will end.
-
-              - If the subscription offering pricing option end behavior is `close`, `end_date` is set to the billing period end date upon subscription creation.
-
-              - If the subscription offering pricing option end behavior is "roll": `end_date` is set to the billing period end date when the subscription is cancelled.
-
-              '
-            type: string
-            example: '2017-01-10T11:41:19.244842Z'
-          go_live_after:
-            description: The date and time a subscription will go live and become active.
-            type: string
-            example: '2017-01-10T11:41:19.244842Z'
-          go_live:
-            description: The date and time a subscription was released from the pending state and made active.
-            type: string
-            example: '2017-01-10T11:41:19.244842Z'
-    PriceFormatting:
-      required:
-      - amount
-      - currency
-      - formatted
-      properties:
-        amount:
-          type: integer
-          format: int64
-          example: 100
-          description: The unformatted amount for the objects.
-        currency:
-          type: string
-          format: string
-          example: USD
-          description: The three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html) in uppercase, associated with a price.
-        formatted:
-          type: string
-          format: string
-          example: $1.00
-          description: The formatted amount for the objects.
     OfferingResponseAttributes:
       allOf:
       - $ref: '#/components/schemas/OfferingAttributes'
       - $ref: '#/components/schemas/Timestamps'
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    CurrencyIdentifier:
-      type: string
-      description: The three-letter [**ISO currency code**](https://www.iso.org/iso-4217-currency-codes.html) in uppercase.
-      maxLength: 1024
-      example: USD
-    ActivePricingOption:
-      type: boolean
-      description: Whether a pricing option is active on a subscription using that offering. The `active_pricing_option` attribute is null if a pricing option is not active in a subscription.
-      example: true
-    DisplayPrice:
-      properties:
-        without_tax:
-          $ref: '#/components/schemas/PriceFormatting'
-        with_tax:
-          $ref: '#/components/schemas/PriceFormatting'
-        tax:
-          description: 'Tax component when itemized (for example on subscription invoices). Omitted for catalog prices
-
-            that only expose with/without tax.
-
-            '
-          $ref: '#/components/schemas/PriceFormatting'
-      example:
-        without_tax:
-          amount: 100
-          currency: USD
-          formatted: $1.00
-        with_tax:
-          amount: 110
-          currency: USD
-          formatted: $1.10
-        tax:
-          amount: 10
-          currency: USD
-          formatted: $0.10
-    OfferingBuildPlanPricingOptions:
-      type: array
-      items:
-        type: string
-        description: The unique ID or external ref of the pricing option
-        example: 11111111-2222-3333-4444-555555555555
-    SubscriptionState:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionStateType'
-        attributes:
-          $ref: '#/components/schemas/SubscriptionStateAttributes'
-        meta:
-          $ref: '#/components/schemas/StateMeta'
-    SubscriptionInvoicePaymentType:
-      type: string
-      description: This represents the type of resource object being returned. Always `subscription_invoice_payment`.
-      example: subscription_invoice_payment
-      enum:
-      - subscription_invoice_payment
-  responses:
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No plan found
-    UnprocessableContent:
-      description: Unprocessable Content.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            cannot-process-refund:
-              value:
-                errors:
-                - title: Unprocessable Content
-                  status: '422'
-                  detail: 'Unprocessable Content: cannot process the refund'
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: 'data.attributes.name: "name" is required'
-    ForbiddenError:
-      description: Forbidden. The operation is forbidden on this entity.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Permission denied
-                  status: '404'
-                  detail: 'Permission denied: plan tenancy mismatch'
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
   parameters:
     PageLimit:
       name: page[limit]
@@ -2710,17 +2653,6 @@ components:
           enum:
           - plans
           - pricing_options
-    Filter:
-      name: filter
-      in: query
-      required: false
-      schema:
-        type: string
-        format: string
-        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
-
-          '
-        example: eq(name,Alan Turing)
     PageOffset:
       name: page[offset]
       description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
@@ -2732,6 +2664,82 @@ components:
         minimum: 0
         maximum: 10000
         example: 10
+    Filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(name,Alan Turing)
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    ForbiddenError:
+      description: Forbidden. The operation is forbidden on this entity.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Permission denied
+                  status: '404'
+                  detail: 'Permission denied: plan tenancy mismatch'
+    UnprocessableContent:
+      description: Unprocessable Content.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            cannot-process-refund:
+              value:
+                errors:
+                - title: Unprocessable Content
+                  status: '422'
+                  detail: 'Unprocessable Content: cannot process the refund'
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: 'data.attributes.name: "name" is required'
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No plan found
   securitySchemes:
     BearerToken:
       scheme: bearer

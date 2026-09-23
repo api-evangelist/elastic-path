@@ -1,51 +1,7 @@
 openapi: 3.2.0
 info:
   title: Single Sign On Authentication Realms API
-  description: 'Single sign-on allows authentication with Commerce using an external authentication provider. Using an existing authentication provider allows for integration with company-specific or customizable authentication systems. In some cases, it can also simplify the log-in experience because they don’t need to remember another password.
-
-
-    Commerce supports two types of single sign-on users:
-
-
-    - End users, that is, customers of your store.
-
-    - Administrators, who can use single sign-on to log on to Commerce Manager.
-
-
-    When users need to authenticate, they are redirected to the single sign-on provider, which then communicates the result of the authentication process back to Commerce.
-
-
-    You can set up Commerce to allow single sign-on for end users, using the *OpenID Connect* standard.
-
-
-    :::note
-
-    When users authenticate using an external authentication provider, authentication details, such as username and password, are neither stored on nor sent through Commerce.
-
-    :::
-
-
-
-    ## Authentication Providers and Composable Commerce
-
-
-    Commerce supports many OpenID Connect compatible authentication providers. For more information, see [Requirements for Authentication Providers](/guides/How-To/Authentication/get-single-sign-on-account-management-token#requirements-for-authentication-providers).
-
-
-    ## External Reference
-
-
-    - [What is OpenID?](https://openid.net/foundation/)
-
-    - [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html)
-
-
-    ## Related Resources
-
-
-    - [Security](/docs/authentication/security)
-
-    '
+  description: Single sign-on allows authentication with Commerce using an external authentication provider.
   contact:
     name: Elastic Path
     url: https://www.elasticpath.com
@@ -64,7 +20,22 @@ security:
 - BearerToken: []
 tags:
 - name: Authentication Realms
-  description: "An authentication realm is a container that consists of the following:\n\n  - Users -  Represented by [User Authentication Info](/docs/api/single-sign-on/user-authentication-infos) objects\n  - Authentication profiles - Ways for the users to authenticate, such as one or more [OpenID Connect Profiles](/docs/api/single-sign-on/oidc-profiles) or [Password Profiles](/docs/api/single-sign-on/password-profiles)\n  - Mappings between users and authentication profiles - [User Authentication OpenID Connect Profile Info](/docs/api/single-sign-on/user-authentication-oidc-profile-infos) or [User Authentication Password Profile Infos](/docs/api/single-sign-on/user-authentication-password-profile-infos)\n\nHere's a domain diagram showing these relationships\n![authentication realm](/assets/authentication-realm-domain.png)\n\nComposable Commerce comes with three per-store pre-set realms:\n  - Buyer Organization. For customers: users who buy products from your store.\n  - Merchant Organization. For administrators: users who log in to Commerce Manager to modify the store’s settings or catalog.\n  - Account Management Realm. For account members: users who buy products from your store on behalf of accounts. Password profiles are only available for account management realm.\n"
+  description: 'An authentication realm is a container that consists of the following:
+
+
+    - Users - Represented by User Authentication Info objects
+
+    - Authentication profiles - Ways for the users to authenticate, such as one or more OpenID Connect Profiles or Password Profiles
+
+    - Mappings between users and authentication profiles - User Authentication OpenID Connect Profile Info or User Authentication Password Profile Infos
+
+
+    Here''s a domain diagram showing these relationships
+
+    !authentication realm
+
+
+    Composable…'
   externalDocs:
     url: https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/authentication-realms
 paths:
@@ -75,9 +46,7 @@ paths:
       summary: Get all Authentication Realms
       description: 'Retrieve a list of all authentication realms configured for your store.
 
-        Authentication Realms allow you to configure authentication options and manage single sign-on settings. Each realm contains users, authentication profiles, and mappings between users and authentication profiles.
-
-        '
+        Authentication Realms allow you to configure authentication options and manage single sign-on settings. Each realm contains users, authentication profiles, and mappings between users and authentication profiles.'
       operationId: get-v2-authentication-realms
       parameters:
       - $ref: '#/components/parameters/page-limit'
@@ -285,73 +254,25 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  responses:
-    BadRequestError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              value:
-                errors:
-                - title: Bad Request
-                  status: '400'
-                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
-    UnauthorizedError:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unauthorized-error:
-              value:
-                errors:
-                - title: Unauthorized
-                  status: '401'
-    UnprocessableEntityError:
-      description: Unprocessable Entity
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unprocessable-entity-error:
-              value:
-                errors:
-                - title: Unprocessable Entity
-                  status: '422'
-                  detail: Constraint violation
-    InternalServerError:
-      description: Internal server error.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              summary: Internal server error
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-                  detail: there was a problem processing your request
-    NotFoundError:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: Resource not found
   schemas:
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+        links:
+          $ref: '#/components/schemas/SelfLink'
+    SelfLink:
+      type: object
+      properties:
+        self:
+          description: A URL to the specific resource.
+          type: string
+          format: uri
     AuthenticationRealmResponse:
       allOf:
       - $ref: '#/components/schemas/AuthenticationRealm'
@@ -371,17 +292,6 @@ components:
                 type: string
                 format: uri
                 example: https://useast.api.elasticpath.com/v2/authentication-realms/deb6b25f-8451-4211-9a22-95610333df23
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-        links:
-          $ref: '#/components/schemas/SelfLink'
     MetaListResults:
       type: object
       properties:
@@ -389,31 +299,6 @@ components:
           type: integer
           description: The total number of results after applying filters, if any, or all results.
           example: 1
-    MetaTimestamps:
-      type: object
-      properties:
-        created_at:
-          description: The date the resource is created.
-          type: string
-          format: date-time
-          example: '2021-02-23T09:40:33.882Z'
-        updated_at:
-          description: The date the resource is updated.
-          type: string
-          format: date-time
-          example: '2021-02-23T09:40:33.882Z'
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      example: deb6b25f-8451-4211-9a22-95610333df23
-    MetaList:
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/MetaListPage'
-        results:
-          $ref: '#/components/schemas/MetaListResults'
     MetaListPage:
       type: object
       properties:
@@ -433,6 +318,18 @@ components:
           type: integer
           description: The total page count.
           example: 1
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
+    MetaList:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/MetaListPage'
+        results:
+          $ref: '#/components/schemas/MetaListResults'
     Error:
       type: object
       required:
@@ -455,6 +352,19 @@ components:
           description: Optional additional detail about the error.
           examples:
           - The field 'name' is required
+    MetaTimestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date the resource is created.
+          type: string
+          format: date-time
+          example: '2021-02-23T09:40:33.882Z'
+        updated_at:
+          description: The date the resource is updated.
+          type: string
+          format: date-time
+          example: '2021-02-23T09:40:33.882Z'
     AuthenticationRealm:
       type: object
       properties:
@@ -506,13 +416,6 @@ components:
       required:
       - type
       - name
-    SelfLink:
-      type: object
-      properties:
-        self:
-          description: A URL to the specific resource.
-          type: string
-          format: uri
   parameters:
     page-limit:
       name: page[limit]
@@ -535,6 +438,72 @@ components:
         format: int64
         minimum: 0
         default: 0
+  responses:
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value:
+                errors:
+                - title: Unauthorized
+                  status: '401'
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: Resource not found
+    UnprocessableEntityError:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unprocessable-entity-error:
+              value:
+                errors:
+                - title: Unprocessable Entity
+                  status: '422'
+                  detail: Constraint violation
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
   securitySchemes:
     BearerToken:
       type: http

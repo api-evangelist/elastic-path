@@ -1,36 +1,7 @@
 openapi: 3.2.0
 info:
-  title: Carts, Checkout, Orders Introduction Cart Shipping Groups API
-  description: 'A cart contains a list of the products that a shopper adds to the cart while browsing your catalog. In the context of a cart, a selected product is called a cart item.
-
-
-    A cart item identifies the product, the product price, the quantity selected, and the total price for the quantity selected. The cart displays a running total of the cost for the selected products plus the calculated tax.
-
-
-    You can allow your shoppers to add custom text to a product when adding an item to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized. See [Add product to cart](/docs/api/carts/manage-carts#add-product-to-cart).
-
-
-    After a shopper checks out, the cart is converted to an order, and you can manually delete the cart. If you don''t delete the cart, it is purged automatically after seven days.
-
-
-    The preview cart feature allows you to set a future date for your shopping cart and view the promotions that will be available during that time period. This feature enables you to validate your promotion settings and observe how they will be applied in the cart. See [Create a Preview Cart](/docs/api/carts/create-a-cart#preview-cart).
-
-
-    The following diagram shows a typical cart workflow:
-
-
-    ![Shows a cart workflow, starting from adding the first item to a cart, through cart creation and checkout](/assets/cart-workflow.png)
-
-
-    ### Multiple Carts
-
-
-    Buyers often make purchases based on jobs that they need to perform or outcomes they need to achieve and therefore require more than one shopping cart. For example, a corporate buyer places orders for multiple locations. Each location has a different frequency of ordering and require different products. The buyer can create one cart per location, fill the carts, and then check out the carts quickly. Similarly, shoppers can also create multiple carts for the ease of managing various shopping experiences, such as birthdays or holidays.
-
-
-    Each cart is discrete and separate. Any updates or changes to one cart has no effect on the other carts. A cart persists, that is, it stays with the buyer or shopper even after they use the cart in a checkout. Carts remain available after a checkout.
-
-    '
+  title: Carts, Checkout, Orders Introduction Cart Shipping Groups…
+  description: A cart contains a list of the products that a shopper adds to the cart while browsing your catalog.
   contact:
     name: Elastic Path
     url: https://elasticpath.com
@@ -57,7 +28,6 @@ paths:
       - Cart Shipping Groups
       summary: Retrieve all shipping groups for a cart
       operationId: getShippingGroups
-      description: Retrieve all shipping groups for a cart
       parameters:
       - name: cartID
         in: path
@@ -132,7 +102,6 @@ paths:
       - Cart Shipping Groups
       summary: Create a new shipping group for a cart
       operationId: createShippingGroup
-      description: Create a new shipping group for a cart
       parameters:
       - name: cartID
         in: path
@@ -215,7 +184,6 @@ paths:
       - Cart Shipping Groups
       summary: Retrieve a specific shipping group for a cart
       operationId: getShippingGroupById
-      description: Retrieve a specific shipping group for a cart
       parameters:
       - name: cartId
         in: path
@@ -390,9 +358,7 @@ paths:
       summary: Delete Cart Shipping Group
       description: 'Deletes a shipping group from a cart. You cannot delete a shipping group that is attached to cart items.
 
-        You must first remove the shipping group from all cart items before deleting the shipping group.
-
-        '
+        You must first remove the shipping group from all cart items before deleting the shipping group.'
       operationId: deleteCartShippingGroup
       parameters:
       - name: cartId
@@ -429,6 +395,74 @@ paths:
                 $ref: '#/components/schemas/Response.ErrorResponse'
 components:
   schemas:
+    DiscountFormattedPriceData:
+      title: DiscountFormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The discount amount. Must be non-positive (zero or negative).
+          type: number
+          maximum: 0
+          examples:
+          - -1000
+          - 0
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - -$10.00
+          - $0.00
+    ShippingGroupResponse:
+      title: Shipping Group Response
+      type: object
+      properties:
+        type:
+          type: string
+          const: shipping_group
+        id:
+          type: string
+        relation:
+          type: string
+        cart_id:
+          type: string
+        order_id:
+          type: string
+        shipping_type:
+          type: string
+        tracking_reference:
+          type: string
+        external_ref:
+          description: An optional external ID reference for a shipping group. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
+          type: string
+          maxLength: 64
+          examples:
+          - SG-12345
+        address:
+          $ref: '#/components/schemas/ShippingAddress'
+        delivery_estimate:
+          $ref: '#/components/schemas/DeliveryEstimate'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        relationships:
+          type: object
+          properties:
+            cart:
+              $ref: '#/components/schemas/SingleRelationship'
+            order:
+              $ref: '#/components/schemas/SingleRelationship'
+        discounts:
+          $ref: '#/components/schemas/Discounts'
+        meta:
+          $ref: '#/components/schemas/ShippingGroupMeta'
     OrderPriceData:
       title: OrderPriceData
       type: object
@@ -448,6 +482,44 @@ components:
           type: boolean
           examples:
           - false
+    DiscountData:
+      title: DiscountData
+      type: object
+      properties:
+        amount:
+          $ref: '#/components/schemas/OrderPriceData'
+        code:
+          type: string
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        promotion_source:
+          type: string
+          description: The source or origin of the promotion, if applicable.
+        is_cart_discount:
+          type: boolean
+          description: Indicates whether the discount applies to the entire cart.
+        ordinal:
+          type: integer
+          description: Order in which the discount was applied.
+    OrderItemFormattedUnitPriceData:
+      title: OrderItemFormattedUnitPriceData
+      type: object
+      properties:
+        unit:
+          $ref: '#/components/schemas/FormattedPriceData'
+        value:
+          $ref: '#/components/schemas/FormattedPriceData'
+    DeliveryEstimate:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
     Money:
       type: object
       properties:
@@ -464,6 +536,98 @@ components:
       - amount
       - currency
       - includes_tax
+    Timestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this was created.
+          type: string
+        updated_at:
+          description: The date this was last updated.
+          type: string
+    Response.ErrorItem:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type:
+          - string
+          - integer
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+        source:
+          type: string
+          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
+        meta:
+          type: object
+          description: Additional metadata associated with the error. May include arbitrary keys.
+          properties:
+            id:
+              type: string
+              description: The resource id associated with the error
+            ids:
+              type: array
+              items:
+                type: string
+                description: The resource ids associated with the error
+            item_ids:
+              type: array
+              items:
+                type: string
+                description: The cart_item ids associated with the error
+            shipping_group_id:
+              type: string
+              description: The shipping group id associated with the error
+            shipping_group_ids:
+              type: array
+              items:
+                type: string
+                description: The shipping group ids associated with the error
+            cart_id:
+              type: string
+              description: The cart id associated with the error
+            code:
+              type: string
+              description: The code associated with the error.
+            order_id:
+              type: string
+              description: The order id associated with the error.
+            sku:
+              type: string
+              description: The SKU associated with the error.
+            email:
+              type: string
+              format: email
+              description: The email address associated with the error.
+            component_product_id:
+              type: string
+              format: uuid
+              description: The component product ID associated with the error.
+            error-meta-key:
+              type: string
+              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
+            value:
+              description: The value associated with the error.
+              oneOf:
+              - type: string
+              - type: integer
+              - type: boolean
+              - type: object
+                additionalProperties: true
+              - type: array
     AddressCommon:
       type: object
       required:
@@ -523,46 +687,45 @@ components:
           type: string
           examples:
           - CA
-    RelationshipItem:
-      title: RelationshipItem
-      description: Relationship data entry
-      required:
-      - type
-      - id
+    Discounts:
+      type: array
+      items:
+        $ref: '#/components/schemas/Discount'
+    Discount:
       type: object
       properties:
-        type:
-          description: The type of related resource.
+        amount:
+          $ref: '#/components/schemas/Money'
+        code:
           type: string
+          description: The discount code used, if applicable.
         id:
-          description: The ID of the related resource.
           type: string
-          format: uuid
-    CustomAttributes:
-      title: CustomAttributes
-      type: object
-      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
-      additionalProperties:
-        type: object
+          description: Unique identifier for the discount.
+        promotion_source:
+          type: string
+          description: The source or origin of the promotion, if applicable.
+        is_cart_discount:
+          type: boolean
+          description: Indicates whether the discount applies to the entire cart.
+        ordinal:
+          type: integer
+          description: Order in which the discount was applied.
+      required:
+      - amount
+      - id
+    AddressWithCounty:
+      title: Address with County
+      allOf:
+      - $ref: '#/components/schemas/AddressCommon'
+      - type: object
         required:
-        - type
-        - value
+        - county
         properties:
-          type:
+          county:
+            description: County of the address.
             type: string
-            description: The type of the custom attribute value.
-            enum:
-            - string
-            - integer
-            - boolean
-            - float
-          value:
-            description: The value of the custom attribute.
-            type:
-            - string
-            - boolean
-            - number
-    UpdateCartShippingGroupRequest:
+    CreateShippingGroupRequest:
       type: object
       properties:
         data:
@@ -603,71 +766,50 @@ components:
       required:
       - total
       - base
-    ShippingGroupEntityResponse:
+    RelationshipItem:
+      title: RelationshipItem
+      description: Relationship data entry
+      required:
+      - type
+      - id
+      type: object
+      properties:
+        type:
+          description: The type of related resource.
+          type: string
+        id:
+          description: The ID of the related resource.
+          type: string
+          format: uuid
+    ShippingPriceRequest:
+      type: object
+      properties:
+        total:
+          type: number
+        base:
+          type: number
+        tax:
+          type: number
+        fees:
+          type: number
+        discount:
+          type: number
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    SingleRelationship:
+      title: SingleRelationship
+      description: Single relationship
       type: object
       properties:
         data:
-          type: object
-          $ref: '#/components/schemas/ShippingGroupResponse'
-        included:
-          type: object
-          description: Related objects that are included in the response when using the include query parameter.
-          properties:
-            items:
-              description: Array of order items associated with this shipping group.
-              type: array
-              items:
-                $ref: '#/components/schemas/OrderItemResponse'
-          additionalProperties: false
-        errors:
-          type: array
-          description: Array of validation or processing errors
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    OrderPriceWrapperMeta:
-      description: Order pricing information.
-      type: object
-      properties:
-        with_tax:
-          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-        without_tax:
-          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-        tax:
-          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-        discount:
-          $ref: '#/components/schemas/DiscountFormattedPriceData'
-        balance_owing:
-          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-        paid:
-          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-        authorized:
-          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-        without_discount:
-          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-        shipping:
-          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-        shipping_discount:
-          $ref: '#/components/schemas/DiscountFormattedPriceData'
-      required:
-      - with_tax
-      - without_tax
-      - tax
-      - discount
-      - balance_owing
-      - paid
-      - authorized
-      - without_discount
-      - shipping
-      - shipping_discount
-    DeliveryEstimate:
-      type: object
-      properties:
-        start:
-          type: string
-          format: date-time
-        end:
-          type: string
-          format: date-time
+          $ref: '#/components/schemas/RelationshipItem'
     ShippingGroupMeta:
       type: object
       properties:
@@ -675,6 +817,26 @@ components:
           $ref: '#/components/schemas/ShippingPriceResponse'
         total_display_price:
           $ref: '#/components/schemas/OrderPriceWrapperMeta'
+    NonNegativeFormattedPriceData:
+      title: NonNegativeFormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The raw total. Must be non-negative.
+          type: number
+          minimum: 0
+          examples:
+          - 10000
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - $10.00
     OrderItemResponse:
       title: OrderItemResponse
       type: object
@@ -920,206 +1082,30 @@ components:
             pricing_option:
               description: Pricing option for the subscription
               type: string
-    Response.ErrorItem:
+    CustomAttributes:
+      title: CustomAttributes
       type: object
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
+      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
+      additionalProperties:
+        type: object
+        required:
+        - type
+        - value
+        properties:
           type:
-          - string
-          - integer
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
-        source:
-          type: string
-          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
-        meta:
-          type: object
-          description: Additional metadata associated with the error. May include arbitrary keys.
-          properties:
-            id:
-              type: string
-              description: The resource id associated with the error
-            ids:
-              type: array
-              items:
-                type: string
-                description: The resource ids associated with the error
-            item_ids:
-              type: array
-              items:
-                type: string
-                description: The cart_item ids associated with the error
-            shipping_group_id:
-              type: string
-              description: The shipping group id associated with the error
-            shipping_group_ids:
-              type: array
-              items:
-                type: string
-                description: The shipping group ids associated with the error
-            cart_id:
-              type: string
-              description: The cart id associated with the error
-            code:
-              type: string
-              description: The code associated with the error.
-            order_id:
-              type: string
-              description: The order id associated with the error.
-            sku:
-              type: string
-              description: The SKU associated with the error.
-            email:
-              type: string
-              format: email
-              description: The email address associated with the error.
-            component_product_id:
-              type: string
-              format: uuid
-              description: The component product ID associated with the error.
-            error-meta-key:
-              type: string
-              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
-            value:
-              description: The value associated with the error.
-              oneOf:
-              - type: string
-              - type: integer
-              - type: boolean
-              - type: object
-                additionalProperties: true
-              - type: array
-    Response.ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    AddressWithCounty:
-      title: Address with County
-      allOf:
-      - $ref: '#/components/schemas/AddressCommon'
-      - type: object
-        required:
-        - county
-        properties:
-          county:
-            description: County of the address.
             type: string
-    SingleRelationship:
-      title: SingleRelationship
-      description: Single relationship
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/RelationshipItem'
-    ShippingGroupResponse:
-      title: Shipping Group Response
-      type: object
-      properties:
-        type:
-          type: string
-          const: shipping_group
-        id:
-          type: string
-        relation:
-          type: string
-        cart_id:
-          type: string
-        order_id:
-          type: string
-        shipping_type:
-          type: string
-        tracking_reference:
-          type: string
-        external_ref:
-          description: An optional external ID reference for a shipping group. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
-          type: string
-          maxLength: 64
-          examples:
-          - SG-12345
-        address:
-          $ref: '#/components/schemas/ShippingAddress'
-        delivery_estimate:
-          $ref: '#/components/schemas/DeliveryEstimate'
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        relationships:
-          type: object
-          properties:
-            cart:
-              $ref: '#/components/schemas/SingleRelationship'
-            order:
-              $ref: '#/components/schemas/SingleRelationship'
-        discounts:
-          $ref: '#/components/schemas/Discounts'
-        meta:
-          $ref: '#/components/schemas/ShippingGroupMeta'
-    AddressWithRegion:
-      title: Address with Region
-      allOf:
-      - $ref: '#/components/schemas/AddressCommon'
-      - type: object
-        required:
-        - region
-        properties:
-          region:
-            description: State, province, or region of the address.
-            type: string
-    NonNegativeFormattedPriceData:
-      title: NonNegativeFormattedPriceData
-      type: object
-      properties:
-        amount:
-          description: The raw total. Must be non-negative.
-          type: number
-          minimum: 0
-          examples:
-          - 10000
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - $10.00
-    ShippingPriceRequest:
-      type: object
-      properties:
-        total:
-          type: number
-        base:
-          type: number
-        tax:
-          type: number
-        fees:
-          type: number
-        discount:
-          type: number
+            description: The type of the custom attribute value.
+            enum:
+            - string
+            - integer
+            - boolean
+            - float
+          value:
+            description: The value of the custom attribute.
+            type:
+            - string
+            - boolean
+            - number
     ShippingAddress:
       title: ShippingAddress
       description: 'Shipping address information. You must specify at least one of region (state/province) or county.
@@ -1155,67 +1141,7 @@ components:
         county: Greater London
         country: GB
         phone_number: +44 20 7946 0958
-    DiscountData:
-      title: DiscountData
-      type: object
-      properties:
-        amount:
-          $ref: '#/components/schemas/OrderPriceData'
-        code:
-          type: string
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        promotion_source:
-          type: string
-          description: The source or origin of the promotion, if applicable.
-        is_cart_discount:
-          type: boolean
-          description: Indicates whether the discount applies to the entire cart.
-        ordinal:
-          type: integer
-          description: Order in which the discount was applied.
-    Timestamps:
-      type: object
-      properties:
-        created_at:
-          description: The date this was created.
-          type: string
-        updated_at:
-          description: The date this was last updated.
-          type: string
-    DiscountFormattedPriceData:
-      title: DiscountFormattedPriceData
-      type: object
-      properties:
-        amount:
-          description: The discount amount. Must be non-positive (zero or negative).
-          type: number
-          maximum: 0
-          examples:
-          - -1000
-          - 0
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - -$10.00
-          - $0.00
-    OrderItemFormattedUnitPriceData:
-      title: OrderItemFormattedUnitPriceData
-      type: object
-      properties:
-        unit:
-          $ref: '#/components/schemas/FormattedPriceData'
-        value:
-          $ref: '#/components/schemas/FormattedPriceData'
-    CreateShippingGroupRequest:
+    UpdateCartShippingGroupRequest:
       type: object
       properties:
         data:
@@ -1240,33 +1166,52 @@ components:
               type: boolean
             delivery_estimate:
               $ref: '#/components/schemas/DeliveryEstimate'
-    Discounts:
-      type: array
-      items:
-        $ref: '#/components/schemas/Discount'
-    Discount:
+    AddressWithRegion:
+      title: Address with Region
+      allOf:
+      - $ref: '#/components/schemas/AddressCommon'
+      - type: object
+        required:
+        - region
+        properties:
+          region:
+            description: State, province, or region of the address.
+            type: string
+    OrderPriceWrapperMeta:
+      description: Order pricing information.
       type: object
       properties:
-        amount:
-          $ref: '#/components/schemas/Money'
-        code:
-          type: string
-          description: The discount code used, if applicable.
-        id:
-          type: string
-          description: Unique identifier for the discount.
-        promotion_source:
-          type: string
-          description: The source or origin of the promotion, if applicable.
-        is_cart_discount:
-          type: boolean
-          description: Indicates whether the discount applies to the entire cart.
-        ordinal:
-          type: integer
-          description: Order in which the discount was applied.
+        with_tax:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        without_tax:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        tax:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        discount:
+          $ref: '#/components/schemas/DiscountFormattedPriceData'
+        balance_owing:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        paid:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        authorized:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        without_discount:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        shipping:
+          $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+        shipping_discount:
+          $ref: '#/components/schemas/DiscountFormattedPriceData'
       required:
-      - amount
-      - id
+      - with_tax
+      - without_tax
+      - tax
+      - discount
+      - balance_owing
+      - paid
+      - authorized
+      - without_discount
+      - shipping
+      - shipping_discount
     FormattedPriceData:
       title: FormattedPriceData
       type: object
@@ -1286,6 +1231,27 @@ components:
           type: string
           examples:
           - $10.00
+    ShippingGroupEntityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/ShippingGroupResponse'
+        included:
+          type: object
+          description: Related objects that are included in the response when using the include query parameter.
+          properties:
+            items:
+              description: Array of order items associated with this shipping group.
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItemResponse'
+          additionalProperties: false
+        errors:
+          type: array
+          description: Array of validation or processing errors
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
   securitySchemes:
     bearerAuth:
       type: http

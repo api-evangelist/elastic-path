@@ -2,46 +2,7 @@ openapi: 3.2.0
 info:
   title: Personal Data Introduction Personal Data Logs API
   version: '1.0'
-  description: '
-
-    In Commerce, every change to a user’s personal data is logged.
-
-
-    Personal data sets are groups of data items that are related to each other. For example, customer, addresses, and authentication information. The contents of a personal data set is dynamic. Data items are attached to each other automatically as they are created or updated.
-
-
-    The API allows you to fetch these logs, including the list of related data items. In other words, the data items that belong to the same personal data set.
-
-
-    Log entries are kept in the system for a limited time. You can configure the retention period using the Logs Time-to-live (TTL) settings API. The default retention period is 365 days for production store types and 7 days for other store types.
-
-
-    ## Personal Data Resource Types
-
-
-    | Entity type                               | Endpoint                                                                                                                                              | Documentation                                                                                                    |
-
-    |-------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-
-    | customer                                  | `v2/customers/{id}`                                                                                                                                   | [Customers](/docs/customer-management/customer-management-api/customer-management-api-overview)                  |
-
-    | account                                   | `v2/accounts/{id}`                                                                                                                                    | [Accounts](/docs/api/accounts/post-v-2-accounts)                                                                 |
-
-    | account-member                            | `v2/account-members/{id}`                                                                                                                             | [Account Members](/docs/api/accounts/account-members)                                                            |
-
-    | account-membership                        | `v2/accounts/{accountId}/account-memberships/{id}`                                                                                                    | [Account Memberships](/docs/api/accounts/account-membership)                                                     |
-
-    | address                                   | `v2/customers/{customerId}/addresses/{id}`; `v2/accounts/{accountId}/addresses/{id}`                                                                  | [Addresses](/docs/api/addresses/addresses-introduction)                                                          |
-
-    | user-authentication-info                  | `v2/authentication-realms/{realmId}/user-authentication-info/{id}`                                                                                    | [User Authentication Info](/docs/api/single-sign-on/user-authentication-infos)                                   |
-
-    | user-authentication-oidc-profile-info     | `v2/authentication-realms/{authenticationRealmId}/user-authentication-info/{userAuthenticationInfoId}/user-authentication-oidc-profile-info/{id}`     | [User Authentication OIDC Profile Info](/docs/api/single-sign-on/user-authentication-oidc-profile-infos)         |
-
-    | user-authentication-password-profile-info | `v2/authentication-realms/{authenticationRealmId}/user-authentication-info/{userAuthenticationInfoId}/user-authentication-password-profile-info/{id}` | [User Authentication Password Profile Info](/docs/api/single-sign-on/user-authentication-password-profile-infos) |
-
-    | order                                     | `v2/orders/{id}`                                                                                                                                      | [Orders](/docs/api/carts/orders)                                                                                 |
-
-    '
+  description: In Commerce, every change to a user’s personal data is logged.
   contact:
     name: Elastic Path
     url: https://www.elasticpath.com
@@ -58,29 +19,50 @@ security:
 - bearerAuth: []
 tags:
 - name: Personal Data Logs
-  description: 'When a user’s personal data is changed, an event is logged by Commerce. You can use the Personal Data Logs endpoint to access these logs.
-
-
-    This API is read only, and you cannot add, update, or delete logs using this API.
-
-
-    The API only allows you to read all logs for a particular data entry (specified in the filter GET parameter).
-
-
-    :::note
-
-    Currently, personal data management is only enabled for a limited set of endpoints. See the [personal data concepts page](/docs/api/personal-data/personal-data-introduction) for the list of endpoints that support personal data management.
-
-    :::
-
-    '
+  description: When a user’s personal data is changed, an event is logged by Commerce.
 paths:
   /v2/personal-data/logs:
     get:
       tags:
       - Personal Data Logs
       summary: Get Personal Data Logs
-      description: "Gets a list of logs for a specific resource id and resource type.\n\nYou can use pagination with this resource. For more information, see [pagination](/guides/Getting-Started/pagination).\n\n:::note\n* This request is only accessible to `client_credentials` token users with `Seller Admin`, `Support` and `IT` roles.\n* Non `client_credentials` token users cannot access this endpoint. See [Permissions](/docs/authentication/tokens/permissions).\n* This request requires a filter for `resource_type` and `resource_id`.\n  :::\n\n## Filtering\n\nThe following operator and attributes are **required** for [filtering](/guides/Getting-Started/filtering) erasure requests.\n\n| Operator | Description                                                                                          |\n|:---------|:-----------------------------------------------------------------------------------------------------|\n| `eq`     | Checks whether the values of two operands are equal. If the values are equal, the condition is true. |\n\n| Attribute         | Type     | Operator | Example                                                   |\n| :---------------- | :---     | :---     | :-------------------------------------------------------- |\n| `resource_type`   | `string` | `eq`     | `eq(resource_type,customer)`                              |\n| `resource_id`     | `string` | `eq`     | `eq(resource_id,0f850c15-d643-480a-a2b4-9e3c26067178)`    |\n"
+      description: 'Gets a list of logs for a specific resource id and resource type.
+
+
+        You can use pagination with this resource. For more information, see pagination.
+
+
+        :::note
+
+        * This request is only accessible to `client_credentials` token users with `Seller Admin`, `Support` and `IT` roles.
+
+        * Non `client_credentials` token users cannot access this endpoint. See Permissions.
+
+        * This request requires a filter for `resource_type` and `resource_id`.
+
+        :::
+
+
+        ## Filtering
+
+
+        The following operator and attributes are **required** for filtering erasure requests.
+
+
+        | Operator | Description |
+
+        |:---------|:-----------------------------------------------------------------------------------------------------|
+
+        | `eq` | Checks whether the values of two operands are equal. If the values are equal, the condition is true. |
+
+
+        | Attribute | Type | Operator | Example |
+
+        | :---------------- | :--- | :--- | :-------------------------------------------------------- |
+
+        | `resource_type` | `string` | `eq` | `eq(resource_type,customer)` |
+
+        | `resource_id` | `string` | `eq` | `eq(resource_id,0f850c15-d643-480a-a2b4-9e3c26067178)` |'
       operationId: get-personal-data-logs
       parameters:
       - $ref: '#/components/parameters/PageOffset'
@@ -148,58 +130,6 @@ paths:
         default:
           $ref: '#/components/responses/InternalServerError'
 components:
-  responses:
-    BadFilterError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-filter:
-              summary: Required filter missing
-              value: "{\n  \"errors\": [\n    {\n      \"detail\": \"bad filter: resource_id and resource_type are the filter fields that are both mandatory and only they are allowed\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}\n"
-    InternalServerError:
-      description: Internal server error.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              summary: Internal server error
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
-  parameters:
-    Filter:
-      name: filter
-      in: query
-      required: false
-      description: Filter attributes. For more information, see the [Filtering](/guides/Getting-Started/filtering) section.
-      schema:
-        type: string
-        format: string
-        example: eq(resource_id,0f850c15-d643-480a-a2b4-9e3c26067178)
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 0
-    PageLimit:
-      name: page[limit]
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 100
   schemas:
     ErrorResponse:
       required:
@@ -241,27 +171,6 @@ components:
               description: The total number of records for the entire collection.
               type: integer
               example: 1
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
     PersonalDataLog:
       properties:
         id:
@@ -348,6 +257,27 @@ components:
                   type: string
                   format: uri
                   example: http://www.elaticpath.com
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
     PaginationLinks:
       required:
       - current
@@ -385,6 +315,58 @@ components:
           type:
           - string
           - 'null'
+  parameters:
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 0
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
+    Filter:
+      name: filter
+      in: query
+      required: false
+      description: Filter attributes. For more information, see the [Filtering](/guides/Getting-Started/filtering) section.
+      schema:
+        type: string
+        format: string
+        example: eq(resource_id,0f850c15-d643-480a-a2b4-9e3c26067178)
+  responses:
+    BadFilterError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-filter:
+              summary: Required filter missing
+              value: "{\n  \"errors\": [\n    {\n      \"detail\": \"bad filter: resource_id and resource_type are the filter fields that are both mandatory and only they are allowed\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}\n"
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
   securitySchemes:
     bearerAuth:
       type: http

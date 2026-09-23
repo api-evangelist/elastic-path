@@ -3,50 +3,7 @@ info:
   version: 26.0427.7514362
   x-version-timestamp: 2026-04-27 13:44:44+00:00
   title: Subscriptions Introduction Subscribers API
-  description: 'Elastic Path Subscriptions allows you to offer your customers subscriptions and recurring billing for your plans and services. Elastic Path Subscriptions gives you the flexibility to pause, update, or reactivate your subscription offerings, change subscription cycles and apply discounts.
-
-
-    You can create subscriptions using the Elastic Path Subscriptions API or Commerce Manager See [Subscriptions](/docs/commerce-manager/subscriptions/overview).
-
-
-    Scenarios include:
-
-
-    - repeat products that your customers purchase on a recurring basis.
-
-    - membership subscriptions where your customers pay a recurring fee to become members of a particular service, program or organization.
-
-    - subscribe and save that allows your customers to subscribe to regular deliveries of products they use frequently, for example, household essentials, or personal care items.
-
-
-    ### How Subscriptions Work
-
-
-    Elastic Path Subscriptions enables you to manage your subscriptions plans and pricing options, using offerings. Offerings can contain any combination of plans and pricing options.
-
-
-    Here''s how a typical subscription works:
-
-
-    1. Create your offerings. Offerings are the plan and pricing options that a customer can choose. An offering can consist of many combinations of a plan or pricing options, depending on the plans and services you offer. See [**Offerings**](/docs/api/subscriptions/offerings).
-
-    2. When a [**customer**](/docs/api/subscriptions/subscribers) chooses a pricing option, a subscription is created. See [**Subscriptions**](/docs/api/subscriptions/subscriptions).
-
-    3. Elastic Path Subscriptions manages the billing and recurring payments associated with the subscription. See [**Invoicing and Payments**](/docs/api/subscriptions/invoices).
-
-
-    ### Subscriber Management
-
-
-    Elastic Path Subscriptions enables you to create customer accounts that you can use to manage their subscription details, including payment methods and billing information. See [**Subscribers**](/docs/api/subscriptions/subscribers).
-
-
-    ### Invoicing & Payments
-
-
-    Elastic Path Subscriptions enables you to manage the billing and recurring payments associated with your customers subscriptions. Elastic Path Subscriptions provides seamless integration with Elastic Path Payments powered by Stripe. See [**Invoicing and Payments**](/docs/api/subscriptions/invoices).
-
-    '
+  description: Elastic Path Subscriptions allows you to offer your customers subscriptions and recurring billing for your plans and services.
 servers:
 - url: https://euwest.api.elasticpath.com
   description: EU west cluster
@@ -56,9 +13,7 @@ security:
 - BearerToken: []
 tags:
 - name: Subscribers
-  description: 'A subscriber is someone who subscribes to your plan or service.
-
-    '
+  description: A subscriber is someone who subscribes to your plan or service.
 paths:
   /v2/subscriptions/subscribers:
     parameters:
@@ -71,7 +26,29 @@ paths:
       - $ref: '#/components/parameters/PageOffset'
       - $ref: '#/components/parameters/PageLimit'
       operationId: ListSubscribers
-      description: "Retrieves a list of all subscribers.\n\n### Filtering\n\nThis endpoint supports filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering).\n\nThe following attributes and operators are supported.\n\n| Operator | Attribute | Description |\n| --- | --- | --- | \n| `eq` | `account_id`, `name`, `email`, `external_ref` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. |\n| `in` | `account_id`, `name`, `email`, `external_ref` | In. Checks if the value is in the specified list. If it is, the condition is true. |\n| `like` | `name`, `email` | Partial match (case-sensitive). Use `*` at the start, end, or both to match any sequence of characters (e.g. `*substring`, `substring*`, `*substring*`). |\n| `ilike` | `name`, `email` | Partial match (case-insensitive). Same as `like` but matching ignores case. Use `*` at the start, end, or both to match any sequence of characters. |\n"
+      description: 'Retrieves a list of all subscribers.
+
+
+        ### Filtering
+
+
+        This endpoint supports filtering. For the general syntax, see **Filtering**.
+
+
+        The following attributes and operators are supported.
+
+
+        | Operator | Attribute | Description |
+
+        | --- | --- | --- |
+
+        | `eq` | `account_id`, `name`, `email`, `external_ref` | Equals. Checks if the values of two operands are equal. If they are, the condition is true. |
+
+        | `in` | `account_id`, `name`, `email`, `external_ref` | In. Checks if the value is in the specified list. If it is, the condition is true. |
+
+        | `like` | `name`, `email` | Partial match (case-sensitive). Use `*` at the start, end, or both to match any sequence of characters (e.g. `*substring`, `substring*`, `*substring*`). |
+
+        | `ilike` | `name`, `email` | Partial match (case-insensitive). Same as `like` but matching ignores case. Use `*` at the start, end, or both to match any sequence of characters. |'
       responses:
         '200':
           description: Success. A list of subscribers is returned.
@@ -196,88 +173,69 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  schemas:
-    PaymentAuthority:
-      type: object
-      oneOf:
-      - $ref: '#/components/schemas/PaymentAuthorityEPPayments'
-      - $ref: '#/components/schemas/PaymentAuthorityStripe'
-      - $ref: '#/components/schemas/PaymentAuthorityAuthorizeNet'
-      discriminator:
-        propertyName: type
-        mapping:
-          elastic_path_payments_stripe: '#/components/schemas/PaymentAuthorityEPPayments'
-          stripe_payment_intents: '#/components/schemas/PaymentAuthorityStripe'
-          authorize_net: '#/components/schemas/PaymentAuthorityAuthorizeNet'
-      required:
-      - type
-      properties:
-        type:
-          description: The name of the payment gateway facilitating the secure transmission of payment data.
-          type: string
-          example: elastic_path_payments_stripe
-          enum:
-          - authorize_net
-          - elastic_path_payments_stripe
-          - stripe_payment_intents
-          x-go-type: paymentgateways.GatewayName
-          x-go-type-import:
-            name: paymentgateways
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
-    SubscriberCreate:
-      required:
-      - type
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/SubscriptionSubscriberType'
-        attributes:
-          $ref: '#/components/schemas/SubscriberAttributes'
-    SubscriberUpdate:
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionSubscriberType'
-        attributes:
-          $ref: '#/components/schemas/SubscriberUpdateAttributes'
-    SubscriberMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        feature_entitlements:
-          type: array
-          description: A list of entitlement tags currently active for the subscriber
+  responses:
+    ForbiddenError:
+      description: Forbidden. The operation is forbidden on this entity.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Permission denied
+                  status: '404'
+                  detail: 'Permission denied: plan tenancy mismatch'
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: 'data.attributes.name: "name" is required'
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No plan found
+    WriteConflictError:
+      description: Write conflict. Unable to perform the operation at this time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
           example:
-          - tag1
-          - tag2
-          items:
-            $ref: '#/components/schemas/FeatureTag'
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    SubscriptionSubscriberType:
-      type: string
-      example: subscription_subscriber
-      enum:
-      - subscription_subscriber
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
+            errors:
+            - title: Write Conflict
+              status: '409'
+  schemas:
     SubscriberAttributes:
       required:
       - name
@@ -305,48 +263,6 @@ components:
             path: github.com/oapi-codegen/runtime/types
         payment_authority:
           $ref: '#/components/schemas/PaymentAuthority'
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    PaymentAuthorityEPPayments:
-      writeOnly: true
-      type: object
-      required:
-      - type
-      properties:
-        type:
-          description: The name of the payment gateway facilitating the secure transmission of payment data.
-          type: string
-          example: elastic_path_payments_stripe
-          enum:
-          - elastic_path_payments_stripe
-          x-go-type: paymentgateways.GatewayName
-          x-go-type-import:
-            name: paymentgateways
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
-        customer_id:
-          description: The unique identifier for a customer.
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: cus_OPfKlxWV3hp9h6
-        card_id:
-          description: The unique identifier of the card used to facilitate payment of the subscription. If a card payment fails, you can use the `card_id` and `customer_id` attributes to program your front-end implementation to allow your preferred payment service provider to update a subscription with new card details. See [Card declines](/docs/api/subscriptions/invoices#card-declines).
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: card_8Diw3FQPhxK27WADPVMeXieP
     SubscriberUpdateAttributes:
       properties:
         name:
@@ -368,75 +284,33 @@ components:
             path: github.com/oapi-codegen/runtime/types
         payment_authority:
           $ref: '#/components/schemas/NullablePaymentAuthority'
-    OwnerMeta:
-      readOnly: true
-      type: string
-      format: string
-      description: The owner of a resource, either `store` or `organization`.
-      example: store
     SubscriberResponseAttributes:
       allOf:
       - $ref: '#/components/schemas/SubscriberAttributes'
       - $ref: '#/components/schemas/Timestamps'
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    UUID:
+    SubscriptionSubscriberType:
       type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 11111111-2222-3333-4444-555555555555
-    Subscriber:
+      example: subscription_subscriber
+      enum:
+      - subscription_subscriber
+    SubscriberMeta:
+      readOnly: true
       required:
-      - type
-      - attributes
-      - meta
+      - owner
+      - timestamps
       properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionSubscriberType'
-        attributes:
-          $ref: '#/components/schemas/SubscriberResponseAttributes'
-        meta:
-          $ref: '#/components/schemas/SubscriberMeta'
-    Timestamps:
-      required:
-      - created_at
-      - updated_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
+        feature_entitlements:
+          type: array
+          description: A list of entitlement tags currently active for the subscriber
+          example:
+          - tag1
+          - tag2
+          items:
+            $ref: '#/components/schemas/FeatureTag'
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
     ErrorResponse:
       required:
       - errors
@@ -445,35 +319,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-    NullablePaymentAuthority:
-      type:
-      - object
-      - 'null'
-      oneOf:
-      - $ref: '#/components/schemas/PaymentAuthorityEPPayments'
-      - $ref: '#/components/schemas/PaymentAuthorityStripe'
-      - $ref: '#/components/schemas/PaymentAuthorityAuthorizeNet'
-      discriminator:
-        propertyName: type
-        mapping:
-          elastic_path_payments_stripe: '#/components/schemas/PaymentAuthorityEPPayments'
-          stripe_payment_intents: '#/components/schemas/PaymentAuthorityStripe'
-          authorize_net: '#/components/schemas/PaymentAuthorityAuthorizeNet'
-      required:
-      - type
-      properties:
-        type:
-          description: The name of the payment gateway facilitating the secure transmission of payment data.
-          type: string
-          example: elastic_path_payments_stripe
-          enum:
-          - authorize_net
-          - elastic_path_payments_stripe
-          - stripe_payment_intents
-          x-go-type: paymentgateways.GatewayName
-          x-go-type-import:
-            name: paymentgateways
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
     FeatureTag:
       type: string
       description: A tag to add to the customer's account when entitled to the feature.
@@ -509,10 +354,139 @@ components:
           minLength: 3
           maxLength: 1024
           example: card_8Diw3FQPhxK27WADPVMeXieP
+    Subscriber:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionSubscriberType'
+        attributes:
+          $ref: '#/components/schemas/SubscriberResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/SubscriberMeta'
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    Timestamps:
+      required:
+      - created_at
+      - updated_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
     Links:
       type: object
       additionalProperties:
         $ref: '#/components/schemas/Link'
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    SubscriberUpdate:
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionSubscriberType'
+        attributes:
+          $ref: '#/components/schemas/SubscriberUpdateAttributes'
+    NullablePaymentAuthority:
+      type:
+      - object
+      - 'null'
+      oneOf:
+      - $ref: '#/components/schemas/PaymentAuthorityEPPayments'
+      - $ref: '#/components/schemas/PaymentAuthorityStripe'
+      - $ref: '#/components/schemas/PaymentAuthorityAuthorizeNet'
+      discriminator:
+        propertyName: type
+        mapping:
+          elastic_path_payments_stripe: '#/components/schemas/PaymentAuthorityEPPayments'
+          stripe_payment_intents: '#/components/schemas/PaymentAuthorityStripe'
+          authorize_net: '#/components/schemas/PaymentAuthorityAuthorizeNet'
+      required:
+      - type
+      properties:
+        type:
+          description: The name of the payment gateway facilitating the secure transmission of payment data.
+          type: string
+          example: elastic_path_payments_stripe
+          enum:
+          - authorize_net
+          - elastic_path_payments_stripe
+          - stripe_payment_intents
+          x-go-type: paymentgateways.GatewayName
+          x-go-type-import:
+            name: paymentgateways
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
+    PaymentAuthorityEPPayments:
+      writeOnly: true
+      type: object
+      required:
+      - type
+      properties:
+        type:
+          description: The name of the payment gateway facilitating the secure transmission of payment data.
+          type: string
+          example: elastic_path_payments_stripe
+          enum:
+          - elastic_path_payments_stripe
+          x-go-type: paymentgateways.GatewayName
+          x-go-type-import:
+            name: paymentgateways
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
+        customer_id:
+          description: The unique identifier for a customer.
+          type: string
+          minLength: 3
+          maxLength: 1024
+          example: cus_OPfKlxWV3hp9h6
+        card_id:
+          description: The unique identifier of the card used to facilitate payment of the subscription. If a card payment fails, you can use the `card_id` and `customer_id` attributes to program your front-end implementation to allow your preferred payment service provider to update a subscription with new card details. See [Card declines](/docs/api/subscriptions/invoices#card-declines).
+          type: string
+          minLength: 3
+          maxLength: 1024
+          example: card_8Diw3FQPhxK27WADPVMeXieP
     PaymentAuthorityAuthorizeNet:
       type: object
       required:
@@ -540,7 +514,82 @@ components:
           minLength: 3
           maxLength: 1024
           example: '1511736979'
+    PaymentAuthority:
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/PaymentAuthorityEPPayments'
+      - $ref: '#/components/schemas/PaymentAuthorityStripe'
+      - $ref: '#/components/schemas/PaymentAuthorityAuthorizeNet'
+      discriminator:
+        propertyName: type
+        mapping:
+          elastic_path_payments_stripe: '#/components/schemas/PaymentAuthorityEPPayments'
+          stripe_payment_intents: '#/components/schemas/PaymentAuthorityStripe'
+          authorize_net: '#/components/schemas/PaymentAuthorityAuthorizeNet'
+      required:
+      - type
+      properties:
+        type:
+          description: The name of the payment gateway facilitating the secure transmission of payment data.
+          type: string
+          example: elastic_path_payments_stripe
+          enum:
+          - authorize_net
+          - elastic_path_payments_stripe
+          - stripe_payment_intents
+          x-go-type: paymentgateways.GatewayName
+          x-go-type-import:
+            name: paymentgateways
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
+    SubscriberCreate:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/SubscriptionSubscriberType'
+        attributes:
+          $ref: '#/components/schemas/SubscriberAttributes'
   parameters:
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
     Filter:
       name: filter
       in: query
@@ -563,78 +612,6 @@ components:
         minimum: 0
         maximum: 10000
         example: 10
-    PageLimit:
-      name: page[limit]
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 100
-  responses:
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No plan found
-    ForbiddenError:
-      description: Forbidden. The operation is forbidden on this entity.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Permission denied
-                  status: '404'
-                  detail: 'Permission denied: plan tenancy mismatch'
-    WriteConflictError:
-      description: Write conflict. Unable to perform the operation at this time.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            errors:
-            - title: Write Conflict
-              status: '409'
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: 'data.attributes.name: "name" is required'
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
   securitySchemes:
     BearerToken:
       scheme: bearer

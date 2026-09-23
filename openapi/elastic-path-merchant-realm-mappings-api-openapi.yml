@@ -2,9 +2,7 @@ openapi: 3.2.0
 info:
   version: 1.0.0
   title: Introduction Merchant Realm Mappings API
-  description: 'The Merchant Realm Mapping object is used to locate the [Authentication Realm](/docs/api/single-sign-on/authentication-realms) which administrators use to sign in to a store via single sign-on. When supplied in the mapping, the prefix field is used during authentication to determine the appropriate authentication realm to sign in with.
-
-    '
+  description: The Merchant Realm Mapping object is used to locate the Authentication Realm which administrators use to sign in to a store via single sign-on. When supplied in the mapping, the prefix field is used during authentication to determine the appropriate authentication realm to sign in with.
   contact:
     name: Elastic Path
     url: https://www.elasticpath.com
@@ -25,9 +23,7 @@ paths:
   /v2/merchant-realm-mappings:
     get:
       summary: Get the Merchant Realm Mapping for the current store
-      description: 'This API is used to obtain an [Authentication Realm](/docs/api/single-sign-on/authentication-realms) if there is none yet for the current store.
-
-        '
+      description: This API is used to obtain an Authentication Realm if there is none yet for the current store.
       operationId: getMerchantRealmMappings
       responses:
         '200':
@@ -128,25 +124,6 @@ paths:
       - Merchant Realm Mappings
 components:
   responses:
-    UnauthorizedError:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unauthorized-error:
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Unauthorized\",\n      \"status\": \"401\"\n    }\n  ]\n}\n"
-    ConflictError:
-      description: Conflict
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            conflict-error:
-              summary: Prefix already in use
-              value: "{\n  \"errors\": [\n    {\n      \"detail\": \"the prefix is already in use\",\n      \"status\": \"409\",\n      \"title\": \"Conflict\"\n    }\n  ]\n}\n"
     ValidationError:
       description: Bad request. The request failed validation.
       content:
@@ -157,16 +134,25 @@ components:
             missing-name:
               summary: Required field missing
               value: "{\n  \"errors\": [\n    {\n      \"detail\": \"The field 'prefix' is required.\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}\n"
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
+    ConflictError:
+      description: Conflict
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           examples:
-            internal-server-error:
-              summary: Internal server error
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
+            conflict-error:
+              summary: Prefix already in use
+              value: "{\n  \"errors\": [\n    {\n      \"detail\": \"the prefix is already in use\",\n      \"status\": \"409\",\n      \"title\": \"Conflict\"\n    }\n  ]\n}\n"
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Unauthorized\",\n      \"status\": \"401\"\n    }\n  ]\n}\n"
     NotFoundError:
       description: Not found. The requested entity does not exist.
       content:
@@ -177,7 +163,25 @@ components:
             not-found:
               summary: Requested entity not found
               value: "{\n  \"errors\": [\n    {\n      \"detail\": \"merchant realm mapping not found\",\n      \"status\": \"404\",\n      \"title\": \"Not Found\"\n    }\n  ]\n}\n"
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
   schemas:
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     MerchantRealmMapping:
       properties:
         prefix:
@@ -188,6 +192,27 @@ components:
           type: string
           description: Represents the type of object being returned. Always `merchant-realm-mappings`.
           const: merchant-realm-mappings
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
     MerchantRealmMappingResponse:
       type: object
       properties:
@@ -212,35 +237,6 @@ components:
           type: string
           description: System-generated store ID.
           example: 88888888-4444-4333-8333-111111111111
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
   securitySchemes:
     bearerAuth:
       type: http

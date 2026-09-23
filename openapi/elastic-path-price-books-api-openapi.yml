@@ -3,20 +3,7 @@ info:
   title: Introduction Price Books API
   version: 26.0529.7665911
   x-version-timestamp: 2026-05-29 08:15:28+00:00
-  description: 'You can use the price books service to configure your product pricing. Your price books are associated with your catalogs. Creating separate price books enables you to:
-
-
-    - Maintain consistent and accurate pricing across all your product listings and channels.
-
-    - Provide competitive pricing by creating different price books for different channels. For example, different pricing for different geographical regions, based on standard of living costs.
-
-    - Provide personalized pricing by creating personalized price books. For example, pricing for loyalty customers versus new customers.
-
-    - Enable cross-selling and upselling by offering sales and volume pricing for your products.
-
-    - Create price-books based on real-time adjustments such as inventory levels and market conditions.
-
-    '
+  description: You can use the price books service to configure your product pricing.
 servers:
 - url: https://euwest.api.elasticpath.com
   description: EU West Production Server
@@ -26,7 +13,7 @@ security:
 - bearerAuth: []
 tags:
 - name: Price Books
-  description: "Price books contain prices for the products in your catalog. Each catalog must have one price book. In your storefront, the product prices are displayed in the currency for the selected locale. If a product in the catalog does not have a price in the price book, the product is displayed without a price. \n\nA price book can be associated with multiple catalogs.\n\nFollowing on from this, you can associate more than one price book with a catalog. Price book stacking allows you to create multiple price books for different scenarios, such as seasonal sales, business versus retail customer pricing, and reward programs. If you have multiple price books, when you create a catalog, you must configure a priority for your price books. Product prices are displayed in the catalog according to the priority of the price books. For example, you may have products that have different prices based on region. You can have a price book with the standard retail pricing and then have a second price book that has different pricing for a different region. See Create a catalog.\n\nA price book contains a list of product SKUs and the prices you want to charge for those products. If your store supports multiple locales, a price book can contain product prices in each of the supported currencies. In addition, you can configure sales and volume (tier) pricing.\n\n:::note\n\nPrice books work with products that are defined using the Product Experience Manager resource model. If your products are defined using an earlier Products resource model, you will need to migrate products to the `pcm/products` resource before you implement price books.\n\n:::\n\nYou can duplicate an existing price book and create a new price book. All products and prices associated with the price book are copied to the new price book. Based on the business requirements, you can use the same data or update the data.\n"
+  description: Price books contain prices for the products in your catalog.
 paths:
   /pcm/pricebooks:
     post:
@@ -59,7 +46,23 @@ paths:
       tags:
       - Price Books
       summary: Get all Price Books
-      description: "Retrieves a list of all price books.\n\n### Filtering\n\nFiltering is supported on this endpoint. For the general syntax, see [Filtering](/guides/Getting-Started/filtering).\n\n You can filter on the following attributes and operators.\n\n | Operator | Attribute | Description | Example |\n | --- | --- | --- | --- |\n | `eq` | `external_ref` | Equals. Checks if the values you provide matches a price book. | `filter=eq(external_ref,some-external-ref)` |\n"
+      description: 'Retrieves a list of all price books.
+
+
+        ### Filtering
+
+
+        Filtering is supported on this endpoint. For the general syntax, see Filtering.
+
+
+        You can filter on the following attributes and operators.
+
+
+        | Operator | Attribute | Description | Example |
+
+        | --- | --- | --- | --- |
+
+        | `eq` | `external_ref` | Equals. Checks if the values you provide matches a price book. | `filter=eq(external_ref,some-external-ref)` |'
       operationId: getPricebooks
       parameters:
       - $ref: '#/components/parameters/filter-pricebook'
@@ -168,9 +171,7 @@ paths:
       tags:
       - Price Books
       summary: Replicate a Price Book
-      description: 'Using this endpoint, you can replicate an existing price book. This is useful because it enables you to quickly and easily create multiple price books with the same pricing structure. When you replicate an existing price book, you can specify a new name, description, and external reference for the replicated price book. Other attributes stay the same.
-
-        '
+      description: Using this endpoint, you can replicate an existing price book. This is useful because it enables you to quickly and easily create multiple price books with the same pricing structure. When you replicate an existing price book, you can specify a new name, description, and external reference for the replicated price book. Other attributes stay the same.
       operationId: replicatePricebook
       requestBody:
         content:
@@ -193,36 +194,105 @@ paths:
                 $ref: '#/components/schemas/error-response-pricebooks'
 components:
   schemas:
-    error-pricebooks:
+    currencies:
       type: object
-      title: ApiError
-      description: This is a json-api style part of an error response
+      description: A collection of one or more currencies objects that consists of the [**three-letter ISO code**](https://www.iso.org/iso-3166-country-codes.html) of the currencies associated with this price and the amount. This is the product's price.
+      example:
+        USD:
+          amount: 100
+          includes_tax: false
+          tiers:
+            min_5:
+              minimum_quantity: 5
+              amount: 50
+        CAD:
+          amount: 127
+          includes_tax: false
+          tiers:
+            min_10:
+              minimum_quantity: 10
+              amount: 100
+        GBP:
+          amount: 73
+          includes_tax: true
+          tiers:
+            min_20:
+              minimum_quantity: 20
+              amount: 60
+      additionalProperties:
+        $ref: '#/components/schemas/amount'
+    sale:
+      type: object
+      description: The name of the sale, such as `Summer Sale`.
       properties:
-        detail:
-          type: string
-          example: The price book already exists
-          x-go-name: Detail
-        status:
-          type: string
-          example: '409'
-          x-go-name: Status
-        title:
-          type: string
-          example: conflict
-          x-go-name: Title
-      additionalProperties: false
-      x-go-name: ApiError
-    pricebook-replicate-data:
+        bundle_ids:
+          type: array
+          description: A list of product IDs in a bundle that you want to specify a sale price for.
+          items:
+            type: string
+            format: uuid
+          x-omitempty: true
+          x-go-name: BundleIDs
+        schedule:
+          $ref: '#/components/schemas/schedule'
+        currencies:
+          $ref: '#/components/schemas/currencies'
+    pricebook-data:
       type: object
-      title: PricebookReplicateData
-      description: Json-api style data object containing a price book to be replicated.
+      title: PricebookData
+      description: A price book with the following attributes.
       properties:
         data:
-          $ref: '#/components/schemas/pricebook-replicate'
+          $ref: '#/components/schemas/pricebook'
+        links:
+          $ref: '#/components/schemas/links-pricebook'
       required:
       - data
       additionalProperties: false
-      x-go-name: PricebookReplicateData
+      x-go-name: PricebookData
+    pricebook-replicate:
+      type: object
+      title: Pricebook
+      description: Price book replicate request.
+      properties:
+        type:
+          type: string
+          x-go-name: Type
+          default: pricebook
+          example: pricebook
+          enum:
+          - pricebook
+        attributes:
+          type: object
+          properties:
+            description:
+              type:
+              - string
+              - 'null'
+              description: A brief description outlining the purpose of a price book, such as flash sale pricing or preferred customer pricing.
+              example: This is a test price book
+              x-go-name: Description
+            name:
+              type:
+              - string
+              - 'null'
+              description: The name of the price book. Price books must have a unique name.
+              example: pricebook-store-abc
+              minLength: 1
+              x-go-name: Name
+            external_ref:
+              description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+              type:
+              - string
+              - 'null'
+              example: external-ref
+              x-go-name: External Ref
+          additionalProperties: false
+      required:
+      - type
+      - attributes
+      additionalProperties: false
+      x-go-name: PricebookReplicate
     pricebook-with-prices-data:
       type: object
       title: PricebookWithPricesData
@@ -241,6 +311,262 @@ components:
       required:
       - data
       additionalProperties: false
+    amount:
+      type: object
+      description: The three-letter ISO code for the currency associated with this price.
+      properties:
+        amount:
+          description: The price in the lowest denomination for the specified currency. This is a product's list price.
+          type:
+          - integer
+          - 'null'
+          format: int64
+          example: 100
+          x-go-name: Amount
+        includes_tax:
+          description: Whether this price includes tax.
+          type: boolean
+          example: false
+          default: false
+          x-go-name: IncludesTax
+        tiers:
+          type: object
+          description: The price tier that an item is eligible for based on the quantity purchased. You cannot have conflicting tiers within the same currencies block.
+          additionalProperties:
+            $ref: '#/components/schemas/tier-price'
+    error-response-pricebooks:
+      type: object
+      title: ErrorResponse
+      description: This is a json-api style error response
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/error-pricebooks'
+          x-go-name: Errors
+      additionalProperties: false
+      x-go-name: ErrorResponse
+    pricebook-replicate-data:
+      type: object
+      title: PricebookReplicateData
+      description: Json-api style data object containing a price book to be replicated.
+      properties:
+        data:
+          $ref: '#/components/schemas/pricebook-replicate'
+      required:
+      - data
+      additionalProperties: false
+      x-go-name: PricebookReplicateData
+    tier-price:
+      type: object
+      description: The name of the tier, for example, `Pencils`.
+      properties:
+        minimum_quantity:
+          description: The minimum quantity of 1 or more defined for the specified price. If a minimum quantity is not specified, an error is returned.
+          type:
+          - integer
+          - 'null'
+          format: int64
+          example: '10'
+          x-go-name: MinQuantity
+        amount:
+          description: The price for each quantity.
+          type:
+          - integer
+          - 'null'
+          format: int64
+          example: '50'
+          x-go-name: Amount
+      x-go-name: TierPrice
+    pricebook:
+      type: object
+      title: Pricebook
+      description: A price book with the following attributes.
+      properties:
+        id:
+          description: A unique identifier of a price book.
+          type: string
+          example: 4c45e4ec-26e0-4043-86e4-c15b9cf985a7
+          x-go-name: ID
+        type:
+          description: Always `pricebook`.
+          type: string
+          x-go-name: Type
+          default: pricebook
+          example: pricebook
+          enum:
+          - pricebook
+        attributes:
+          type: object
+          properties:
+            external_ref:
+              description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+              type:
+              - string
+              - 'null'
+              example: an-external-ref
+              x-go-name: External Ref
+            description:
+              description: A brief description that outlines the purpose of a price book, for example, flash sale pricing or preferred customer pricing.
+              type:
+              - string
+              - 'null'
+              example: This is a test price book
+              x-go-name: Description
+            name:
+              description: The name of a price book. Price books must have a unique name
+              type:
+              - string
+              - 'null'
+              example: Standard Price Book
+              x-go-name: Name
+            created_at:
+              description: The date and time when the price book was created.
+              type: string
+              format: date-time
+              example: '2020-09-22T09:00:00Z'
+              x-go-name: CreatedAt
+            updated_at:
+              description: The date and time when the price book was last updated.
+              type: string
+              example: '2020-09-22T09:00:00Z'
+              format: date-time
+              x-go-name: UpdatedAt
+          required:
+          - name
+          - created_at
+          - updated_at
+        meta:
+          type: object
+          properties:
+            owner:
+              description: The resource owner, either `organization` or `store`.
+              type:
+              - string
+              - 'null'
+              example: store
+      required:
+      - id
+      - type
+      - attributes
+      additionalProperties: false
+      x-go-name: Pricebook
+    schedule:
+      type:
+      - object
+      - 'null'
+      description: "The schedule of the sale. If the entire `schedule` object is omitted or `null`, the sale price is considered permanent.\n\nWhen defining a recurring sale with `rrule`, the `valid_from` and `valid_to` parameters are mandatory to set the overall start and end dates for the recurrence. A single price cannot have both a standard and a recurring (`rrule`) sale schedule.\n\nYou can use `tzid` to set the timezone of the `valid_from` and `valid_to` parameters.\n\nFor sale prices within the same price book:\n  - The schedules must not be exactly the same.\n  - Schedules and recurrence rules can partially overlap. If schedules do overlap, the sale price active during the smallest sale period is chosen.\n  - If you have a single permanent sale price (no schedule), you must configure a schedule for it before adding other sale prices to the same price book.\n\n  \nSale prices in different price books can have overlapping schedules.\n"
+      properties:
+        valid_from:
+          description: The start date of the sale.
+          type:
+          - string
+          - 'null'
+          example: '2023-09-22T09:00:00Z'
+          format: date-time
+          x-go-name: ValidFrom
+        valid_to:
+          description: The end date of the sale.
+          type:
+          - string
+          - 'null'
+          example: '2023-09-24T09:00:00Z'
+          format: date-time
+          x-go-name: ValidTo
+        rrule:
+          type:
+          - string
+          - 'null'
+          description: "Specifies a recurring schedule for a sale, defined using a subset of the RFC 5545 RRULE format.\nThis allows for setting up sales that automatically apply on a recurring basis, such as weekly weekend discounts.\n\n**Supported RRULE Parameters:**\n  - `FREQ`: Defines the frequency of recurrence. Supported values: `WEEKLY`.\n  - `BYDAY`: Specifies the days of the week for weekly recurrences. Supported values: `MO`, `TU`, `WE`, `TH`, `FR`, `SA`, and `SU`.\n\n  \n**Example Usage:**\n  - Weekly sale on Saturdays and Sundays: `FREQ=WEEKLY;BYDAY=SA,SU`\n"
+          example: FREQ=WEEKLY;BYDAY=SA,SU
+          x-go-name: RecurrenceRule
+        tzid:
+          type:
+          - string
+          - 'null'
+          description: 'Timezone based on the IANA Timezone Database (e.g., Europe/London or Europe/Paris).
+
+            Timezones can be specified for both standard and `rrule` based sales.
+
+            By default, `valid_from` and `valid_to` are interpreted as UTC. Specifying a `tzid` applies that timezone to both the start and end dates.
+
+            '
+          example: Europe/London
+          x-go-name: Timezone
+      x-go-name: Schedule
+    shopper-attributes:
+      type: object
+      description: "You can add custom attributes to a product price. For example, you can set prices based on customer segments. For instance, you can offer different prices for wholesale and retail customers or provide discounts to loyal customers. Following on from this, you might want to offer personalized offers and prices, enhancing the shopping experience.\n\n`shopper_attributes` are displayed in catalogs. This means `shopper_attributes` can be viewed by both shoppers and administrators. If you do not want a custom attribute to be displayed in a catalog, you must add an `admin_attribute`. \n\n`shopper_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
+      example:
+        cost_of_goods: '42.0'
+        charge_type: credit card
+      additionalProperties:
+        type:
+        - string
+        - 'null'
+    links-pricebook:
+      description: Links are used to allow you to move between requests.
+      type: object
+      properties:
+        self:
+          description: Single entities use a self parameter with a link to that specific resource.
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7
+    pricebook-create:
+      type: object
+      title: PricebookWithoutId
+      properties:
+        type:
+          type: string
+          x-go-name: Type
+          default: pricebook
+          example: pricebook
+          enum:
+          - pricebook
+        attributes:
+          type: object
+          properties:
+            description:
+              description: A brief description that describes the purpose of a price book, for example, flash sale pricing or preferred customer pricing.
+              type:
+              - string
+              - 'null'
+              example: This is a price book
+              x-go-name: Description
+            name:
+              description: The name of the price book. Price books must have a unique name.
+              type: string
+              example: pricebook-store-abc
+              minLength: 1
+              x-go-name: Name
+            external_ref:
+              description: A unique attribute that you can use to contain information from another company system, for example. The maximum length is 2048 characters.
+              type:
+              - string
+              - 'null'
+              example: external-ref
+              x-go-name: External Ref
+          required:
+          - name
+          additionalProperties: false
+      required:
+      - type
+      - attributes
+      additionalProperties: false
+      x-go-name: PricebookCreateParam
+    admin-attributes:
+      type: object
+      description: "You can add custom attributes to a product price. For example, you may want to add custom attributes that can automate price updates based on predefined rules, saving time and reducing human error or you might want to integrate price attributes with your other company systems, (ERP, CRM) ensuring consistency and accuracy across platforms.\n \n`admin_attributes` are not displayed in catalogs. This means `admin_attributes` can only be viewed by administrators. If you want a custom attribute to be displayed in a catalog, you must add a `shopper_attribute`. \n \n`admin_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
+      example:
+        cost_of_goods: '42.0'
+        charge_type: credit card
+      additionalProperties:
+        type:
+        - string
+        - 'null'
     pricebook-list-data:
       type: object
       title: PricebookListData
@@ -348,127 +674,6 @@ components:
       - data
       additionalProperties: false
       x-go-name: PricebookUpdateData
-    shopper-attributes:
-      type: object
-      description: "You can add custom attributes to a product price. For example, you can set prices based on customer segments. For instance, you can offer different prices for wholesale and retail customers or provide discounts to loyal customers. Following on from this, you might want to offer personalized offers and prices, enhancing the shopping experience.\n\n`shopper_attributes` are displayed in catalogs. This means `shopper_attributes` can be viewed by both shoppers and administrators. If you do not want a custom attribute to be displayed in a catalog, you must add an `admin_attribute`. \n\n`shopper_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
-      example:
-        cost_of_goods: '42.0'
-        charge_type: credit card
-      additionalProperties:
-        type:
-        - string
-        - 'null'
-    pricebook-create:
-      type: object
-      title: PricebookWithoutId
-      properties:
-        type:
-          type: string
-          x-go-name: Type
-          default: pricebook
-          example: pricebook
-          enum:
-          - pricebook
-        attributes:
-          type: object
-          properties:
-            description:
-              description: A brief description that describes the purpose of a price book, for example, flash sale pricing or preferred customer pricing.
-              type:
-              - string
-              - 'null'
-              example: This is a price book
-              x-go-name: Description
-            name:
-              description: The name of the price book. Price books must have a unique name.
-              type: string
-              example: pricebook-store-abc
-              minLength: 1
-              x-go-name: Name
-            external_ref:
-              description: A unique attribute that you can use to contain information from another company system, for example. The maximum length is 2048 characters.
-              type:
-              - string
-              - 'null'
-              example: external-ref
-              x-go-name: External Ref
-          required:
-          - name
-          additionalProperties: false
-      required:
-      - type
-      - attributes
-      additionalProperties: false
-      x-go-name: PricebookCreateParam
-    pricebook-data:
-      type: object
-      title: PricebookData
-      description: A price book with the following attributes.
-      properties:
-        data:
-          $ref: '#/components/schemas/pricebook'
-        links:
-          $ref: '#/components/schemas/links-pricebook'
-      required:
-      - data
-      additionalProperties: false
-      x-go-name: PricebookData
-    tier-price:
-      type: object
-      description: The name of the tier, for example, `Pencils`.
-      properties:
-        minimum_quantity:
-          description: The minimum quantity of 1 or more defined for the specified price. If a minimum quantity is not specified, an error is returned.
-          type:
-          - integer
-          - 'null'
-          format: int64
-          example: '10'
-          x-go-name: MinQuantity
-        amount:
-          description: The price for each quantity.
-          type:
-          - integer
-          - 'null'
-          format: int64
-          example: '50'
-          x-go-name: Amount
-      x-go-name: TierPrice
-    amount:
-      type: object
-      description: The three-letter ISO code for the currency associated with this price.
-      properties:
-        amount:
-          description: The price in the lowest denomination for the specified currency. This is a product's list price.
-          type:
-          - integer
-          - 'null'
-          format: int64
-          example: 100
-          x-go-name: Amount
-        includes_tax:
-          description: Whether this price includes tax.
-          type: boolean
-          example: false
-          default: false
-          x-go-name: IncludesTax
-        tiers:
-          type: object
-          description: The price tier that an item is eligible for based on the quantity purchased. You cannot have conflicting tiers within the same currencies block.
-          additionalProperties:
-            $ref: '#/components/schemas/tier-price'
-    error-response-pricebooks:
-      type: object
-      title: ErrorResponse
-      description: This is a json-api style error response
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/error-pricebooks'
-          x-go-name: Errors
-      additionalProperties: false
-      x-go-name: ErrorResponse
     sales:
       type: object
       description: The sales price that an item is eligible for based on the price book.
@@ -501,322 +706,6 @@ components:
                   amount: 50
       additionalProperties:
         $ref: '#/components/schemas/sale'
-    pricebook:
-      type: object
-      title: Pricebook
-      description: A price book with the following attributes.
-      properties:
-        id:
-          description: A unique identifier of a price book.
-          type: string
-          example: 4c45e4ec-26e0-4043-86e4-c15b9cf985a7
-          x-go-name: ID
-        type:
-          description: Always `pricebook`.
-          type: string
-          x-go-name: Type
-          default: pricebook
-          example: pricebook
-          enum:
-          - pricebook
-        attributes:
-          type: object
-          properties:
-            external_ref:
-              description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-              type:
-              - string
-              - 'null'
-              example: an-external-ref
-              x-go-name: External Ref
-            description:
-              description: A brief description that outlines the purpose of a price book, for example, flash sale pricing or preferred customer pricing.
-              type:
-              - string
-              - 'null'
-              example: This is a test price book
-              x-go-name: Description
-            name:
-              description: The name of a price book. Price books must have a unique name
-              type:
-              - string
-              - 'null'
-              example: Standard Price Book
-              x-go-name: Name
-            created_at:
-              description: The date and time when the price book was created.
-              type: string
-              format: date-time
-              example: '2020-09-22T09:00:00Z'
-              x-go-name: CreatedAt
-            updated_at:
-              description: The date and time when the price book was last updated.
-              type: string
-              example: '2020-09-22T09:00:00Z'
-              format: date-time
-              x-go-name: UpdatedAt
-          required:
-          - name
-          - created_at
-          - updated_at
-        meta:
-          type: object
-          properties:
-            owner:
-              description: The resource owner, either `organization` or `store`.
-              type:
-              - string
-              - 'null'
-              example: store
-      required:
-      - id
-      - type
-      - attributes
-      additionalProperties: false
-      x-go-name: Pricebook
-    sale:
-      type: object
-      description: The name of the sale, such as `Summer Sale`.
-      properties:
-        bundle_ids:
-          type: array
-          description: A list of product IDs in a bundle that you want to specify a sale price for.
-          items:
-            type: string
-            format: uuid
-          x-omitempty: true
-          x-go-name: BundleIDs
-        schedule:
-          $ref: '#/components/schemas/schedule'
-        currencies:
-          $ref: '#/components/schemas/currencies'
-    pricebook-replicate:
-      type: object
-      title: Pricebook
-      description: Price book replicate request.
-      properties:
-        type:
-          type: string
-          x-go-name: Type
-          default: pricebook
-          example: pricebook
-          enum:
-          - pricebook
-        attributes:
-          type: object
-          properties:
-            description:
-              type:
-              - string
-              - 'null'
-              description: A brief description outlining the purpose of a price book, such as flash sale pricing or preferred customer pricing.
-              example: This is a test price book
-              x-go-name: Description
-            name:
-              type:
-              - string
-              - 'null'
-              description: The name of the price book. Price books must have a unique name.
-              example: pricebook-store-abc
-              minLength: 1
-              x-go-name: Name
-            external_ref:
-              description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-              type:
-              - string
-              - 'null'
-              example: external-ref
-              x-go-name: External Ref
-          additionalProperties: false
-      required:
-      - type
-      - attributes
-      additionalProperties: false
-      x-go-name: PricebookReplicate
-    links-pricebook:
-      description: Links are used to allow you to move between requests.
-      type: object
-      properties:
-        self:
-          description: Single entities use a self parameter with a link to that specific resource.
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7
-    page-meta:
-      type: object
-      description: Contains the results for the entire collection.
-      title: PageMeta
-      properties:
-        results:
-          type: object
-          properties:
-            total:
-              description: Total number of results for the entire collection.
-              type:
-              - integer
-              - 'null'
-              example: 1
-        page:
-          type: object
-          properties:
-            limit:
-              description: The maximum number of records for all pages.
-              type: integer
-              example: 10
-              x-omitempty: false
-            offset:
-              description: The current offset by number of pages.
-              type: integer
-              example: 0
-              x-omitempty: false
-            current:
-              description: The current number of pages.
-              type: integer
-              example: 0
-              x-omitempty: false
-            total:
-              description: The total number of records for the entire collection.
-              type: integer
-              example: 1
-              x-omitempty: false
-    pricebook-create-data:
-      type: object
-      title: PricebookCreateData
-      properties:
-        data:
-          $ref: '#/components/schemas/pricebook-create'
-      required:
-      - data
-      additionalProperties: false
-      x-go-name: PricebookCreateData
-      example:
-        data:
-          attributes:
-            external_ref: an-external-ref
-            description: This is a test price book
-            name: Standard Price Book
-          type: pricebook
-    schedule:
-      type:
-      - object
-      - 'null'
-      description: "The schedule of the sale. If the entire `schedule` object is omitted or `null`, the sale price is considered permanent.\n\nWhen defining a recurring sale with `rrule`, the `valid_from` and `valid_to` parameters are mandatory to set the overall start and end dates for the recurrence. A single price cannot have both a standard and a recurring (`rrule`) sale schedule.\n\nYou can use `tzid` to set the timezone of the `valid_from` and `valid_to` parameters.\n\nFor sale prices within the same price book:\n  - The schedules must not be exactly the same.\n  - Schedules and recurrence rules can partially overlap. If schedules do overlap, the sale price active during the smallest sale period is chosen.\n  - If you have a single permanent sale price (no schedule), you must configure a schedule for it before adding other sale prices to the same price book.\n\n  \nSale prices in different price books can have overlapping schedules.\n"
-      properties:
-        valid_from:
-          description: The start date of the sale.
-          type:
-          - string
-          - 'null'
-          example: '2023-09-22T09:00:00Z'
-          format: date-time
-          x-go-name: ValidFrom
-        valid_to:
-          description: The end date of the sale.
-          type:
-          - string
-          - 'null'
-          example: '2023-09-24T09:00:00Z'
-          format: date-time
-          x-go-name: ValidTo
-        rrule:
-          type:
-          - string
-          - 'null'
-          description: "Specifies a recurring schedule for a sale, defined using a subset of the RFC 5545 RRULE format.\nThis allows for setting up sales that automatically apply on a recurring basis, such as weekly weekend discounts.\n\n**Supported RRULE Parameters:**\n  - `FREQ`: Defines the frequency of recurrence. Supported values: `WEEKLY`.\n  - `BYDAY`: Specifies the days of the week for weekly recurrences. Supported values: `MO`, `TU`, `WE`, `TH`, `FR`, `SA`, and `SU`.\n\n  \n**Example Usage:**\n  - Weekly sale on Saturdays and Sundays: `FREQ=WEEKLY;BYDAY=SA,SU`\n"
-          example: FREQ=WEEKLY;BYDAY=SA,SU
-          x-go-name: RecurrenceRule
-        tzid:
-          type:
-          - string
-          - 'null'
-          description: 'Timezone based on the IANA Timezone Database (e.g., Europe/London or Europe/Paris).
-
-            Timezones can be specified for both standard and `rrule` based sales.
-
-            By default, `valid_from` and `valid_to` are interpreted as UTC. Specifying a `tzid` applies that timezone to both the start and end dates.
-
-            '
-          example: Europe/London
-          x-go-name: Timezone
-      x-go-name: Schedule
-    currencies:
-      type: object
-      description: A collection of one or more currencies objects that consists of the [**three-letter ISO code**](https://www.iso.org/iso-3166-country-codes.html) of the currencies associated with this price and the amount. This is the product's price.
-      example:
-        USD:
-          amount: 100
-          includes_tax: false
-          tiers:
-            min_5:
-              minimum_quantity: 5
-              amount: 50
-        CAD:
-          amount: 127
-          includes_tax: false
-          tiers:
-            min_10:
-              minimum_quantity: 10
-              amount: 100
-        GBP:
-          amount: 73
-          includes_tax: true
-          tiers:
-            min_20:
-              minimum_quantity: 20
-              amount: 60
-      additionalProperties:
-        $ref: '#/components/schemas/amount'
-    links-pricebooks:
-      description: Links are used to allow you to move between requests. Single entities use a self parameter with a link to that specific resource. Sometimes, there aren’t enough entities for a project to fill multiple pages. In this situation, we return some defaults, instead of expecting you to check for these special cases.
-      type: object
-      properties:
-        self:
-          description: Single entities use a self parameter with a link to that specific resource.
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7?filter=like(name,*Standard*)
-        first:
-          description: Always the first page.
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7?filter=like(name,*Standard*)&page[offset]=0&page[limit]=25
-        last:
-          description: This is `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7?filter=like(name,*Standard*)&page[offset]=0&page[limit]=25
-        prev:
-          description: This is `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7?filter=like(name,*Standard*)&page[offset]=0&page[limit]=25
-        next:
-          description: This is `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7?filter=like(name,*Standard*)&page[offset]=25&page[limit]=25
-    admin-attributes:
-      type: object
-      description: "You can add custom attributes to a product price. For example, you may want to add custom attributes that can automate price updates based on predefined rules, saving time and reducing human error or you might want to integrate price attributes with your other company systems, (ERP, CRM) ensuring consistency and accuracy across platforms.\n \n`admin_attributes` are not displayed in catalogs. This means `admin_attributes` can only be viewed by administrators. If you want a custom attribute to be displayed in a catalog, you must add a `shopper_attribute`. \n \n`admin_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
-      example:
-        cost_of_goods: '42.0'
-        charge_type: credit card
-      additionalProperties:
-        type:
-        - string
-        - 'null'
     pricebook-update:
       type: object
       title: Pricebook
@@ -867,7 +756,128 @@ components:
       - attributes
       additionalProperties: false
       x-go-name: PricebookUpdate
+    links-pricebooks:
+      description: Links are used to allow you to move between requests. Single entities use a self parameter with a link to that specific resource. Sometimes, there aren’t enough entities for a project to fill multiple pages. In this situation, we return some defaults, instead of expecting you to check for these special cases.
+      type: object
+      properties:
+        self:
+          description: Single entities use a self parameter with a link to that specific resource.
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7?filter=like(name,*Standard*)
+        first:
+          description: Always the first page.
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7?filter=like(name,*Standard*)&page[offset]=0&page[limit]=25
+        last:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7?filter=like(name,*Standard*)&page[offset]=0&page[limit]=25
+        prev:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7?filter=like(name,*Standard*)&page[offset]=0&page[limit]=25
+        next:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7?filter=like(name,*Standard*)&page[offset]=25&page[limit]=25
+    pricebook-create-data:
+      type: object
+      title: PricebookCreateData
+      properties:
+        data:
+          $ref: '#/components/schemas/pricebook-create'
+      required:
+      - data
+      additionalProperties: false
+      x-go-name: PricebookCreateData
+      example:
+        data:
+          attributes:
+            external_ref: an-external-ref
+            description: This is a test price book
+            name: Standard Price Book
+          type: pricebook
+    page-meta:
+      type: object
+      description: Contains the results for the entire collection.
+      title: PageMeta
+      properties:
+        results:
+          type: object
+          properties:
+            total:
+              description: Total number of results for the entire collection.
+              type:
+              - integer
+              - 'null'
+              example: 1
+        page:
+          type: object
+          properties:
+            limit:
+              description: The maximum number of records for all pages.
+              type: integer
+              example: 10
+              x-omitempty: false
+            offset:
+              description: The current offset by number of pages.
+              type: integer
+              example: 0
+              x-omitempty: false
+            current:
+              description: The current number of pages.
+              type: integer
+              example: 0
+              x-omitempty: false
+            total:
+              description: The total number of records for the entire collection.
+              type: integer
+              example: 1
+              x-omitempty: false
+    error-pricebooks:
+      type: object
+      title: ApiError
+      description: This is a json-api style part of an error response
+      properties:
+        detail:
+          type: string
+          example: The price book already exists
+          x-go-name: Detail
+        status:
+          type: string
+          example: '409'
+          x-go-name: Status
+        title:
+          type: string
+          example: conflict
+          x-go-name: Title
+      additionalProperties: false
+      x-go-name: ApiError
   parameters:
+    limit:
+      name: page[limit]
+      in: query
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
     offset:
       name: page[offset]
       in: query
@@ -887,15 +897,6 @@ components:
       required: false
       schema:
         type: string
-    limit:
-      name: page[limit]
-      in: query
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
   securitySchemes:
     bearerAuth:
       type: http

@@ -1,36 +1,7 @@
 openapi: 3.2.0
 info:
   title: Carts, , Orders Introduction Checkout API
-  description: 'A cart contains a list of the products that a shopper adds to the cart while browsing your catalog. In the context of a cart, a selected product is called a cart item.
-
-
-    A cart item identifies the product, the product price, the quantity selected, and the total price for the quantity selected. The cart displays a running total of the cost for the selected products plus the calculated tax.
-
-
-    You can allow your shoppers to add custom text to a product when adding an item to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized. See [Add product to cart](/docs/api/carts/manage-carts#add-product-to-cart).
-
-
-    After a shopper checks out, the cart is converted to an order, and you can manually delete the cart. If you don''t delete the cart, it is purged automatically after seven days.
-
-
-    The preview cart feature allows you to set a future date for your shopping cart and view the promotions that will be available during that time period. This feature enables you to validate your promotion settings and observe how they will be applied in the cart. See [Create a Preview Cart](/docs/api/carts/create-a-cart#preview-cart).
-
-
-    The following diagram shows a typical cart workflow:
-
-
-    ![Shows a cart workflow, starting from adding the first item to a cart, through cart creation and checkout](/assets/cart-workflow.png)
-
-
-    ### Multiple Carts
-
-
-    Buyers often make purchases based on jobs that they need to perform or outcomes they need to achieve and therefore require more than one shopping cart. For example, a corporate buyer places orders for multiple locations. Each location has a different frequency of ordering and require different products. The buyer can create one cart per location, fill the carts, and then check out the carts quickly. Similarly, shoppers can also create multiple carts for the ease of managing various shopping experiences, such as birthdays or holidays.
-
-
-    Each cart is discrete and separate. Any updates or changes to one cart has no effect on the other carts. A cart persists, that is, it stays with the buyer or shopper even after they use the cart in a checkout. Carts remain available after a checkout.
-
-    '
+  description: A cart contains a list of the products that a shopper adds to the cart while browsing your catalog.
   contact:
     name: Elastic Path
     url: https://elasticpath.com
@@ -50,7 +21,7 @@ security:
 - bearerAuth: []
 tags:
 - name: Checkout
-  description: "\nThe checkout workflow ties together many of the key concepts covered in this section. When a customer initiates the checkout process, an order is created from the cart. The order is incomplete until after a successful payment is made. A complete order can be shipped and the product deducted from inventory counts.\n\n![Checkout workflow](/assets/checkout-flow.png)\n\n### Summary of the checkout workflow\n\n1. Add a product to a cart. A cart and its reference number is generated.\n2. Manage the cart items. For example, you might add items, remove items, and change quantities.\n3. Check out the cart. An incomplete order is created.\n4. Pay for an order: provide billing and shipping details, if you are a new customer. The order is now in the processing status.\n5. If using a manual gateway, after you authorize and capture it, Composable Commerce considers the order complete. If you use a third-party integration supported by Composable Commerce (such as Stripe), after the third-party gateway authorizes and captures the payment, the order becomes complete. Usually capture does not occur at the same time as authorization. For more information, see the Capture section.\n6. After the order is shipped, you can manually flag it as fulfilled.\n\n### Carts\n\nWhen a product is added to a cart, a cart is generated together with its unique reference ID that on checkout becomes a part of the order ID. If you are using our JavaScript software development kit, generating a cart reference ID is done for you; otherwise, add a cart reference generator to your functionality.\n\n### Promotions and custom items\n\nOptionally, apply a promotion code on a cart, or add custom_items to modify the product price (typically to handle taxes, customs, or shipping).\n\n### Checkout\n\nYou can checkout a cart with an associated customer name and email (customer object). Typically, this would be used for new customers or ones that prefer to shop as guests. Use the `customer.id` checkout option to checkout for an existing customer. After a successful checkout is completed, the response contains an order.\n\nEmail addresses that either begin or end with a period, or contain consecutive periods, are considered invalid, resulting in the following error:\n```json\n\"errors\": [\n  {\n      \"status\": 400,\n      \"source\": \"data.customer.email\",\n      \"title\": \"format\",\n      \"detail\": \"Does not match format 'email'\"\n  }\n]\n  ```\n\n### Payments\n\nOn checkout, an incomplete order is created. You can then use a third-party integration to handle your payment gateway. If the payment gateway is supported by Composable Commerce, such as Stripe, the payment is processed externally but handled internally. When a successful validation is returned, Composable Commerce flags the order as complete.\n\nIf you are using a payment method not officially supported by Composable Commerce, the gateway needs to be implemented and handled manually. After the payment has been authorized and captured either through Commerce Manager or API, the status of an order becomes complete.\n\n### Shipping\n\nThe status of an order and the status of shipping are handled separately, and so an order can be complete but not shipped. Orders that have not been shipped yet have a status of unfulfilled. This flag is generated automatically by Composable Commerce when an order is created. Currently, you can only update the shipping status manually, through the API. After the order is shipped, flag its shipping status as fulfilled.\n\n### Inventory\n\nIf enabled, you can manage your stock. As such, your stock is automatically updated as soon as a product is checked out.\n"
+  description: The checkout workflow ties together many of the key concepts covered in this section.
 paths:
   /v2/carts/{cartID}/checkout:
     parameters: []
@@ -58,7 +29,94 @@ paths:
       tags:
       - Checkout
       summary: Checkout API
-      description: "When a Cart is ready for checkout, you can convert the cart to an order. The cart remains and can be modified and checked out again if required.\n\nA cart can be checked out with a customer ID, customer object, or with an account by authenticating with the `Client Credentials Token`.\n\nAfter a successful checkout, a response that contains the order is returned. If the cart is linked to a shipping group, the shipping group is also associated with the order after checkout.\n\nYou can checkout using one of the following methods:\n- **Customer ID**: You can checkout a cart with an existing customer ID.\n- **Guest Checkout** (Checkout with Customer Object): You can checkout a cart with an associated customer name and email.\n- **Checkout with Account**: The shopper authenticates with the `Client Credentials` Token.\n- **Checkout with Account Management Authentication Token**: The shopper authenticates with the `Implicit Token` and the `EP-Account-Management-Authentication-Token`.\n\n:::note\n\n- The cart currency is set when the first item is added to the cart.\n- The product being added to the cart requires a price in the same currency as the other items in the cart. The API returns a 400 error if a price is not defined in the correct currency.\n- To ensure that a free gift is automatically applied to an order, set the promotion to automatic. The checkout process will not be successful if free gift items are out of stock. See [Errors](#errors) section.\n\n:::\n\n:::caution\n\n- By default, carts are automatically deleted 7 days after the last update. You can change this setting by [updating cart settings](/docs/api/carts/put-v-2-settings-cart).\n- Your inventory is modified during checkout and payment of an order. For more information about the changes in the inventory, see the [Inventory](/docs/api/pxm/inventory/inventories-introduction) section.\n\n:::\n\n You can pass `order_number` and `external_ref` in the checkout endpoint or when [updating an order](/docs/api/carts/update-an-order). The `order_number` is an optional, user-managed field that is used as an alternative to `order_id`. When processing transactions through Authorize.net, the `order_number` is sent instead of the `order_id`, and it will appear in the invoice number section. If no `order_number` is provided, the `order_id` is sent to Authorize.net on payment by default. There are no duplication restrictions on the `order_number` value.\n\n### Next Steps\n\nAfter a cart has been converted to an Order using either of the previous methods, you most likely want to capture payment for order. See [Paying for an Order](/docs/api/carts/payments).\n\n### Errors\n\nThe following error response is returned during checkout when an eligible item is added to the cart, and the free gift is out of stock.\n\n```json\n{\n    \"errors\": [\n        {\n            \"status\": 400,\n            \"title\": \"Insufficient stock\",\n            \"detail\": \"There is not enough stock to add gift2 to your cart\",\n            \"meta\": {\n                \"id\": \"f2b68648-9621-45a3-aed6-1b526b0f5beb\",\n                \"sku\": \"gift2\"\n            }\n        }\n    ]\n}\n```\n"
+      description: 'When a Cart is ready for checkout, you can convert the cart to an order. The cart remains and can be modified and checked out again if required.
+
+
+        A cart can be checked out with a customer ID, customer object, or with an account by authenticating with the `Client Credentials Token`.
+
+
+        After a successful checkout, a response that contains the order is returned. If the cart is linked to a shipping group, the shipping group is also associated with the order after checkout.
+
+
+        You can checkout using one of the following methods:
+
+        - **Customer ID**: You can checkout a cart with an existing customer ID.
+
+        - **Guest Checkout** (Checkout with Customer Object): You can checkout a cart with an associated customer name and email.
+
+        - **Checkout with Account**: The shopper authenticates with the `Client Credentials` Token.
+
+        - **Checkout with Account Management Authentication Token**: The shopper authenticates with the `Implicit Token` and the `EP-Account-Management-Authentication-Token`.
+
+
+        :::note
+
+
+        - The cart currency is set when the first item is added to the cart.
+
+        - The product being added to the cart requires a price in the same currency as the other items in the cart. The API returns a 400 error if a price is not defined in the correct currency.
+
+        - To ensure that a free gift is automatically applied to an order, set the promotion to automatic. The checkout process will not be successful if free gift items are out of stock. See Errors section.
+
+
+        :::
+
+
+        :::caution
+
+
+        - By default, carts are automatically deleted 7 days after the last update. You can change this setting by updating cart settings.
+
+        - Your inventory is modified during checkout and payment of an order. For more information about the changes in the inventory, see the Inventory section.
+
+
+        :::
+
+
+        You can pass `order_number` and `external_ref` in the checkout endpoint or when updating an order. The `order_number` is an optional, user-managed field that is used as an alternative to `order_id`. When processing transactions through Authorize.net, the `order_number` is sent instead of the `order_id`, and it will appear in the invoice number section. If no `order_number` is provided, the `order_id` is sent to Authorize.net on payment by default. There are no duplication restrictions on the `order_number` value.
+
+
+        ### Next Steps
+
+
+        After a cart has been converted to an Order using either of the previous methods, you most likely want to capture payment for order. See Paying for an Order.
+
+
+        ### Errors
+
+
+        The following error response is returned during checkout when an eligible item is added to the cart, and the free gift is out of stock.
+
+
+        ```json
+
+        {
+
+        "errors": [
+
+        {
+
+        "status": 400,
+
+        "title": "Insufficient stock",
+
+        "detail": "There is not enough stock to add gift2 to your cart",
+
+        "meta": {
+
+        "id": "f2b68648-9621-45a3-aed6-1b526b0f5beb",
+
+        "sku": "gift2"
+
+        }
+
+        }
+
+        ]
+
+        }
+
+        ```'
       operationId: checkoutAPI
       parameters:
       - name: cartID
@@ -242,6 +300,28 @@ paths:
       deprecated: false
 components:
   schemas:
+    DiscountFormattedPriceData:
+      title: DiscountFormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The discount amount. Must be non-positive (zero or negative).
+          type: number
+          maximum: 0
+          examples:
+          - -1000
+          - 0
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - -$10.00
+          - $0.00
     OrderPriceData:
       title: OrderPriceData
       type: object
@@ -261,6 +341,199 @@ components:
           type: boolean
           examples:
           - false
+    DiscountData:
+      title: DiscountData
+      type: object
+      properties:
+        amount:
+          $ref: '#/components/schemas/OrderPriceData'
+        code:
+          type: string
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        promotion_source:
+          type: string
+          description: The source or origin of the promotion, if applicable.
+        is_cart_discount:
+          type: boolean
+          description: Indicates whether the discount applies to the entire cart.
+        ordinal:
+          type: integer
+          description: Order in which the discount was applied.
+    CustomDiscountResponse:
+      title: CustomDiscountResponse
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the resource. Always `custom_discount`.
+          type: string
+          const: custom_discount
+        id:
+          description: Specifies the UUID of the custom discount.
+          type: string
+          format: uuid
+          examples:
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        external_id:
+          description: Specifies an external id for the custom discount.
+          type: string
+          examples:
+          - custom-discount-external-id
+        discount_engine:
+          description: 'Specifies from where the custom discount is applied.
+
+            '
+          type: string
+          examples:
+          - Custom Discount Engine
+        amount:
+          description: The amount of the custom discount.
+          $ref: '#/components/schemas/FormattedPriceData'
+        description:
+          description: Specifies a description for the custom discount.
+          type: string
+          examples:
+          - Custom discount description
+        discount_code:
+          description: Specifies the discount code used for the custom discount.
+          type: string
+          examples:
+          - cart-custom-promo-code
+        relationships:
+          description: Relationships to other resources like cart items
+          type: object
+          properties:
+            item:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: The cart item ID this discount is related to
+                    type:
+                      type: string
+                      enum:
+                      - cart_item
+                      - custom_item
+    OrderItemFormattedUnitPriceData:
+      title: OrderItemFormattedUnitPriceData
+      type: object
+      properties:
+        unit:
+          $ref: '#/components/schemas/FormattedPriceData'
+        value:
+          $ref: '#/components/schemas/FormattedPriceData'
+    Contact:
+      title: Contact
+      type: object
+      properties:
+        email:
+          description: The email address of the contact.
+          type: string
+          examples:
+          - johndoe@email.com
+        name:
+          description: The name of the contact.
+          type: string
+          examples:
+          - John Doe
+    Timestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this was created.
+          type: string
+        updated_at:
+          description: The date this was last updated.
+          type: string
+    Response.ErrorItem:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type:
+          - string
+          - integer
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+        source:
+          type: string
+          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
+        meta:
+          type: object
+          description: Additional metadata associated with the error. May include arbitrary keys.
+          properties:
+            id:
+              type: string
+              description: The resource id associated with the error
+            ids:
+              type: array
+              items:
+                type: string
+                description: The resource ids associated with the error
+            item_ids:
+              type: array
+              items:
+                type: string
+                description: The cart_item ids associated with the error
+            shipping_group_id:
+              type: string
+              description: The shipping group id associated with the error
+            shipping_group_ids:
+              type: array
+              items:
+                type: string
+                description: The shipping group ids associated with the error
+            cart_id:
+              type: string
+              description: The cart id associated with the error
+            code:
+              type: string
+              description: The code associated with the error.
+            order_id:
+              type: string
+              description: The order id associated with the error.
+            sku:
+              type: string
+              description: The SKU associated with the error.
+            email:
+              type: string
+              format: email
+              description: The email address associated with the error.
+            component_product_id:
+              type: string
+              format: uuid
+              description: The component product ID associated with the error.
+            error-meta-key:
+              type: string
+              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
+            value:
+              description: The value associated with the error.
+              oneOf:
+              - type: string
+              - type: integer
+              - type: boolean
+              - type: object
+                additionalProperties: true
+              - type: array
     AddressCommon:
       type: object
       required:
@@ -320,6 +593,46 @@ components:
           type: string
           examples:
           - CA
+    CustomerCheckout:
+      title: Customer Checkout
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            order_number:
+              description: A user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.
+              type: string
+            external_ref:
+              description: An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
+              type: string
+            customer:
+              type: object
+              properties:
+                id:
+                  description: The ID of the customer.
+                  type: string
+                email:
+                  description: The email of the customer.
+                  type: string
+                name:
+                  description: The name of the customer.
+                  type: string
+            billing_address:
+              $ref: '#/components/schemas/BillingAddress'
+            shipping_address:
+              $ref: '#/components/schemas/ShippingAddress'
+    AddressWithCounty:
+      title: Address with County
+      allOf:
+      - $ref: '#/components/schemas/AddressCommon'
+      - type: object
+        required:
+        - county
+        properties:
+          county:
+            description: County of the address.
+            type: string
     RelationshipItem:
       title: RelationshipItem
       description: Relationship data entry
@@ -335,200 +648,79 @@ components:
           description: The ID of the related resource.
           type: string
           format: uuid
-    RelationshipArray:
-      title: RelationshipArray
-      description: Array of relationships
+    Response.ErrorResponse:
       type: object
+      required:
+      - errors
       properties:
-        data:
-          description: Individual relationships
-          type: array
-          items:
-            $ref: '#/components/schemas/RelationshipItem'
-    OrderEntityResponse:
-      title: OrderEntityResponse
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/OrderResponse'
-        included:
-          description: 'Optional included data such as order items, tax items, custom discounts, and promotions.
-
-            '
-          type: object
-          properties:
-            items:
-              description: Array of order items included in the response.
-              type: array
-              items:
-                $ref: '#/components/schemas/OrderItemResponse'
-            tax_items:
-              description: Array of tax items included in the response.
-              type: array
-              items:
-                $ref: '#/components/schemas/TaxItemResponse'
-            custom_discounts:
-              description: Array of custom discounts included in the response.
-              type: array
-              items:
-                $ref: '#/components/schemas/CustomDiscountResponse'
-            promotions:
-              description: Array of promotions included in the response.
-              type: array
-              items:
-                $ref: '#/components/schemas/CondensedPromotionResponse'
         errors:
           type: array
-          description: Array of error objects, if any errors occurred.
           items:
             $ref: '#/components/schemas/Response.ErrorItem'
-    CustomAttributes:
-      title: CustomAttributes
-      type: object
-      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
-      additionalProperties:
-        type: object
-        required:
-        - type
-        - value
-        properties:
-          type:
-            type: string
-            description: The type of the custom attribute value.
-            enum:
-            - string
-            - integer
-            - boolean
-            - float
-          value:
-            description: The value of the custom attribute.
-            type:
-            - string
-            - boolean
-            - number
-    OrderResponse:
-      title: OrderResponse
-      type: object
-      properties:
-        type:
-          description: Specifies the type of object being returned. You must use `order`.
-          type: string
-          const: order
-        order_number:
-          description: Specifies a user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.
-          type: string
-          examples:
-          - 1234
-        external_ref:
-          description: An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
-          type: string
-          examples:
-          - e-123456789
-        id:
-          description: Specifies the unique identifier of the order.
-          type: string
-          format: uuid
-          readOnly: true
-          examples:
-          - aa854b8f-5930-476d-951a-e9b9cfbdefb1
-        status:
-          description: Specifies the status of the order, such as `incomplete`, `complete`, `processing`, or `cancelled`.
-          type: string
-          enum:
-          - complete
-          - incomplete
-          - cancelled
-          - processing
-        payment:
-          description: Specifies the status of the payment, such as `unpaid`, `authorized`, `paid`, or `refunded`.
-          type: string
-          enum:
-          - authorized
-          - paid
-          - unpaid
-          - refunded
-          - partially_paid
-          - partially_authorized
-        shipping:
-          description: Specifies the status of the shipment, such as `fulfilled` or `unfulfilled`.
-          type: string
-          enum:
-          - unfulfilled
-          - fulfilled
-        anonymized:
-          description: Specifies if the order is anonymized.
-          type: boolean
-          examples:
-          - false
-        payment_intent_id:
-          description: Stripe Payment Intent ID.  Please see Stripe's Payment Intent [documentation](https://docs.stripe.com/api/payment_intents) for more information on Payment Intents.
-          type: string
-          examples:
-          - pi_3MtwBwLkdIwHu7ix28a3tqPa
-        custom_attributes:
-          $ref: '#/components/schemas/CustomAttributes'
-        links:
-          type: object
-        meta:
-          $ref: '#/components/schemas/OrderMeta'
-        billing_address:
-          $ref: '#/components/schemas/BillingAddress'
-        contact:
-          $ref: '#/components/schemas/Contact'
-        customer:
-          $ref: '#/components/schemas/Customer'
-        shipping_address:
-          $ref: '#/components/schemas/ShippingAddress'
-        relationships:
-          type: object
-          properties:
-            items:
-              $ref: '#/components/schemas/RelationshipArray'
-            custom_discounts:
-              $ref: '#/components/schemas/RelationshipArray'
-            promotions:
-              $ref: '#/components/schemas/RelationshipArray'
-            customer:
-              $ref: '#/components/schemas/SingleRelationship'
-            account:
-              $ref: '#/components/schemas/SingleRelationship'
-            account_member:
-              $ref: '#/components/schemas/SingleRelationship'
-            store:
-              $ref: '#/components/schemas/SingleRelationship'
-    OrderMeta:
-      title: OrderMeta
+    BillingAddress:
+      title: BillingAddress
+      description: 'Billing address information. You must specify at least one of region (state/province) or county.
+
+        '
+      anyOf:
+      - $ref: '#/components/schemas/AddressWithRegion'
+      - $ref: '#/components/schemas/AddressWithCounty'
+      examples:
+      - first_name: John
+        last_name: Doe
+        company_name: John Doe Enterprises
+        line_1: 1 Sunny Street
+        line_2: Apartment 123
+        city: Los Angeles
+        postcode: '92802'
+        region: CA
+        country: US
+      - first_name: Jane
+        last_name: Smith
+        line_1: 123 Main Street
+        city: London
+        postcode: SW1A 1AA
+        county: Greater London
+        country: GB
+    SingleRelationship:
+      title: SingleRelationship
+      description: Single relationship
       type: object
       properties:
-        timestamps:
-          $ref: '#/components/schemas/OrderTimestamps'
-        display_price:
-          description: Order pricing information including amounts, tax, discounts, and payment details.
-          type: object
-          properties:
-            with_tax:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            without_tax:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            tax:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            discount:
-              $ref: '#/components/schemas/DiscountFormattedPriceData'
-            balance_owing:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            paid:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            authorized:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            without_discount:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            shipping:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            shipping_discount:
-              $ref: '#/components/schemas/DiscountFormattedPriceData'
-        is_manual:
-          description: Specifies if the order was created manually.
-          type: boolean
+        data:
+          $ref: '#/components/schemas/RelationshipItem'
+    NonNegativeFormattedPriceData:
+      title: NonNegativeFormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The raw total. Must be non-negative.
+          type: number
+          minimum: 0
+          examples:
+          - 10000
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - $10.00
+    OrderTimestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this order was created.
+          type: string
+        updated_at:
+          description: The date this order was last updated.
+          type: string
+        fully_paid_at:
+          description: The date this order was fully paid. Only present for orders with payment status 'paid'.
+          type: string
     OrderItemResponse:
       title: OrderItemResponse
       type: object
@@ -774,89 +966,293 @@ components:
             pricing_option:
               description: Pricing option for the subscription
               type: string
-    Response.ErrorItem:
+    CustomAttributes:
+      title: CustomAttributes
       type: object
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
+      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
+      additionalProperties:
+        type: object
+        required:
+        - type
+        - value
+        properties:
           type:
-          - string
-          - integer
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
+            type: string
+            description: The type of the custom attribute value.
+            enum:
+            - string
+            - integer
+            - boolean
+            - float
+          value:
+            description: The value of the custom attribute.
+            type:
+            - string
+            - boolean
+            - number
+    Customer:
+      title: Customer
+      type: object
+      properties:
+        name:
+          description: The name of the customer.
           type: string
-          description: Optional additional detail about the error.
           examples:
-          - The field 'name' is required
-        source:
+          - John Doe
+        email:
+          description: The email address of the customer.
           type: string
-          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
-        meta:
+          format: email
+          examples:
+          - john.doe@example.com
+        id:
+          description: The unique identifier of the customer.
+          type: string
+          format: uuid
+          examples:
+          - e5a0d684-a4af-4919-a348-f66b0b4955e0
+    ShippingAddress:
+      title: ShippingAddress
+      description: 'Shipping address information. You must specify at least one of region (state/province) or county.
+
+        '
+      allOf:
+      - anyOf:
+        - $ref: '#/components/schemas/AddressWithRegion'
+        - $ref: '#/components/schemas/AddressWithCounty'
+      - type: object
+        properties:
+          phone_number:
+            description: Phone number of the shipping recipient.
+            type: string
+          instructions:
+            description: Delivery instructions.
+            type: string
+      examples:
+      - first_name: John
+        last_name: Doe
+        line_1: 1 Sunny Street
+        line_2: Apartment 123
+        city: Los Angeles
+        postcode: '92802'
+        region: CA
+        country: US
+        instructions: Please leave on porch
+      - first_name: Jane
+        last_name: Smith
+        line_1: 123 Main Street
+        city: London
+        postcode: SW1A 1AA
+        county: Greater London
+        country: GB
+        phone_number: +44 20 7946 0958
+    AddressWithRegion:
+      title: Address with Region
+      allOf:
+      - $ref: '#/components/schemas/AddressCommon'
+      - type: object
+        required:
+        - region
+        properties:
+          region:
+            description: State, province, or region of the address.
+            type: string
+    AccountCheckout:
+      title: Account Checkout
+      type: object
+      properties:
+        data:
           type: object
-          description: Additional metadata associated with the error. May include arbitrary keys.
           properties:
-            id:
+            order_number:
+              description: A user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.
               type: string
-              description: The resource id associated with the error
-            ids:
-              type: array
-              items:
-                type: string
-                description: The resource ids associated with the error
-            item_ids:
-              type: array
-              items:
-                type: string
-                description: The cart_item ids associated with the error
-            shipping_group_id:
+            external_ref:
+              description: An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
               type: string
-              description: The shipping group id associated with the error
-            shipping_group_ids:
-              type: array
-              items:
-                type: string
-                description: The shipping group ids associated with the error
-            cart_id:
-              type: string
-              description: The cart id associated with the error
-            code:
-              type: string
-              description: The code associated with the error.
-            order_id:
-              type: string
-              description: The order id associated with the error.
-            sku:
-              type: string
-              description: The SKU associated with the error.
-            email:
-              type: string
-              format: email
-              description: The email address associated with the error.
-            component_product_id:
-              type: string
-              format: uuid
-              description: The component product ID associated with the error.
-            error-meta-key:
-              type: string
-              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
-            value:
-              description: The value associated with the error.
-              oneOf:
-              - type: string
-              - type: integer
-              - type: boolean
-              - type: object
-                additionalProperties: true
-              - type: array
+            account:
+              type: object
+              properties:
+                id:
+                  description: The account ID.
+                  type: string
+                member_id:
+                  description: The account member ID.
+                  type: string
+            contact:
+              type: object
+              properties:
+                name:
+                  description: The name of the account member.
+                  type: string
+                email:
+                  description: The email address of the account member.
+                  type: string
+                  format: email
+            billing_address:
+              $ref: '#/components/schemas/BillingAddress'
+            shipping_address:
+              $ref: '#/components/schemas/ShippingAddress'
+    RelationshipArray:
+      title: RelationshipArray
+      description: Array of relationships
+      type: object
+      properties:
+        data:
+          description: Individual relationships
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipItem'
+    FormattedPriceData:
+      title: FormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The raw total.
+          type: number
+          examples:
+          - 10000
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - $10.00
+    TaxItemResponse:
+      title: TaxItemResponse
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the resource. Always `tax_item`.
+          type: string
+          const: tax_item
+        id:
+          description: Specifies the UUID of the tax item.
+          type: string
+          format: uuid
+          readOnly: true
+          examples:
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        jurisdiction:
+          description: The jurisdiction for the tax item.
+          type: string
+          examples:
+          - US-CA
+        code:
+          description: The tax code for the tax item.
+          type: string
+          examples:
+          - CA_SALES_TAX
+        name:
+          description: The name of the tax item.
+          type: string
+          examples:
+          - California Sales Tax
+        rate:
+          description: The tax rate as a decimal (e.g., 0.085 for 8.5%).
+          type: number
+          format: float
+          examples:
+          - 0.085
+        amount:
+          description: The tax amount in the smallest currency unit.
+          type: integer
+          examples:
+          - 850
+    OrderResponse:
+      title: OrderResponse
+      type: object
+      properties:
+        type:
+          description: Specifies the type of object being returned. You must use `order`.
+          type: string
+          const: order
+        order_number:
+          description: Specifies a user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.
+          type: string
+          examples:
+          - 1234
+        external_ref:
+          description: An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
+          type: string
+          examples:
+          - e-123456789
+        id:
+          description: Specifies the unique identifier of the order.
+          type: string
+          format: uuid
+          readOnly: true
+          examples:
+          - aa854b8f-5930-476d-951a-e9b9cfbdefb1
+        status:
+          description: Specifies the status of the order, such as `incomplete`, `complete`, `processing`, or `cancelled`.
+          type: string
+          enum:
+          - complete
+          - incomplete
+          - cancelled
+          - processing
+        payment:
+          description: Specifies the status of the payment, such as `unpaid`, `authorized`, `paid`, or `refunded`.
+          type: string
+          enum:
+          - authorized
+          - paid
+          - unpaid
+          - refunded
+          - partially_paid
+          - partially_authorized
+        shipping:
+          description: Specifies the status of the shipment, such as `fulfilled` or `unfulfilled`.
+          type: string
+          enum:
+          - unfulfilled
+          - fulfilled
+        anonymized:
+          description: Specifies if the order is anonymized.
+          type: boolean
+          examples:
+          - false
+        payment_intent_id:
+          description: Stripe Payment Intent ID.  Please see Stripe's Payment Intent [documentation](https://docs.stripe.com/api/payment_intents) for more information on Payment Intents.
+          type: string
+          examples:
+          - pi_3MtwBwLkdIwHu7ix28a3tqPa
+        custom_attributes:
+          $ref: '#/components/schemas/CustomAttributes'
+        links:
+          type: object
+        meta:
+          $ref: '#/components/schemas/OrderMeta'
+        billing_address:
+          $ref: '#/components/schemas/BillingAddress'
+        contact:
+          $ref: '#/components/schemas/Contact'
+        customer:
+          $ref: '#/components/schemas/Customer'
+        shipping_address:
+          $ref: '#/components/schemas/ShippingAddress'
+        relationships:
+          type: object
+          properties:
+            items:
+              $ref: '#/components/schemas/RelationshipArray'
+            custom_discounts:
+              $ref: '#/components/schemas/RelationshipArray'
+            promotions:
+              $ref: '#/components/schemas/RelationshipArray'
+            customer:
+              $ref: '#/components/schemas/SingleRelationship'
+            account:
+              $ref: '#/components/schemas/SingleRelationship'
+            account_member:
+              $ref: '#/components/schemas/SingleRelationship'
+            store:
+              $ref: '#/components/schemas/SingleRelationship'
     CondensedPromotionResponse:
       title: CondensedPromotionResponse
       type: object
@@ -911,414 +1307,76 @@ components:
           format: date-time
           examples:
           - '2024-08-31T23:59:59Z'
-    AccountCheckout:
-      title: Account Checkout
+    OrderEntityResponse:
+      title: OrderEntityResponse
       type: object
       properties:
         data:
-          type: object
-          properties:
-            order_number:
-              description: A user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.
-              type: string
-            external_ref:
-              description: An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
-              type: string
-            account:
-              type: object
-              properties:
-                id:
-                  description: The account ID.
-                  type: string
-                member_id:
-                  description: The account member ID.
-                  type: string
-            contact:
-              type: object
-              properties:
-                name:
-                  description: The name of the account member.
-                  type: string
-                email:
-                  description: The email address of the account member.
-                  type: string
-                  format: email
-            billing_address:
-              $ref: '#/components/schemas/BillingAddress'
-            shipping_address:
-              $ref: '#/components/schemas/ShippingAddress'
-    Response.ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    Contact:
-      title: Contact
-      type: object
-      properties:
-        email:
-          description: The email address of the contact.
-          type: string
-          examples:
-          - johndoe@email.com
-        name:
-          description: The name of the contact.
-          type: string
-          examples:
-          - John Doe
-    OrderTimestamps:
-      type: object
-      properties:
-        created_at:
-          description: The date this order was created.
-          type: string
-        updated_at:
-          description: The date this order was last updated.
-          type: string
-        fully_paid_at:
-          description: The date this order was fully paid. Only present for orders with payment status 'paid'.
-          type: string
-    CustomerCheckout:
-      title: Customer Checkout
-      type: object
-      properties:
-        data:
-          type: object
-          properties:
-            order_number:
-              description: A user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.
-              type: string
-            external_ref:
-              description: An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
-              type: string
-            customer:
-              type: object
-              properties:
-                id:
-                  description: The ID of the customer.
-                  type: string
-                email:
-                  description: The email of the customer.
-                  type: string
-                name:
-                  description: The name of the customer.
-                  type: string
-            billing_address:
-              $ref: '#/components/schemas/BillingAddress'
-            shipping_address:
-              $ref: '#/components/schemas/ShippingAddress'
-    AddressWithCounty:
-      title: Address with County
-      allOf:
-      - $ref: '#/components/schemas/AddressCommon'
-      - type: object
-        required:
-        - county
-        properties:
-          county:
-            description: County of the address.
-            type: string
-    SingleRelationship:
-      title: SingleRelationship
-      description: Single relationship
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/RelationshipItem'
-    AddressWithRegion:
-      title: Address with Region
-      allOf:
-      - $ref: '#/components/schemas/AddressCommon'
-      - type: object
-        required:
-        - region
-        properties:
-          region:
-            description: State, province, or region of the address.
-            type: string
-    NonNegativeFormattedPriceData:
-      title: NonNegativeFormattedPriceData
-      type: object
-      properties:
-        amount:
-          description: The raw total. Must be non-negative.
-          type: number
-          minimum: 0
-          examples:
-          - 10000
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - $10.00
-    BillingAddress:
-      title: BillingAddress
-      description: 'Billing address information. You must specify at least one of region (state/province) or county.
-
-        '
-      anyOf:
-      - $ref: '#/components/schemas/AddressWithRegion'
-      - $ref: '#/components/schemas/AddressWithCounty'
-      examples:
-      - first_name: John
-        last_name: Doe
-        company_name: John Doe Enterprises
-        line_1: 1 Sunny Street
-        line_2: Apartment 123
-        city: Los Angeles
-        postcode: '92802'
-        region: CA
-        country: US
-      - first_name: Jane
-        last_name: Smith
-        line_1: 123 Main Street
-        city: London
-        postcode: SW1A 1AA
-        county: Greater London
-        country: GB
-    ShippingAddress:
-      title: ShippingAddress
-      description: 'Shipping address information. You must specify at least one of region (state/province) or county.
-
-        '
-      allOf:
-      - anyOf:
-        - $ref: '#/components/schemas/AddressWithRegion'
-        - $ref: '#/components/schemas/AddressWithCounty'
-      - type: object
-        properties:
-          phone_number:
-            description: Phone number of the shipping recipient.
-            type: string
-          instructions:
-            description: Delivery instructions.
-            type: string
-      examples:
-      - first_name: John
-        last_name: Doe
-        line_1: 1 Sunny Street
-        line_2: Apartment 123
-        city: Los Angeles
-        postcode: '92802'
-        region: CA
-        country: US
-        instructions: Please leave on porch
-      - first_name: Jane
-        last_name: Smith
-        line_1: 123 Main Street
-        city: London
-        postcode: SW1A 1AA
-        county: Greater London
-        country: GB
-        phone_number: +44 20 7946 0958
-    DiscountFormattedPriceData:
-      title: DiscountFormattedPriceData
-      type: object
-      properties:
-        amount:
-          description: The discount amount. Must be non-positive (zero or negative).
-          type: number
-          maximum: 0
-          examples:
-          - -1000
-          - 0
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - -$10.00
-          - $0.00
-    DiscountData:
-      title: DiscountData
-      type: object
-      properties:
-        amount:
-          $ref: '#/components/schemas/OrderPriceData'
-        code:
-          type: string
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        promotion_source:
-          type: string
-          description: The source or origin of the promotion, if applicable.
-        is_cart_discount:
-          type: boolean
-          description: Indicates whether the discount applies to the entire cart.
-        ordinal:
-          type: integer
-          description: Order in which the discount was applied.
-    Timestamps:
-      type: object
-      properties:
-        created_at:
-          description: The date this was created.
-          type: string
-        updated_at:
-          description: The date this was last updated.
-          type: string
-    TaxItemResponse:
-      title: TaxItemResponse
-      type: object
-      properties:
-        type:
-          description: Specifies the type of the resource. Always `tax_item`.
-          type: string
-          const: tax_item
-        id:
-          description: Specifies the UUID of the tax item.
-          type: string
-          format: uuid
-          readOnly: true
-          examples:
-          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
-        jurisdiction:
-          description: The jurisdiction for the tax item.
-          type: string
-          examples:
-          - US-CA
-        code:
-          description: The tax code for the tax item.
-          type: string
-          examples:
-          - CA_SALES_TAX
-        name:
-          description: The name of the tax item.
-          type: string
-          examples:
-          - California Sales Tax
-        rate:
-          description: The tax rate as a decimal (e.g., 0.085 for 8.5%).
-          type: number
-          format: float
-          examples:
-          - 0.085
-        amount:
-          description: The tax amount in the smallest currency unit.
-          type: integer
-          examples:
-          - 850
-    OrderItemFormattedUnitPriceData:
-      title: OrderItemFormattedUnitPriceData
-      type: object
-      properties:
-        unit:
-          $ref: '#/components/schemas/FormattedPriceData'
-        value:
-          $ref: '#/components/schemas/FormattedPriceData'
-    Customer:
-      title: Customer
-      type: object
-      properties:
-        name:
-          description: The name of the customer.
-          type: string
-          examples:
-          - John Doe
-        email:
-          description: The email address of the customer.
-          type: string
-          format: email
-          examples:
-          - john.doe@example.com
-        id:
-          description: The unique identifier of the customer.
-          type: string
-          format: uuid
-          examples:
-          - e5a0d684-a4af-4919-a348-f66b0b4955e0
-    CustomDiscountResponse:
-      title: CustomDiscountResponse
-      type: object
-      properties:
-        type:
-          description: Specifies the type of the resource. Always `custom_discount`.
-          type: string
-          const: custom_discount
-        id:
-          description: Specifies the UUID of the custom discount.
-          type: string
-          format: uuid
-          examples:
-          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
-        external_id:
-          description: Specifies an external id for the custom discount.
-          type: string
-          examples:
-          - custom-discount-external-id
-        discount_engine:
-          description: 'Specifies from where the custom discount is applied.
+          $ref: '#/components/schemas/OrderResponse'
+        included:
+          description: 'Optional included data such as order items, tax items, custom discounts, and promotions.
 
             '
-          type: string
-          examples:
-          - Custom Discount Engine
-        amount:
-          description: The amount of the custom discount.
-          $ref: '#/components/schemas/FormattedPriceData'
-        description:
-          description: Specifies a description for the custom discount.
-          type: string
-          examples:
-          - Custom discount description
-        discount_code:
-          description: Specifies the discount code used for the custom discount.
-          type: string
-          examples:
-          - cart-custom-promo-code
-        relationships:
-          description: Relationships to other resources like cart items
           type: object
           properties:
-            item:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                      description: The cart item ID this discount is related to
-                    type:
-                      type: string
-                      enum:
-                      - cart_item
-                      - custom_item
-    FormattedPriceData:
-      title: FormattedPriceData
+            items:
+              description: Array of order items included in the response.
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItemResponse'
+            tax_items:
+              description: Array of tax items included in the response.
+              type: array
+              items:
+                $ref: '#/components/schemas/TaxItemResponse'
+            custom_discounts:
+              description: Array of custom discounts included in the response.
+              type: array
+              items:
+                $ref: '#/components/schemas/CustomDiscountResponse'
+            promotions:
+              description: Array of promotions included in the response.
+              type: array
+              items:
+                $ref: '#/components/schemas/CondensedPromotionResponse'
+        errors:
+          type: array
+          description: Array of error objects, if any errors occurred.
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    OrderMeta:
+      title: OrderMeta
       type: object
       properties:
-        amount:
-          description: The raw total.
-          type: number
-          examples:
-          - 10000
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - $10.00
+        timestamps:
+          $ref: '#/components/schemas/OrderTimestamps'
+        display_price:
+          description: Order pricing information including amounts, tax, discounts, and payment details.
+          type: object
+          properties:
+            with_tax:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            without_tax:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            tax:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            discount:
+              $ref: '#/components/schemas/DiscountFormattedPriceData'
+            balance_owing:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            paid:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            authorized:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            without_discount:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            shipping:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            shipping_discount:
+              $ref: '#/components/schemas/DiscountFormattedPriceData'
+        is_manual:
+          description: Specifies if the order was created manually.
+          type: boolean
   securitySchemes:
     bearerAuth:
       type: http

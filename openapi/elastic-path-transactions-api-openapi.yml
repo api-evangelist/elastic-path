@@ -123,85 +123,7 @@ paths:
     - url: https://useast.api.elasticpath.com/v2
       description: US East cluster
 components:
-  responses:
-    UnprocessableEntityError:
-      description: The request was understood, but could not be processed by the server
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Cannot complete request
-                  status: '422'
-                  detail: Your request could not be completed due to insufficient stock levels
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No stock found
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-    NotFoundError_2:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No location found
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: Your request was invalid
   schemas:
-    Meta:
-      allOf:
-      - $ref: '#/components/schemas/Timestamps'
-    Timestamps:
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
     ErrorResponse:
       type: object
       required:
@@ -243,6 +165,24 @@ components:
           format: int64
           example: 5
           minimum: 1
+    UUID:
+      type: string
+      description: The unique identifier.
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 00000000-0000-0000-0000-000000000000
+    Timestamps:
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
     Error:
       type: object
       required:
@@ -267,6 +207,9 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    Meta:
+      allOf:
+      - $ref: '#/components/schemas/Timestamps'
     Transaction:
       required:
       - type
@@ -316,24 +259,6 @@ components:
           example: 5
         timestamps:
           $ref: '#/components/schemas/Timestamps'
-    UUID:
-      type: string
-      description: The unique identifier.
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 00000000-0000-0000-0000-000000000000
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
     TransactionCreateAttributes:
       required:
       - action
@@ -367,15 +292,50 @@ components:
           minLength: 1
           maxLength: 128
           example: milton-keynes-warehouse
-    TransactionCreate_2:
+    StockTransactionType:
+      type: string
+      enum:
+      - stock-transaction
+      default: stock-transaction
+      example: stock-transaction
+    Timestamps_2:
       required:
+      - created_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    Meta_2:
+      type: object
+      required:
+      - timestamps
+      properties:
+        timestamps:
+          $ref: '#/components/schemas/Timestamps_2'
+    TransactionResponse:
+      type: object
+      required:
+      - id
       - type
       - attributes
       properties:
+        id:
+          $ref: '#/components/schemas/UUID'
         type:
           $ref: '#/components/schemas/StockTransactionType'
         attributes:
-          $ref: '#/components/schemas/TransactionCreateAttributes'
+          $ref: '#/components/schemas/TransactionResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
     LinkObject:
       type: object
       properties:
@@ -390,19 +350,12 @@ components:
           type: string
           format: uri
           example: http://example.com/schemas/article-comments
-    Meta_2:
-      type: object
-      required:
-      - timestamps
-      properties:
-        timestamps:
-          $ref: '#/components/schemas/Timestamps_2'
-    StockTransactionType:
-      type: string
-      enum:
-      - stock-transaction
-      default: stock-transaction
-      example: stock-transaction
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
     TransactionResponseAttributes:
       type: object
       required:
@@ -450,37 +403,19 @@ components:
           minLength: 1
           maxLength: 128
           example: milton-keynes-warehouse
-    Timestamps_2:
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    TransactionCreate_2:
       required:
-      - created_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    TransactionResponse:
-      type: object
-      required:
-      - id
       - type
       - attributes
       properties:
-        id:
-          $ref: '#/components/schemas/UUID'
         type:
           $ref: '#/components/schemas/StockTransactionType'
         attributes:
-          $ref: '#/components/schemas/TransactionResponseAttributes'
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
+          $ref: '#/components/schemas/TransactionCreateAttributes'
   parameters:
     PageOffset:
       name: page[offset]
@@ -514,6 +449,71 @@ components:
 
           '
         example: eq(location,new-york)
+  responses:
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No stock found
+    UnprocessableEntityError:
+      description: The request was understood, but could not be processed by the server
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Cannot complete request
+                  status: '422'
+                  detail: Your request could not be completed due to insufficient stock levels
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: Your request was invalid
+    NotFoundError_2:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No location found
   securitySchemes:
     bearerAuth:
       type: http

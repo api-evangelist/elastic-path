@@ -1,33 +1,7 @@
 openapi: 3.2.0
 info:
-  title: Product Experience Manager Introduction Product Image Relationships API
-  description: '
-
-    Product Experience Manager uses the PIM service to manage product information, hierarchies, and price books. Ideally, Product Experience Manager becomes the single source of truth for product data across your organization.
-
-
-    In Commerce, the product data is stored separately from pricing, catalogs, and inventory. This separation means that you retrieve all product data only when you are managing product data and assets. Otherwise, when setting prices or managing inventory, you retrieve a reference to the product rather than the entire product, which makes the response times very fast.
-
-
-    You also have the flexibility to create catalogs for different scenarios by combining hierarchies of products with a price book. Scenarios might include:
-
-
-    - **Multiple geographical regions**. Display different catalogs in different regions with suitable pricing or combine product hierarchies from two different regions to display in a third region.
-
-    - **Multiple channels**. Display different catalogs based on how a shopper accesses your store, such as through a mobile app or a web storefront.
-
-    - **Direct to business versus direct to customers**. Offer different products and prices for business customers versus retail customers.
-
-    - **Preferred customers**. Offer special pricing to preferred customers while displaying a standard price catalog to all other shoppers.
-
-    - **Reward programs**. Enable reward programs where catalog prices drop after a certain spending level is reached.
-
-    - **Product sales**. Offer sale items for a limited time.
-
-
-    Scenarios are created by defining the context within which a catalog is displays. Contexts can be a customer ID, a channel, or any other user-defined tag that can be passed to the APIs from the front-end shopper experiences.
-
-    '
+  title: Product Experience Manager Introduction Product Image…
+  description: Product Experience Manager uses the PIM service to manage product information, hierarchies, and price books.
   version: 26.0612.7739142
   x-version-timestamp: 2026-06-12 10:52:50+00:00
 servers:
@@ -42,12 +16,10 @@ tags:
   description: 'Products are the items or services that you might want to sell in your store. In Product Experience Manager, products can also have associated rich media assets, such as product images or a file containing additional product details.
 
 
-    You can do this using [Files API](/docs/api/pxm/files).
+    You can do this using Files API.
 
 
-    Once you have created your files, you associate files with your products using the [Create Product Main Image Relationships API](/docs/api/pxm/products/create-product-main-image-relationships).
-
-    '
+    Once you have created your files, you associate files with your products using the Create Product Main Image Relationships API.'
 paths:
   /pcm/products/{productID}/relationships/main_image:
     post:
@@ -172,87 +144,18 @@ paths:
         '500':
           $ref: '#/components/responses/internal'
 components:
-  responses:
-    not_found:
-      description: Bad Request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-    bad_request:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            bad-request:
-              value:
-                errors:
-                - title: Bad Request
-                  detail: Could not parse the supplied filter
-                  status: '400'
-    internal:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - status: '500'
-                  title: Internal Server Error
-                  detail: There was an internal server error, you can report with your request id.
-                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
-    unprocessable_entity:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            failed-validation:
-              value:
-                errors:
-                - title: Failed Validation
-                  status: '422'
-                  detail: <XYZ> can not be empty
-    write_conflict:
-      description: Write conflict detected
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Conflict
-                  status: '409'
-                  detail: write conflict detected
-    forbidden:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Forbidden
-                  status: '403'
-                  detail: entity owned by organization
+  parameters:
+    product_id:
+      name: productID
+      in: path
+      schema:
+        type: string
+        example: 00000000-0000-0000-0000-000000000000
+        x-postman-example: '{{productID}}'
+      required: true
+      description: A unique identifier for the product.
   schemas:
-    replace_main_image_request:
+    main_image_request:
       type: object
       properties:
         data:
@@ -260,9 +163,10 @@ components:
           properties:
             id:
               type: string
-              description: The ID of the new image file.
+              description: The ID of the image file.
               example: 00000000-0000-0000-0000-000000000000
             type:
+              description: This represents the type of resource being returned. Always `file`.
               type: string
               enum:
               - file
@@ -316,7 +220,7 @@ components:
               type: string
               enum:
               - file
-    main_image_request:
+    replace_main_image_request:
       type: object
       properties:
         data:
@@ -324,23 +228,91 @@ components:
           properties:
             id:
               type: string
-              description: The ID of the image file.
+              description: The ID of the new image file.
               example: 00000000-0000-0000-0000-000000000000
             type:
-              description: This represents the type of resource being returned. Always `file`.
               type: string
               enum:
               - file
-  parameters:
-    product_id:
-      name: productID
-      in: path
-      schema:
-        type: string
-        example: 00000000-0000-0000-0000-000000000000
-        x-postman-example: '{{productID}}'
-      required: true
-      description: A unique identifier for the product.
+  responses:
+    internal:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: '500'
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+    not_found:
+      description: Bad Request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+    bad_request:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            bad-request:
+              value:
+                errors:
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+    forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Forbidden
+                  status: '403'
+                  detail: entity owned by organization
+    write_conflict:
+      description: Write conflict detected
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Conflict
+                  status: '409'
+                  detail: write conflict detected
   securitySchemes:
     bearerAuth:
       type: http

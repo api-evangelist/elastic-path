@@ -3,7 +3,7 @@ info:
   title: Flows Service Introduction Entries API
   version: 25.1201.6902711
   x-version-timestamp: 2025-12-01 12:04:04+00:00
-  description: "\nWith flows you can extend the capabilities of Commerce and Product Experience Manager at both organization and store level, and apply Composable Commerce to almost any use case.\n \n### Flows in Commerce\n \nYou can define custom data fields for the resources that you use in your store or organization, such as adding more fields to the `customer` resource. \n \n You can also create new resources, such as a `wishlist` resource to support wishlists in your store. \n \n:::note\n \n [Custom APIs](/docs/api/commerce-extensions/custom-ap-is#custom-apis-vs-non-core-flows) are the next generation of Non-Core Flows. Flows are not going anywhere, but Custom APIs offer enhanced capabilities. We recommend using Custom APIs for any of your new use cases.\n \n:::\n\n:::caution\n \n- In an organization, not all resources are available. See [**Extend a resource**](https://elasticpath.dev/guides/Custom%20Data/extend-any-resource) for a list of organization resources that can be extended.\n- If you store any sensitive Personal Identifiable Information (PII) or non-public data on your site, ensure that you do not use this data in flows to avoid potential unauthorized access to the data. For more information, see [**Permissions**](/docs/authentication/tokens/permissions).\n \n:::\n \n### Templates in Product Experience Manager\n \n Templates allow you to attach a specific set of attributes to your products.\n \n - You can use templates to define characteristics of your product, for example, a product specification. For example, a *Book* template might contain attributes, such as *ISBN*, *Author*, *Number of pages*, *Year Published*, or *Condition (New/Used)*.\n - You can use templates for Search Engine Optimization (SEO). When you assign template attributes such as, *care instructions* or *fabric*, to a shirt and a shopper searches for a specific item, attributes help stores to return the products that match the search criteria. For example, when a shopper searches for a large blue shirt, all shirts that are large and blue are returned in the search result.\n"
+  description: With flows you can extend the capabilities of Commerce and Product Experience Manager at both organization and store level, and apply Composable Commerce to almost any use case.
 servers:
 - url: https://euwest.api.elasticpath.com
   description: EU West Production Server
@@ -22,9 +22,7 @@ tags:
     ### Entries in Product Experience Manager
 
 
-    Entries hold the pieces of data collected within the attributes. If your template has more than one attribute related to it, you see multiple attribute slugs.
-
-    '
+    Entries hold the pieces of data collected within the attributes. If your template has more than one attribute related to it, you see multiple attribute slugs.'
 paths:
   /v2/flows/{flowSlug}/entries:
     get:
@@ -33,9 +31,7 @@ paths:
       summary: Get all Entries
       description: '- For Commerce, this endpoint retrieves all entries for a flow.
 
-        - For Product Experience Manager, this endpoint retrieves all entries for a template.
-
-        '
+        - For Product Experience Manager, this endpoint retrieves all entries for a template.'
       operationId: getAllEntries
       parameters:
       - name: flowSlug
@@ -97,9 +93,7 @@ paths:
       summary: Create an Entry
       description: '- For Commerce, this endpoint creates an entry for a flow.
 
-        - For Product Experience Manager, this endpoint creates an entry for a template.
-
-        '
+        - For Product Experience Manager, this endpoint creates an entry for a template.'
       operationId: createAnEntry
       parameters:
       - name: flowSlug
@@ -161,9 +155,7 @@ paths:
       summary: Get an Entry
       description: '- For Commerce, this endpoint retrieves an entry from a flow.
 
-        - For Product Experience Manager, this endpoint retrieves an entry from a template.
-
-        '
+        - For Product Experience Manager, this endpoint retrieves an entry from a template.'
       operationId: getAnEntry
       parameters:
       - name: flowSlug
@@ -213,9 +205,7 @@ paths:
       summary: Delete an Entry
       description: '- For Commerce, this endpoint deletes an entry from a flow.
 
-        - For Product Experience Manager, this endpoint deletes an entry from a template.
-
-        '
+        - For Product Experience Manager, this endpoint deletes an entry from a template.'
       operationId: deleteAnEntry
       parameters:
       - name: flowSlug
@@ -245,9 +235,7 @@ paths:
       summary: Update an Entry
       description: '- For Commerce, this endpoint updates an entry for a flow.
 
-        - For Product Experience Manager, this endpoint updates an entry for a template.
-
-        '
+        - For Product Experience Manager, this endpoint updates an entry for a template.'
       operationId: updateAnEntry
       parameters:
       - name: flowSlug
@@ -314,28 +302,71 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       deprecated: false
 components:
+  responses:
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: 400
+                  detail: 'data.attributes.name: "name" is required'
+    NotFound:
+      description: Bad request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: 404
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: 500
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
   schemas:
-    Meta:
+    FlowsEntriesUpdateRequest:
+      title: FlowsEntriesUpdateRequest
       type: object
       properties:
-        owner:
-          type: string
-          description: The resource owner, either `organization` or `store`.
-          example: enum
-          enum:
-          - store
-          - organization
-        timestamps:
+        data:
           type: object
           properties:
-            created_at:
+            FIELD1_SLUG:
               type: string
-              description: The date and time a resource is created.
-              example: '2023-10-11T13:02:25.293Z'
-            updated_at:
+              description: The field slug for each field/attribute in a flow/template and the corresponding value for the entry. You can have multiple field slugs if they are related to the flow/template.
+              examples:
+              - value1
+            FIELD2_SLUG:
               type: string
-              description: The date and time a resource is updated.
-              example: '2023-10-11T13:02:25.293Z'
+              description: The field slug for each field/attribute in a flow/template and the corresponding value for the entry. You can have multiple field slugs if they are related to the flow/template.
+              examples:
+              - value2
+            id:
+              $ref: '#/components/schemas/UUID'
+            type:
+              type: string
+              description: Represents the type of the resource object.
+              examples:
+              - entry
     ErrorResponse:
       required:
       - errors
@@ -362,13 +393,6 @@ components:
               description: Represents the type of object being returned.
               examples:
               - entry
-    FlowsLinks:
-      type: object
-      description: "Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:\n \n | Property | Description |\n | --- | --- |\n | `current` | Always the current page |\n | `first` | Always the first page |\n | `last` | `null` if there is only one page. |\n | `prev` | `null` if you are on the first page. |\n | `next` | `null` if there is only one page. |\n"
-      properties:
-        self:
-          type: string
-          example: https://euwest.api.elasticpath.com/v2/flows/d2a9b22a-b4b0-456b-bbc7-d8723aaffa84
     Entry:
       title: Entry
       type: object
@@ -386,6 +410,11 @@ components:
       additionalProperties:
         type: string
         description: There can be a `:fieldSlug` attribute for each field/attribute attached to a flow/template. The type depends on the field type.
+    UUID:
+      type: string
+      description: A unique identifier for a resource.
+      format: uuid
+      example: 00000000-0000-0000-0000-000000000000
     Error:
       required:
       - status
@@ -414,75 +443,34 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    FlowsEntriesUpdateRequest:
-      title: FlowsEntriesUpdateRequest
+    Meta:
       type: object
       properties:
-        data:
+        owner:
+          type: string
+          description: The resource owner, either `organization` or `store`.
+          example: enum
+          enum:
+          - store
+          - organization
+        timestamps:
           type: object
           properties:
-            FIELD1_SLUG:
+            created_at:
               type: string
-              description: The field slug for each field/attribute in a flow/template and the corresponding value for the entry. You can have multiple field slugs if they are related to the flow/template.
-              examples:
-              - value1
-            FIELD2_SLUG:
+              description: The date and time a resource is created.
+              example: '2023-10-11T13:02:25.293Z'
+            updated_at:
               type: string
-              description: The field slug for each field/attribute in a flow/template and the corresponding value for the entry. You can have multiple field slugs if they are related to the flow/template.
-              examples:
-              - value2
-            id:
-              $ref: '#/components/schemas/UUID'
-            type:
-              type: string
-              description: Represents the type of the resource object.
-              examples:
-              - entry
-    UUID:
-      type: string
-      description: A unique identifier for a resource.
-      format: uuid
-      example: 00000000-0000-0000-0000-000000000000
-  responses:
-    NotFound:
-      description: Bad request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: 404
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: 400
-                  detail: 'data.attributes.name: "name" is required'
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - status: 500
-                  title: Internal Server Error
-                  detail: There was an internal server error, you can report with your request id.
-                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+              description: The date and time a resource is updated.
+              example: '2023-10-11T13:02:25.293Z'
+    FlowsLinks:
+      type: object
+      description: "Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:\n \n | Property | Description |\n | --- | --- |\n | `current` | Always the current page |\n | `first` | Always the first page |\n | `last` | `null` if there is only one page. |\n | `prev` | `null` if you are on the first page. |\n | `next` | `null` if there is only one page. |\n"
+      properties:
+        self:
+          type: string
+          example: https://euwest.api.elasticpath.com/v2/flows/d2a9b22a-b4b0-456b-bbc7-d8723aaffa84
   parameters:
     page-limit:
       name: page[limit]

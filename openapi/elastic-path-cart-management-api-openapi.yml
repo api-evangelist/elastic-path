@@ -1,36 +1,7 @@
 openapi: 3.2.0
 info:
   title: Carts, Checkout, Orders Introduction Cart Management API
-  description: 'A cart contains a list of the products that a shopper adds to the cart while browsing your catalog. In the context of a cart, a selected product is called a cart item.
-
-
-    A cart item identifies the product, the product price, the quantity selected, and the total price for the quantity selected. The cart displays a running total of the cost for the selected products plus the calculated tax.
-
-
-    You can allow your shoppers to add custom text to a product when adding an item to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized. See [Add product to cart](/docs/api/carts/manage-carts#add-product-to-cart).
-
-
-    After a shopper checks out, the cart is converted to an order, and you can manually delete the cart. If you don''t delete the cart, it is purged automatically after seven days.
-
-
-    The preview cart feature allows you to set a future date for your shopping cart and view the promotions that will be available during that time period. This feature enables you to validate your promotion settings and observe how they will be applied in the cart. See [Create a Preview Cart](/docs/api/carts/create-a-cart#preview-cart).
-
-
-    The following diagram shows a typical cart workflow:
-
-
-    ![Shows a cart workflow, starting from adding the first item to a cart, through cart creation and checkout](/assets/cart-workflow.png)
-
-
-    ### Multiple Carts
-
-
-    Buyers often make purchases based on jobs that they need to perform or outcomes they need to achieve and therefore require more than one shopping cart. For example, a corporate buyer places orders for multiple locations. Each location has a different frequency of ordering and require different products. The buyer can create one cart per location, fill the carts, and then check out the carts quickly. Similarly, shoppers can also create multiple carts for the ease of managing various shopping experiences, such as birthdays or holidays.
-
-
-    Each cart is discrete and separate. Any updates or changes to one cart has no effect on the other carts. A cart persists, that is, it stays with the buyer or shopper even after they use the cart in a checkout. Carts remain available after a checkout.
-
-    '
+  description: A cart contains a list of the products that a shopper adds to the cart while browsing your catalog.
   contact:
     name: Elastic Path
     url: https://elasticpath.com
@@ -50,22 +21,7 @@ security:
 - bearerAuth: []
 tags:
 - name: Cart Management
-  description: 'A Cart contains the product and custom cart items that a user intends to purchase. After a Cart is ready for Checkout, you can use the [Checkout endpoint](/docs/api/carts/checkout) to convert the cart to an order.
-
-
-    :::note
-
-
-    - Adding, modifying, or removing any cart items, custom items, or promotions always returns the cart meta, calculated using the calculation method. This is useful to update the client with up-to-date totals.
-
-    - We will automatically delete carts 7 days after they were last updated.
-
-    - If you do not pass a `X-MOLTIN-CURRENCY` header specifying what currency you would like the cart to use, the products in the cart are converted to your default currency.
-
-
-    :::
-
-    '
+  description: A Cart contains the product and custom cart items that a user intends to purchase.
 paths:
   /v2/carts:
     parameters: []
@@ -80,11 +36,11 @@ paths:
 
         | :--- | :--- | :--- |
 
-        | **Customer Token** | `X-Moltin-Customer-Token` | Carts for the specified customer. See [Customer Tokens](/docs/customer-management/customer-management-api/customer-tokens). |
+        | **Customer Token** | `X-Moltin-Customer-Token` | Carts for the specified customer. See Customer Tokens. |
 
-        | **Account Token** | `EP-Account-Management-Authentication-Token` | Carts for the specified account. See [Account Management Token](/docs/api/accounts/post-v-2-account-members-tokens). |
+        | **Account Token** | `EP-Account-Management-Authentication-Token` | Carts for the specified account. See Account Management Token. |
 
-        | **Client Credentials** | `Authorization: Bearer <token>` | All carts or only registered carts, controlled by the `show_all_carts` setting. See [Cart Settings](/docs/api/carts/put-v-2-settings-cart). |
+        | **Client Credentials** | `Authorization: Bearer ` | All carts or only registered carts, controlled by the `show_all_carts` setting. See Cart Settings. |
 
 
         **Client Credentials Behavior:**
@@ -97,9 +53,7 @@ paths:
         **Sorting**
 
 
-        Carts are sorted in descending order by `updated_date`. For more information, see [Pagination](/guides/Getting-Started/pagination).
-
-        '
+        Carts are sorted in descending order by `updated_date`. For more information, see Pagination.'
       operationId: getCarts
       parameters:
       - name: EP-Account-Management-Authentication-Token
@@ -220,7 +174,106 @@ paths:
       tags:
       - Cart Management
       summary: Create a Cart
-      description: "\nCreates a cart. Call this endpoint each time a customer creates a cart.\n\nEach shopper can have multiple carts. Use the carts API to create a cart. The carts are distinct from one another. Shoppers can add different items to their carts. They can check out one of the carts without affecting the content or status of their other carts.\n\nAfter the shopper checks out the cart, the cart remains available to the shopper. The cart is persistent and stays with the shopper after it is used.\n\nYou can create a cart to specify custom discounts. You can enable custom discounts when the `discount_settings.custom_discounts_enabled` field is set to `true`. Default is set from cart discount settings for the store. See [Update Cart Settings](/docs/api/carts/put-v-2-settings-cart).\n\nYou can also create a cart when inventory checks are not performed until checkout by setting the `inventory_settings.defer_inventory_check` field to `true`. Again the default is set from cart discount settings for the store. See [Update Cart Settings](/docs/api/carts/put-v-2-settings-cart).\n\n### Preview Cart\n\nYou can set a future date for your shopping cart and view the promotions that will be available during that time period. This feature enables you to validate your promotion settings and observe how they will be applied in the cart.\n\n:::caution\n- Once the cart is in preview mode, you cannot revert it to a regular cart.\n- Carts with `snapshot_date` are same as preview carts.\n- You cannot checkout a cart that includes a `snapshot_date`.\n- To delete a promotion preview cart, use [Delete a cart](/docs/api/carts/delete-a-cart) endpoint.\n- The promotion preview cart has the same expiration time as a regular cart based on the store's [cart settings](/docs/api/carts/put-v-2-settings-cart).\n- Preview cart interactions skip inventory checks and events, allowing users to preview future carts without impacting related external systems.\n:::\n\n### Custom Attributes\nYou can create custom attributes for the cart object to include additional information, enabling promotions that target specific cart attributes.\nFor example:\n```\n\"custom_attributes\":{\n  \"membership\": {\n    \"type\": \"string\",\n    \"value\": \"VIP\"\n  }\n}\n```\nSee [adding cart custom attributes in promotions builder](/docs/commerce-manager/promotions-builder/creating-a-promotion-in-promotions-builder#adding-cart-custom-attributes)\n\nCart custom attributes remain with the corresponding cart for the extent of its lifecycle.  These custom attributes carry over to the resulting order objects on checkout and those on carts are deleted with their carts upon cart deletions.\nCustom attributes can be updated or removed using a PUT request. To delete specific custom attributes, simply exclude the unwanted attribute objects from the PUT request body.\n\n### Contact Email\nYou can attach an email to carts via the `contact.email` field.  These values help identify guest shopper carts and, in the case of promotions with maximum usage settings for guest and registered shopper, track per-shopper promotion usages.\nSee [Create Max Uses Per Shopper Promotion Codes](/docs/promotions-builder/promotions-builder-codes/create-max-use-limit-promotion-codes)\n\nFor example:\n```\n\"contact\": {\n  \"email\": \"tester@email.com\"\n}\n```\n\nPlease note, this value is not supported for registered shopper carts (that is, carts with accounts or customers associated), as these carts already have email values associated via the shopper details.  Accordingly, requests to add contact email information to registered shopper carts (and vice versa) result in error messages.\n\n### Errors\n\n- `400 Bad Request` : This is returned when the submitted request does not adhere to the expected API contract for the endpoint.\n\n   - For example, in the case of string fields, this error might indicate issues in the length or format of submitted strings. For more information about valid string fields, refer to Safe Characters section.\n   - In the case of preview carts (those with `snapshot_date`), an error is returned for invalid actions, such as removing the preview date, setting a preview date in the past, or attempting to checkout a cart with a `snapshot_date`.\n"
+      description: 'Creates a cart. Call this endpoint each time a customer creates a cart.
+
+
+        Each shopper can have multiple carts. Use the carts API to create a cart. The carts are distinct from one another. Shoppers can add different items to their carts. They can check out one of the carts without affecting the content or status of their other carts.
+
+
+        After the shopper checks out the cart, the cart remains available to the shopper. The cart is persistent and stays with the shopper after it is used.
+
+
+        You can create a cart to specify custom discounts. You can enable custom discounts when the `discount_settings.custom_discounts_enabled` field is set to `true`. Default is set from cart discount settings for the store. See Update Cart Settings.
+
+
+        You can also create a cart when inventory checks are not performed until checkout by setting the `inventory_settings.defer_inventory_check` field to `true`. Again the default is set from cart discount settings for the store. See Update Cart Settings.
+
+
+        ### Preview Cart
+
+
+        You can set a future date for your shopping cart and view the promotions that will be available during that time period. This feature enables you to validate your promotion settings and observe how they will be applied in the cart.
+
+
+        :::caution
+
+        - Once the cart is in preview mode, you cannot revert it to a regular cart.
+
+        - Carts with `snapshot_date` are same as preview carts.
+
+        - You cannot checkout a cart that includes a `snapshot_date`.
+
+        - To delete a promotion preview cart, use Delete a cart endpoint.
+
+        - The promotion preview cart has the same expiration time as a regular cart based on the store''s cart settings.
+
+        - Preview cart interactions skip inventory checks and events, allowing users to preview future carts without impacting related external systems.
+
+        :::
+
+
+        ### Custom Attributes
+
+        You can create custom attributes for the cart object to include additional information, enabling promotions that target specific cart attributes.
+
+        For example:
+
+        ```
+
+        "custom_attributes":{
+
+        "membership": {
+
+        "type": "string",
+
+        "value": "VIP"
+
+        }
+
+        }
+
+        ```
+
+        See adding cart custom attributes in promotions builder
+
+
+        Cart custom attributes remain with the corresponding cart for the extent of its lifecycle. These custom attributes carry over to the resulting order objects on checkout and those on carts are deleted with their carts upon cart deletions.
+
+        Custom attributes can be updated or removed using a PUT request. To delete specific custom attributes, simply exclude the unwanted attribute objects from the PUT request body.
+
+
+        ### Contact Email
+
+        You can attach an email to carts via the `contact.email` field. These values help identify guest shopper carts and, in the case of promotions with maximum usage settings for guest and registered shopper, track per-shopper promotion usages.
+
+        See Create Max Uses Per Shopper Promotion Codes
+
+
+        For example:
+
+        ```
+
+        "contact": {
+
+        "email": "tester@email.com"
+
+        }
+
+        ```
+
+
+        Please note, this value is not supported for registered shopper carts (that is, carts with accounts or customers associated), as these carts already have email values associated via the shopper details. Accordingly, requests to add contact email information to registered shopper carts (and vice versa) result in error messages.
+
+
+        ### Errors
+
+
+        - `400 Bad Request` : This is returned when the submitted request does not adhere to the expected API contract for the endpoint.
+
+
+        - For example, in the case of string fields, this error might indicate issues in the length or format of submitted strings. For more information about valid string fields, refer to Safe Characters section.
+
+        - In the case of preview carts (those with `snapshot_date`), an error is returned for invalid actions, such as removing the preview date, setting a preview date in the past, or attempting to checkout a cart with a `snapshot_date`.'
       operationId: createACart
       parameters:
       - name: EP-Account-Management-Authentication-Token
@@ -320,7 +373,7 @@ paths:
         :::note
 
 
-        - The default cart name is Cart. However, you can update the cart name as required. Ensure that the string length of the name is greater than or equal to one. Follow the safe character guidelines for name and description naming. For more information about cart ID naming requirements, see the [Safe Characters](/guides/Getting-Started/safe-characters) section.
+        - The default cart name is Cart. However, you can update the cart name as required. Ensure that the string length of the name is greater than or equal to one. Follow the safe character guidelines for name and description naming. For more information about cart ID naming requirements, see the Safe Characters section.
 
         - Outside of the JS-SDK, we don''t handle creating cart references. You need to create your own.
 
@@ -331,7 +384,7 @@ paths:
         :::caution
 
 
-        An empty cart is returned for any carts that don''t currently exist. For more information about the cart items object, see [Get Cart Items](/docs/api/carts/get-cart-items).
+        An empty cart is returned for any carts that don''t currently exist. For more information about the cart items object, see Get Cart Items.
 
 
         :::
@@ -340,14 +393,11 @@ paths:
         ### Query parameters
 
 
-
-        | Name      | Required | Type     | Description                                |
+        | Name | Required | Type | Description |
 
         |:----------|:---------|:---------|:-------------------------------------------|
 
-        | `include` | Optional | `string` | Comma-delimited string of entities that can be included. The information included are `items`,`tax_items`, `custom_discounts`, or `promotions`. |
-
-        '
+        | `include` | Optional | `string` | Comma-delimited string of entities that can be included. The information included are `items`,`tax_items`, `custom_discounts`, or `promotions`. |'
       operationId: getACart
       parameters:
       - name: cartID
@@ -392,12 +442,10 @@ paths:
       description: 'Updates cart properties for the specified cartID.
 
 
-        You can update a cart to specify custom discounts. You can enable custom discounts when the `discount_settings.custom_discounts_enabled` field is set to `true`. Default is set from cart discount settings for the store. See [Cart Settings](/docs/api/carts/put-v-2-settings-cart).
+        You can update a cart to specify custom discounts. You can enable custom discounts when the `discount_settings.custom_discounts_enabled` field is set to `true`. Default is set from cart discount settings for the store. See Cart Settings.
 
 
-        You can also create a cart when inventory checks are not performed until checkout by setting the `inventory_settings.defer_inventory_check` field to `true`. Again the default is set from cart discount settings for the store. See [Update Cart Settings](/docs/api/carts/put-v-2-settings-cart).
-
-        '
+        You can also create a cart when inventory checks are not performed until checkout by setting the `inventory_settings.defer_inventory_check` field to `true`. Again the default is set from cart discount settings for the store. See Update Cart Settings.'
       operationId: updateACart
       parameters:
       - name: cartID
@@ -469,7 +517,36 @@ paths:
       tags:
       - Cart Management
       summary: Delete a Cart
-      description: "You can delete a cart, including the items, name, description, and remove all associations.\n\n### Errors\n\nThe following error message is received when you attempt to delete a cart that is associated with a customer. Before deletion, ensure that the cart is disassociated.\n\n```json\nmessage: {\n    errors: [\n      {\n        status: 400,\n        title: 'Last cart',\n        detail: 'This is the last cart associated with a customer and it cannot be deleted, try disassociating instead'\n      }\n    ]\n  }\n````\n"
+      description: 'You can delete a cart, including the items, name, description, and remove all associations.
+
+
+        ### Errors
+
+
+        The following error message is received when you attempt to delete a cart that is associated with a customer. Before deletion, ensure that the cart is disassociated.
+
+
+        ```json
+
+        message: {
+
+        errors: [
+
+        {
+
+        status: 400,
+
+        title: ''Last cart'',
+
+        detail: ''This is the last cart associated with a customer and it cannot be deleted, try disassociating instead''
+
+        }
+
+        ]
+
+        }
+
+        ````'
       operationId: deleteACart
       parameters:
       - name: cartID
@@ -493,6 +570,140 @@ paths:
       deprecated: false
 components:
   schemas:
+    DiscountSettings:
+      title: DiscountSettings
+      type: object
+      properties:
+        custom_discounts_enabled:
+          description: This parameter enables custom discounts for a cart. When set to true, Elastic Path promotions will not be applied to the new carts. Default is set from cart discount settings for the store. See [Cart Settings](/docs/api/carts/put-v-2-settings-cart).
+          type: boolean
+          examples:
+          - false
+        use_rule_promotions:
+          description: When set to true, this parameter allows the cart to use rule promotions.
+          type: boolean
+          examples:
+          - false
+    CartsRequest:
+      title: CartsRequest
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            description:
+              type: string
+              description: The cart description.
+              examples:
+              - cart description
+            discount_settings:
+              $ref: '#/components/schemas/DiscountSettings'
+            inventory_settings:
+              $ref: '#/components/schemas/InventorySettings'
+            item_settings:
+              $ref: '#/components/schemas/ItemSettings'
+            name:
+              description: The cart name provided by the shopper. A cart name must contain 1 to 255 characters. You cannot use whitespace characters, but special characters are permitted. For more information, see the [Safe Characters](/guides/Getting-Started/safe-characters) section.
+              type: string
+              examples:
+              - my cart name
+            contact:
+              $ref: '#/components/schemas/CartContact'
+            snapshot_date:
+              description: This optional parameter sets a reference date for the cart. If this parameter is set, it allows the cart to act as one that might occur on that specified date. For example, such future carts might acquire future-enabled discounts, allowing users to test and validate future interactions with carts. The snapshot_date must be in the format 2026-02-21T15:07:25Z. By default, this parameter is left empty.
+              type: string
+              examples:
+              - '2026-09-10T00:12:00Z'
+            custom_attributes:
+              description: "Specifies custom attributes for cart objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nAttribute types include:\n  - string\n  - boolean\n  - integer\n  - float\n\nMultiple custom attributes may be submitted together.  A cart can have a maximum of 20 custom attributes.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n\nUpdating an existing cart with new custom attributes clears previously-saved attributes.  In order to maintain existing custom attributes on a cart, please include them in the update request along with any new attributes.\n"
+              $ref: '#/components/schemas/CustomAttributes'
+            payment_intent_id:
+              description: To remove the Stripe payment intent from a cart, pass the empty value in the `payment_intent_id` field.  You must use an empty value for this field. You cannot use this endpoint to directly update the cart to use an existing Payment Intent.
+              type: string
+              examples:
+              - ''
+    InventorySettings:
+      title: InventorySettings
+      type: object
+      properties:
+        defer_inventory_check:
+          description: This parameter enables deferring inventory checks on the cart. This allows items to be added to or updating in the cart without checking stock levels. Inventory checks are still performed as normal on checkout
+          type: boolean
+          examples:
+          - false
+    Response.PaginationPage:
+      type: object
+      properties:
+        current:
+          description: The current page.
+          type: integer
+        limit:
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          type: integer
+        offset:
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          type: integer
+        total:
+          description: The total page count.
+          type: integer
+    CustomDiscountResponse:
+      title: CustomDiscountResponse
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the resource. Always `custom_discount`.
+          type: string
+          const: custom_discount
+        id:
+          description: Specifies the UUID of the custom discount.
+          type: string
+          format: uuid
+          examples:
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        external_id:
+          description: Specifies an external id for the custom discount.
+          type: string
+          examples:
+          - custom-discount-external-id
+        discount_engine:
+          description: 'Specifies from where the custom discount is applied.
+
+            '
+          type: string
+          examples:
+          - Custom Discount Engine
+        amount:
+          description: The amount of the custom discount.
+          $ref: '#/components/schemas/FormattedPriceData'
+        description:
+          description: Specifies a description for the custom discount.
+          type: string
+          examples:
+          - Custom discount description
+        discount_code:
+          description: Specifies the discount code used for the custom discount.
+          type: string
+          examples:
+          - cart-custom-promo-code
+        relationships:
+          description: Relationships to other resources like cart items
+          type: object
+          properties:
+            item:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: The cart item ID this discount is related to
+                    type:
+                      type: string
+                      enum:
+                      - cart_item
+                      - custom_item
     BaseCartResponse:
       title: BaseCartResponse
       type: object
@@ -645,153 +856,6 @@ components:
         prev:
           description: if the user is on the first page, it is `null`.
           type: string
-    RelationshipItem:
-      title: RelationshipItem
-      description: Relationship data entry
-      required:
-      - type
-      - id
-      type: object
-      properties:
-        type:
-          description: The type of related resource.
-          type: string
-        id:
-          description: The ID of the related resource.
-          type: string
-          format: uuid
-    RelationshipArray:
-      title: RelationshipArray
-      description: Array of relationships
-      type: object
-      properties:
-        data:
-          description: Individual relationships
-          type: array
-          items:
-            $ref: '#/components/schemas/RelationshipItem'
-    Response.PaginationResults:
-      type: object
-      properties:
-        total:
-          description: The total page count.
-          type: integer
-    CartsRequest:
-      title: CartsRequest
-      type: object
-      properties:
-        data:
-          type: object
-          properties:
-            description:
-              type: string
-              description: The cart description.
-              examples:
-              - cart description
-            discount_settings:
-              $ref: '#/components/schemas/DiscountSettings'
-            inventory_settings:
-              $ref: '#/components/schemas/InventorySettings'
-            item_settings:
-              $ref: '#/components/schemas/ItemSettings'
-            name:
-              description: The cart name provided by the shopper. A cart name must contain 1 to 255 characters. You cannot use whitespace characters, but special characters are permitted. For more information, see the [Safe Characters](/guides/Getting-Started/safe-characters) section.
-              type: string
-              examples:
-              - my cart name
-            contact:
-              $ref: '#/components/schemas/CartContact'
-            snapshot_date:
-              description: This optional parameter sets a reference date for the cart. If this parameter is set, it allows the cart to act as one that might occur on that specified date. For example, such future carts might acquire future-enabled discounts, allowing users to test and validate future interactions with carts. The snapshot_date must be in the format 2026-02-21T15:07:25Z. By default, this parameter is left empty.
-              type: string
-              examples:
-              - '2026-09-10T00:12:00Z'
-            custom_attributes:
-              description: "Specifies custom attributes for cart objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nAttribute types include:\n  - string\n  - boolean\n  - integer\n  - float\n\nMultiple custom attributes may be submitted together.  A cart can have a maximum of 20 custom attributes.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n\nUpdating an existing cart with new custom attributes clears previously-saved attributes.  In order to maintain existing custom attributes on a cart, please include them in the update request along with any new attributes.\n"
-              $ref: '#/components/schemas/CustomAttributes'
-            payment_intent_id:
-              description: To remove the Stripe payment intent from a cart, pass the empty value in the `payment_intent_id` field.  You must use an empty value for this field. You cannot use this endpoint to directly update the cart to use an existing Payment Intent.
-              type: string
-              examples:
-              - ''
-    CustomAttributes:
-      title: CustomAttributes
-      type: object
-      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
-      additionalProperties:
-        type: object
-        required:
-        - type
-        - value
-        properties:
-          type:
-            type: string
-            description: The type of the custom attribute value.
-            enum:
-            - string
-            - integer
-            - boolean
-            - float
-          value:
-            description: The value of the custom attribute.
-            type:
-            - string
-            - boolean
-            - number
-    Response.PaginationPage:
-      type: object
-      properties:
-        current:
-          description: The current page.
-          type: integer
-        limit:
-          description: The maximum number of records per page for this response. You can set this value up to 100.
-          type: integer
-        offset:
-          description: The current offset by number of records, not pages. Offset is zero-based.
-          type: integer
-        total:
-          description: The total page count.
-          type: integer
-    ItemSettings:
-      title: ItemSettings
-      type: object
-      properties:
-        separate_items_by_location:
-          description: When set to true, cart items with the same SKU but different locations are kept as separate line items instead of being merged. When false (default), items with the same SKU are merged and the location is updated to the most recent value.
-          type: boolean
-          examples:
-          - false
-    CartEntityResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/CartResponse'
-        included:
-          type: object
-          description: Related objects that are included in the response.
-          properties:
-            custom_discounts:
-              type: array
-              items:
-                $ref: '#/components/schemas/CustomDiscountResponse'
-            promotions:
-              type: array
-              items:
-                $ref: '#/components/schemas/CondensedPromotionResponse'
-        meta:
-          type: object
-          description: Additional metadata for the cart response.
-          properties:
-            payment_intent:
-              type: object
-              description: Payment intent details with nested structure including status and other Stripe payment intent fields
-              additionalProperties: true
-        errors:
-          type: array
-          description: Array of error objects, if any errors occurred.
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
     Response.ErrorItem:
       type: object
       required:
@@ -875,6 +939,13 @@ components:
               - type: object
                 additionalProperties: true
               - type: array
+    Response.Meta.Carts:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/Response.PaginationPage'
+        results:
+          $ref: '#/components/schemas/Response.PaginationResults'
     CartResponse:
       title: CartResponse
       allOf:
@@ -885,6 +956,150 @@ components:
             description: The type of object being returned.
             type: string
             const: cart
+    CartContact:
+      title: CartContact
+      type: object
+      properties:
+        email:
+          description: The email address attached to a cart.
+          type: string
+          format: email
+          examples:
+          - tester@email.com
+    RelationshipItem:
+      title: RelationshipItem
+      description: Relationship data entry
+      required:
+      - type
+      - id
+      type: object
+      properties:
+        type:
+          description: The type of related resource.
+          type: string
+        id:
+          description: The ID of the related resource.
+          type: string
+          format: uuid
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    ItemSettings:
+      title: ItemSettings
+      type: object
+      properties:
+        separate_items_by_location:
+          description: When set to true, cart items with the same SKU but different locations are kept as separate line items instead of being merged. When false (default), items with the same SKU are merged and the location is updated to the most recent value.
+          type: boolean
+          examples:
+          - false
+    Response.PaginationResults:
+      type: object
+      properties:
+        total:
+          description: The total page count.
+          type: integer
+    CustomAttributes:
+      title: CustomAttributes
+      type: object
+      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
+      additionalProperties:
+        type: object
+        required:
+        - type
+        - value
+        properties:
+          type:
+            type: string
+            description: The type of the custom attribute value.
+            enum:
+            - string
+            - integer
+            - boolean
+            - float
+          value:
+            description: The value of the custom attribute.
+            type:
+            - string
+            - boolean
+            - number
+    RelationshipArray:
+      title: RelationshipArray
+      description: Array of relationships
+      type: object
+      properties:
+        data:
+          description: Individual relationships
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipItem'
+    FormattedPriceData:
+      title: FormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The raw total.
+          type: number
+          examples:
+          - 10000
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - $10.00
+    CartTimestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this was created.
+          type: string
+        updated_at:
+          description: The date this was last updated.
+          type: string
+        expires_at:
+          description: The date this expires.
+          type: string
+    CartEntityResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/CartResponse'
+        included:
+          type: object
+          description: Related objects that are included in the response.
+          properties:
+            custom_discounts:
+              type: array
+              items:
+                $ref: '#/components/schemas/CustomDiscountResponse'
+            promotions:
+              type: array
+              items:
+                $ref: '#/components/schemas/CondensedPromotionResponse'
+        meta:
+          type: object
+          description: Additional metadata for the cart response.
+          properties:
+            payment_intent:
+              type: object
+              description: Payment intent details with nested structure including status and other Stripe payment intent fields
+              additionalProperties: true
+        errors:
+          type: array
+          description: Array of error objects, if any errors occurred.
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
     CondensedPromotionResponse:
       title: CondensedPromotionResponse
       type: object
@@ -952,144 +1167,6 @@ components:
           $ref: '#/components/schemas/Response.Meta.Carts'
       required:
       - data
-    Response.ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    InventorySettings:
-      title: InventorySettings
-      type: object
-      properties:
-        defer_inventory_check:
-          description: This parameter enables deferring inventory checks on the cart. This allows items to be added to or updating in the cart without checking stock levels. Inventory checks are still performed as normal on checkout
-          type: boolean
-          examples:
-          - false
-    CartTimestamps:
-      type: object
-      properties:
-        created_at:
-          description: The date this was created.
-          type: string
-        updated_at:
-          description: The date this was last updated.
-          type: string
-        expires_at:
-          description: The date this expires.
-          type: string
-    DiscountSettings:
-      title: DiscountSettings
-      type: object
-      properties:
-        custom_discounts_enabled:
-          description: This parameter enables custom discounts for a cart. When set to true, Elastic Path promotions will not be applied to the new carts. Default is set from cart discount settings for the store. See [Cart Settings](/docs/api/carts/put-v-2-settings-cart).
-          type: boolean
-          examples:
-          - false
-        use_rule_promotions:
-          description: When set to true, this parameter allows the cart to use rule promotions.
-          type: boolean
-          examples:
-          - false
-    Response.Meta.Carts:
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/Response.PaginationPage'
-        results:
-          $ref: '#/components/schemas/Response.PaginationResults'
-    CartContact:
-      title: CartContact
-      type: object
-      properties:
-        email:
-          description: The email address attached to a cart.
-          type: string
-          format: email
-          examples:
-          - tester@email.com
-    CustomDiscountResponse:
-      title: CustomDiscountResponse
-      type: object
-      properties:
-        type:
-          description: Specifies the type of the resource. Always `custom_discount`.
-          type: string
-          const: custom_discount
-        id:
-          description: Specifies the UUID of the custom discount.
-          type: string
-          format: uuid
-          examples:
-          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
-        external_id:
-          description: Specifies an external id for the custom discount.
-          type: string
-          examples:
-          - custom-discount-external-id
-        discount_engine:
-          description: 'Specifies from where the custom discount is applied.
-
-            '
-          type: string
-          examples:
-          - Custom Discount Engine
-        amount:
-          description: The amount of the custom discount.
-          $ref: '#/components/schemas/FormattedPriceData'
-        description:
-          description: Specifies a description for the custom discount.
-          type: string
-          examples:
-          - Custom discount description
-        discount_code:
-          description: Specifies the discount code used for the custom discount.
-          type: string
-          examples:
-          - cart-custom-promo-code
-        relationships:
-          description: Relationships to other resources like cart items
-          type: object
-          properties:
-            item:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                      description: The cart item ID this discount is related to
-                    type:
-                      type: string
-                      enum:
-                      - cart_item
-                      - custom_item
-    FormattedPriceData:
-      title: FormattedPriceData
-      type: object
-      properties:
-        amount:
-          description: The raw total.
-          type: number
-          examples:
-          - 10000
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - $10.00
   securitySchemes:
     bearerAuth:
       type: http

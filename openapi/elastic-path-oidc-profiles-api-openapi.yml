@@ -1,51 +1,7 @@
 openapi: 3.2.0
 info:
   title: Single Sign On OIDC Profiles API
-  description: 'Single sign-on allows authentication with Commerce using an external authentication provider. Using an existing authentication provider allows for integration with company-specific or customizable authentication systems. In some cases, it can also simplify the log-in experience because they don’t need to remember another password.
-
-
-    Commerce supports two types of single sign-on users:
-
-
-    - End users, that is, customers of your store.
-
-    - Administrators, who can use single sign-on to log on to Commerce Manager.
-
-
-    When users need to authenticate, they are redirected to the single sign-on provider, which then communicates the result of the authentication process back to Commerce.
-
-
-    You can set up Commerce to allow single sign-on for end users, using the *OpenID Connect* standard.
-
-
-    :::note
-
-    When users authenticate using an external authentication provider, authentication details, such as username and password, are neither stored on nor sent through Commerce.
-
-    :::
-
-
-
-    ## Authentication Providers and Composable Commerce
-
-
-    Commerce supports many OpenID Connect compatible authentication providers. For more information, see [Requirements for Authentication Providers](/guides/How-To/Authentication/get-single-sign-on-account-management-token#requirements-for-authentication-providers).
-
-
-    ## External Reference
-
-
-    - [What is OpenID?](https://openid.net/foundation/)
-
-    - [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html)
-
-
-    ## Related Resources
-
-
-    - [Security](/docs/authentication/security)
-
-    '
+  description: Single sign-on allows authentication with Commerce using an external authentication provider.
   contact:
     name: Elastic Path
     url: https://www.elasticpath.com
@@ -70,9 +26,7 @@ tags:
     An authentication realm can have multiple OpenID Connect Profiles. This allows shoppers to authenticate using multiple OpenID providers. In the example shown below, Jane can login using both Apple and Google, whereas Joan can only login using Google.
 
 
-    ![oidc profiles](/assets/oidc-profiles.png)
-
-    '
+    !oidc profiles'
 paths:
   /v2/authentication-realms/{realmId}/oidc-profiles:
     post:
@@ -322,61 +276,34 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  responses:
-    BadRequestError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              value:
-                errors:
-                - title: Bad Request
-                  status: '400'
-                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
-    UnprocessableEntityError:
-      description: Unprocessable Entity
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unprocessable-entity-error:
-              value:
-                errors:
-                - title: Unprocessable Entity
-                  status: '422'
-                  detail: Constraint violation
-    InternalServerError:
-      description: Internal server error.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              summary: Internal server error
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-                  detail: there was a problem processing your request
-    NotFoundError:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: Resource not found
   schemas:
+    OidcProfile:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Specifies the type of object. Set this value to `oidc-profile`.
+          const: oidc-profile
+        name:
+          type: string
+          description: Specifies the name of the OIDC profile.
+          example: my-oidc-profile
+        discovery_url:
+          type: string
+          description: The OIDC discovery URL.
+          format: uri
+          example: https://example.com/.well-known/openid_configuration
+        client_id:
+          type: string
+          description: The client ID for the OpenID Provider.
+          example: my-client-id
+        client_secret:
+          type: string
+          description: The client secret for the OpenID Provider.
+          example: my-client-secret
+      required:
+      - type
+      - name
     ErrorResponse:
       type: object
       required:
@@ -388,11 +315,6 @@ components:
             $ref: '#/components/schemas/Error'
         links:
           $ref: '#/components/schemas/SelfLink'
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      example: deb6b25f-8451-4211-9a22-95610333df23
     PaginationMeta:
       type: object
       properties:
@@ -422,6 +344,57 @@ components:
               type: integer
               description: The total number of results after applying filters, if any, or all results.
               example: 1
+    SelfLink:
+      type: object
+      properties:
+        self:
+          description: A URL to the specific resource.
+          type: string
+          format: uri
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
+    OidcProfileLinks:
+      allOf:
+      - $ref: '#/components/schemas/SelfLink'
+      - type: object
+        properties:
+          authorization-endpoint:
+            description: The link that front-end applications should use to authenticate the OpenID Connect profile. The front-end application is responsible for appending all of the [required parameters](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest) to the request. The endpoint also forwards some optional parameters, `display`, `prompt` and `ui_locales` to the configured Identity Provider. These parameters allow you to control the behavior of the authentication process on the Identity Provider. Additionally the query parameter `ep_report_callback_replay_error` can be set to `true` in which case if the user revisits the `callback-endpoint` multiple times (e.g., if they hit their Back button), we will redirect the user back to the front end with an [Authentication error response](https://openid.net/specs/openid-connect-core-1_0.html#AuthError) of `callback_replay`.
+            type: string
+            format: uri
+          callback-endpoint:
+            description: The link that should be supplied as the callback URL to the upstream authentication provider.
+            type: string
+            format: uri
+          client-discovery-url:
+            description: The link to the [OpenID Connect Discovery](https://openid.net/specs/openid-connect-discovery-1_0.html) document for this provider, see [here](/docs/api/single-sign-on/get-oidc-idp-stores-store-id-authentication-realms-realm-id-well-known-openid-configuration).
+            type: string
+            format: uri
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
     OidcProfileResponse:
       allOf:
       - $ref: '#/components/schemas/OidcProfile'
@@ -468,45 +441,6 @@ components:
                 description: The client discovery URL.
                 type: string
                 format: uri
-    Error:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
-    OidcProfileLinks:
-      allOf:
-      - $ref: '#/components/schemas/SelfLink'
-      - type: object
-        properties:
-          authorization-endpoint:
-            description: The link that front-end applications should use to authenticate the OpenID Connect profile. The front-end application is responsible for appending all of the [required parameters](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest) to the request. The endpoint also forwards some optional parameters, `display`, `prompt` and `ui_locales` to the configured Identity Provider. These parameters allow you to control the behavior of the authentication process on the Identity Provider. Additionally the query parameter `ep_report_callback_replay_error` can be set to `true` in which case if the user revisits the `callback-endpoint` multiple times (e.g., if they hit their Back button), we will redirect the user back to the front end with an [Authentication error response](https://openid.net/specs/openid-connect-core-1_0.html#AuthError) of `callback_replay`.
-            type: string
-            format: uri
-          callback-endpoint:
-            description: The link that should be supplied as the callback URL to the upstream authentication provider.
-            type: string
-            format: uri
-          client-discovery-url:
-            description: The link to the [OpenID Connect Discovery](https://openid.net/specs/openid-connect-discovery-1_0.html) document for this provider, see [here](/docs/api/single-sign-on/get-oidc-idp-stores-store-id-authentication-realms-realm-id-well-known-openid-configuration).
-            type: string
-            format: uri
     PaginationLinks:
       type: object
       properties:
@@ -542,40 +476,6 @@ components:
           type: string
           format: uri
           description: The current resource URL.
-    OidcProfile:
-      type: object
-      properties:
-        type:
-          type: string
-          description: Specifies the type of object. Set this value to `oidc-profile`.
-          const: oidc-profile
-        name:
-          type: string
-          description: Specifies the name of the OIDC profile.
-          example: my-oidc-profile
-        discovery_url:
-          type: string
-          description: The OIDC discovery URL.
-          format: uri
-          example: https://example.com/.well-known/openid_configuration
-        client_id:
-          type: string
-          description: The client ID for the OpenID Provider.
-          example: my-client-id
-        client_secret:
-          type: string
-          description: The client secret for the OpenID Provider.
-          example: my-client-secret
-      required:
-      - type
-      - name
-    SelfLink:
-      type: object
-      properties:
-        self:
-          description: A URL to the specific resource.
-          type: string
-          format: uri
   parameters:
     page-limit:
       name: page[limit]
@@ -598,6 +498,60 @@ components:
         format: int64
         minimum: 0
         default: 0
+  responses:
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: Resource not found
+    UnprocessableEntityError:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unprocessable-entity-error:
+              value:
+                errors:
+                - title: Unprocessable Entity
+                  status: '422'
+                  detail: Constraint violation
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
   securitySchemes:
     BearerToken:
       type: http

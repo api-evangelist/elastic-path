@@ -3,107 +3,7 @@ info:
   title: Catalog Search Introduction Search Indexes API
   version: 26.0604.7696948
   x-version-timestamp: 2026-06-04 10:33:46+00:00
-  description: 'Elastic Path Catalog Search provides fast, relevant product search capabilities for your published catalogs. Catalog Search enables shoppers to find products quickly using full-text search, filtering, faceting, and sorting, while giving merchandisers powerful tools to customize search relevance and ranking.
-
-
-    You can integrate Catalog Search into your storefront using the Catalog Search API or manage search settings through Commerce Manager.
-
-
-    ### How Catalog Search Works
-
-
-    Catalog Search works alongside your Product Experience Manager catalogs to provide optimized search functionality.
-
-
-    When creating or updating a catalog, enable search to allow the catalog''s products to be indexed. See [Catalogs](/docs/api/pxm/catalog/catalogs). Then when a search-enabled catalog is published, the products are automatically indexed for search. The search index contains product data optimized for fast querying.
-
-
-    Use the Search API to query products with full-text search, filtering, faceting, and sorting. The results of the search contain the full product information, not just the indexed fields, reducing the need for further API calls.
-
-
-    ### Key Capabilities
-
-
-    - **Full-text search**: Search across product names, descriptions, SKUs, and custom fields with typo tolerance and relevance ranking
-
-    - **Filtering**: Narrow results using conditions on product attributes, categories, prices, and custom fields
-
-    - **Faceting**: Get aggregated counts for attribute values to build dynamic navigation and refinement options
-
-    - **Sorting**: Order results by price, name, custom fields, or relevance score
-
-    - **Search Profiles**: Configure search behavior including field weights, filters, and boost rules without code changes
-
-    - **Custom Fields**: Extend the search schema with your own product attributes for filtering, faceting, and sorting
-
-    - **Fully Hydrated Responses**: Search results contain complete information about the products, reducing the requirement for follow-up API calls.
-
-
-    ### Personalized Search Results
-
-
-    Search results are automatically personalized based on the shopper''s context. The system determines which catalog and prices to show based on:
-
-
-    - **Channel**: The shopping experience, such as a web storefront or mobile app
-
-    - **Account**: For B2B scenarios, the shopper''s account and any parent accounts
-
-    - **Customer**: The logged-in customer''s segment or tier
-
-    - **Tags**: Custom context tags for advanced segmentation scenarios
-
-
-    See [**Characteristics of Shopper Catalogs**](/docs/api/pxm/catalog/shopper-catalog-api#characteristics-of-shopper-catalogs) for more information.
-
-
-    ### Search Profiles
-
-
-    Search Profiles give merchandisers control over search behavior without requiring code changes. With Search Profiles, you can:
-
-
-    - **Configure field weights**: Control which product fields are most important for relevance ranking
-
-    - **Apply default filters**: Enforce business rules like only showing live products
-
-    - **Boost products**: Promote featured products, specific brands, or categories to the top of results
-
-    - **A/B test**: Create multiple profiles to test different search configurations
-
-
-    See [**Search Profiles**](/docs/api/pxm/catalog-search/search-profiles) for more information.
-
-
-    ### Extending the Search Schema
-
-
-    By default, the search index includes standard product fields like name, description, SKU, and categories. You can extend the schema by adding custom fields using [Indexable Fields](/docs/api/pxm/catalog-search/indexable-fields).
-
-
-    Two types of custom fields can be indexed:
-
-
-    - **Product extension fields** (`extensions.products(<slug>).<field>`): Fields from your product extension templates.
-
-    - **Product custom attributes** (`shopper_attributes.<attribute>` and `admin_attributes.<attribute>`): Merchant-defined key/value attributes on products.
-
-
-    This allows you to:
-
-
-    - Search on custom product attributes like brand, material, or specifications
-
-    - Filter products by custom fields like color, size, or rating
-
-    - Display facets for custom field values in your navigation
-
-    - Sort results by custom numeric fields like rating or popularity
-
-
-    See [**Indexable Fields**](/docs/api/pxm/catalog-search/indexable-fields) for more information.
-
-    '
+  description: Elastic Path Catalog Search provides fast, relevant product search capabilities for your published catalogs.
 servers:
 - url: https://euwest.api.elasticpath.com/v2
   description: EU west cluster
@@ -113,58 +13,7 @@ security:
 - BearerToken: []
 tags:
 - name: Search Indexes
-  description: 'Search Indexes represent the indexed data for your catalog releases. Each time a catalog is published with search enabled, a search index is created containing the product data optimized for fast querying.
-
-
-    ### Index Status
-
-
-    The Search Indexes API allows you to view the status of your indexes and identify any that are out of sync. An index becomes out of sync when:
-
-
-    - Indexable fields have been added, modified, or deleted
-
-    - The index failed to build during catalog publishing
-
-    - A reindex is required due to schema changes
-
-
-    ### Monitoring Indexes
-
-
-    Use the list endpoint to:
-
-
-    - **View all indexes**: See all search indexes for your store
-
-    - **Check sync status**: Identify indexes that need reindexing
-
-    - **Filter by status**: Find only out-of-sync indexes using the `out_of_sync` query parameter
-
-
-    ### Index Information
-
-
-    Each search index includes:
-
-
-    | Property      | Description                                             |
-
-    |---------------|---------------------------------------------------------|
-
-    | `catalog_id`  | The ID of the catalog this index belongs to             |
-
-    | `release_id`  | The ID of the catalog release this index was built from |
-
-    | `out_of_sync` | Whether the index needs to be rebuilt                   |
-
-
-    ### Reindexing
-
-
-    When indexes are out of sync, use the reindex endpoint in [Jobs](/docs/api/pxm/catalog-search/jobs) to rebuild them. Reindexing ensures your search indexes reflect the current indexable field configuration.
-
-    '
+  description: Search Indexes represent the indexed data for your catalog releases.
 paths:
   /pcm/catalogs/search-indexes:
     get:
@@ -197,6 +46,99 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
+    ListResponseMeta:
+      type: object
+      required:
+      - results
+      properties:
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
+    ListResponseMetaResults:
+      description: Contains the results for the entire collection.
+      type: object
+      required:
+      - total
+      properties:
+        total:
+          description: Total number of results for the entire collection.
+          type: integer
+          example: 100
+    ListSearchIndexesResponse:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchIndex'
+        meta:
+          $ref: '#/components/schemas/ListResponseMeta'
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    SearchIndexType:
+      description: Represents the type of object being returned. Always `catalog_search_index`.
+      type: string
+      example: catalog_search_index
+      enum:
+      - catalog_search_index
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
+    SearchIndex:
+      type: object
+      required:
+      - id
+      - type
+      - meta
+      properties:
+        id:
+          description: The unique identifier for the search index.
+          type: string
+          format: uuid
+          example: 805103ff-0a37-4f83-8fe0-95a16039bd98
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/SearchIndexType'
+        meta:
+          $ref: '#/components/schemas/SearchIndexMeta'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     SearchIndexMeta:
       type: object
       required:
@@ -221,99 +163,6 @@ components:
           example: false
         owner:
           $ref: '#/components/schemas/ResourceOwner'
-    ListSearchIndexesResponse:
-      type: object
-      required:
-      - data
-      - meta
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/SearchIndex'
-        meta:
-          $ref: '#/components/schemas/ListResponseMeta'
-    ResourceOwner:
-      description: The resource owner, either `organization` or `store`.
-      type: string
-      example: organization
-      enum:
-      - organization
-      - store
-      x-go-type: tenancy.Owner
-      x-go-type-import:
-        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    SearchIndexType:
-      description: Represents the type of object being returned. Always `catalog_search_index`.
-      type: string
-      example: catalog_search_index
-      enum:
-      - catalog_search_index
-    ListResponseMeta:
-      type: object
-      required:
-      - results
-      properties:
-        results:
-          $ref: '#/components/schemas/ListResponseMetaResults'
-    ListResponseMetaResults:
-      description: Contains the results for the entire collection.
-      type: object
-      required:
-      - total
-      properties:
-        total:
-          description: Total number of results for the entire collection.
-          type: integer
-          example: 100
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    SearchIndex:
-      type: object
-      required:
-      - id
-      - type
-      - meta
-      properties:
-        id:
-          description: The unique identifier for the search index.
-          type: string
-          format: uuid
-          example: 805103ff-0a37-4f83-8fe0-95a16039bd98
-          x-go-name: ID
-        type:
-          $ref: '#/components/schemas/SearchIndexType'
-        meta:
-          $ref: '#/components/schemas/SearchIndexMeta'
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.

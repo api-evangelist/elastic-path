@@ -1,36 +1,7 @@
 openapi: 3.2.0
 info:
   title: Carts, Checkout, Orders Introduction Tax Items API
-  description: 'A cart contains a list of the products that a shopper adds to the cart while browsing your catalog. In the context of a cart, a selected product is called a cart item.
-
-
-    A cart item identifies the product, the product price, the quantity selected, and the total price for the quantity selected. The cart displays a running total of the cost for the selected products plus the calculated tax.
-
-
-    You can allow your shoppers to add custom text to a product when adding an item to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized. See [Add product to cart](/docs/api/carts/manage-carts#add-product-to-cart).
-
-
-    After a shopper checks out, the cart is converted to an order, and you can manually delete the cart. If you don''t delete the cart, it is purged automatically after seven days.
-
-
-    The preview cart feature allows you to set a future date for your shopping cart and view the promotions that will be available during that time period. This feature enables you to validate your promotion settings and observe how they will be applied in the cart. See [Create a Preview Cart](/docs/api/carts/create-a-cart#preview-cart).
-
-
-    The following diagram shows a typical cart workflow:
-
-
-    ![Shows a cart workflow, starting from adding the first item to a cart, through cart creation and checkout](/assets/cart-workflow.png)
-
-
-    ### Multiple Carts
-
-
-    Buyers often make purchases based on jobs that they need to perform or outcomes they need to achieve and therefore require more than one shopping cart. For example, a corporate buyer places orders for multiple locations. Each location has a different frequency of ordering and require different products. The buyer can create one cart per location, fill the carts, and then check out the carts quickly. Similarly, shoppers can also create multiple carts for the ease of managing various shopping experiences, such as birthdays or holidays.
-
-
-    Each cart is discrete and separate. Any updates or changes to one cart has no effect on the other carts. A cart persists, that is, it stays with the buyer or shopper even after they use the cart in a checkout. Carts remain available after a checkout.
-
-    '
+  description: A cart contains a list of the products that a shopper adds to the cart while browsing your catalog.
   contact:
     name: Elastic Path
     url: https://elasticpath.com
@@ -50,7 +21,7 @@ security:
 - bearerAuth: []
 tags:
 - name: Tax Items
-  description: "Taxes differ by country and can differ within the country by region, state, or province. Each jurisdiction has a unique tax code and rate. If your store serves many jurisdictions, integrate a third-party tax generator to manage taxes. If your store serves a few jurisdictions, you can use the API to define the tax codes and rates in Composable Commerce.\n\nTaxes are calculated after all promotional discounts have been applied. When calculating taxes on a cart or order, you can choose from the following methods for calculating taxes:\n\n  - Simple calculation method: Taxes are calculated at the unit level and are rounded to the nearest penny for the unit.\n  - Line calculation method: Default. Taxes are calculated at the line level and are rounded to the nearest penny for the line.\n    For more information about calculation methods, see [Calculate cart and order totals](/guides/How-To/Carts/calculate-totals).\n\nTax values can be either `rate` or `amount`.\n  - `rate` - Represents the tax as a percentage in decimal form.\n  - `amount` - Represents a tax amount.\n\n:::note\nTax items can be added and removed using [client_credentials access tokens](/docs/api/authentication/create-an-access-token). Only administrators with `client-credentials` access tokens are able to manage tax items.\n:::\n"
+  description: Taxes differ by country and can differ within the country by region, state, or province.
 paths:
   /v2/carts/{cartID}/items/{cartitemID}/taxes:
     parameters: []
@@ -58,9 +29,7 @@ paths:
       tags:
       - Tax Items
       summary: Add Tax Item to Cart
-      description: '
-
-        Use this endpoint to add a tax item to a cart.
+      description: 'Use this endpoint to add a tax item to a cart.
 
 
         :::note
@@ -69,9 +38,7 @@ paths:
         There is a soft limit of 5 unique tax items per cart item at any one time.
 
 
-        :::
-
-        '
+        :::'
       operationId: addTaxItemToCart
       parameters:
       - name: cartID
@@ -164,9 +131,7 @@ paths:
       tags:
       - Tax Items
       summary: Add Tax Item to Bundle Component
-      description: '
-
-        Use this endpoint to add a tax item to a specific bundle component (component product) within a cart item.
+      description: 'Use this endpoint to add a tax item to a specific bundle component (component product) within a cart item.
 
 
         :::note
@@ -175,9 +140,7 @@ paths:
         There is a soft limit of 5 unique tax items per component product at any one time.
 
 
-        :::
-
-        '
+        :::'
       operationId: addTaxItemToCartItemComponent
       parameters:
       - name: cartID
@@ -358,11 +321,7 @@ paths:
       tags:
       - Tax Items
       summary: Delete Tax Item from Bundle Component
-      description: '
-
-        Use this endpoint to delete a tax item from a specific bundle component (component product) within a cart item.
-
-        '
+      description: Use this endpoint to delete a tax item from a specific bundle component (component product) within a cart item.
       operationId: deleteTaxItemFromCartItemComponent
       parameters:
       - name: cartID
@@ -416,7 +375,187 @@ paths:
       tags:
       - Tax Items
       summary: Bulk Add Tax Items to Cart
-      description: "Use this endpoint to bulk add tax items to cart items and bundle component products.\n\n:::note\n\nA cart item can only have a maximum of five tax items.\nA bundle component product can only have a maximum of five tax items.\n\n:::\n\n### Bundle Component Taxes\n\nTo add tax items to bundle component products, include a `meta` object with `component_product_id` in each tax item:\n\n```json\n{\n  \"data\": [\n    {\n      \"type\": \"tax_item\",\n      \"code\": \"GST\",\n      \"name\": \"Goods and Services Tax\",\n      \"rate\": 0.1,\n      \"meta\": {\n        \"component_product_id\": \"12345678-1234-5678-9012-123456789012\"\n      },\n      \"relationships\": {\n        \"item\": {\n          \"data\": {\n            \"type\": \"cart_item\",\n            \"id\": \"cart-item-id\"\n          }\n        }\n      }\n    }\n  ]\n}\n```\n\n### Errors\n\n\n`422 Unprocessable Entity`\n\n\nIn this example, when `options.add_all_or_nothing` is set to `true` and if\none of cart items is not found or has reached its maximum tax item limit,\nthe following error response is returned:\n\n\n```json\n\n{\n            \"status\": 422,\n            \"title\": \"Add all or nothing.\",\n            \"detail\": \"Add all or nothing set to (true). Could not bulk add tax items to cart.\"\n        }\n\n```\n\n\nIn this example, if you add more than five tax items to the same cart item,\nthe following error response is returned:\n\n\n```json\n\n{\n            \"status\": 422,\n            \"title\": \"Tax item not added to cart item.\",\n            \"detail\": \"Cannot exceed tax item limit of (5) on cart item.\",\n            \"meta\": {\n                \"id\": \"f88e6370-cb35-40b2-a998-c759f31dec0a\"\n            }\n        }\n```\n\n\n`404`\n\n\nIn this example, if there is a mismatch between `cart_item`/`custom_item`\nand the `relationships.item.data.type` specified in the bulk add tax item,\nthe following error response is returned:\n\n\n```json\n\n{\n    \"data\": [],\n    \"errors\": [\n        {\n            \"status\": 404,\n            \"title\": \"Tax item not added to cart item.\",\n            \"detail\": \"Mismatch between bulk tax item type(cart_item) and cart item type(custom_item).\",\n            \"meta\": {\n                \"id\": \"56aab5d1-1dd4-45ed-88ed-4d0cc396b62d\"\n            }\n        },\n        {\n            \"status\": 404,\n            \"title\": \"Tax item not added to cart item.\",\n            \"detail\": \"Mismatch between bulk tax item type(cart_item) and cart item type(custom_item).\",\n            \"meta\": {\n                \"id\": \"56aab5d1-1dd4-45ed-88ed-4d0cc396b62d\"\n            }\n        }\n    ]\n}\n\n```\n"
+      description: 'Use this endpoint to bulk add tax items to cart items and bundle component products.
+
+
+        :::note
+
+
+        A cart item can only have a maximum of five tax items.
+
+        A bundle component product can only have a maximum of five tax items.
+
+
+        :::
+
+
+        ### Bundle Component Taxes
+
+
+        To add tax items to bundle component products, include a `meta` object with `component_product_id` in each tax item:
+
+
+        ```json
+
+        {
+
+        "data": [
+
+        {
+
+        "type": "tax_item",
+
+        "code": "GST",
+
+        "name": "Goods and Services Tax",
+
+        "rate": 0.1,
+
+        "meta": {
+
+        "component_product_id": "12345678-1234-5678-9012-123456789012"
+
+        },
+
+        "relationships": {
+
+        "item": {
+
+        "data": {
+
+        "type": "cart_item",
+
+        "id": "cart-item-id"
+
+        }
+
+        }
+
+        }
+
+        }
+
+        ]
+
+        }
+
+        ```
+
+
+        ### Errors
+
+
+        `422 Unprocessable Entity`
+
+
+        In this example, when `options.add_all_or_nothing` is set to `true` and if
+
+        one of cart items is not found or has reached its maximum tax item limit,
+
+        the following error response is returned:
+
+
+        ```json
+
+
+        {
+
+        "status": 422,
+
+        "title": "Add all or nothing.",
+
+        "detail": "Add all or nothing set to (true). Could not bulk add tax items to cart."
+
+        }
+
+
+        ```
+
+
+        In this example, if you add more than five tax items to the same cart item,
+
+        the following error response is returned:
+
+
+        ```json
+
+
+        {
+
+        "status": 422,
+
+        "title": "Tax item not added to cart item.",
+
+        "detail": "Cannot exceed tax item limit of (5) on cart item.",
+
+        "meta": {
+
+        "id": "f88e6370-cb35-40b2-a998-c759f31dec0a"
+
+        }
+
+        }
+
+        ```
+
+
+        `404`
+
+
+        In this example, if there is a mismatch between `cart_item`/`custom_item`
+
+        and the `relationships.item.data.type` specified in the bulk add tax item,
+
+        the following error response is returned:
+
+
+        ```json
+
+
+        {
+
+        "data": [],
+
+        "errors": [
+
+        {
+
+        "status": 404,
+
+        "title": "Tax item not added to cart item.",
+
+        "detail": "Mismatch between bulk tax item type(cart_item) and cart item type(custom_item).",
+
+        "meta": {
+
+        "id": "56aab5d1-1dd4-45ed-88ed-4d0cc396b62d"
+
+        }
+
+        },
+
+        {
+
+        "status": 404,
+
+        "title": "Tax item not added to cart item.",
+
+        "detail": "Mismatch between bulk tax item type(cart_item) and cart item type(custom_item).",
+
+        "meta": {
+
+        "id": "56aab5d1-1dd4-45ed-88ed-4d0cc396b62d"
+
+        }
+
+        }
+
+        ]
+
+        }
+
+
+        ```'
       operationId: bulkAddTaxItemsToCart
       parameters:
       - name: cartID
@@ -565,7 +704,54 @@ paths:
       tags:
       - Tax Items
       summary: Bulk Delete Tax Items from Cart
-      description: "Use this endpoint to bulk delete all tax items from all cart items and bundle component products in the cart.\n\n:::warning\n\nThis operation will remove ALL tax items from:\n- All cart items in the cart\n- All bundle component products within bundle cart items\n\n:::\n\n### Behavior\n\n- Removes all tax items from every cart item\n- Removes all tax items from every component product in bundle cart items\n- If no tax items exist anywhere in the cart, returns a 404 error\n\n### Errors\n\n`404 Not Found`\n\nIf no tax items exist in the cart (on cart items or component products):\n\n```json\n{\n    \"status\": 404,\n    \"title\": \"Resource Not Found\",\n    \"detail\": \"No tax items exist in the cart\"\n}\n```\n"
+      description: 'Use this endpoint to bulk delete all tax items from all cart items and bundle component products in the cart.
+
+
+        :::warning
+
+
+        This operation will remove ALL tax items from:
+
+        - All cart items in the cart
+
+        - All bundle component products within bundle cart items
+
+
+        :::
+
+
+        ### Behavior
+
+
+        - Removes all tax items from every cart item
+
+        - Removes all tax items from every component product in bundle cart items
+
+        - If no tax items exist anywhere in the cart, returns a 404 error
+
+
+        ### Errors
+
+
+        `404 Not Found`
+
+
+        If no tax items exist in the cart (on cart items or component products):
+
+
+        ```json
+
+        {
+
+        "status": 404,
+
+        "title": "Resource Not Found",
+
+        "detail": "No tax items exist in the cart"
+
+        }
+
+        ```'
       operationId: bulkDeleteTaxItemsFromCart
       parameters:
       - name: cartID
@@ -728,40 +914,6 @@ components:
           properties:
             amount:
               type: number
-    CartsBulkTaxes:
-      title: CartsBulkTaxes
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            allOf:
-            - $ref: '#/components/schemas/CartsItemsTaxesObject'
-            - $ref: '#/components/schemas/CartItemRelationship'
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-        options:
-          $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
-    Response.ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    AddAllOrNothingOptionsObject:
-      title: Add All Or Nothing Options Object
-      type: object
-      properties:
-        add_all_or_nothing:
-          description: When `true`, if an error occurs for any item, no items are added to the cart. When `false`, valid items are added to the cart and the items with errors are reported in the response. Default is `false`.
-          type: boolean
-          examples:
-          - false
     CartsItemsTaxesWithAmount:
       title: Tax Object (With Amount)
       allOf:
@@ -791,25 +943,79 @@ components:
           properties:
             rate:
               type: number
-    CartsItemsTaxesObject:
-      title: Carts Items Taxes Object
-      description: 'A tax item that can be applied to cart items or bundle components. You must specify either a rate (percentage) or an amount (fixed value), but not both.
-
-        '
-      oneOf:
-      - $ref: '#/components/schemas/CartsItemsTaxesWithRate'
-      - $ref: '#/components/schemas/CartsItemsTaxesWithAmount'
-      examples:
-      - type: tax_item
-        code: VAT
-        jurisdiction: UK
-        name: Value Added Tax
-        rate: 0.2
-      - type: tax_item
-        code: EXCISE
-        jurisdiction: US
-        name: Excise Tax
-        amount: 500
+    CartItemRelationship:
+      title: CartItemRelationship
+      type: object
+      properties:
+        relationships:
+          type: object
+          required:
+          - item
+          properties:
+            item:
+              type: object
+              required:
+              - data
+              properties:
+                data:
+                  type: object
+                  required:
+                  - type
+                  - id
+                  properties:
+                    type:
+                      description: Specifies the type of item. For example, `custom_item` or `cart_item`.
+                      type: string
+                      examples:
+                      - cart_item
+                    id:
+                      description: Specifies the unique identifier of the `cart_item` or `custom_item` in the cart.
+                      type: string
+                      format: uuid
+                      examples:
+                      - 5601a4b1-9d13-42d3-8fb7-03b35169d1b6
+    AddAllOrNothingOptionsObject:
+      title: Add All Or Nothing Options Object
+      type: object
+      properties:
+        add_all_or_nothing:
+          description: When `true`, if an error occurs for any item, no items are added to the cart. When `false`, valid items are added to the cart and the items with errors are reported in the response. Default is `false`.
+          type: boolean
+          examples:
+          - false
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    CartsBulkTaxes:
+      title: CartsBulkTaxes
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/CartsItemsTaxesObject'
+            - $ref: '#/components/schemas/CartItemRelationship'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+        options:
+          $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
+    CartItemTaxesEntityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/CartsItemsTaxesObject'
+      required:
+      - data
     Response.ErrorItem:
       type: object
       required:
@@ -893,37 +1099,25 @@ components:
               - type: object
                 additionalProperties: true
               - type: array
-    CartItemRelationship:
-      title: CartItemRelationship
-      type: object
-      properties:
-        relationships:
-          type: object
-          required:
-          - item
-          properties:
-            item:
-              type: object
-              required:
-              - data
-              properties:
-                data:
-                  type: object
-                  required:
-                  - type
-                  - id
-                  properties:
-                    type:
-                      description: Specifies the type of item. For example, `custom_item` or `cart_item`.
-                      type: string
-                      examples:
-                      - cart_item
-                    id:
-                      description: Specifies the unique identifier of the `cart_item` or `custom_item` in the cart.
-                      type: string
-                      format: uuid
-                      examples:
-                      - 5601a4b1-9d13-42d3-8fb7-03b35169d1b6
+    CartsItemsTaxesObject:
+      title: Carts Items Taxes Object
+      description: 'A tax item that can be applied to cart items or bundle components. You must specify either a rate (percentage) or an amount (fixed value), but not both.
+
+        '
+      oneOf:
+      - $ref: '#/components/schemas/CartsItemsTaxesWithRate'
+      - $ref: '#/components/schemas/CartsItemsTaxesWithAmount'
+      examples:
+      - type: tax_item
+        code: VAT
+        jurisdiction: UK
+        name: Value Added Tax
+        rate: 0.2
+      - type: tax_item
+        code: EXCISE
+        jurisdiction: US
+        name: Excise Tax
+        amount: 500
     CartsItemsTaxesCommon:
       type: object
       required:
@@ -957,14 +1151,6 @@ components:
           type: string
           format: uuid
           readOnly: true
-    CartItemTaxesEntityResponse:
-      type: object
-      properties:
-        data:
-          type: object
-          $ref: '#/components/schemas/CartsItemsTaxesObject'
-      required:
-      - data
   securitySchemes:
     bearerAuth:
       type: http

@@ -12,7 +12,7 @@ security:
 - bearerAuth: []
 tags:
 - name: Inventory
-  description: "The Inventory API allows you to manage stock for products at both organization and store levels. Each product keeps a history of inventory transactions, enabling easier stock auditing.\n\nYou can specify an initial stock level when you create a product. The stock is set to `0` by default.\n\n:::caution \n\nYou cannot create multiple inventories of the same organization-level product in different stores because no unique stock ID, specific to each store, is currently generated. Hence, when you try to manage inventory of the same product for different stores, you get an invalid product identifier error. \n\n:::\n"
+  description: The Inventory API allows you to manage stock for products at both organization and store levels.
 paths:
   /inventories:
     get:
@@ -252,7 +252,68 @@ paths:
     - url: https://useast.api.elasticpath.com/v2
       description: US East cluster
 components:
+  responses:
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: Your request was invalid
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No stock found
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    NotFoundError_2:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No location found
   schemas:
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     MultipleProducts:
       type: object
       required:
@@ -269,9 +330,14 @@ components:
           type: string
           format: uuid
           example: 3c78777a-cf09-4b2d-be91-a73acbf9166f
-    Meta:
-      allOf:
-      - $ref: '#/components/schemas/Timestamps'
+    UUID:
+      type: string
+      description: The unique identifier.
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 00000000-0000-0000-0000-000000000000
     Timestamps:
       properties:
         updated_at:
@@ -282,53 +348,12 @@ components:
           description: The date and time a resource was created.
           type: string
           example: '2017-01-10T11:41:19.244842Z'
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
     InventoryCreate:
       properties:
         quantity:
           description: The amount of inventory available.
           type: integer
           example: 5
-    UUID:
-      type: string
-      description: The unique identifier.
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 00000000-0000-0000-0000-000000000000
-    Error:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     Inventory:
       required:
       - type
@@ -369,23 +394,37 @@ components:
           example: 25
         meta:
           $ref: '#/components/schemas/Meta'
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    NullableLocation:
-      type:
-      - object
-      - 'null'
+    Error:
+      type: object
       required:
-      - available
+      - status
+      - title
       properties:
-        available:
-          type: integer
-          format: int64
-          example: 20
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    Meta:
+      allOf:
+      - $ref: '#/components/schemas/Timestamps'
+    NullableLocations:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/NullableLocation'
     StockCreateAttributes:
       type: object
       properties:
@@ -409,13 +448,10 @@ components:
               available: 10
             stevenage_warehouse:
               available: 20
-    NullableLocations:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/NullableLocation'
-    StockCreate:
+    StockUpdateRequest:
       type: object
       required:
+      - id
       - type
       - attributes
       properties:
@@ -424,45 +460,7 @@ components:
         type:
           $ref: '#/components/schemas/StockType'
         attributes:
-          $ref: '#/components/schemas/StockCreateAttributes'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    StockUpdateAttributes:
-      properties:
-        locations:
-          $ref: '#/components/schemas/NullableLocations'
-    StockType:
-      type: string
-      enum:
-      - stock
-      default: stock
-      example: stock
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    StockMeta:
-      type: object
-      required:
-      - stock_id
-      - timestamps
-      properties:
-        stock_id:
-          $ref: '#/components/schemas/UUID'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps_2'
+          $ref: '#/components/schemas/StockUpdateAttributes'
     StockLocations:
       type: object
       additionalProperties:
@@ -484,19 +482,6 @@ components:
             type: integer
             format: int64
             example: 30
-    StockUpdateRequest:
-      type: object
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/StockType'
-        attributes:
-          $ref: '#/components/schemas/StockUpdateAttributes'
     StockResponse:
       type: object
       required:
@@ -513,6 +498,22 @@ components:
           $ref: '#/components/schemas/StockResponseAttributes'
         meta:
           $ref: '#/components/schemas/StockMeta'
+    StockType:
+      type: string
+      enum:
+      - stock
+      default: stock
+      example: stock
+    StockMeta:
+      type: object
+      required:
+      - stock_id
+      - timestamps
+      properties:
+        stock_id:
+          $ref: '#/components/schemas/UUID'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps_2'
     Timestamps_2:
       required:
       - created_at
@@ -525,10 +526,34 @@ components:
           description: The date and time a resource was created.
           type: string
           example: '2017-01-10T11:41:19.244842Z'
+    StockUpdateAttributes:
+      properties:
+        locations:
+          $ref: '#/components/schemas/NullableLocations'
     Links:
       type: object
       additionalProperties:
         $ref: '#/components/schemas/Link'
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
     StockResponseAttributes:
       type: object
       required:
@@ -550,6 +575,33 @@ components:
           example: 30
         locations:
           $ref: '#/components/schemas/StockLocations'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    NullableLocation:
+      type:
+      - object
+      - 'null'
+      required:
+      - available
+      properties:
+        available:
+          type: integer
+          format: int64
+          example: 20
+    StockCreate:
+      type: object
+      required:
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/StockType'
+        attributes:
+          $ref: '#/components/schemas/StockCreateAttributes'
   parameters:
     PageOffset:
       name: page[offset]
@@ -583,58 +635,6 @@ components:
 
           '
         example: eq(location,new-york)
-  responses:
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: Your request was invalid
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No stock found
-    NotFoundError_2:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No location found
   securitySchemes:
     bearerAuth:
       type: http
