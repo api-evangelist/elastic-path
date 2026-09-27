@@ -854,113 +854,37 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  parameters:
-    OfferingInclude:
-      name: include
-      in: query
-      required: false
-      style: form
-      explode: false
-      schema:
-        type: array
-        description: A comma-separated list of resources to include. See [Characteristics of Include Parameter](/guides/Getting-Started/includes#characteristics-of-include-parameter).
-        example: plans,pricing_options
-        items:
-          type: string
-          enum:
-          - plans
-          - pricing_options
-          - features
-    PageLimit:
-      name: page[limit]
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 100
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 10
-    Filter:
-      name: filter
-      in: query
-      required: false
-      schema:
-        type: string
-        format: string
-        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
-
-          '
-        example: eq(name,Alan Turing)
   schemas:
-    NullableLeadTime:
-      type:
-      - object
-      - 'null'
-      description: Configuration of the lead time to generate an invoice ahead of time in a pro-forma state
+    FeatureAttributes:
+      required:
+      - name
+      - configuration
       properties:
-        type:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+        name:
           type: string
-          description: The unit of time that lead time is measured in.
-          example: week
-          enum:
-          - day
-          - week
-          x-go-type: model.LeadTimeType
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-        time:
-          type: integer
-          description: The lead time to generate an invoice ahead of time in a pro-forma state
-          example: 14
-          minimum: 1
-      required:
-      - type
-      - time
-    Feature:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionFeatureType'
-        attributes:
-          $ref: '#/components/schemas/FeatureResponseAttributes'
-        meta:
-          $ref: '#/components/schemas/FeatureMeta'
-    FeatureConfigAccessAttributes:
-      description: Configures an access feature against a plan in an offering, indicating that the referenced feature is a benefit of that plan.
-      required:
-      - type
-      properties:
-        type:
+          description: The name of the feature.
+          minLength: 3
+          maxLength: 1024
+          example: Digital library access
+        description:
           type: string
-          enum:
-          - access
-          example: access
-    OfferingUpdateRelationships:
-      properties:
-        proration_policy:
-          $ref: '#/components/schemas/ProrationPolicyUpdateRelationshipAttributes'
-    FeaturePlanConfigurationUpdate:
-      type:
-      - object
-      - 'null'
+          description: The feature description to display to customers.
+          maxLength: 1024
+          example: Access to over 100 ebooks via the digital library.
+        configuration:
+          $ref: '#/components/schemas/FeatureConfiguration'
+    PricingOptionResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/PricingOptionAttributes'
+      - $ref: '#/components/schemas/Timestamps'
+    OfferingPlanAttributes:
+      allOf:
+      - $ref: '#/components/schemas/PlanAttributes'
+      - $ref: '#/components/schemas/OfferingPlanExtraAttributes'
+    FeaturePlanConfiguration:
+      type: object
       oneOf:
       - $ref: '#/components/schemas/FeatureConfigAccessAttributes'
       - $ref: '#/components/schemas/FeatureConfigPromotionAttributes'
@@ -982,95 +906,131 @@ components:
           - usage
           example: access
           x-go-type: string
-    FeatureResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/FeatureAttributes'
-    FeatureTag:
-      type: string
-      description: A tag to add to the customer's account when entitled to the feature.
-      minLength: 1
-      maxLength: 64
-      pattern: ^[0-9A-Za-z_-]+$
-      example: digital_library_access
+    OfferingPlanUpdateExtraAttributes:
+      properties:
+        feature_configurations:
+          type: object
+          description: A map of configurations indicating which features are available for the plan
+          additionalProperties:
+            $ref: '#/components/schemas/FeaturePlanConfigurationUpdate'
     PlanResponseAttributes:
       allOf:
       - $ref: '#/components/schemas/PlanAttributes'
       - $ref: '#/components/schemas/Timestamps'
-    Timestamps:
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    OfferingFeature:
       required:
-      - created_at
-      - updated_at
+      - type
+      - attributes
+      - meta
       properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    DisplayPrice:
-      properties:
-        without_tax:
-          $ref: '#/components/schemas/PriceFormatting'
-        with_tax:
-          $ref: '#/components/schemas/PriceFormatting'
-        tax:
-          description: 'Tax component when itemized (for example on subscription invoices). Omitted for catalog prices
-
-            that only expose with/without tax.
-
-            '
-          $ref: '#/components/schemas/PriceFormatting'
-      example:
-        without_tax:
-          amount: 100
-          currency: USD
-          formatted: $1.00
-        with_tax:
-          amount: 110
-          currency: USD
-          formatted: $1.10
-        tax:
-          amount: 10
-          currency: USD
-          formatted: $0.10
-    PricingOptionResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/PricingOptionAttributes'
-      - $ref: '#/components/schemas/Timestamps'
-    NullablePrice:
-      type:
-      - object
-      - 'null'
-      additionalProperties:
+        id:
+          $ref: '#/components/schemas/UUID'
         type:
-        - object
-        - 'null'
-        required:
-        - amount
-        properties:
-          amount:
-            type: integer
-            format: int64
-            example: 100
-            description: The value as a whole number of the currency's smallest subdivision.
-          includes_tax:
-            type: boolean
-            example: true
-            description: Whether the amount includes any taxes.
-      example:
-        USD:
-          amount: 100
-          includes_tax: false
-        GBP:
-          amount: 90
-          includes_tax: true
-    SubscriptionOfferingPricingOptionType:
+          $ref: '#/components/schemas/SubscriptionOfferingFeatureType'
+        attributes:
+          $ref: '#/components/schemas/FeatureResponseAttributes'
+        relationships:
+          $ref: '#/components/schemas/Relationships'
+        meta:
+          $ref: '#/components/schemas/FeatureMeta'
+    OfferingPlanUpdate:
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionOfferingPlanType'
+        attributes:
+          $ref: '#/components/schemas/OfferingPlanUpdateAttributes'
+    SubscriptionFeatureType:
       type: string
-      example: subscription_offering_pricing_option
+      example: subscription_feature
       enum:
-      - subscription_offering_pricing_option
+      - subscription_feature
+    PlanAttributes:
+      required:
+      - name
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+        name:
+          type: string
+          description: The name of the plan.
+          minLength: 3
+          maxLength: 1024
+          example: Magazine
+        description:
+          type: string
+          description: The plan or service description to display to customers.
+          maxLength: 1024
+          example: A lovely magazine that is published every month.
+        sku:
+          type: string
+          description: A stock keeping unit for the plan, if appropriate.
+          maxLength: 1024
+          example: MAGAZINE1
+        main_image:
+          type: string
+          format: uri
+          description: A URL from which an image or file for the plan can be fetched. You can either upload your images and files to Commerce using the Commerce Files API or you can use your own content delivery network. If you are using the Commerce Files API, use [**Create a File**](/docs/api/pxm/files/create-a-file) to upload your file and return an HREF link in the response. An extensive range of [**media and file extensions**](/docs/api/pxm/files/files-service-api) are supported.
+          maxLength: 1024
+          example: https://magazine.com/cover.jpg
+        price:
+          $ref: '#/components/schemas/Price'
+        price_units:
+          $ref: '#/components/schemas/PriceUnits'
+    PlanUpdateAttributes:
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRefUpdate'
+        name:
+          type: string
+          description: The name of the plan.
+          minLength: 3
+          maxLength: 1024
+          example: Magazine
+        description:
+          type:
+          - string
+          - 'null'
+          description: The plan or service description to display to customers.
+          maxLength: 1024
+          example: A lovely magazine that is published every month.
+        sku:
+          type:
+          - string
+          - 'null'
+          description: A stock keeping unit for the plan, if appropriate.
+          maxLength: 1024
+          example: MAGAZINE1
+        main_image:
+          type:
+          - string
+          - 'null'
+          format: uri
+          description: A URL from which an image or file for the plan can be fetched. You can either upload your images and files to Commerce using the Commerce Files API or you can use your own content delivery network. If you are using the Commerce Files API, use [**Create a File**](/docs/api/pxm/files/create-a-file) to upload your file and return an HREF link in the response. An extensive range of [**media and file extensions**](/docs/api/pxm/files/files-service-api) are supported.
+          maxLength: 1024
+          example: https://magazine.com/cover.jpg
+        price:
+          $ref: '#/components/schemas/NullablePrice'
+        price_units:
+          $ref: '#/components/schemas/NullablePriceUnits'
+    OfferingFeatureCreate:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/SubscriptionOfferingFeatureType'
+        attributes:
+          $ref: '#/components/schemas/FeatureAttributes'
     RelationshipsRequest:
       description: Enumerates a list of resources that are related.
       required:
@@ -1080,55 +1040,99 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RelationshipData'
-    OfferingMeta:
+    SubscriptionOfferingType:
+      type: string
+      example: subscription_offering
+      enum:
+      - subscription_offering
+    Offering:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionOfferingType'
+        attributes:
+          $ref: '#/components/schemas/OfferingResponseAttributes'
+        relationships:
+          $ref: '#/components/schemas/Relationships'
+        meta:
+          $ref: '#/components/schemas/OfferingMeta'
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
+    OfferingBuildPlanPricingOptions:
+      type: array
+      items:
+        type: string
+        description: The unique ID or external ref of the pricing option
+        example: 11111111-2222-3333-4444-555555555555
+    FeatureMeta:
       readOnly: true
       required:
       - owner
       - timestamps
-      - external_plan_refs
       properties:
-        external_plan_refs:
-          type: array
-          items:
-            $ref: '#/components/schemas/OfferingPlanExternalRefMeta'
         owner:
           $ref: '#/components/schemas/OwnerMeta'
         timestamps:
           $ref: '#/components/schemas/Timestamps'
-    OfferingPlanUpdateExtraAttributes:
+    OfferingUpdateAttributes:
       properties:
-        feature_configurations:
-          type: object
-          description: A map of configurations indicating which features are available for the plan
-          additionalProperties:
-            $ref: '#/components/schemas/FeaturePlanConfigurationUpdate'
-    ExternalRefUpdate:
-      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-      type:
-      - string
-      - 'null'
-      example: abc123
-      maxLength: 2048
-    FeatureConfigPromotionAttributes:
-      description: Configures a promotion feature against a plan in an offering, indicating that the referenced feature is a benefit of that plan. The tag of the specific promotion that it to be made available must be supplied.
+        external_ref:
+          $ref: '#/components/schemas/ExternalRefUpdate'
+        name:
+          type: string
+          description: The name of the offering.
+          minLength: 3
+          maxLength: 1024
+          example: Magazine
+        description:
+          type:
+          - string
+          - 'null'
+          description: The offering description to display to customers.
+          maxLength: 1024
+          example: A lovely magazine that is published every month.
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    FeatureTag:
+      type: string
+      description: A tag to add to the customer's account when entitled to the feature.
+      minLength: 1
+      maxLength: 64
+      pattern: ^[0-9A-Za-z_-]+$
+      example: digital_library_access
+    OfferingPricingOptionPrices:
+      type: object
+      description: The price of each plan within the offering that this pricing option may be applied to.
+      readOnly: true
+      additionalProperties:
+        $ref: '#/components/schemas/OfferingPricingOptionPriceForPlan'
+    OfferingCreate:
       required:
       - type
-      - tag
+      - attributes
       properties:
         type:
-          type: string
-          enum:
-          - promotion
-          example: promotion
-        tag:
-          $ref: '#/components/schemas/FeatureTag'
-    OfferingPlanExtraAttributes:
-      properties:
-        feature_configurations:
-          type: object
-          description: A map of configurations indicating which features are available for the plan
-          additionalProperties:
-            $ref: '#/components/schemas/FeaturePlanConfiguration'
+          $ref: '#/components/schemas/SubscriptionOfferingType'
+        attributes:
+          $ref: '#/components/schemas/OfferingAttributes'
+        relationships:
+          $ref: '#/components/schemas/OfferingRelationships'
     OfferingPlanCreate:
       required:
       - type
@@ -1140,335 +1144,6 @@ components:
           $ref: '#/components/schemas/OfferingPlanAttributes'
         relationships:
           $ref: '#/components/schemas/Relationships'
-    PlanMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        prices:
-          $ref: '#/components/schemas/OfferingPlanPrices'
-        display_price:
-          $ref: '#/components/schemas/DisplayPrice'
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-        active_plan:
-          $ref: '#/components/schemas/ActivePlan'
-    Price:
-      additionalProperties:
-        type: object
-        description: The base price.
-        required:
-        - amount
-        properties:
-          amount:
-            type: integer
-            format: int64
-            minimum: 0
-            example: 100
-            description: The value as a whole number of the currency's smallest subdivision.
-          includes_tax:
-            type: boolean
-            example: true
-            description: Indicates whether the amount includes any taxes.
-      example:
-        USD:
-          amount: 100
-          includes_tax: false
-        GBP:
-          amount: 90
-          includes_tax: true
-    FeaturePromotionAttributes:
-      required:
-      - type
-      - promotions
-      properties:
-        type:
-          type: string
-          enum:
-          - promotion
-          example: promotion
-        promotions:
-          type: array
-          items:
-            $ref: '#/components/schemas/FeaturePromotion'
-    ActivePlan:
-      type: boolean
-      description: Whether a plan is active on a subscription using that offering. The `active_plan` attribute is null if a plan is not active in a subscription.
-      example: true
-    ProrationPolicyType:
-      type: string
-      example: subscription_proration_policy
-      enum:
-      - subscription_proration_policy
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    OfferingBuildPricingOptionAssociations:
-      type: object
-      description: A map of plans keyed by plan UUID or external_ref to a list of associated pricing options, similarly keyed.
-      additionalProperties:
-        $ref: '#/components/schemas/OfferingBuildPlanPricingOptions'
-    RelationshipLinks:
-      description: "Links are used to allow you, as an API consumer, to move between requests. Single entities use a self parameter with a link to that specific resource. Sometimes, there aren’t enough entities for a project to fill multiple pages. In this situation, we return some defaults, instead of expecting you to check for these special cases. \n\n - current - Always the current page.\n - first - Always the first page.\n - last - always `null`.\n - next - `null` if the user is on the first page.\n - previous - `null` if there is only one page.\n"
-      type: object
-      properties:
-        related:
-          type: string
-          example: foo.bar
-    FeatureUpdateAttributes:
-      properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRefUpdate'
-        name:
-          type: string
-          description: The name of the feature.
-          minLength: 3
-          maxLength: 1024
-          example: Digital library access
-        description:
-          type:
-          - string
-          - 'null'
-          description: The feature description to display to customers.
-          maxLength: 1024
-          example: Access to over 100 ebooks via the digital library.
-        configuration:
-          $ref: '#/components/schemas/FeatureConfiguration'
-    OfferingPricingOptionUpdate:
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionOfferingPricingOptionType'
-        attributes:
-          $ref: '#/components/schemas/PricingOptionUpdateAttributes'
-    Relationships:
-      description: Relationships are established between different subscription entities. For example, a plan and a pricing option are related to an offering, as both are attached to it.
-      additionalProperties:
-        $ref: '#/components/schemas/Relationship'
-      example:
-        pricing-options:
-          links:
-            related: /offerings/:offering-id/pricing-options
-            self: /offerings/:offering-id
-          data:
-            type: offering-pricing-option
-            id: 625fe958-7b4b-40a0-a2c0-dbb8f31eec0d
-    FeaturePromotion:
-      required:
-      - name
-      - tag
-      properties:
-        name:
-          type: string
-          description: The name of the feature.
-          minLength: 3
-          maxLength: 1024
-          example: Digital library access
-        tag:
-          $ref: '#/components/schemas/FeatureTag'
-        promotion_id:
-          $ref: '#/components/schemas/UUID'
-    OfferingPricingOptionMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        prices:
-          $ref: '#/components/schemas/OfferingPricingOptionPrices'
-        price:
-          $ref: '#/components/schemas/Price'
-        display_price:
-          $ref: '#/components/schemas/DisplayPrice'
-        active_pricing_option:
-          $ref: '#/components/schemas/ActivePricingOption'
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    FeatureUsageAttributes:
-      required:
-      - type
-      - tag
-      - label
-      - default_value
-      properties:
-        type:
-          type: string
-          enum:
-          - usage
-          example: usage
-        tag:
-          $ref: '#/components/schemas/FeatureTag'
-        label:
-          type: string
-          description: The property that has a usage limit.
-          minLength: 3
-          maxLength: 1024
-          example: Digital downloads
-        default_value:
-          type: integer
-          description: The default initial value
-          example: 10
-    OfferingRelationships:
-      properties:
-        proration_policy:
-          $ref: '#/components/schemas/ProrationPolicyRelationshipAttributes'
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 11111111-2222-3333-4444-555555555555
-    OfferingPlanAttributes:
-      allOf:
-      - $ref: '#/components/schemas/PlanAttributes'
-      - $ref: '#/components/schemas/OfferingPlanExtraAttributes'
-    Relationship:
-      anyOf:
-      - $ref: '#/components/schemas/SingleRelationship'
-      - $ref: '#/components/schemas/ManyRelationship'
-    ProrationPolicyRelationshipAttributes:
-      type: object
-      required:
-      - type
-      - id
-      properties:
-        type:
-          $ref: '#/components/schemas/ProrationPolicyType'
-        id:
-          $ref: '#/components/schemas/UUID'
-    FeatureConfiguration:
-      type: object
-      required:
-      - type
-      properties:
-        type:
-          description: The type of feature, one of access, promotion or usage.
-          enum:
-          - access
-          - promotion
-          - usage
-          example: access
-          x-go-type: string
-      oneOf:
-      - $ref: '#/components/schemas/FeatureAccessAttributes'
-      - $ref: '#/components/schemas/FeaturePromotionAttributes'
-      - $ref: '#/components/schemas/FeatureUsageAttributes'
-      discriminator:
-        propertyName: type
-        mapping:
-          access: '#/components/schemas/FeatureAccessAttributes'
-          promotion: '#/components/schemas/FeaturePromotionAttributes'
-          usage: '#/components/schemas/FeatureUsageAttributes'
-    OfferingBuildPlanPricingOptions:
-      type: array
-      items:
-        type: string
-        description: The unique ID or external ref of the pricing option
-        example: 11111111-2222-3333-4444-555555555555
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
-    FeatureConfigUsageAttributes:
-      description: Configures a usage feature against a plan in an offering, indicating that the referenced feature is a benefit of that plan. The default value that the usage metrics adopts must be supplied.
-      required:
-      - type
-      - default_value
-      properties:
-        type:
-          type: string
-          enum:
-          - usage
-          example: usage
-        default_value:
-          type: integer
-          description: The default initial value
-          example: 10
-    SingleRelationship:
-      description: The subscription resource that is related.
-      properties:
-        data:
-          $ref: '#/components/schemas/RelationshipData'
-        links:
-          $ref: '#/components/schemas/RelationshipLinks'
-    ManyRelationship:
-      description: The list of resources that are related.
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/RelationshipData'
-        links:
-          $ref: '#/components/schemas/RelationshipLinks'
-    SubscriptionOfferingType:
-      type: string
-      example: subscription_offering
-      enum:
-      - subscription_offering
-    LeadTime:
-      type: object
-      description: Configuration of the lead time to generate an invoice ahead of time in a pro-forma state
-      properties:
-        type:
-          type: string
-          description: The unit of time that lead time is measured in.
-          example: day
-          enum:
-          - day
-          - week
-          x-go-type: model.LeadTimeType
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-        time:
-          type: integer
-          description: The lead time to generate an invoice ahead of time in a pro-forma state
-          example: 14
-          minimum: 1
-      required:
-      - type
-      - time
     PricingOptionUpdateAttributes:
       properties:
         external_ref:
@@ -1555,25 +1230,463 @@ components:
           maximum: 100
         fixed_price:
           $ref: '#/components/schemas/NullablePrice'
+    NullableLeadTime:
+      type:
+      - object
+      - 'null'
+      description: Configuration of the lead time to generate an invoice ahead of time in a pro-forma state
+      properties:
+        type:
+          type: string
+          description: The unit of time that lead time is measured in.
+          example: week
+          enum:
+          - day
+          - week
+          x-go-type: model.LeadTimeType
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+        time:
+          type: integer
+          description: The lead time to generate an invoice ahead of time in a pro-forma state
+          example: 14
+          minimum: 1
+      required:
+      - type
+      - time
+    FeaturePlanConfigurationUpdate:
+      type:
+      - object
+      - 'null'
+      oneOf:
+      - $ref: '#/components/schemas/FeatureConfigAccessAttributes'
+      - $ref: '#/components/schemas/FeatureConfigPromotionAttributes'
+      - $ref: '#/components/schemas/FeatureConfigUsageAttributes'
+      discriminator:
+        propertyName: type
+        mapping:
+          access: '#/components/schemas/FeatureConfigAccessAttributes'
+          promotion: '#/components/schemas/FeatureConfigPromotionAttributes'
+          usage: '#/components/schemas/FeatureConfigUsageAttributes'
+      required:
+      - type
+      properties:
+        type:
+          description: The type of feature, one of access, promotion or usage.
+          enum:
+          - access
+          - promotion
+          - usage
+          example: access
+          x-go-type: string
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    PriceUnits:
+      type: object
+      description: The timeframe during which the plan price is applicable. For example, for a streaming service, the price is $12.99 and the `unit` is `months` and the `amount` is `1`. In other words, the streaming service is available for $12.99 a month. You may want to specify a unit price if you have many plans that all have different prices. Rather than having to create separate pricing options for each plan, you can specify the timeframe during which the plan price is applicable and then create one pricing option that determines the billing frequency for those plans.
+      required:
+      - unit
+      - amount
+      properties:
+        unit:
+          type: string
+          description: A unit of time.
+          enum:
+          - day
+          - month
+          example: day
+          x-go-type: model.PriceUnitsUnit
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+        amount:
+          type: integer
+          description: The number of days or months the period covers.
+          example: 7
+          minimum: 1
+    NullablePriceUnits:
+      type:
+      - object
+      - 'null'
+      description: The timeframe during which the plan price is applicable. For example, for a streaming service, the price is $12.99 and the `unit` is `months` and the `amount` is `1`. In other words, the streaming service is available for $12.99 a month. You may want to specify a unit price if you have many plans that all have different prices. Rather than having to create separate pricing options for each plan, you can specify the timeframe during which the plan price is applicable and then create one pricing option that determines the billing frequency for those plans.
+      required:
+      - unit
+      - amount
+      properties:
+        unit:
+          type: string
+          description: A unit of time, either days or months.
+          enum:
+          - day
+          - month
+          example: day
+          x-go-type: model.PriceUnitsUnit
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+        amount:
+          type: integer
+          description: The number of days or months the period covers.
+          example: 7
+          minimum: 1
+    FeatureConfigUsageAttributes:
+      description: Configures a usage feature against a plan in an offering, indicating that the referenced feature is a benefit of that plan. The default value that the usage metrics adopts must be supplied.
+      required:
+      - type
+      - default_value
+      properties:
+        type:
+          type: string
+          enum:
+          - usage
+          example: usage
+        default_value:
+          type: integer
+          description: The default initial value
+          example: 10
+    OfferingUpdateRelationships:
+      properties:
+        proration_policy:
+          $ref: '#/components/schemas/ProrationPolicyUpdateRelationshipAttributes'
+    ExternalRefUpdate:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type:
+      - string
+      - 'null'
+      example: abc123
+      maxLength: 2048
     OfferingPlanPriceForPricingOption:
       properties:
         price:
           $ref: '#/components/schemas/Price'
         display_price:
           $ref: '#/components/schemas/DisplayPrice'
+    OfferingFeatureUpdate:
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionOfferingFeatureType'
+        attributes:
+          $ref: '#/components/schemas/FeatureUpdateAttributes'
+    FeatureUsageAttributes:
+      required:
+      - type
+      - tag
+      - label
+      - default_value
+      properties:
+        type:
+          type: string
+          enum:
+          - usage
+          example: usage
+        tag:
+          $ref: '#/components/schemas/FeatureTag'
+        label:
+          type: string
+          description: The property that has a usage limit.
+          minLength: 3
+          maxLength: 1024
+          example: Digital downloads
+        default_value:
+          type: integer
+          description: The default initial value
+          example: 10
+    Relationships:
+      description: Relationships are established between different subscription entities. For example, a plan and a pricing option are related to an offering, as both are attached to it.
+      additionalProperties:
+        $ref: '#/components/schemas/Relationship'
+      example:
+        pricing-options:
+          links:
+            related: /offerings/:offering-id/pricing-options
+            self: /offerings/:offering-id
+          data:
+            type: offering-pricing-option
+            id: 625fe958-7b4b-40a0-a2c0-dbb8f31eec0d
+    OfferingPlanResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/PlanResponseAttributes'
+      - $ref: '#/components/schemas/OfferingPlanResponseExtraAttributes'
+    Timestamps:
+      required:
+      - created_at
+      - updated_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    FeatureConfiguration:
+      type: object
+      required:
+      - type
+      properties:
+        type:
+          description: The type of feature, one of access, promotion or usage.
+          enum:
+          - access
+          - promotion
+          - usage
+          example: access
+          x-go-type: string
+      oneOf:
+      - $ref: '#/components/schemas/FeatureAccessAttributes'
+      - $ref: '#/components/schemas/FeaturePromotionAttributes'
+      - $ref: '#/components/schemas/FeatureUsageAttributes'
+      discriminator:
+        propertyName: type
+        mapping:
+          access: '#/components/schemas/FeatureAccessAttributes'
+          promotion: '#/components/schemas/FeaturePromotionAttributes'
+          usage: '#/components/schemas/FeatureUsageAttributes'
+    OfferingBuildConfiguredFeatures:
+      type: object
+      description: Map of feature configurations keyed by plan UUID or external_ref
+      additionalProperties:
+        $ref: '#/components/schemas/OfferingBuildPlanFeatures'
+    OfferingBuildPricingOptionAssociations:
+      type: object
+      description: A map of plans keyed by plan UUID or external_ref to a list of associated pricing options, similarly keyed.
+      additionalProperties:
+        $ref: '#/components/schemas/OfferingBuildPlanPricingOptions'
+    FeaturePromotionAttributes:
+      required:
+      - type
+      - promotions
+      properties:
+        type:
+          type: string
+          enum:
+          - promotion
+          example: promotion
+        promotions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeaturePromotion'
+    OfferingPlanResponseExtraAttributes:
+      required:
+      - feature_configurations
+      properties:
+        feature_configurations:
+          type: object
+          description: A map of configurations indicating which features are available for the plan
+          additionalProperties:
+            $ref: '#/components/schemas/FeaturePlanConfiguration'
+    RelationshipData:
+      type: object
+      required:
+      - id
+      - type
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          type: string
+          description: This represents the type of resource being returned.
+          example: 11111111-2222-3333-4444-555555555555
+    OfferingPricingOptionUpdate:
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionOfferingPricingOptionType'
+        attributes:
+          $ref: '#/components/schemas/PricingOptionUpdateAttributes'
+    OfferingPlanPrices:
+      type: object
+      description: A list of plan prices for each of its pricing options.
+      additionalProperties:
+        $ref: '#/components/schemas/OfferingPlanPriceForPricingOption'
+    Relationship:
+      anyOf:
+      - $ref: '#/components/schemas/SingleRelationship'
+      - $ref: '#/components/schemas/ManyRelationship'
+    Feature:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionFeatureType'
+        attributes:
+          $ref: '#/components/schemas/FeatureResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/FeatureMeta'
+    PlanMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      properties:
+        prices:
+          $ref: '#/components/schemas/OfferingPlanPrices'
+        display_price:
+          $ref: '#/components/schemas/DisplayPrice'
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+        active_plan:
+          $ref: '#/components/schemas/ActivePlan'
+    OfferingFeatureAttach:
+      description: A list of feature IDs to attach to the offering. See [**List Features**](/docs/api/subscriptions/list-features).
+      required:
+      - features
+      properties:
+        features:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/UUID'
+    Price:
+      additionalProperties:
+        type: object
+        description: The base price.
+        required:
+        - amount
+        properties:
+          amount:
+            type: integer
+            format: int64
+            minimum: 0
+            example: 100
+            description: The value as a whole number of the currency's smallest subdivision.
+          includes_tax:
+            type: boolean
+            example: true
+            description: Indicates whether the amount includes any taxes.
+      example:
+        USD:
+          amount: 100
+          includes_tax: false
+        GBP:
+          amount: 90
+          includes_tax: true
+    NullablePrice:
+      type:
+      - object
+      - 'null'
+      additionalProperties:
+        type:
+        - object
+        - 'null'
+        required:
+        - amount
+        properties:
+          amount:
+            type: integer
+            format: int64
+            example: 100
+            description: The value as a whole number of the currency's smallest subdivision.
+          includes_tax:
+            type: boolean
+            example: true
+            description: Whether the amount includes any taxes.
+      example:
+        USD:
+          amount: 100
+          includes_tax: false
+        GBP:
+          amount: 90
+          includes_tax: true
     ActivePricingOption:
       type: boolean
       description: Whether a pricing option is active on a subscription using that offering. The `active_pricing_option` attribute is null if a pricing option is not active in a subscription.
       example: true
-    OfferingFeatureCreate:
+    BuildOffering:
+      required:
+      - name
+      - plans
+      - pricing_options
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+        name:
+          type: string
+          description: The name of the offering.
+          minLength: 3
+          maxLength: 1024
+          example: Magazine
+        description:
+          type: string
+          description: The offering description to display to customers.
+          maxLength: 1024
+          example: A lovely magazine that is published every month.
+        proration_policy_id:
+          type: string
+          description: The unique ID or external ref of the proration policy
+          example: 11111111-2222-3333-4444-555555555555
+        configured_features:
+          $ref: '#/components/schemas/OfferingBuildConfiguredFeatures'
+        pricing_option_associations:
+          $ref: '#/components/schemas/OfferingBuildPricingOptionAssociations'
+        features:
+          type: array
+          description: Either references of existing features (id or external_ref) to be attached to the offering or feature information to be created directly within the offering
+          minItems: 1
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/ExternalRef'
+            - $ref: '#/components/schemas/FeatureAttributes'
+            - $ref: '#/components/schemas/UUID'
+        plans:
+          type: array
+          description: Plan information to be created within the offering
+          minItems: 1
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/OfferingPlanAttributes'
+        pricing_options:
+          type: array
+          description: Pricing options information to be created within the offering
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/PricingOptionAttributes'
+    OfferingPlanUpdateAttributes:
+      allOf:
+      - $ref: '#/components/schemas/PlanUpdateAttributes'
+      - $ref: '#/components/schemas/OfferingPlanUpdateExtraAttributes'
+    ActivePlan:
+      type: boolean
+      description: Whether a plan is active on a subscription using that offering. The `active_plan` attribute is null if a plan is not active in a subscription.
+      example: true
+    OfferingPricingOptionCreate:
       required:
       - type
       - attributes
       properties:
         type:
-          $ref: '#/components/schemas/SubscriptionOfferingFeatureType'
+          $ref: '#/components/schemas/SubscriptionOfferingPricingOptionType'
         attributes:
-          $ref: '#/components/schemas/FeatureAttributes'
+          $ref: '#/components/schemas/PricingOptionAttributes'
     PricingOptionAttributes:
       required:
       - name
@@ -1665,44 +1778,44 @@ components:
           maximum: 100
         fixed_price:
           $ref: '#/components/schemas/Price'
-    NullablePriceUnits:
-      type:
-      - object
-      - 'null'
-      description: The timeframe during which the plan price is applicable. For example, for a streaming service, the price is $12.99 and the `unit` is `months` and the `amount` is `1`. In other words, the streaming service is available for $12.99 a month. You may want to specify a unit price if you have many plans that all have different prices. Rather than having to create separate pricing options for each plan, you can specify the timeframe during which the plan price is applicable and then create one pricing option that determines the billing frequency for those plans.
+    OfferingPricingOption:
       required:
-      - unit
-      - amount
+      - type
+      - attributes
+      - meta
       properties:
-        unit:
-          type: string
-          description: A unit of time, either days or months.
-          enum:
-          - day
-          - month
-          example: day
-          x-go-type: model.PriceUnitsUnit
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-        amount:
-          type: integer
-          description: The number of days or months the period covers.
-          example: 7
-          minimum: 1
-    OwnerMeta:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionOfferingPricingOptionType'
+        attributes:
+          $ref: '#/components/schemas/PricingOptionResponseAttributes'
+        relationships:
+          $ref: '#/components/schemas/Relationships'
+        meta:
+          $ref: '#/components/schemas/OfferingPricingOptionMeta'
+    OfferingPricingOptionMeta:
       readOnly: true
-      type: string
-      format: string
-      description: The owner of a resource, either `store` or `organization`.
-      example: store
-    FeatureAttributes:
       required:
-      - name
-      - configuration
+      - owner
+      - timestamps
+      properties:
+        prices:
+          $ref: '#/components/schemas/OfferingPricingOptionPrices'
+        price:
+          $ref: '#/components/schemas/Price'
+        display_price:
+          $ref: '#/components/schemas/DisplayPrice'
+        active_pricing_option:
+          $ref: '#/components/schemas/ActivePricingOption'
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    FeatureUpdateAttributes:
       properties:
         external_ref:
-          $ref: '#/components/schemas/ExternalRef'
+          $ref: '#/components/schemas/ExternalRefUpdate'
         name:
           type: string
           description: The name of the feature.
@@ -1710,84 +1823,14 @@ components:
           maxLength: 1024
           example: Digital library access
         description:
-          type: string
+          type:
+          - string
+          - 'null'
           description: The feature description to display to customers.
           maxLength: 1024
           example: Access to over 100 ebooks via the digital library.
         configuration:
           $ref: '#/components/schemas/FeatureConfiguration'
-    OfferingPlanUpdate:
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionOfferingPlanType'
-        attributes:
-          $ref: '#/components/schemas/OfferingPlanUpdateAttributes'
-    FeaturePlanConfiguration:
-      type: object
-      oneOf:
-      - $ref: '#/components/schemas/FeatureConfigAccessAttributes'
-      - $ref: '#/components/schemas/FeatureConfigPromotionAttributes'
-      - $ref: '#/components/schemas/FeatureConfigUsageAttributes'
-      discriminator:
-        propertyName: type
-        mapping:
-          access: '#/components/schemas/FeatureConfigAccessAttributes'
-          promotion: '#/components/schemas/FeatureConfigPromotionAttributes'
-          usage: '#/components/schemas/FeatureConfigUsageAttributes'
-      required:
-      - type
-      properties:
-        type:
-          description: The type of feature, one of access, promotion or usage.
-          enum:
-          - access
-          - promotion
-          - usage
-          example: access
-          x-go-type: string
-    PlanAttributes:
-      required:
-      - name
-      properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRef'
-        name:
-          type: string
-          description: The name of the plan.
-          minLength: 3
-          maxLength: 1024
-          example: Magazine
-        description:
-          type: string
-          description: The plan or service description to display to customers.
-          maxLength: 1024
-          example: A lovely magazine that is published every month.
-        sku:
-          type: string
-          description: A stock keeping unit for the plan, if appropriate.
-          maxLength: 1024
-          example: MAGAZINE1
-        main_image:
-          type: string
-          format: uri
-          description: A URL from which an image or file for the plan can be fetched. You can either upload your images and files to Commerce using the Commerce Files API or you can use your own content delivery network. If you are using the Commerce Files API, use [**Create a File**](/docs/api/pxm/files/create-a-file) to upload your file and return an HREF link in the response. An extensive range of [**media and file extensions**](/docs/api/pxm/files/files-service-api) are supported.
-          maxLength: 1024
-          example: https://magazine.com/cover.jpg
-        price:
-          $ref: '#/components/schemas/Price'
-        price_units:
-          $ref: '#/components/schemas/PriceUnits'
-    OfferingBuildPlanFeatures:
-      type: object
-      description: A map of configurations indicating which features are available for the plan
-      additionalProperties:
-        $ref: '#/components/schemas/FeaturePlanConfiguration'
     ProrationPolicyUpdateRelationshipAttributes:
       type:
       - object
@@ -1800,54 +1843,16 @@ components:
           $ref: '#/components/schemas/ProrationPolicyType'
         id:
           $ref: '#/components/schemas/UUID'
-    RelationshipData:
+    OfferingBuildPlanFeatures:
       type: object
-      required:
-      - id
-      - type
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          type: string
-          description: This represents the type of resource being returned.
-          example: 11111111-2222-3333-4444-555555555555
-    PriceFormatting:
-      required:
-      - amount
-      - currency
-      - formatted
-      properties:
-        amount:
-          type: integer
-          format: int64
-          example: 100
-          description: The unformatted amount for the objects.
-        currency:
-          type: string
-          format: string
-          example: USD
-          description: The three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html) in uppercase, associated with a price.
-        formatted:
-          type: string
-          format: string
-          example: $1.00
-          description: The formatted amount for the objects.
-    OfferingPlanResponseExtraAttributes:
-      required:
-      - feature_configurations
-      properties:
-        feature_configurations:
-          type: object
-          description: A map of configurations indicating which features are available for the plan
-          additionalProperties:
-            $ref: '#/components/schemas/FeaturePlanConfiguration'
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
+      description: A map of configurations indicating which features are available for the plan
+      additionalProperties:
+        $ref: '#/components/schemas/FeaturePlanConfiguration'
+    ExternalRef:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
     OfferingUpdate:
       anyOf:
       - required:
@@ -1866,58 +1871,115 @@ components:
           $ref: '#/components/schemas/OfferingUpdateAttributes'
         relationships:
           $ref: '#/components/schemas/OfferingUpdateRelationships'
-    ExternalRef:
-      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-      type: string
-      example: abc123
-      maxLength: 2048
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    OfferingUpdateAttributes:
+    FeatureConfigPromotionAttributes:
+      description: Configures a promotion feature against a plan in an offering, indicating that the referenced feature is a benefit of that plan. The tag of the specific promotion that it to be made available must be supplied.
+      required:
+      - type
+      - tag
       properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRefUpdate'
+        type:
+          type: string
+          enum:
+          - promotion
+          example: promotion
+        tag:
+          $ref: '#/components/schemas/FeatureTag'
+    OfferingPlanExtraAttributes:
+      properties:
+        feature_configurations:
+          type: object
+          description: A map of configurations indicating which features are available for the plan
+          additionalProperties:
+            $ref: '#/components/schemas/FeaturePlanConfiguration'
+    ManyRelationship:
+      description: The list of resources that are related.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipData'
+        links:
+          $ref: '#/components/schemas/RelationshipLinks'
+    FeaturePromotion:
+      required:
+      - name
+      - tag
+      properties:
         name:
           type: string
-          description: The name of the offering.
+          description: The name of the feature.
           minLength: 3
           maxLength: 1024
-          example: Magazine
-        description:
-          type:
-          - string
-          - 'null'
-          description: The offering description to display to customers.
-          maxLength: 1024
-          example: A lovely magazine that is published every month.
-    OfferingCreate:
+          example: Digital library access
+        tag:
+          $ref: '#/components/schemas/FeatureTag'
+        promotion_id:
+          $ref: '#/components/schemas/UUID'
+    DisplayPrice:
+      properties:
+        without_tax:
+          $ref: '#/components/schemas/PriceFormatting'
+        with_tax:
+          $ref: '#/components/schemas/PriceFormatting'
+        tax:
+          description: 'Tax component when itemized (for example on subscription invoices). Omitted for catalog prices
+
+            that only expose with/without tax.
+
+            '
+          $ref: '#/components/schemas/PriceFormatting'
+      example:
+        without_tax:
+          amount: 100
+          currency: USD
+          formatted: $1.00
+        with_tax:
+          amount: 110
+          currency: USD
+          formatted: $1.10
+        tax:
+          amount: 10
+          currency: USD
+          formatted: $0.10
+    RelationshipLinks:
+      description: "Links are used to allow you, as an API consumer, to move between requests. Single entities use a self parameter with a link to that specific resource. Sometimes, there aren’t enough entities for a project to fill multiple pages. In this situation, we return some defaults, instead of expecting you to check for these special cases. \n\n - current - Always the current page.\n - first - Always the first page.\n - last - always `null`.\n - next - `null` if the user is on the first page.\n - previous - `null` if there is only one page.\n"
+      type: object
+      properties:
+        related:
+          type: string
+          example: foo.bar
+    OfferingResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/OfferingAttributes'
+      - $ref: '#/components/schemas/Timestamps'
+    SubscriptionOfferingPlanType:
+      type: string
+      example: subscription_offering_plan
+      enum:
+      - subscription_offering_plan
+    OfferingPlan:
       required:
       - type
       - attributes
+      - meta
       properties:
+        id:
+          $ref: '#/components/schemas/UUID'
         type:
-          $ref: '#/components/schemas/SubscriptionOfferingType'
+          $ref: '#/components/schemas/SubscriptionOfferingPlanType'
         attributes:
-          $ref: '#/components/schemas/OfferingAttributes'
+          $ref: '#/components/schemas/OfferingPlanResponseAttributes'
         relationships:
-          $ref: '#/components/schemas/OfferingRelationships'
-    OfferingIncludes:
+          $ref: '#/components/schemas/Relationships'
+        meta:
+          $ref: '#/components/schemas/PlanMeta'
+    OfferingPricingOptionPriceForPlan:
       readOnly: true
       properties:
-        features:
-          type: array
-          items:
-            $ref: '#/components/schemas/OfferingFeature'
-        plans:
-          type: array
-          items:
-            $ref: '#/components/schemas/OfferingPlan'
-        pricing_options:
-          type: array
-          items:
-            $ref: '#/components/schemas/OfferingPricingOption'
+        price:
+          $ref: '#/components/schemas/Price'
+        display_price:
+          $ref: '#/components/schemas/DisplayPrice'
     NotificationSchedule:
       type: object
       required:
@@ -1949,239 +2011,36 @@ components:
           description: The number of units between each notification.
           example: 100
           minimum: 1
-    OfferingPricingOptionCreate:
-      required:
-      - type
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/SubscriptionOfferingPricingOptionType'
-        attributes:
-          $ref: '#/components/schemas/PricingOptionAttributes'
-    OfferingPlanExternalRefMeta:
-      readOnly: true
+    SubscriptionOfferingPricingOptionType:
       type: string
-      format: string
-      description: The offerings plan external_ref value
-      example: 97dddc65-eabd-45d8-b45b-2ece5cfc8c50
-    SubscriptionOfferingFeatureType:
-      type: string
-      example: subscription_offering_feature
+      example: subscription_offering_pricing_option
       enum:
-      - subscription_offering_feature
-    SubscriptionFeatureType:
-      type: string
-      example: subscription_feature
-      enum:
-      - subscription_feature
-    OfferingPlanPrices:
-      type: object
-      description: A list of plan prices for each of its pricing options.
-      additionalProperties:
-        $ref: '#/components/schemas/OfferingPlanPriceForPricingOption'
-    OfferingPlanResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/PlanResponseAttributes'
-      - $ref: '#/components/schemas/OfferingPlanResponseExtraAttributes'
-    PlanUpdateAttributes:
+      - subscription_offering_pricing_option
+    FeatureConfigAccessAttributes:
+      description: Configures an access feature against a plan in an offering, indicating that the referenced feature is a benefit of that plan.
+      required:
+      - type
       properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRefUpdate'
-        name:
+        type:
           type: string
-          description: The name of the plan.
-          minLength: 3
-          maxLength: 1024
-          example: Magazine
-        description:
-          type:
-          - string
-          - 'null'
-          description: The plan or service description to display to customers.
-          maxLength: 1024
-          example: A lovely magazine that is published every month.
-        sku:
-          type:
-          - string
-          - 'null'
-          description: A stock keeping unit for the plan, if appropriate.
-          maxLength: 1024
-          example: MAGAZINE1
-        main_image:
-          type:
-          - string
-          - 'null'
-          format: uri
-          description: A URL from which an image or file for the plan can be fetched. You can either upload your images and files to Commerce using the Commerce Files API or you can use your own content delivery network. If you are using the Commerce Files API, use [**Create a File**](/docs/api/pxm/files/create-a-file) to upload your file and return an HREF link in the response. An extensive range of [**media and file extensions**](/docs/api/pxm/files/files-service-api) are supported.
-          maxLength: 1024
-          example: https://magazine.com/cover.jpg
-        price:
-          $ref: '#/components/schemas/NullablePrice'
-        price_units:
-          $ref: '#/components/schemas/NullablePriceUnits'
-    OfferingBuildConfiguredFeatures:
-      type: object
-      description: Map of feature configurations keyed by plan UUID or external_ref
-      additionalProperties:
-        $ref: '#/components/schemas/OfferingBuildPlanFeatures'
-    OfferingPlanUpdateAttributes:
-      allOf:
-      - $ref: '#/components/schemas/PlanUpdateAttributes'
-      - $ref: '#/components/schemas/OfferingPlanUpdateExtraAttributes'
-    OfferingFeatureUpdate:
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionOfferingFeatureType'
-        attributes:
-          $ref: '#/components/schemas/FeatureUpdateAttributes'
-    OfferingPricingOptionPrices:
-      type: object
-      description: The price of each plan within the offering that this pricing option may be applied to.
-      readOnly: true
-      additionalProperties:
-        $ref: '#/components/schemas/OfferingPricingOptionPriceForPlan'
-    OfferingFeature:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionOfferingFeatureType'
-        attributes:
-          $ref: '#/components/schemas/FeatureResponseAttributes'
-        relationships:
-          $ref: '#/components/schemas/Relationships'
-        meta:
-          $ref: '#/components/schemas/FeatureMeta'
-    Offering:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionOfferingType'
-        attributes:
-          $ref: '#/components/schemas/OfferingResponseAttributes'
-        relationships:
-          $ref: '#/components/schemas/Relationships'
-        meta:
-          $ref: '#/components/schemas/OfferingMeta'
-    OfferingPricingOption:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionOfferingPricingOptionType'
-        attributes:
-          $ref: '#/components/schemas/PricingOptionResponseAttributes'
-        relationships:
-          $ref: '#/components/schemas/Relationships'
-        meta:
-          $ref: '#/components/schemas/OfferingPricingOptionMeta'
-    OfferingPlan:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionOfferingPlanType'
-        attributes:
-          $ref: '#/components/schemas/OfferingPlanResponseAttributes'
-        relationships:
-          $ref: '#/components/schemas/Relationships'
-        meta:
-          $ref: '#/components/schemas/PlanMeta'
-    PriceUnits:
-      type: object
-      description: The timeframe during which the plan price is applicable. For example, for a streaming service, the price is $12.99 and the `unit` is `months` and the `amount` is `1`. In other words, the streaming service is available for $12.99 a month. You may want to specify a unit price if you have many plans that all have different prices. Rather than having to create separate pricing options for each plan, you can specify the timeframe during which the plan price is applicable and then create one pricing option that determines the billing frequency for those plans.
-      required:
-      - unit
-      - amount
-      properties:
-        unit:
-          type: string
-          description: A unit of time.
           enum:
-          - day
-          - month
-          example: day
-          x-go-type: model.PriceUnitsUnit
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-        amount:
-          type: integer
-          description: The number of days or months the period covers.
-          example: 7
-          minimum: 1
-    BuildOffering:
-      required:
-      - name
-      - plans
-      - pricing_options
+          - access
+          example: access
+    OfferingIncludes:
+      readOnly: true
       properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRef'
-        name:
-          type: string
-          description: The name of the offering.
-          minLength: 3
-          maxLength: 1024
-          example: Magazine
-        description:
-          type: string
-          description: The offering description to display to customers.
-          maxLength: 1024
-          example: A lovely magazine that is published every month.
-        proration_policy_id:
-          type: string
-          description: The unique ID or external ref of the proration policy
-          example: 11111111-2222-3333-4444-555555555555
-        configured_features:
-          $ref: '#/components/schemas/OfferingBuildConfiguredFeatures'
-        pricing_option_associations:
-          $ref: '#/components/schemas/OfferingBuildPricingOptionAssociations'
         features:
           type: array
-          description: Either references of existing features (id or external_ref) to be attached to the offering or feature information to be created directly within the offering
-          minItems: 1
           items:
-            anyOf:
-            - $ref: '#/components/schemas/ExternalRef'
-            - $ref: '#/components/schemas/FeatureAttributes'
-            - $ref: '#/components/schemas/UUID'
+            $ref: '#/components/schemas/OfferingFeature'
         plans:
           type: array
-          description: Plan information to be created within the offering
-          minItems: 1
           items:
-            anyOf:
-            - $ref: '#/components/schemas/OfferingPlanAttributes'
+            $ref: '#/components/schemas/OfferingPlan'
         pricing_options:
           type: array
-          description: Pricing options information to be created within the offering
-          minItems: 1
           items:
-            $ref: '#/components/schemas/PricingOptionAttributes'
+            $ref: '#/components/schemas/OfferingPricingOption'
     LinkObject:
       type: object
       properties:
@@ -2196,6 +2055,76 @@ components:
           type: string
           format: uri
           example: http://example.com/schemas/article-comments
+    OfferingRelationships:
+      properties:
+        proration_policy:
+          $ref: '#/components/schemas/ProrationPolicyRelationshipAttributes'
+    OfferingMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      - external_plan_refs
+      properties:
+        external_plan_refs:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfferingPlanExternalRefMeta'
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    PriceFormatting:
+      required:
+      - amount
+      - currency
+      - formatted
+      properties:
+        amount:
+          type: integer
+          format: int64
+          example: 100
+          description: The unformatted amount for the objects.
+        currency:
+          type: string
+          format: string
+          example: USD
+          description: The three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html) in uppercase, associated with a price.
+        formatted:
+          type: string
+          format: string
+          example: $1.00
+          description: The formatted amount for the objects.
+    SingleRelationship:
+      description: The subscription resource that is related.
+      properties:
+        data:
+          $ref: '#/components/schemas/RelationshipData'
+        links:
+          $ref: '#/components/schemas/RelationshipLinks'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     FeatureAccessAttributes:
       required:
       - type
@@ -2208,6 +2137,31 @@ components:
           example: access
         tag:
           $ref: '#/components/schemas/FeatureTag'
+    ProrationPolicyRelationshipAttributes:
+      type: object
+      required:
+      - type
+      - id
+      properties:
+        type:
+          $ref: '#/components/schemas/ProrationPolicyType'
+        id:
+          $ref: '#/components/schemas/UUID'
+    FeatureResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/FeatureAttributes'
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    OfferingPlanExternalRefMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The offerings plan external_ref value
+      example: 97dddc65-eabd-45d8-b45b-2ece5cfc8c50
     OfferingAttributes:
       required:
       - name
@@ -2225,81 +2179,40 @@ components:
           description: The offering description to display to customers.
           maxLength: 1024
           example: A lovely magazine that is published every month.
-    OfferingPricingOptionPriceForPlan:
-      readOnly: true
-      properties:
-        price:
-          $ref: '#/components/schemas/Price'
-        display_price:
-          $ref: '#/components/schemas/DisplayPrice'
-    SubscriptionOfferingPlanType:
+    SubscriptionOfferingFeatureType:
       type: string
-      example: subscription_offering_plan
+      example: subscription_offering_feature
       enum:
-      - subscription_offering_plan
-    FeatureMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
+      - subscription_offering_feature
+    ProrationPolicyType:
+      type: string
+      example: subscription_proration_policy
+      enum:
+      - subscription_proration_policy
+    LeadTime:
+      type: object
+      description: Configuration of the lead time to generate an invoice ahead of time in a pro-forma state
       properties:
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    OfferingResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/OfferingAttributes'
-      - $ref: '#/components/schemas/Timestamps'
-    OfferingFeatureAttach:
-      description: A list of feature IDs to attach to the offering. See [**List Features**](/docs/api/subscriptions/list-features).
+        type:
+          type: string
+          description: The unit of time that lead time is measured in.
+          example: day
+          enum:
+          - day
+          - week
+          x-go-type: model.LeadTimeType
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+        time:
+          type: integer
+          description: The lead time to generate an invoice ahead of time in a pro-forma state
+          example: 14
+          minimum: 1
       required:
-      - features
-      properties:
-        features:
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/UUID'
+      - type
+      - time
   responses:
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-    ForbiddenError:
-      description: Forbidden. The operation is forbidden on this entity.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Permission denied
-                  status: '404'
-                  detail: 'Permission denied: plan tenancy mismatch'
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: 'data.attributes.name: "name" is required'
     NotFoundError:
       description: Not found. The requested entity does not exist.
       content:
@@ -2313,6 +2226,44 @@ components:
                 - title: Not Found
                   status: '404'
                   detail: No plan found
+    ForbiddenError:
+      description: Forbidden. The operation is forbidden on this entity.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Permission denied
+                  status: '404'
+                  detail: 'Permission denied: plan tenancy mismatch'
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: 'data.attributes.name: "name" is required'
     WriteConflictError:
       description: Write conflict. Unable to perform the operation at this time.
       content:
@@ -2323,6 +2274,55 @@ components:
             errors:
             - title: Write Conflict
               status: '409'
+  parameters:
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
+    Filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(name,Alan Turing)
+    OfferingInclude:
+      name: include
+      in: query
+      required: false
+      style: form
+      explode: false
+      schema:
+        type: array
+        description: A comma-separated list of resources to include. See [Characteristics of Include Parameter](/guides/Getting-Started/includes#characteristics-of-include-parameter).
+        example: plans,pricing_options
+        items:
+          type: string
+          enum:
+          - plans
+          - pricing_options
+          - features
   securitySchemes:
     BearerToken:
       scheme: bearer

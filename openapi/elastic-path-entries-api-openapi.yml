@@ -302,71 +302,12 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       deprecated: false
 components:
-  responses:
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: 400
-                  detail: 'data.attributes.name: "name" is required'
-    NotFound:
-      description: Bad request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: 404
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - status: 500
-                  title: Internal Server Error
-                  detail: There was an internal server error, you can report with your request id.
-                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
   schemas:
-    FlowsEntriesUpdateRequest:
-      title: FlowsEntriesUpdateRequest
-      type: object
-      properties:
-        data:
-          type: object
-          properties:
-            FIELD1_SLUG:
-              type: string
-              description: The field slug for each field/attribute in a flow/template and the corresponding value for the entry. You can have multiple field slugs if they are related to the flow/template.
-              examples:
-              - value1
-            FIELD2_SLUG:
-              type: string
-              description: The field slug for each field/attribute in a flow/template and the corresponding value for the entry. You can have multiple field slugs if they are related to the flow/template.
-              examples:
-              - value2
-            id:
-              $ref: '#/components/schemas/UUID'
-            type:
-              type: string
-              description: Represents the type of the resource object.
-              examples:
-              - entry
+    UUID:
+      type: string
+      description: A unique identifier for a resource.
+      format: uuid
+      example: 00000000-0000-0000-0000-000000000000
     ErrorResponse:
       required:
       - errors
@@ -375,46 +316,27 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-    FlowsEntriesRequest:
-      title: FlowsEntriesRequest
+    Meta:
       type: object
       properties:
-        data:
-          type: object
-          description: Specifies the type of the resource object.
-          properties:
-            FIELD_SLUG:
-              type: string
-              description: Where **FIELD_SLUG** is the slug for each field/attribute on this flow/template along with the corresponding value. You must provide a field slug and a value for the entry. You can have multiple field slugs if they are related to the flow/template.
-              examples:
-              - a value
-            type:
-              type: string
-              description: Represents the type of object being returned.
-              examples:
-              - entry
-    Entry:
-      title: Entry
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
+        owner:
           type: string
-          description: Represents the type of object being returned.
-          example: entry
-        links:
-          $ref: '#/components/schemas/FlowsLinks'
-        meta:
-          $ref: '#/components/schemas/Meta'
-      additionalProperties:
-        type: string
-        description: There can be a `:fieldSlug` attribute for each field/attribute attached to a flow/template. The type depends on the field type.
-    UUID:
-      type: string
-      description: A unique identifier for a resource.
-      format: uuid
-      example: 00000000-0000-0000-0000-000000000000
+          description: The resource owner, either `organization` or `store`.
+          example: enum
+          enum:
+          - store
+          - organization
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              type: string
+              description: The date and time a resource is created.
+              example: '2023-10-11T13:02:25.293Z'
+            updated_at:
+              type: string
+              description: The date and time a resource is updated.
+              example: '2023-10-11T13:02:25.293Z'
     Error:
       required:
       - status
@@ -443,27 +365,6 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    Meta:
-      type: object
-      properties:
-        owner:
-          type: string
-          description: The resource owner, either `organization` or `store`.
-          example: enum
-          enum:
-          - store
-          - organization
-        timestamps:
-          type: object
-          properties:
-            created_at:
-              type: string
-              description: The date and time a resource is created.
-              example: '2023-10-11T13:02:25.293Z'
-            updated_at:
-              type: string
-              description: The date and time a resource is updated.
-              example: '2023-10-11T13:02:25.293Z'
     FlowsLinks:
       type: object
       description: "Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:\n \n | Property | Description |\n | --- | --- |\n | `current` | Always the current page |\n | `first` | Always the first page |\n | `last` | `null` if there is only one page. |\n | `prev` | `null` if you are on the first page. |\n | `next` | `null` if there is only one page. |\n"
@@ -471,19 +372,106 @@ components:
         self:
           type: string
           example: https://euwest.api.elasticpath.com/v2/flows/d2a9b22a-b4b0-456b-bbc7-d8723aaffa84
-  parameters:
-    page-limit:
-      name: page[limit]
-      description: 'The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-
-        '
-      in: query
-      style: form
-      explode: true
-      schema:
+    Entry:
+      title: Entry
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          type: string
+          description: Represents the type of object being returned.
+          example: entry
+        links:
+          $ref: '#/components/schemas/FlowsLinks'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      additionalProperties:
         type: string
-        examples:
-        - '10'
+        description: There can be a `:fieldSlug` attribute for each field/attribute attached to a flow/template. The type depends on the field type.
+    FlowsEntriesUpdateRequest:
+      title: FlowsEntriesUpdateRequest
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            FIELD1_SLUG:
+              type: string
+              description: The field slug for each field/attribute in a flow/template and the corresponding value for the entry. You can have multiple field slugs if they are related to the flow/template.
+              examples:
+              - value1
+            FIELD2_SLUG:
+              type: string
+              description: The field slug for each field/attribute in a flow/template and the corresponding value for the entry. You can have multiple field slugs if they are related to the flow/template.
+              examples:
+              - value2
+            id:
+              $ref: '#/components/schemas/UUID'
+            type:
+              type: string
+              description: Represents the type of the resource object.
+              examples:
+              - entry
+    FlowsEntriesRequest:
+      title: FlowsEntriesRequest
+      type: object
+      properties:
+        data:
+          type: object
+          description: Specifies the type of the resource object.
+          properties:
+            FIELD_SLUG:
+              type: string
+              description: Where **FIELD_SLUG** is the slug for each field/attribute on this flow/template along with the corresponding value. You must provide a field slug and a value for the entry. You can have multiple field slugs if they are related to the flow/template.
+              examples:
+              - a value
+            type:
+              type: string
+              description: Represents the type of object being returned.
+              examples:
+              - entry
+  responses:
+    NotFound:
+      description: Bad request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: 404
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: 400
+                  detail: 'data.attributes.name: "name" is required'
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: 500
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+  parameters:
     page-offset:
       name: page[offset]
       description: 'The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
@@ -496,6 +484,18 @@ components:
         type: string
         examples:
         - '0'
+    page-limit:
+      name: page[limit]
+      description: 'The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+
+        '
+      in: query
+      style: form
+      explode: true
+      schema:
+        type: string
+        examples:
+        - '10'
   securitySchemes:
     bearerAuth:
       type: http

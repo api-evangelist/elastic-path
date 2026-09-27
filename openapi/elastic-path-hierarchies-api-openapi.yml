@@ -1004,6 +1004,75 @@ paths:
           $ref: '#/components/responses/internal'
 components:
   schemas:
+    hierarchy:
+      type: object
+      required:
+      - id
+      - type
+      - meta
+      - relationships
+      - attributes
+      properties:
+        id:
+          description: A unique identifier generated when a hierarchy is created.
+          type: string
+        type:
+          description: This represents the type of resource object being returned. Always `hierarchy`.
+          type: string
+          enum:
+          - hierarchy
+        attributes:
+          $ref: '#/components/schemas/attributes_hierarchy'
+        relationships:
+          $ref: '#/components/schemas/relationships_hierarchy'
+        meta:
+          type: object
+          properties:
+            created_at:
+              description: The date and time a hierarchy is created.
+              type: string
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+            updated_at:
+              description: The date and time a hierarchy is updated.
+              type: string
+              example: '2020-09-22T09:00:00.000Z'
+              format: date-time
+            owner:
+              description: The owner of a resource, either `organization` or `store`.
+              type: string
+              enum:
+              - store
+              - organization
+            has_children:
+              description: Whether the hierarchy has child nodes.
+              type: boolean
+            breadcrumbs:
+              type: array
+              description: Breadcrumbs
+              items:
+                type: object
+                properties:
+                  id:
+                    description: A unique identifier generated when a hierarchy is created.
+                    type: string
+                  name:
+                    description: The name of a hierarchy, such as `Major Appliances`.
+                    type: string
+                  slug:
+                    description: A unique slug for a hierarchy.
+                    type: string
+                  locales:
+                    description: Product Experience Manager supports localization of hierarchies and nodes. If you store supports multiple languages, you can localize hierarchy and node names and descriptions.
+                    type: object
+                    additionalProperties:
+                      description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        name:
+                          description: A localized hierarchy or node name.
+                          type: string
     included_response:
       type: object
       description: Included is an array of resources that are included in the response.
@@ -1023,6 +1092,65 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/elastic_path_file'
+    multi_hierarchy:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/hierarchy'
+        links:
+          $ref: '#/components/schemas/multi_links'
+        meta:
+          $ref: '#/components/schemas/multi_meta'
+    shopper_attributes:
+      type: object
+      description: "`shopper_attributes` are displayed in catalogs. This means `shopper_attributes` can be viewed by both shoppers and administrators. If you do not want a custom attribute to be displayed in a catalog, you must add it to `admin_attributes`. \n\n`shopper_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
+      example:
+        cost_of_goods: '42.0'
+        charge_type: credit card
+      additionalProperties:
+        type:
+        - string
+        - 'null'
+    attributes:
+      type: object
+      properties:
+        name:
+          description: The name of the node, such as `Ranges` or `Refrigerators`. Names must be unique among sibling nodes in the hierarchy. Otherwise, a name can be non-unique within the hierarchy and across multiple hierarchies.
+          type: string
+        description:
+          description: A description for a node.
+          type: string
+        slug:
+          description: A slug for the node. Slugs must be unique among sibling nodes in the hierarchy. Otherwise, a slug can be non-unique within the hierarchy and across multiple hierarchies.
+          type: string
+        curated_products:
+          description: You can curate your products in your nodes product lists. Product curation allows you to promote specific products within each node in a hierarchy, enabling you to create unique product collections in your storefront.
+          type: array
+          items:
+            description: A list of product IDs whose products you want to curate.
+            type: string
+        admin_attributes:
+          $ref: '#/components/schemas/admin_attributes'
+        shopper_attributes:
+          $ref: '#/components/schemas/shopper_attributes'
+        locales:
+          description: Product Experience Manager supports localization of hierarchies and nodes. If you store supports multiple languages, you can localize hierarchy and node names and descriptions.
+          type: object
+          additionalProperties:
+            description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                description: A localized hierarchy or node name.
+                type: string
+              description:
+                description: A localized hierarchy or node description.
+                type: string
     job:
       type: object
       required:
@@ -1131,249 +1259,6 @@ components:
               - string
               - 'null'
               description: The entities included in the job. For example, if the job type is `product-export`, the PXM products included in the export.
-    relationships:
-      type: object
-      description: Relationships allow you to move between requests. Includes links to the child nodes and products associated with a hierarchy or node.
-      properties:
-        children:
-          description: The child nodes related to the resource.
-          type: object
-          properties:
-            data:
-              description: An array of child nodes.
-              type: array
-              items: {}
-            links:
-              description: Links allow you to move between requests.
-              type: object
-              properties:
-                related:
-                  description: A link to a related resource.
-                  type: string
-        parent:
-          description: The parent node related to the resource
-          type: object
-          properties:
-            data:
-              description: The parent node
-              type: object
-              required:
-              - id
-              - type
-              properties:
-                type:
-                  description: This represents the type of resource object being returned. Always `node`.
-                  type: string
-                  enum:
-                  - node
-                id:
-                  description: The unique identifier of a node.
-                  type: string
-        products:
-          type: object
-          description: The products related to the resource.
-          properties:
-            data:
-              description: An array of products.
-              type: array
-              items: {}
-            links:
-              type: object
-              description: Links allow you to move between requests.
-              properties:
-                related:
-                  description: A link to a related resource.
-                  type: string
-    node_children:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: array
-          items:
-            type: object
-            required:
-            - id
-            - type
-            properties:
-              id:
-                type: string
-                description: The unique identifier of the child node. Must not match the node ID specified in the request path.
-                example: 00000000-0000-0000-0000-000000000000
-              type:
-                description: This represents the type of resource object being returned. Always `node`.
-                type: string
-                enum:
-                - node
-    product_custom_inputs:
-      type: object
-      description: You use the `custom_inputs` attribute to allow your shoppers to add custom text to a product when adding product items to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized or you sell greetings cards that can be printed with your shoppers personalized messages. See [Personalizing Products](/docs/api/pxm/products/create-product#personalizing-products).
-      additionalProperties:
-        description: A name for the custom text field. You can rename this to something more representative of the input that shoppers are adding, for example, `message` or `front`.
-        type: object
-        properties:
-          name:
-            type: string
-            description: A name for the custom text field.
-          validation_rules:
-            type: array
-            description: The validation rules for the custom text.
-            items:
-              type: object
-              properties:
-                type:
-                  type: string
-                  description: The type of validation rule. For example, `string`.
-                options:
-                  type: object
-                  description: The options for the validation rule.
-                  properties:
-                    max_length:
-                      type: integer
-                      description: The number of characters the custom text field can be. You can specify a maximum length up to 255 characters, as the limit is 255 characters.
-          required:
-            type: boolean
-            description: '`true` or `false` depending on whether the custom text is required.'
-    multi_hierarchy:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/hierarchy'
-        links:
-          $ref: '#/components/schemas/multi_links'
-        meta:
-          $ref: '#/components/schemas/multi_meta'
-    single_hierarchy:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          $ref: '#/components/schemas/hierarchy'
-    hierarchy:
-      type: object
-      required:
-      - id
-      - type
-      - meta
-      - relationships
-      - attributes
-      properties:
-        id:
-          description: A unique identifier generated when a hierarchy is created.
-          type: string
-        type:
-          description: This represents the type of resource object being returned. Always `hierarchy`.
-          type: string
-          enum:
-          - hierarchy
-        attributes:
-          $ref: '#/components/schemas/attributes_hierarchy'
-        relationships:
-          $ref: '#/components/schemas/relationships_hierarchy'
-        meta:
-          type: object
-          properties:
-            created_at:
-              description: The date and time a hierarchy is created.
-              type: string
-              example: '2020-09-22T09:00:00.000Z'
-              format: date-time
-            updated_at:
-              description: The date and time a hierarchy is updated.
-              type: string
-              example: '2020-09-22T09:00:00.000Z'
-              format: date-time
-            owner:
-              description: The owner of a resource, either `organization` or `store`.
-              type: string
-              enum:
-              - store
-              - organization
-            has_children:
-              description: Whether the hierarchy has child nodes.
-              type: boolean
-            breadcrumbs:
-              type: array
-              description: Breadcrumbs
-              items:
-                type: object
-                properties:
-                  id:
-                    description: A unique identifier generated when a hierarchy is created.
-                    type: string
-                  name:
-                    description: The name of a hierarchy, such as `Major Appliances`.
-                    type: string
-                  slug:
-                    description: A unique slug for a hierarchy.
-                    type: string
-                  locales:
-                    description: Product Experience Manager supports localization of hierarchies and nodes. If you store supports multiple languages, you can localize hierarchy and node names and descriptions.
-                    type: object
-                    additionalProperties:
-                      description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
-                      type: object
-                      additionalProperties: false
-                      properties:
-                        name:
-                          description: A localized hierarchy or node name.
-                          type: string
-    error:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            required:
-            - status
-            - title
-            properties:
-              status:
-                type: string
-                description: The HTTP response code of the error.
-                example: '500'
-              title:
-                type: string
-                description: A brief summary of the error.
-                example: Internal server error
-              detail:
-                type: string
-                description: Optional additional detail about the error.
-                example: An internal error has occurred.
-              request_id:
-                type: string
-                description: Internal request ID.
-                example: 00000000-0000-0000-0000-000000000000
-              meta:
-                type: object
-                description: Additional supporting meta data for the error.
-                example:
-                  missing_ids:
-                  - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    admin_attributes:
-      type: object
-      description: "`admin_attributes` are not displayed in catalogs. This means `admin_attributes` can only be viewed by administrators. If you want a custom attribute to be displayed in a catalog, you must add it to `shopper_attributes`. \n\n`admin_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
-      example:
-        cost_of_goods: '42.0'
-        charge_type: credit card
-      additionalProperties:
-        type:
-        - string
-        - 'null'
-    single_node:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          $ref: '#/components/schemas/node'
     multi_nodes:
       type: object
       required:
@@ -1388,110 +1273,6 @@ components:
           $ref: '#/components/schemas/multi_meta'
         links:
           $ref: '#/components/schemas/multi_links'
-    single:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          $ref: '#/components/schemas/job'
-    multi_product_response:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/product_response'
-        included:
-          $ref: '#/components/schemas/included_response'
-        links:
-          $ref: '#/components/schemas/multi_links'
-        meta:
-          type: object
-          properties:
-            results:
-              description: Contains the results for the entire collection.
-              type: object
-              properties:
-                total:
-                  description: Total number of results for the entire collection.
-                  type: integer
-                  example: 2
-    create_hierarchy:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: object
-          required:
-          - type
-          - attributes
-          properties:
-            type:
-              description: This represents the type of resource object being returned. Always `hierarchy`.
-              type: string
-              enum:
-              - hierarchy
-            attributes:
-              $ref: '#/components/schemas/req_attributes_hierarchy'
-    node_parent:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: object
-          required:
-          - id
-          - type
-          properties:
-            id:
-              type: string
-              description: The unique identifier of the new parent node. Must not match the node ID specified in the request path.
-              example: 00000000-0000-0000-0000-000000000000
-            type:
-              description: This represents the type of resource object being returned. Always `node`.
-              type: string
-              enum:
-              - node
-    attributes_nodes:
-      type: object
-      additionalProperties: false
-      properties:
-        name:
-          description: The name of the node, such as `Ranges` or `Refrigerators`. Names must be unique among sibling nodes in the hierarchy. Otherwise, a name can be non-unique within the hierarchy and across multiple hierarchies.
-          type: string
-        description:
-          description: A description of the node.
-          type: string
-        slug:
-          description: A slug for the node. Slugs must be unique among sibling nodes in the hierarchy. Otherwise, a slug can be non-unique within the hierarchy and across multiple hierarchies.
-          type: string
-        curated_products:
-          description: You can curate your products in your nodes product lists. Product curation allows you to promote specific products within each node in a hierarchy, enabling you to create unique product collections in your storefront. See [Curating Products in a Node](/docs/api/pxm/products/create-node#curating-products-in-a-node).
-          type: array
-          items:
-            description: A list of product IDs for the products that you want to curate in a node.
-            type: string
-        admin_attributes:
-          $ref: '#/components/schemas/admin_attributes'
-        shopper_attributes:
-          $ref: '#/components/schemas/shopper_attributes'
-        locales:
-          description: Product Experience Manager supports localization of products and hierarchies. If your store supports multiple languages, you can localize product names and descriptions. You can have as many locales as you want.
-          type: object
-          additionalProperties:
-            description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
-            type: object
-            additionalProperties: false
-            properties:
-              name:
-                description: A localized name for the node.
-                type: string
-              description:
-                description: A localized description for the node.
-                type: string
     node:
       type: object
       required:
@@ -1570,70 +1351,6 @@ components:
                         name:
                           description: A localized hierarchy or node name.
                           type: string
-    node_products:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: array
-          items:
-            type: object
-            required:
-            - id
-            - type
-            properties:
-              id:
-                type: string
-                description: The unique identifier of the product to be attached to the node.
-                example: 00000000-0000-0000-0000-000000000000
-              type:
-                description: This represents the type of resource object being returned. Always `product`.
-                type: string
-                enum:
-                - product
-    shopper_attributes:
-      type: object
-      description: "`shopper_attributes` are displayed in catalogs. This means `shopper_attributes` can be viewed by both shoppers and administrators. If you do not want a custom attribute to be displayed in a catalog, you must add it to `admin_attributes`. \n\n`shopper_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
-      example:
-        cost_of_goods: '42.0'
-        charge_type: credit card
-      additionalProperties:
-        type:
-        - string
-        - 'null'
-    create_node:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: object
-          required:
-          - type
-          - attributes
-          properties:
-            type:
-              description: This represents the type of resource object being returned. Always `node`.
-              type: string
-              enum:
-              - node
-            attributes:
-              $ref: '#/components/schemas/attributes_nodes'
-            meta:
-              type: object
-              additionalProperties: false
-              properties:
-                sort_order:
-                  description: 'You can sort the order of your nodes, regardless of where the nodes are in the hierarchy. The `sort_order` for each node. This value determines the order of nodes in the response for the `Get a Node’s Children` request. The node with the highest value of sort_order is displayed first. For example, a node with a sort_order value of 3 appears before a node with a sort_order value of 2.
-
-
-                    - If you don’t provide `sort_order` when creating nodes, all child nodes in the response for `Get a Node’s Children` request are ordered by the `updated_at` time in descending order, with the most recently updated child node first.
-
-                    - If you set `sort_order` for only a few child nodes or not all, the child nodes with a `sort_order` value appear first and then other child nodes appear in the order of `updated_at` time. See [Sorting Nodes in a hierarchy]().
-
-                    '
-                  type: integer
     elastic_path_file:
       type: object
       title: ElasticPathFile
@@ -1711,6 +1428,68 @@ components:
                       description: Total number of results for the entire collection.
                       type: integer
                       example: 2
+    admin_attributes:
+      type: object
+      description: "`admin_attributes` are not displayed in catalogs. This means `admin_attributes` can only be viewed by administrators. If you want a custom attribute to be displayed in a catalog, you must add it to `shopper_attributes`. \n\n`admin_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
+      example:
+        cost_of_goods: '42.0'
+        charge_type: credit card
+      additionalProperties:
+        type:
+        - string
+        - 'null'
+    update_node:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - id
+          - type
+          - attributes
+          properties:
+            id:
+              type: string
+              description: The unique identifier of the node. Must match the node ID specified in the request path.
+              example: 00000000-0000-0000-0000-000000000000
+            type:
+              description: This represents the type of resource object being returned. Always `node`.
+              type: string
+              enum:
+              - node
+            attributes:
+              $ref: '#/components/schemas/attributes_nodes'
+            meta:
+              type: object
+              additionalProperties: false
+              properties:
+                sort_order:
+                  description: "You can sort the order of your nodes, regardless of where the nodes are in the hierarchy. The `sort_order` for each node. This value determines the order of nodes in the response for the `Get a Node’s Children` request. The node with the highest value of sort_order is displayed first. For example, a node with a sort_order value of 3 appears before a node with a sort_order value of 2.\n \n- If you don’t provide `sort_order` when creating nodes, all child nodes in the response for `Get a Node’s Children` request are ordered by the `updated_at` time in descending order, with the most recently updated child node first.\n- If you set `sort_order` for only a few child nodes or not all, the child nodes with a `sort_order` value appear first and then other child nodes appear in the order of `updated_at` time.\n"
+                  type: integer
+    node_children:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - type
+            properties:
+              id:
+                type: string
+                description: The unique identifier of the child node. Must not match the node ID specified in the request path.
+                example: 00000000-0000-0000-0000-000000000000
+              type:
+                description: This represents the type of resource object being returned. Always `node`.
+                type: string
+                enum:
+                - node
     update_hierarchy:
       type: object
       required:
@@ -1735,6 +1514,56 @@ components:
               example: hierarchy
             attributes:
               $ref: '#/components/schemas/req_attributes_hierarchy'
+    attributes_hierarchy:
+      type: object
+      properties:
+        name:
+          description: The name of a hierarchy, such as `Major Appliances`.
+          type: string
+        description:
+          description: A description for a hierarchy.
+          type: string
+        slug:
+          description: A unique slug for a hierarchy.
+          type: string
+        admin_attributes:
+          $ref: '#/components/schemas/admin_attributes'
+        shopper_attributes:
+          $ref: '#/components/schemas/shopper_attributes'
+        locales:
+          description: Product Experience Manager supports localization of hierarchies and nodes. If you store supports multiple languages, you can localize hierarchy and node names and descriptions.
+          type: object
+          additionalProperties:
+            description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                description: A localized hierarchy or node name.
+                type: string
+              description:
+                description: A localized hierarchy or node description.
+                type: string
+    node_parent:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - id
+          - type
+          properties:
+            id:
+              type: string
+              description: The unique identifier of the new parent node. Must not match the node ID specified in the request path.
+              example: 00000000-0000-0000-0000-000000000000
+            type:
+              description: This represents the type of resource object being returned. Always `node`.
+              type: string
+              enum:
+              - node
     product_build_rules:
       type: object
       description: You can build a combination of child products associated with a product, based on build rules that you specify. This is useful, for example, if you have a variation option that you do not sell. This makes managing and building your child products quick and easy. See [Using Build Rules](/docs/api/pxm/products/build-child-products#using-build-rules).
@@ -1759,11 +1588,111 @@ components:
             type: array
             items:
               type: string
-    relationships_hierarchy:
+    product_locales:
+      type: object
+      description: Product Experience Manager supports localization of products and hierarchies. If your store supports multiple languages, you can localize product names and descriptions. You can have as many locales as you want.
+      additionalProperties:
+        description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+        type: object
+        required:
+        - name
+        properties:
+          name:
+            type: string
+            description: A localized name for the product.
+          description:
+            type: string
+            description: A localized description for the product.
+    multi_product_response:
       type: object
       properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/product_response'
+        included:
+          $ref: '#/components/schemas/included_response'
+        links:
+          $ref: '#/components/schemas/multi_links'
+        meta:
+          type: object
+          properties:
+            results:
+              description: Contains the results for the entire collection.
+              type: object
+              properties:
+                total:
+                  description: Total number of results for the entire collection.
+                  type: integer
+                  example: 2
+    error:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                example: '500'
+              title:
+                type: string
+                description: A brief summary of the error.
+                example: Internal server error
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                example: An internal error has occurred.
+              request_id:
+                type: string
+                description: Internal request ID.
+                example: 00000000-0000-0000-0000-000000000000
+              meta:
+                type: object
+                description: Additional supporting meta data for the error.
+                example:
+                  missing_ids:
+                  - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    single:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/job'
+    node_products:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - type
+            properties:
+              id:
+                type: string
+                description: The unique identifier of the product to be attached to the node.
+                example: 00000000-0000-0000-0000-000000000000
+              type:
+                description: This represents the type of resource object being returned. Always `product`.
+                type: string
+                enum:
+                - product
+    relationships:
+      type: object
+      description: Relationships allow you to move between requests. Includes links to the child nodes and products associated with a hierarchy or node.
+      properties:
         children:
-          description: The child nodes related to the hierarchy.
+          description: The child nodes related to the resource.
           type: object
           properties:
             data:
@@ -1777,6 +1706,223 @@ components:
                 related:
                   description: A link to a related resource.
                   type: string
+        parent:
+          description: The parent node related to the resource
+          type: object
+          properties:
+            data:
+              description: The parent node
+              type: object
+              required:
+              - id
+              - type
+              properties:
+                type:
+                  description: This represents the type of resource object being returned. Always `node`.
+                  type: string
+                  enum:
+                  - node
+                id:
+                  description: The unique identifier of a node.
+                  type: string
+        products:
+          type: object
+          description: The products related to the resource.
+          properties:
+            data:
+              description: An array of products.
+              type: array
+              items: {}
+            links:
+              type: object
+              description: Links allow you to move between requests.
+              properties:
+                related:
+                  description: A link to a related resource.
+                  type: string
+    duplicate_job:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              description: This represents the type of resource object being returned. Always `hierarchy`.
+              type: string
+              enum:
+              - hierarchy
+            attributes:
+              type: object
+              additionalProperties: false
+              properties:
+                name:
+                  description: The name of the duplicate hierarchy. The maximum length is 1000 characters.
+                  type: string
+                description:
+                  description: A description of the duplicate hierarchy.
+                  type: string
+                slug:
+                  description: The slug of the duplicate hierarchy. Must be lower case and use dashes instead of spaces.
+                  type: string
+                include_products:
+                  description: Specify `true` if you want the product relationships in the existing nodes associated in your duplicated hierarchy. If not, specify `false`.
+                  type: boolean
+    attributes_nodes:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          description: The name of the node, such as `Ranges` or `Refrigerators`. Names must be unique among sibling nodes in the hierarchy. Otherwise, a name can be non-unique within the hierarchy and across multiple hierarchies.
+          type: string
+        description:
+          description: A description of the node.
+          type: string
+        slug:
+          description: A slug for the node. Slugs must be unique among sibling nodes in the hierarchy. Otherwise, a slug can be non-unique within the hierarchy and across multiple hierarchies.
+          type: string
+        curated_products:
+          description: You can curate your products in your nodes product lists. Product curation allows you to promote specific products within each node in a hierarchy, enabling you to create unique product collections in your storefront. See [Curating Products in a Node](/docs/api/pxm/products/create-node#curating-products-in-a-node).
+          type: array
+          items:
+            description: A list of product IDs for the products that you want to curate in a node.
+            type: string
+        admin_attributes:
+          $ref: '#/components/schemas/admin_attributes'
+        shopper_attributes:
+          $ref: '#/components/schemas/shopper_attributes'
+        locales:
+          description: Product Experience Manager supports localization of products and hierarchies. If your store supports multiple languages, you can localize product names and descriptions. You can have as many locales as you want.
+          type: object
+          additionalProperties:
+            description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                description: A localized name for the node.
+                type: string
+              description:
+                description: A localized description for the node.
+                type: string
+    create_node:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - attributes
+          properties:
+            type:
+              description: This represents the type of resource object being returned. Always `node`.
+              type: string
+              enum:
+              - node
+            attributes:
+              $ref: '#/components/schemas/attributes_nodes'
+            meta:
+              type: object
+              additionalProperties: false
+              properties:
+                sort_order:
+                  description: 'You can sort the order of your nodes, regardless of where the nodes are in the hierarchy. The `sort_order` for each node. This value determines the order of nodes in the response for the `Get a Node’s Children` request. The node with the highest value of sort_order is displayed first. For example, a node with a sort_order value of 3 appears before a node with a sort_order value of 2.
+
+
+                    - If you don’t provide `sort_order` when creating nodes, all child nodes in the response for `Get a Node’s Children` request are ordered by the `updated_at` time in descending order, with the most recently updated child node first.
+
+                    - If you set `sort_order` for only a few child nodes or not all, the child nodes with a `sort_order` value appear first and then other child nodes appear in the order of `updated_at` time. See [Sorting Nodes in a hierarchy]().
+
+                    '
+                  type: integer
+    single_hierarchy:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/hierarchy'
+    req_attributes_hierarchy:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          description: The name of the hierarchy, such as `Major Appliances`.
+          type: string
+        description:
+          description: A description of the hierarchy.
+          type: string
+        slug:
+          description: A unique slug for the hierarchy.
+          type: string
+        admin_attributes:
+          $ref: '#/components/schemas/admin_attributes'
+        shopper_attributes:
+          $ref: '#/components/schemas/shopper_attributes'
+        locales:
+          description: Product Experience Manager supports localization of products and hierarchies. If your store supports multiple languages, you can localize product names and descriptions. You can have as many locales as you want.
+          type: object
+          additionalProperties:
+            description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                description: A localized name for the hierarchy.
+                type: string
+              description:
+                description: A localized description for the hierarchy.
+                type: string
+    product_custom_inputs:
+      type: object
+      description: You use the `custom_inputs` attribute to allow your shoppers to add custom text to a product when adding product items to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized or you sell greetings cards that can be printed with your shoppers personalized messages. See [Personalizing Products](/docs/api/pxm/products/create-product#personalizing-products).
+      additionalProperties:
+        description: A name for the custom text field. You can rename this to something more representative of the input that shoppers are adding, for example, `message` or `front`.
+        type: object
+        properties:
+          name:
+            type: string
+            description: A name for the custom text field.
+          validation_rules:
+            type: array
+            description: The validation rules for the custom text.
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: The type of validation rule. For example, `string`.
+                options:
+                  type: object
+                  description: The options for the validation rule.
+                  properties:
+                    max_length:
+                      type: integer
+                      description: The number of characters the custom text field can be. You can specify a maximum length up to 255 characters, as the limit is 255 characters.
+          required:
+            type: boolean
+            description: '`true` or `false` depending on whether the custom text is required.'
+    nodes_or_hierarchies:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          description: An array of nodes or hierarchies.
+          type: array
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/node'
+            - $ref: '#/components/schemas/hierarchy'
+            discriminator:
+              propertyName: type
+        meta:
+          $ref: '#/components/schemas/multi_meta'
+        links:
+          $ref: '#/components/schemas/multi_links'
     multi_links:
       type: object
       description: 'Links allow you to navigate between pages of results.
@@ -1854,101 +2000,82 @@ components:
             '
           type: string
           example: /pcm/hierarchies?page[offset]=8&page[limit]=10
-    attributes:
-      type: object
-      properties:
-        name:
-          description: The name of the node, such as `Ranges` or `Refrigerators`. Names must be unique among sibling nodes in the hierarchy. Otherwise, a name can be non-unique within the hierarchy and across multiple hierarchies.
-          type: string
-        description:
-          description: A description for a node.
-          type: string
-        slug:
-          description: A slug for the node. Slugs must be unique among sibling nodes in the hierarchy. Otherwise, a slug can be non-unique within the hierarchy and across multiple hierarchies.
-          type: string
-        curated_products:
-          description: You can curate your products in your nodes product lists. Product curation allows you to promote specific products within each node in a hierarchy, enabling you to create unique product collections in your storefront.
-          type: array
-          items:
-            description: A list of product IDs whose products you want to curate.
-            type: string
-        admin_attributes:
-          $ref: '#/components/schemas/admin_attributes'
-        shopper_attributes:
-          $ref: '#/components/schemas/shopper_attributes'
-        locales:
-          description: Product Experience Manager supports localization of hierarchies and nodes. If you store supports multiple languages, you can localize hierarchy and node names and descriptions.
-          type: object
-          additionalProperties:
-            description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
-            type: object
-            additionalProperties: false
-            properties:
-              name:
-                description: A localized hierarchy or node name.
-                type: string
-              description:
-                description: A localized hierarchy or node description.
-                type: string
-    duplicate_job:
+    single_node:
       type: object
       required:
       - data
       properties:
         data:
-          type: object
-          properties:
-            type:
-              description: This represents the type of resource object being returned. Always `hierarchy`.
-              type: string
-              enum:
-              - hierarchy
-            attributes:
-              type: object
-              additionalProperties: false
-              properties:
-                name:
-                  description: The name of the duplicate hierarchy. The maximum length is 1000 characters.
-                  type: string
-                description:
-                  description: A description of the duplicate hierarchy.
-                  type: string
-                slug:
-                  description: The slug of the duplicate hierarchy. Must be lower case and use dashes instead of spaces.
-                  type: string
-                include_products:
-                  description: Specify `true` if you want the product relationships in the existing nodes associated in your duplicated hierarchy. If not, specify `false`.
-                  type: boolean
-    attributes_hierarchy:
+          $ref: '#/components/schemas/node'
+    multi_meta:
       type: object
       properties:
-        name:
-          description: The name of a hierarchy, such as `Major Appliances`.
-          type: string
-        description:
-          description: A description for a hierarchy.
-          type: string
-        slug:
-          description: A unique slug for a hierarchy.
-          type: string
-        admin_attributes:
-          $ref: '#/components/schemas/admin_attributes'
-        shopper_attributes:
-          $ref: '#/components/schemas/shopper_attributes'
-        locales:
-          description: Product Experience Manager supports localization of hierarchies and nodes. If you store supports multiple languages, you can localize hierarchy and node names and descriptions.
+        results:
+          description: Contains the results for the entire collection.
           type: object
-          additionalProperties:
-            description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
-            type: object
-            additionalProperties: false
-            properties:
-              name:
-                description: A localized hierarchy or node name.
-                type: string
-              description:
-                description: A localized hierarchy or node description.
-                type: string
+          properties:
+            total:
+              description: Total number of results for the entire collection.
+              type: integer
+              example: 30
+              minimum: 0
+    product_bundle_components:
+      type: object
+      description: With Product Experience Manager, you can create and manage bundles. A bundle is a purchasable product, consisting of one or more products that you want to sell together. You can create multiple components within a bundle. Each component must have at least one or more options. Each option is a product and a quantity. See [Bundles](/docs/api/pxm/products/products#bundles).
+      additionalProperties:
+        description: The name of the component, such as `games`. The `bundle_configuration` uses the component name to reference a component. A component name should be relatively short and must not contain any special characters.
+        type: object
+        properties:
+          name:
+            type: string
+            description: The component name. The component name is the name that is displayed in your storefront.
+          options:
+            type: array
+            description: The product options included in a component. This can be the ID of another bundle.
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: The unique ID of the product you want to add to a component.
+                type:
+                  type: string
+                  description: This represents the type of object being returned. Always `product`.
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: The number of this product option that a shopper must purchase.
+                min:
+                  type: integer
+                  minimum: 1
+                  description: The minimum quantity of this product option that a shopper can select. Must be 1 or greater. If specified, max must also be specified.
+                max:
+                  type: integer
+                  minimum: 1
+                  description: The maximum quantity of this product option that a shopper can select. Must be 1 or greater and greater than or equal to min. If specified, min must also be specified.
+                sort_order:
+                  type: integer
+                  description: The sort order of the options. The `create a bundle` and `update a bundle` endpoints do not sort the options. You can use the `sort_order` attribute when programming your storefront to display the options in the order that you want.
+                default:
+                  description: Whether the product option is a default option in a bundle. Shoppers can select a bundle that specifies a default list of product options. See [Dynamic Bundles](/docs/api/pxm/products/products#dynamic-bundles).
+                  type: boolean
+                product_should_be_substituted_with_child:
+                  description: Whether the product option should be substituted with a child product.
+                  type: boolean
+                excluded_children:
+                  description: The IDs of child products that are excluded from the bundle option.
+                  type: array
+                  items:
+                    type: string
+          min:
+            type: integer
+            description: The minimum number of product options a shopper can select from this component.
+          max:
+            type: integer
+            description: The maximum number of product options a shopper can select from this component.
+          sort_order:
+            type: integer
+            description: The sort order of the components. The `create a bundle` and `update a bundle` endpoints do not sort the components. You can use the `sort_order` attribute when programming your storefront to display the components in the order that you want.
     product_response:
       type: object
       properties:
@@ -2181,94 +2308,7 @@ components:
                 type: object
                 additionalProperties:
                   type: string
-    product_bundle_components:
-      type: object
-      description: With Product Experience Manager, you can create and manage bundles. A bundle is a purchasable product, consisting of one or more products that you want to sell together. You can create multiple components within a bundle. Each component must have at least one or more options. Each option is a product and a quantity. See [Bundles](/docs/api/pxm/products/products#bundles).
-      additionalProperties:
-        description: The name of the component, such as `games`. The `bundle_configuration` uses the component name to reference a component. A component name should be relatively short and must not contain any special characters.
-        type: object
-        properties:
-          name:
-            type: string
-            description: The component name. The component name is the name that is displayed in your storefront.
-          options:
-            type: array
-            description: The product options included in a component. This can be the ID of another bundle.
-            items:
-              type: object
-              properties:
-                id:
-                  type: string
-                  description: The unique ID of the product you want to add to a component.
-                type:
-                  type: string
-                  description: This represents the type of object being returned. Always `product`.
-                quantity:
-                  type: integer
-                  minimum: 1
-                  description: The number of this product option that a shopper must purchase.
-                min:
-                  type: integer
-                  minimum: 1
-                  description: The minimum quantity of this product option that a shopper can select. Must be 1 or greater. If specified, max must also be specified.
-                max:
-                  type: integer
-                  minimum: 1
-                  description: The maximum quantity of this product option that a shopper can select. Must be 1 or greater and greater than or equal to min. If specified, min must also be specified.
-                sort_order:
-                  type: integer
-                  description: The sort order of the options. The `create a bundle` and `update a bundle` endpoints do not sort the options. You can use the `sort_order` attribute when programming your storefront to display the options in the order that you want.
-                default:
-                  description: Whether the product option is a default option in a bundle. Shoppers can select a bundle that specifies a default list of product options. See [Dynamic Bundles](/docs/api/pxm/products/products#dynamic-bundles).
-                  type: boolean
-                product_should_be_substituted_with_child:
-                  description: Whether the product option should be substituted with a child product.
-                  type: boolean
-                excluded_children:
-                  description: The IDs of child products that are excluded from the bundle option.
-                  type: array
-                  items:
-                    type: string
-          min:
-            type: integer
-            description: The minimum number of product options a shopper can select from this component.
-          max:
-            type: integer
-            description: The maximum number of product options a shopper can select from this component.
-          sort_order:
-            type: integer
-            description: The sort order of the components. The `create a bundle` and `update a bundle` endpoints do not sort the components. You can use the `sort_order` attribute when programming your storefront to display the components in the order that you want.
-    nodes_or_hierarchies:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          description: An array of nodes or hierarchies.
-          type: array
-          items:
-            oneOf:
-            - $ref: '#/components/schemas/node'
-            - $ref: '#/components/schemas/hierarchy'
-            discriminator:
-              propertyName: type
-        meta:
-          $ref: '#/components/schemas/multi_meta'
-        links:
-          $ref: '#/components/schemas/multi_links'
-    multi_meta:
-      type: object
-      properties:
-        results:
-          description: Contains the results for the entire collection.
-          type: object
-          properties:
-            total:
-              description: Total number of results for the entire collection.
-              type: integer
-              example: 30
-              minimum: 0
-    update_node:
+    create_hierarchy:
       type: object
       required:
       - data
@@ -2276,75 +2316,363 @@ components:
         data:
           type: object
           required:
-          - id
           - type
           - attributes
           properties:
-            id:
-              type: string
-              description: The unique identifier of the node. Must match the node ID specified in the request path.
-              example: 00000000-0000-0000-0000-000000000000
             type:
-              description: This represents the type of resource object being returned. Always `node`.
+              description: This represents the type of resource object being returned. Always `hierarchy`.
               type: string
               enum:
-              - node
+              - hierarchy
             attributes:
-              $ref: '#/components/schemas/attributes_nodes'
-            meta:
-              type: object
-              additionalProperties: false
-              properties:
-                sort_order:
-                  description: "You can sort the order of your nodes, regardless of where the nodes are in the hierarchy. The `sort_order` for each node. This value determines the order of nodes in the response for the `Get a Node’s Children` request. The node with the highest value of sort_order is displayed first. For example, a node with a sort_order value of 3 appears before a node with a sort_order value of 2.\n \n- If you don’t provide `sort_order` when creating nodes, all child nodes in the response for `Get a Node’s Children` request are ordered by the `updated_at` time in descending order, with the most recently updated child node first.\n- If you set `sort_order` for only a few child nodes or not all, the child nodes with a `sort_order` value appear first and then other child nodes appear in the order of `updated_at` time.\n"
-                  type: integer
-    product_locales:
+              $ref: '#/components/schemas/req_attributes_hierarchy'
+    relationships_hierarchy:
       type: object
-      description: Product Experience Manager supports localization of products and hierarchies. If your store supports multiple languages, you can localize product names and descriptions. You can have as many locales as you want.
-      additionalProperties:
-        description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
-        type: object
-        required:
-        - name
-        properties:
-          name:
-            type: string
-            description: A localized name for the product.
-          description:
-            type: string
-            description: A localized description for the product.
-    req_attributes_hierarchy:
-      type: object
-      additionalProperties: false
       properties:
-        name:
-          description: The name of the hierarchy, such as `Major Appliances`.
-          type: string
-        description:
-          description: A description of the hierarchy.
-          type: string
-        slug:
-          description: A unique slug for the hierarchy.
-          type: string
-        admin_attributes:
-          $ref: '#/components/schemas/admin_attributes'
-        shopper_attributes:
-          $ref: '#/components/schemas/shopper_attributes'
-        locales:
-          description: Product Experience Manager supports localization of products and hierarchies. If your store supports multiple languages, you can localize product names and descriptions. You can have as many locales as you want.
+        children:
+          description: The child nodes related to the hierarchy.
           type: object
-          additionalProperties:
-            description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
-            type: object
-            additionalProperties: false
-            properties:
-              name:
-                description: A localized name for the hierarchy.
-                type: string
-              description:
-                description: A localized description for the hierarchy.
-                type: string
+          properties:
+            data:
+              description: An array of child nodes.
+              type: array
+              items: {}
+            links:
+              description: Links allow you to move between requests.
+              type: object
+              properties:
+                related:
+                  description: A link to a related resource.
+                  type: string
+  parameters:
+    filter_nodes:
+      name: filter
+      in: query
+      description: 'Many Commerce API endpoints support filtering. The general syntax is described [**here**](/guides/Getting-Started/filtering).
+
+        '
+      style: form
+      explode: true
+      schema:
+        type: string
+      examples:
+        eq:
+          value: eq(name,some-name)
+        like:
+          value: like(name,*some-name*)
+        in:
+          value: in(id,some-id)
+        lt:
+          value: lt(id,100)
+        le:
+          value: le(created_at,2023-01-01)
+        gt:
+          value: gt(updated_at,2023-01-01)
+        ge:
+          value: ge(parent_id,500)
+        eq-owner:
+          value: eq(owner,store)
+        eq-locale:
+          value: eq(locales.fr-FR.name,Nom-du-produit)
+        like-locale:
+          value: like(locales.es-ES.description,*descripción*)
+    include_hierarchies:
+      name: include_hierarchies
+      in: query
+      description: When true, includes hierarchy objects in the response alongside nodes
+      required: false
+      schema:
+        type: boolean
+        default: false
+    hierarchy_id:
+      name: hierarchyID
+      in: path
+      schema:
+        type: string
+        example: 00000000-0000-0000-0000-000000000000
+      required: true
+      description: A unique identifier for the hierarchy.
+    page_limit:
+      name: page[limit]
+      in: query
+      description: The number of records per page. The maximum limit is 100.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 10000
+        format: int64
+        example: 10
+    page_offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 10000
+        format: int64
+        example: 0
+    node_id:
+      name: nodeID
+      in: path
+      schema:
+        type: string
+        example: 00000000-0000-0000-0000-000000000000
+      required: true
+      description: A unique identifier for the node.
+  responses:
+    not_found:
+      description: Bad Request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+    forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Forbidden
+                  status: '403'
+                  detail: entity owned by organization
+    internal:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: '500'
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+    bad_request:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            bad-request:
+              value:
+                errors:
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
   examples:
+    node_updated:
+      value:
+        data:
+          type: node
+          id: 9ea0de15-3347-43dd-8faa-cd32f44a04c7
+          attributes:
+            description: Latest Ballet Shoes
+            locales:
+              fr-FR:
+                name: Chaussons de ballet
+                description: Dernières chaussures de ballet
+            admin_attributes:
+              cost_of_goods: '42.0'
+            shopper_attributes:
+              charge_type: credit card
+            name: Ballet Shoes
+            slug: ballet-shoes
+          relationships:
+            children:
+              data: []
+              links:
+                related: /hierarchies/6183d10c-94b5-4caa-9f12-2f14cb738d41/nodes/9ea0de15-3347-43dd-8faa-cd32f44a04c7/children
+            products:
+              data: []
+              links:
+                related: /hierarchies/6183d10c-94b5-4caa-9f12-2f14cb738d41/nodes/9ea0de15-3347-43dd-8faa-cd32f44a04c7/products
+          meta:
+            created_at: '2024-01-11T19:19:50.087Z'
+            owner: store
+            sort_order: 5
+            updated_at: '2024-01-11T19:56:53.695Z'
+            hierarchy_id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
+            breadcrumbs:
+            - id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
+              name: Shoes
+              slug: shoes
+              locales:
+                fr-FR:
+                  name: hierarchy 1 in French
+            - id: 9ea0de15-3347-43dd-8faa-cd32f44a04c7
+              name: Ballet Shoes
+              slug: ballet-shoes
+              locales:
+                fr-FR:
+                  name: Node 1 in French
+    create_hierarchy:
+      value:
+        data:
+          type: hierarchy
+          attributes:
+            name: Shoes
+            description: Shoes Category
+            slug: shoes
+            admin_attributes:
+              cost_of_goods: '42.0'
+              charge_type: credit card
+            shopper_attributes:
+              cost_of_goods: '42.0'
+              charge_type: credit card
+            locales:
+              fr-FR:
+                name: Chaussures
+                description: Catégorie de chaussures
+    multi_product_response:
+      value:
+        data:
+        - type: product
+          id: 9c85b276-09b4-488e-a59c-c561bae14c9e
+          attributes:
+            commodity_type: physical
+            custom_inputs:
+              back:
+                name: T-Shirt Back
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+              front:
+                name: T-Shirt Front
+                validation_rules:
+                - type: string
+                  options:
+                    max_length: 50
+                required: false
+            description: T-shirt.
+            mpn: 1234-5678-TTTT
+            name: T-Shirt
+            sku: '97805'
+            slug: '97805'
+            status: live
+            upc_ean: '12345656'
+            tags:
+            - tag1
+            - tag2
+            extensions:
+              products(size):
+                widthMM: 600
+                fuelType: electric
+                hasUKPlug: true
+                online: null
+          relationships:
+            children:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/children
+            component_products:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/component_products
+            files:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/files
+            main_image:
+              data: null
+            templates:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/templates
+            variations:
+              data: []
+              links:
+                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/variations
+          meta:
+            created_at: '2022-08-18T14:25:57.391Z'
+            owner: store
+            product_types:
+            - standard
+            updated_at: '2022-08-18T14:25:57.391Z'
+        meta:
+          results:
+            total: 1
+    create_node:
+      value:
+        data:
+          type: node
+          attributes:
+            name: Ballet Shoes
+            description: All Ballet Shoes
+            slug: ballet-shoes
+            admin_attributes:
+              cost_of_goods: '42.0'
+              charge_type: credit card
+            shopper_attributes:
+              cost_of_goods: '42.0'
+              charge_type: credit card
+            locales:
+              fr-FR:
+                name: Chaussons de ballet
+                description: Toutes les ballerines
+          meta:
+            sort_order: 2
+    hierarchy_updated:
+      value:
+        data:
+          type: hierarchy
+          id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
+          attributes:
+            description: Shoes Category Updated
+            locales:
+              fr-FR:
+                name: Chaussures mises à jour
+                description: Catégorie de chaussures mise à jour
+            admin_attributes:
+              cost_of_goods: '42.0'
+            shopper_attributes:
+              charge_type: credit card
+            name: Shoes Updated
+            slug: shoes
+          relationships:
+            children:
+              data: []
+              links:
+                related: /hierarchies/6183d10c-94b5-4caa-9f12-2f14cb738d41/children
+          meta:
+            created_at: '2024-01-10T20:16:35.343Z'
+            owner: store
+            updated_at: '2024-01-10T20:30:50.867Z'
+            breadcrumbs:
+            - id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
+              name: Shoes Updated
+              slug: shoes
+              locales:
+                fr-FR:
+                  name: hierarchy 1 in French
     hierarchy_created:
       value:
         data:
@@ -2380,39 +2708,11 @@ components:
               locales:
                 fr-FR:
                   name: hierarchy 1 in French
-    update_hierarchy:
+    node_parent:
       value:
         data:
-          type: hierarchy
-          id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
-          attributes:
-            description: Shoes Category Updated
-            admin_attributes:
-              cost_of_goods: '42.0'
-              charge_type: null
-            shopper_attributes:
-              cost_of_goods: null
-              charge_type: credit card
-            locales:
-              fr-FR:
-                name: Chaussures mises à jour
-                description: Catégorie de chaussures mise à jour
-            name: Shoes Updated
-            slug: shoes
-    duplicate_hierarchy_job_created:
-      value:
-        data:
-          type: pim-job
-          id: 1d9b101e-a40a-4e53-9f54-08a9ede65019
-          attributes:
-            completed_at: null
-            created_at: '2024-01-11T22:49:10.338Z'
-            started_at: null
-            status: pending
-            type: hierarchy-duplicate
-            updated_at: '2024-01-11T22:49:10.338Z'
-          meta:
-            x_request_id: 40995a1d-c0c1-4d52-a178-bfb5399ab0ec
+          type: node
+          id: 60dc3982-ab34-47e8-9173-c920c63dc382
     resp_multi_nodes:
       value:
         data:
@@ -2495,67 +2795,6 @@ components:
         meta:
           results:
             total: 2
-    duplicate_job:
-      value:
-        data:
-          type: hierarchy
-          attributes:
-            name: New Shoes
-            description: New Shoes Category
-            include_products: true
-    resp_multi_hierarchy:
-      value:
-        data:
-        - type: hierarchy
-          id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
-          attributes:
-            description: Shoes Category
-            locales:
-              fr-FR:
-                name: Chaussures
-                description: Catégorie de chaussures
-            name: Shoes
-            slug: shoes
-          relationships:
-            children:
-              data: []
-              links:
-                related: /hierarchies/6183d10c-94b5-4caa-9f12-2f14cb738d41/children
-          meta:
-            created_at: '2024-01-10T20:16:35.343Z'
-            owner: store
-            updated_at: '2024-01-10T20:30:50.867Z'
-            breadcrumbs:
-            - id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
-              name: Shoes
-              slug: shoes
-              locales:
-                fr-FR:
-                  name: hierarchy 1 in French
-        links:
-          last: /pcm/hierarchies?page[offset]=29&page[limit]=1
-          next: /pcm/hierarchies?page[offset]=1&page[limit]=1
-        meta:
-          results:
-            total: 30
-    create_hierarchy:
-      value:
-        data:
-          type: hierarchy
-          attributes:
-            name: Shoes
-            description: Shoes Category
-            slug: shoes
-            admin_attributes:
-              cost_of_goods: '42.0'
-              charge_type: credit card
-            shopper_attributes:
-              cost_of_goods: '42.0'
-              charge_type: credit card
-            locales:
-              fr-FR:
-                name: Chaussures
-                description: Catégorie de chaussures
     resp_multi_nodes_or_hierarchies:
       value:
         data:
@@ -2664,38 +2903,100 @@ components:
         meta:
           results:
             total: 3
-    node_updated:
+    update_node:
       value:
         data:
           type: node
           id: 9ea0de15-3347-43dd-8faa-cd32f44a04c7
           attributes:
+            name: Ballet Shoes
             description: Latest Ballet Shoes
+            slug: ballet-shoes
+            admin_attributes:
+              cost_of_goods: '42.0'
+              charge_type: null
+            shopper_attributes:
+              cost_of_goods: null
+              charge_type: credit card
             locales:
               fr-FR:
                 name: Chaussons de ballet
                 description: Dernières chaussures de ballet
+          meta:
+            sort_order: 5
+    duplicate_hierarchy_job_created:
+      value:
+        data:
+          type: pim-job
+          id: 1d9b101e-a40a-4e53-9f54-08a9ede65019
+          attributes:
+            completed_at: null
+            created_at: '2024-01-11T22:49:10.338Z'
+            started_at: null
+            status: pending
+            type: hierarchy-duplicate
+            updated_at: '2024-01-11T22:49:10.338Z'
+          meta:
+            x_request_id: 40995a1d-c0c1-4d52-a178-bfb5399ab0ec
+    update_hierarchy:
+      value:
+        data:
+          type: hierarchy
+          id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
+          attributes:
+            description: Shoes Category Updated
             admin_attributes:
               cost_of_goods: '42.0'
+              charge_type: null
             shopper_attributes:
+              cost_of_goods: null
               charge_type: credit card
-            name: Ballet Shoes
-            slug: ballet-shoes
+            locales:
+              fr-FR:
+                name: Chaussures mises à jour
+                description: Catégorie de chaussures mise à jour
+            name: Shoes Updated
+            slug: shoes
+    duplicate_job:
+      value:
+        data:
+          type: hierarchy
+          attributes:
+            name: New Shoes
+            description: New Shoes Category
+            include_products: true
+    node_children:
+      value:
+        data:
+        - type: node
+          id: b2f5e53e-de3c-4548-98da-120f8b185d34
+    node_products:
+      value:
+        data:
+        - type: product
+          id: 9c85b276-09b4-488e-a59c-c561bae14c9e
+    resp_multi_hierarchy:
+      value:
+        data:
+        - type: hierarchy
+          id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
+          attributes:
+            description: Shoes Category
+            locales:
+              fr-FR:
+                name: Chaussures
+                description: Catégorie de chaussures
+            name: Shoes
+            slug: shoes
           relationships:
             children:
               data: []
               links:
-                related: /hierarchies/6183d10c-94b5-4caa-9f12-2f14cb738d41/nodes/9ea0de15-3347-43dd-8faa-cd32f44a04c7/children
-            products:
-              data: []
-              links:
-                related: /hierarchies/6183d10c-94b5-4caa-9f12-2f14cb738d41/nodes/9ea0de15-3347-43dd-8faa-cd32f44a04c7/products
+                related: /hierarchies/6183d10c-94b5-4caa-9f12-2f14cb738d41/children
           meta:
-            created_at: '2024-01-11T19:19:50.087Z'
+            created_at: '2024-01-10T20:16:35.343Z'
             owner: store
-            sort_order: 5
-            updated_at: '2024-01-11T19:56:53.695Z'
-            hierarchy_id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
+            updated_at: '2024-01-10T20:30:50.867Z'
             breadcrumbs:
             - id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
               name: Shoes
@@ -2703,82 +3004,12 @@ components:
               locales:
                 fr-FR:
                   name: hierarchy 1 in French
-            - id: 9ea0de15-3347-43dd-8faa-cd32f44a04c7
-              name: Ballet Shoes
-              slug: ballet-shoes
-              locales:
-                fr-FR:
-                  name: Node 1 in French
-    multi_product_response:
-      value:
-        data:
-        - type: product
-          id: 9c85b276-09b4-488e-a59c-c561bae14c9e
-          attributes:
-            commodity_type: physical
-            custom_inputs:
-              back:
-                name: T-Shirt Back
-                validation_rules:
-                - type: string
-                  options:
-                    max_length: 50
-                required: false
-              front:
-                name: T-Shirt Front
-                validation_rules:
-                - type: string
-                  options:
-                    max_length: 50
-                required: false
-            description: T-shirt.
-            mpn: 1234-5678-TTTT
-            name: T-Shirt
-            sku: '97805'
-            slug: '97805'
-            status: live
-            upc_ean: '12345656'
-            tags:
-            - tag1
-            - tag2
-            extensions:
-              products(size):
-                widthMM: 600
-                fuelType: electric
-                hasUKPlug: true
-                online: null
-          relationships:
-            children:
-              data: []
-              links:
-                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/children
-            component_products:
-              data: []
-              links:
-                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/component_products
-            files:
-              data: []
-              links:
-                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/files
-            main_image:
-              data: null
-            templates:
-              data: []
-              links:
-                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/templates
-            variations:
-              data: []
-              links:
-                self: /products/9c85b276-09b4-488e-a59c-c561bae14c9e/relationships/variations
-          meta:
-            created_at: '2022-08-18T14:25:57.391Z'
-            owner: store
-            product_types:
-            - standard
-            updated_at: '2022-08-18T14:25:57.391Z'
+        links:
+          last: /pcm/hierarchies?page[offset]=29&page[limit]=1
+          next: /pcm/hierarchies?page[offset]=1&page[limit]=1
         meta:
           results:
-            total: 1
+            total: 30
     node_created:
       value:
         data:
@@ -2831,237 +3062,6 @@ components:
               locales:
                 fr-FR:
                   name: Node 1 in French
-    node_parent:
-      value:
-        data:
-          type: node
-          id: 60dc3982-ab34-47e8-9173-c920c63dc382
-    hierarchy_updated:
-      value:
-        data:
-          type: hierarchy
-          id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
-          attributes:
-            description: Shoes Category Updated
-            locales:
-              fr-FR:
-                name: Chaussures mises à jour
-                description: Catégorie de chaussures mise à jour
-            admin_attributes:
-              cost_of_goods: '42.0'
-            shopper_attributes:
-              charge_type: credit card
-            name: Shoes Updated
-            slug: shoes
-          relationships:
-            children:
-              data: []
-              links:
-                related: /hierarchies/6183d10c-94b5-4caa-9f12-2f14cb738d41/children
-          meta:
-            created_at: '2024-01-10T20:16:35.343Z'
-            owner: store
-            updated_at: '2024-01-10T20:30:50.867Z'
-            breadcrumbs:
-            - id: 6183d10c-94b5-4caa-9f12-2f14cb738d41
-              name: Shoes Updated
-              slug: shoes
-              locales:
-                fr-FR:
-                  name: hierarchy 1 in French
-    update_node:
-      value:
-        data:
-          type: node
-          id: 9ea0de15-3347-43dd-8faa-cd32f44a04c7
-          attributes:
-            name: Ballet Shoes
-            description: Latest Ballet Shoes
-            slug: ballet-shoes
-            admin_attributes:
-              cost_of_goods: '42.0'
-              charge_type: null
-            shopper_attributes:
-              cost_of_goods: null
-              charge_type: credit card
-            locales:
-              fr-FR:
-                name: Chaussons de ballet
-                description: Dernières chaussures de ballet
-          meta:
-            sort_order: 5
-    create_node:
-      value:
-        data:
-          type: node
-          attributes:
-            name: Ballet Shoes
-            description: All Ballet Shoes
-            slug: ballet-shoes
-            admin_attributes:
-              cost_of_goods: '42.0'
-              charge_type: credit card
-            shopper_attributes:
-              cost_of_goods: '42.0'
-              charge_type: credit card
-            locales:
-              fr-FR:
-                name: Chaussons de ballet
-                description: Toutes les ballerines
-          meta:
-            sort_order: 2
-    node_products:
-      value:
-        data:
-        - type: product
-          id: 9c85b276-09b4-488e-a59c-c561bae14c9e
-    node_children:
-      value:
-        data:
-        - type: node
-          id: b2f5e53e-de3c-4548-98da-120f8b185d34
-  responses:
-    not_found:
-      description: Bad Request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-    forbidden:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Forbidden
-                  status: '403'
-                  detail: entity owned by organization
-    internal:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - status: '500'
-                  title: Internal Server Error
-                  detail: There was an internal server error, you can report with your request id.
-                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
-    bad_request:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            bad-request:
-              value:
-                errors:
-                - title: Bad Request
-                  detail: Could not parse the supplied filter
-                  status: '400'
-    unprocessable_entity:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            failed-validation:
-              value:
-                errors:
-                - title: Failed Validation
-                  status: '422'
-                  detail: <XYZ> can not be empty
-  parameters:
-    page_limit:
-      name: page[limit]
-      in: query
-      description: The number of records per page. The maximum limit is 100.
-      schema:
-        type: integer
-        minimum: 0
-        maximum: 10000
-        format: int64
-        example: 10
-    page_offset:
-      name: page[offset]
-      in: query
-      description: The number of records to offset the results by.
-      schema:
-        type: integer
-        minimum: 0
-        maximum: 10000
-        format: int64
-        example: 0
-    node_id:
-      name: nodeID
-      in: path
-      schema:
-        type: string
-        example: 00000000-0000-0000-0000-000000000000
-      required: true
-      description: A unique identifier for the node.
-    filter_nodes:
-      name: filter
-      in: query
-      description: 'Many Commerce API endpoints support filtering. The general syntax is described [**here**](/guides/Getting-Started/filtering).
-
-        '
-      style: form
-      explode: true
-      schema:
-        type: string
-      examples:
-        eq:
-          value: eq(name,some-name)
-        like:
-          value: like(name,*some-name*)
-        in:
-          value: in(id,some-id)
-        lt:
-          value: lt(id,100)
-        le:
-          value: le(created_at,2023-01-01)
-        gt:
-          value: gt(updated_at,2023-01-01)
-        ge:
-          value: ge(parent_id,500)
-        eq-owner:
-          value: eq(owner,store)
-        eq-locale:
-          value: eq(locales.fr-FR.name,Nom-du-produit)
-        like-locale:
-          value: like(locales.es-ES.description,*descripción*)
-    include_hierarchies:
-      name: include_hierarchies
-      in: query
-      description: When true, includes hierarchy objects in the response alongside nodes
-      required: false
-      schema:
-        type: boolean
-        default: false
-    hierarchy_id:
-      name: hierarchyID
-      in: path
-      schema:
-        type: string
-        example: 00000000-0000-0000-0000-000000000000
-      required: true
-      description: A unique identifier for the hierarchy.
   securitySchemes:
     bearerAuth:
       type: http

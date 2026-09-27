@@ -197,32 +197,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   responses:
-    ForbiddenError:
-      description: Forbidden. The operation is forbidden on this entity.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Permission denied
-                  status: '404'
-                  detail: 'Permission denied: plan tenancy mismatch'
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: 'data.attributes.name: "name" is required'
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.
       content:
@@ -248,6 +222,19 @@ components:
                 - title: Not Found
                   status: '404'
                   detail: No plan found
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: 'data.attributes.name: "name" is required'
     WriteConflictError:
       description: Write conflict. Unable to perform the operation at this time.
       content:
@@ -258,25 +245,83 @@ components:
             errors:
             - title: Write Conflict
               status: '409'
+    ForbiddenError:
+      description: Forbidden. The operation is forbidden on this entity.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Permission denied
+                  status: '404'
+                  detail: 'Permission denied: plan tenancy mismatch'
+  parameters:
+    Filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(name,Alan Turing)
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
   schemas:
-    DunningRuleMeta:
-      readOnly: true
+    DunningRuleUpdate:
       required:
-      - owner
-      - timestamps
+      - id
+      - type
+      - attributes
       properties:
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    ErrorResponse:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionDunningRuleType'
+        attributes:
+          $ref: '#/components/schemas/DunningRuleUpdateAttributes'
+    DunningRule:
       required:
-      - errors
+      - type
+      - attributes
+      - meta
       properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionDunningRuleType'
+        attributes:
+          $ref: '#/components/schemas/DunningRuleAttributes'
+        meta:
+          $ref: '#/components/schemas/DunningRuleMeta'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
     DunningRuleUpdateAttributes:
       properties:
         payment_retry_type:
@@ -347,42 +392,6 @@ components:
           type: boolean
           example: false
           description: Set to `true` if you want this rule to be the default for the store.
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 11111111-2222-3333-4444-555555555555
-    DunningRuleCreate:
-      required:
-      - type
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/SubscriptionDunningRuleType'
-        attributes:
-          $ref: '#/components/schemas/DunningRuleAttributes'
-    Timestamps:
-      required:
-      - created_at
-      - updated_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    SubscriptionDunningRuleType:
-      type: string
-      example: subscription_dunning_rule
-      enum:
-      - subscription_dunning_rule
     Links:
       type: object
       additionalProperties:
@@ -401,30 +410,25 @@ components:
           type: string
           format: uri
           example: http://example.com/schemas/article-comments
-    DunningRule:
+    DunningRuleMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      properties:
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    DunningRuleCreate:
       required:
       - type
       - attributes
-      - meta
       properties:
-        id:
-          $ref: '#/components/schemas/UUID'
         type:
           $ref: '#/components/schemas/SubscriptionDunningRuleType'
         attributes:
           $ref: '#/components/schemas/DunningRuleAttributes'
-        meta:
-          $ref: '#/components/schemas/DunningRuleMeta'
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
     DunningRuleAttributes:
       description: 'The dunning rule attributes you can use to configure your payment retry strategy.
 
@@ -511,18 +515,25 @@ components:
           type: boolean
           example: false
           description: Set to `true` if you want this rule to be the default for the store.
-    DunningRuleUpdate:
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
+    Timestamps:
       required:
-      - id
-      - type
-      - attributes
+      - created_at
+      - updated_at
       properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionDunningRuleType'
-        attributes:
-          $ref: '#/components/schemas/DunningRuleUpdateAttributes'
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
     Error:
       required:
       - status
@@ -546,45 +557,34 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    OwnerMeta:
-      readOnly: true
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    UUID:
       type: string
-      format: string
-      description: The owner of a resource, either `store` or `organization`.
-      example: store
-  parameters:
-    PageLimit:
-      name: page[limit]
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 100
-    Filter:
-      name: filter
-      in: query
-      required: false
-      schema:
-        type: string
-        format: string
-        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
-
-          '
-        example: eq(name,Alan Turing)
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 10
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    SubscriptionDunningRuleType:
+      type: string
+      example: subscription_dunning_rule
+      enum:
+      - subscription_dunning_rule
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     BearerToken:
       scheme: bearer

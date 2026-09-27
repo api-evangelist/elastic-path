@@ -74,15 +74,64 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    ErrorResponse:
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
+    AccountAuthenticationSettings:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Specifies the type of object. Set this value to `account_authentication_settings`.
+          const: account_authentication_settings
+        enable_self_signup:
+          description: Set to `true` to enable self signup.
+          type: boolean
+          example: true
+        auto_create_account_for_account_members:
+          description: This will automatically create an account for each new account member, using the account member’s name as the account name.
+          type: boolean
+          example: true
+        account_member_self_management:
+          description: Whether a user with an [Account Management Authentication Token](/docs/api/accounts/post-v-2-account-members-tokens) can update their own account member details. By default, this is `disabled`. Set to `update_only` if you want the user to be able to update their own account member details (e.g., name, email, and if applicable their username and password). The user can update their own account member details by updating their [User Authentication Info](/docs/authentication/single-sign-on/user-authentication-info-api/update-a-user-authentication-info) using the `account_member_id` retrieved from the `meta` in the response of [Generating an Account Management Authentication Token](/docs/api/accounts/post-v-2-account-members-tokens) as the `id` and find the authentication credentials to update by calling the [Get All User Authentication Password Profile Info](/docs/authentication/single-sign-on/user-authentication-password-profiles-api/get-all-user-authentication-password-profile-info) endpoint.
+          type: string
+          default: disabled
+          enum:
+          - disabled
+          - update_only
+        account_management_authentication_token_timeout_secs:
+          description: The expiry time for Account Management Authentication Token in seconds. If you want to implement idle timout for you application, see [Implementing Idle Timeout](/guides/How-To/Accounts/implement-idle-timeout)
+          type: integer
+          default: 86400
+          example: 86400
+    Error:
       type: object
       required:
-      - errors
+      - status
+      - title
       properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
     AccountAuthenticationSettingsResponse:
       type: object
       properties:
@@ -133,90 +182,16 @@ components:
               description: A URL to the specific resource.
               type: string
               example: https://useast.api.elasticpath.com/v2/account_authentication_settings
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: deb6b25f-8451-4211-9a22-95610333df23
-    Error:
+    ErrorResponse:
       type: object
       required:
-      - status
-      - title
+      - errors
       properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
-    AccountAuthenticationSettings:
-      type: object
-      properties:
-        type:
-          type: string
-          description: Specifies the type of object. Set this value to `account_authentication_settings`.
-          const: account_authentication_settings
-        enable_self_signup:
-          description: Set to `true` to enable self signup.
-          type: boolean
-          example: true
-        auto_create_account_for_account_members:
-          description: This will automatically create an account for each new account member, using the account member’s name as the account name.
-          type: boolean
-          example: true
-        account_member_self_management:
-          description: Whether a user with an [Account Management Authentication Token](/docs/api/accounts/post-v-2-account-members-tokens) can update their own account member details. By default, this is `disabled`. Set to `update_only` if you want the user to be able to update their own account member details (e.g., name, email, and if applicable their username and password). The user can update their own account member details by updating their [User Authentication Info](/docs/authentication/single-sign-on/user-authentication-info-api/update-a-user-authentication-info) using the `account_member_id` retrieved from the `meta` in the response of [Generating an Account Management Authentication Token](/docs/api/accounts/post-v-2-account-members-tokens) as the `id` and find the authentication credentials to update by calling the [Get All User Authentication Password Profile Info](/docs/authentication/single-sign-on/user-authentication-password-profiles-api/get-all-user-authentication-password-profile-info) endpoint.
-          type: string
-          default: disabled
-          enum:
-          - disabled
-          - update_only
-        account_management_authentication_token_timeout_secs:
-          description: The expiry time for Account Management Authentication Token in seconds. If you want to implement idle timout for you application, see [Implementing Idle Timeout](/guides/How-To/Accounts/implement-idle-timeout)
-          type: integer
-          default: 86400
-          example: 86400
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
   responses:
-    UnauthorizedError:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unauthorized-error:
-              value:
-                errors:
-                - title: Unauthorized
-                  status: '401'
-    BadRequestError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              value:
-                errors:
-                - title: Bad Request
-                  status: '400'
-                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
     InternalServerError:
       description: Internal server error.
       content:
@@ -231,6 +206,18 @@ components:
                 - title: Internal Server Error
                   status: '500'
                   detail: there was a problem processing your request
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value:
+                errors:
+                - title: Unauthorized
+                  status: '401'
     UnprocessableEntity:
       description: Unprocessable Entity
       content:
@@ -244,6 +231,19 @@ components:
                 - title: Unprocessable Entity
                   status: '422'
                   detail: store id mismatch
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
   securitySchemes:
     BearerToken:
       type: http

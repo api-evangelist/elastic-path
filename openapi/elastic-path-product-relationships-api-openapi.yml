@@ -300,249 +300,98 @@ paths:
         '500':
           $ref: '#/components/responses/internal'
 components:
+  parameters:
+    product_id:
+      name: productID
+      in: path
+      schema:
+        type: string
+        example: 00000000-0000-0000-0000-000000000000
+        x-postman-example: '{{productID}}'
+      required: true
+      description: A unique identifier for the product.
+    page_limit:
+      name: page[limit]
+      in: query
+      description: The number of records per page. The maximum limit is 100.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 10000
+        format: int64
+        example: 10
+    custom_relationship_slug:
+      name: customRelationshipSlug
+      in: path
+      schema:
+        type: string
+        example: CRP_electric_devices_2024
+      required: true
+      description: A custom relationship slug.
+    page_offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 10000
+        format: int64
+        example: 0
   schemas:
-    included_response:
+    product_association_response:
       type: object
-      description: Included is an array of resources that are included in the response.
       properties:
-        main_images:
-          description: The main images associated with a product.
-          type: array
-          items:
-            $ref: '#/components/schemas/elastic_path_file'
-        component_products:
-          description: Returns a list of component products in a product bundle. If a bundle has no component products (in other words, is not a product bundle), an empty array is returned.
-          type: array
-          items:
-            $ref: '#/components/schemas/product_response'
-        files:
-          description: The files associated with a product.
-          type: array
-          items:
-            $ref: '#/components/schemas/elastic_path_file'
-    product_association_delete_request:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: array
-          items:
-            type: object
-            required:
-            - id
-            - type
-            properties:
-              id:
-                type: string
-                description: The ID of the product you want to relate.
-              type:
-                type: string
-                enum:
-                - product
-                description: This represents the type of resource being returned. Always `product`.
-    multi_custom_relationships:
-      type: object
-      required:
-      - data
-      - meta
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/custom_relationship'
-        links:
-          $ref: '#/components/schemas/multi_links_cr'
         meta:
-          $ref: '#/components/schemas/multi_meta'
-    product_custom_inputs:
-      type: object
-      description: You use the `custom_inputs` attribute to allow your shoppers to add custom text to a product when adding product items to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized or you sell greetings cards that can be printed with your shoppers personalized messages. See [Personalizing Products](/docs/api/pxm/products/create-product#personalizing-products).
-      additionalProperties:
-        description: A name for the custom text field. You can rename this to something more representative of the input that shoppers are adding, for example, `message` or `front`.
-        type: object
-        properties:
-          name:
-            type: string
-            description: A name for the custom text field.
-          validation_rules:
-            type: array
-            description: The validation rules for the custom text.
-            items:
-              type: object
-              properties:
-                type:
-                  type: string
-                  description: The type of validation rule. For example, `string`.
-                options:
-                  type: object
-                  description: The options for the validation rule.
-                  properties:
-                    max_length:
-                      type: integer
-                      description: The number of characters the custom text field can be. You can specify a maximum length up to 255 characters, as the limit is 255 characters.
-          required:
-            type: boolean
-            description: '`true` or `false` depending on whether the custom text is required.'
-    error:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            required:
-            - status
-            - title
-            properties:
-              status:
+          type: object
+          properties:
+            associated_products:
+              description: A list of product IDs that have been successfully associated with this custom relationship.
+              type: array
+              items:
                 type: string
-                description: The HTTP response code of the error.
-                example: '500'
-              title:
-                type: string
-                description: A brief summary of the error.
-                example: Internal server error
-              detail:
-                type: string
-                description: Optional additional detail about the error.
-                example: An internal error has occurred.
-              request_id:
-                type: string
-                description: Internal request ID.
-                example: 00000000-0000-0000-0000-000000000000
-              meta:
-                type: object
-                description: Additional supporting meta data for the error.
-                example:
-                  missing_ids:
-                  - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    admin_attributes:
-      type: object
-      description: "`admin_attributes` are not displayed in catalogs. This means `admin_attributes` can only be viewed by administrators. If you want a custom attribute to be displayed in a catalog, you must add it to `shopper_attributes`. \n\n`admin_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
-      example:
-        cost_of_goods: '42.0'
-        charge_type: credit card
-      additionalProperties:
-        type:
-        - string
-        - 'null'
-    product_association_request:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: array
-          items:
-            type: object
-            required:
-            - id
-            - type
-            properties:
-              id:
-                type: string
-                description: The ID of the product you want to relate.
-              type:
-                type: string
-                enum:
-                - product
-                description: This represents the type of resource being returned. Always `product`.
-              attributes:
+              example:
+              - 68c48149-0e94-4ef2-93d5-8d5f3774980a
+              - ab4826d1-4a5a-4951-a2a5-98058899f891
+            products_not_associated:
+              description: A list of products that could not be associated, including the reasons why.
+              type: array
+              items:
                 type: object
                 properties:
-                  sort_order:
-                    description: The order in which the product to product should be displayed in relation to others. A lower value represents a higher priority in the display order. If set to NULL, the sort order will be removed.
-                    type:
-                    - integer
-                    - 'null'
-                    example: 5
-    multi_product_response:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/product_response'
-        included:
-          $ref: '#/components/schemas/included_response'
-        links:
-          $ref: '#/components/schemas/multi_links'
-        meta:
-          type: object
-          properties:
-            results:
-              description: Contains the results for the entire collection.
-              type: object
-              properties:
-                total:
-                  description: Total number of results for the entire collection.
-                  type: integer
-                  example: 2
-    attach_custom_relationship_request:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: array
-          items:
-            type: object
-            required:
-            - slug
-            - type
-            properties:
-              slug:
-                type: string
-                description: The slug of the custom relationship.
-              type:
-                type: string
-                enum:
-                - custom-relationship
-                description: This represents the type of resource. Always `custom-relationship`.
-    custom_relationship:
-      type: object
-      required:
-      - id
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          description: A unique identifier generated when a custom relationship is created.
-          type: string
-        type:
-          description: This represents the type of resource object being returned. Always `custom-relationship`.
-          type: string
-          enum:
-          - custom-relationship
-        attributes:
-          $ref: '#/components/schemas/req_attributes_custom_relationship'
-        meta:
-          type: object
-          required:
-          - owner
-          - timestamps
-          properties:
+                  ID:
+                    description: The ID of the product that could not be associated.
+                    type: string
+                    example: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
+                  Details:
+                    description: Details about why the product could not be associated.
+                    type: string
+                    example: could not find product
+              example:
+              - ID: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
+                Details: could not find product
+              - ID: a0ef3291-2ec1-4d7d-9d6d-1705ae01bb99
+                Details: product already has 5 custom relationships, cannot associate more as it has reached the limit of 5 custom relationships
+              - ID: bde79675-4783-40b7-8a7e-ac6df41459c6
+                Details: product already has 5 custom relationships, cannot associate more as it has reached the limit of 5 custom relationships
+              - ID: aaddd5f4-a5f8-42e8-be9a-097986f22e58
+                Details: exceeded maximum allowed associations (2000). Please review and try again
             owner:
               description: The owner of the resource.
               type: string
               example: store
             timestamps:
               type: object
-              required:
-              - created_at
-              - updated_at
               properties:
                 created_at:
-                  description: The date and time the resource is created.
+                  description: The date and time the resource was created.
                   type: string
-                  example: '2024-01-10T20:16:35.343Z'
+                  example: '2024-08-08T09:29:08.295Z'
                   format: date-time
                 updated_at:
-                  description: The date and time the resource is updated.
+                  description: The date and time the resource was last updated.
                   type: string
-                  example: '2024-01-10T20:16:35.343Z'
+                  example: '2024-08-08T09:29:08.295Z'
                   format: date-time
     shopper_attributes:
       type: object
@@ -631,6 +480,36 @@ components:
                       description: Total number of results for the entire collection.
                       type: integer
                       example: 2
+    admin_attributes:
+      type: object
+      description: "`admin_attributes` are not displayed in catalogs. This means `admin_attributes` can only be viewed by administrators. If you want a custom attribute to be displayed in a catalog, you must add it to `shopper_attributes`. \n\n`admin_attributes` are structured as key-value pairs. Both the keys and values are `strings`. You can have up to 100 keys.\n"
+      example:
+        cost_of_goods: '42.0'
+        charge_type: credit card
+      additionalProperties:
+        type:
+        - string
+        - 'null'
+    multi_links_cr:
+      type: object
+      description: Links are used to allow you to move between requests.
+      properties:
+        first:
+          description: Always the first page.
+          type: string
+          example: /pcm/custom_relationships?page[offset]=0&page[limit]=10
+        last:
+          description: This is `null` if there is only one page.
+          type: string
+          example: /pcm/custom_relationships?page[offset]=20&page[limit]=10
+        next:
+          description: This is `null` if there is only one page.
+          type: string
+          example: /pcm/custom_relationships?page[offset]=10&page[limit]=10
+        prev:
+          description: This is `null` if you on the first page.
+          type: string
+          example: /pcm/custom_relationships?page[offset]=8&page[limit]=10
     product_build_rules:
       type: object
       description: You can build a combination of child products associated with a product, based on build rules that you specify. This is useful, for example, if you have a variation option that you do not sell. This makes managing and building your child products quick and easy. See [Using Build Rules](/docs/api/pxm/products/build-child-products#using-build-rules).
@@ -655,6 +534,277 @@ components:
             type: array
             items:
               type: string
+    product_locales:
+      type: object
+      description: Product Experience Manager supports localization of products and hierarchies. If your store supports multiple languages, you can localize product names and descriptions. You can have as many locales as you want.
+      additionalProperties:
+        description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
+        type: object
+        required:
+        - name
+        properties:
+          name:
+            type: string
+            description: A localized name for the product.
+          description:
+            type: string
+            description: A localized description for the product.
+    multi_custom_relationships:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_relationship'
+        links:
+          $ref: '#/components/schemas/multi_links_cr'
+        meta:
+          $ref: '#/components/schemas/multi_meta'
+    custom_relationship:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: A unique identifier generated when a custom relationship is created.
+          type: string
+        type:
+          description: This represents the type of resource object being returned. Always `custom-relationship`.
+          type: string
+          enum:
+          - custom-relationship
+        attributes:
+          $ref: '#/components/schemas/req_attributes_custom_relationship'
+        meta:
+          type: object
+          required:
+          - owner
+          - timestamps
+          properties:
+            owner:
+              description: The owner of the resource.
+              type: string
+              example: store
+            timestamps:
+              type: object
+              required:
+              - created_at
+              - updated_at
+              properties:
+                created_at:
+                  description: The date and time the resource is created.
+                  type: string
+                  example: '2024-01-10T20:16:35.343Z'
+                  format: date-time
+                updated_at:
+                  description: The date and time the resource is updated.
+                  type: string
+                  example: '2024-01-10T20:16:35.343Z'
+                  format: date-time
+    multi_product_response:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/product_response'
+        included:
+          $ref: '#/components/schemas/included_response'
+        links:
+          $ref: '#/components/schemas/multi_links'
+        meta:
+          type: object
+          properties:
+            results:
+              description: Contains the results for the entire collection.
+              type: object
+              properties:
+                total:
+                  description: Total number of results for the entire collection.
+                  type: integer
+                  example: 2
+    error:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                example: '500'
+              title:
+                type: string
+                description: A brief summary of the error.
+                example: Internal server error
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                example: An internal error has occurred.
+              request_id:
+                type: string
+                description: Internal request ID.
+                example: 00000000-0000-0000-0000-000000000000
+              meta:
+                type: object
+                description: Additional supporting meta data for the error.
+                example:
+                  missing_ids:
+                  - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    multi_meta:
+      type: object
+      properties:
+        results:
+          description: Contains the results for the entire collection.
+          type: object
+          properties:
+            total:
+              description: Total number of results for the entire collection.
+              type: integer
+              example: 30
+              minimum: 0
+    product_association_request:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - type
+            properties:
+              id:
+                type: string
+                description: The ID of the product you want to relate.
+              type:
+                type: string
+                enum:
+                - product
+                description: This represents the type of resource being returned. Always `product`.
+              attributes:
+                type: object
+                properties:
+                  sort_order:
+                    description: The order in which the product to product should be displayed in relation to others. A lower value represents a higher priority in the display order. If set to NULL, the sort order will be removed.
+                    type:
+                    - integer
+                    - 'null'
+                    example: 5
+    product_association_list_product_ids_response:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - type
+            properties:
+              id:
+                description: A unique identifier generated when a product relationship is created.
+                type: string
+              type:
+                description: This represents the type of resource object being returned. Always `product`.
+                type: string
+                enum:
+                - product
+              attributes:
+                type: object
+                properties:
+                  sort_order:
+                    description: The order in which the product to product should be displayed in relation to others. A lower value represents a higher priority in the display order. If set to NULL, the sort order will be removed.
+                    type:
+                    - integer
+                    - 'null'
+                    example: 5
+    product_custom_inputs:
+      type: object
+      description: You use the `custom_inputs` attribute to allow your shoppers to add custom text to a product when adding product items to their carts. This is useful, for example, if you have a product like a T-shirt that can be personalized or you sell greetings cards that can be printed with your shoppers personalized messages. See [Personalizing Products](/docs/api/pxm/products/create-product#personalizing-products).
+      additionalProperties:
+        description: A name for the custom text field. You can rename this to something more representative of the input that shoppers are adding, for example, `message` or `front`.
+        type: object
+        properties:
+          name:
+            type: string
+            description: A name for the custom text field.
+          validation_rules:
+            type: array
+            description: The validation rules for the custom text.
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: The type of validation rule. For example, `string`.
+                options:
+                  type: object
+                  description: The options for the validation rule.
+                  properties:
+                    max_length:
+                      type: integer
+                      description: The number of characters the custom text field can be. You can specify a maximum length up to 255 characters, as the limit is 255 characters.
+          required:
+            type: boolean
+            description: '`true` or `false` depending on whether the custom text is required.'
+    product_association_delete_request:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - type
+            properties:
+              id:
+                type: string
+                description: The ID of the product you want to relate.
+              type:
+                type: string
+                enum:
+                - product
+                description: This represents the type of resource being returned. Always `product`.
+    attach_custom_relationship_request:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - slug
+            - type
+            properties:
+              slug:
+                type: string
+                description: The slug of the custom relationship.
+              type:
+                type: string
+                enum:
+                - custom-relationship
+                description: This represents the type of resource. Always `custom-relationship`.
     multi_links:
       type: object
       description: 'Links allow you to navigate between pages of results.
@@ -732,56 +882,6 @@ components:
             '
           type: string
           example: /pcm/hierarchies?page[offset]=8&page[limit]=10
-    product_association_list_product_ids_response:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: array
-          items:
-            type: object
-            required:
-            - id
-            - type
-            properties:
-              id:
-                description: A unique identifier generated when a product relationship is created.
-                type: string
-              type:
-                description: This represents the type of resource object being returned. Always `product`.
-                type: string
-                enum:
-                - product
-              attributes:
-                type: object
-                properties:
-                  sort_order:
-                    description: The order in which the product to product should be displayed in relation to others. A lower value represents a higher priority in the display order. If set to NULL, the sort order will be removed.
-                    type:
-                    - integer
-                    - 'null'
-                    example: 5
-    multi_links_cr:
-      type: object
-      description: Links are used to allow you to move between requests.
-      properties:
-        first:
-          description: Always the first page.
-          type: string
-          example: /pcm/custom_relationships?page[offset]=0&page[limit]=10
-        last:
-          description: This is `null` if there is only one page.
-          type: string
-          example: /pcm/custom_relationships?page[offset]=20&page[limit]=10
-        next:
-          description: This is `null` if there is only one page.
-          type: string
-          example: /pcm/custom_relationships?page[offset]=10&page[limit]=10
-        prev:
-          description: This is `null` if you on the first page.
-          type: string
-          example: /pcm/custom_relationships?page[offset]=8&page[limit]=10
     req_attributes_custom_relationship:
       type: object
       additionalProperties: false
@@ -824,6 +924,63 @@ components:
           type: boolean
           description: Is this relationship one way or bi-directional `true` or `false`. Default is false
           default: false
+    product_bundle_components:
+      type: object
+      description: With Product Experience Manager, you can create and manage bundles. A bundle is a purchasable product, consisting of one or more products that you want to sell together. You can create multiple components within a bundle. Each component must have at least one or more options. Each option is a product and a quantity. See [Bundles](/docs/api/pxm/products/products#bundles).
+      additionalProperties:
+        description: The name of the component, such as `games`. The `bundle_configuration` uses the component name to reference a component. A component name should be relatively short and must not contain any special characters.
+        type: object
+        properties:
+          name:
+            type: string
+            description: The component name. The component name is the name that is displayed in your storefront.
+          options:
+            type: array
+            description: The product options included in a component. This can be the ID of another bundle.
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: The unique ID of the product you want to add to a component.
+                type:
+                  type: string
+                  description: This represents the type of object being returned. Always `product`.
+                quantity:
+                  type: integer
+                  minimum: 1
+                  description: The number of this product option that a shopper must purchase.
+                min:
+                  type: integer
+                  minimum: 1
+                  description: The minimum quantity of this product option that a shopper can select. Must be 1 or greater. If specified, max must also be specified.
+                max:
+                  type: integer
+                  minimum: 1
+                  description: The maximum quantity of this product option that a shopper can select. Must be 1 or greater and greater than or equal to min. If specified, min must also be specified.
+                sort_order:
+                  type: integer
+                  description: The sort order of the options. The `create a bundle` and `update a bundle` endpoints do not sort the options. You can use the `sort_order` attribute when programming your storefront to display the options in the order that you want.
+                default:
+                  description: Whether the product option is a default option in a bundle. Shoppers can select a bundle that specifies a default list of product options. See [Dynamic Bundles](/docs/api/pxm/products/products#dynamic-bundles).
+                  type: boolean
+                product_should_be_substituted_with_child:
+                  description: Whether the product option should be substituted with a child product.
+                  type: boolean
+                excluded_children:
+                  description: The IDs of child products that are excluded from the bundle option.
+                  type: array
+                  items:
+                    type: string
+          min:
+            type: integer
+            description: The minimum number of product options a shopper can select from this component.
+          max:
+            type: integer
+            description: The maximum number of product options a shopper can select from this component.
+          sort_order:
+            type: integer
+            description: The sort order of the components. The `create a bundle` and `update a bundle` endpoints do not sort the components. You can use the `sort_order` attribute when programming your storefront to display the components in the order that you want.
     product_response:
       type: object
       properties:
@@ -1056,182 +1213,25 @@ components:
                 type: object
                 additionalProperties:
                   type: string
-    product_bundle_components:
+    included_response:
       type: object
-      description: With Product Experience Manager, you can create and manage bundles. A bundle is a purchasable product, consisting of one or more products that you want to sell together. You can create multiple components within a bundle. Each component must have at least one or more options. Each option is a product and a quantity. See [Bundles](/docs/api/pxm/products/products#bundles).
-      additionalProperties:
-        description: The name of the component, such as `games`. The `bundle_configuration` uses the component name to reference a component. A component name should be relatively short and must not contain any special characters.
-        type: object
-        properties:
-          name:
-            type: string
-            description: The component name. The component name is the name that is displayed in your storefront.
-          options:
-            type: array
-            description: The product options included in a component. This can be the ID of another bundle.
-            items:
-              type: object
-              properties:
-                id:
-                  type: string
-                  description: The unique ID of the product you want to add to a component.
-                type:
-                  type: string
-                  description: This represents the type of object being returned. Always `product`.
-                quantity:
-                  type: integer
-                  minimum: 1
-                  description: The number of this product option that a shopper must purchase.
-                min:
-                  type: integer
-                  minimum: 1
-                  description: The minimum quantity of this product option that a shopper can select. Must be 1 or greater. If specified, max must also be specified.
-                max:
-                  type: integer
-                  minimum: 1
-                  description: The maximum quantity of this product option that a shopper can select. Must be 1 or greater and greater than or equal to min. If specified, min must also be specified.
-                sort_order:
-                  type: integer
-                  description: The sort order of the options. The `create a bundle` and `update a bundle` endpoints do not sort the options. You can use the `sort_order` attribute when programming your storefront to display the options in the order that you want.
-                default:
-                  description: Whether the product option is a default option in a bundle. Shoppers can select a bundle that specifies a default list of product options. See [Dynamic Bundles](/docs/api/pxm/products/products#dynamic-bundles).
-                  type: boolean
-                product_should_be_substituted_with_child:
-                  description: Whether the product option should be substituted with a child product.
-                  type: boolean
-                excluded_children:
-                  description: The IDs of child products that are excluded from the bundle option.
-                  type: array
-                  items:
-                    type: string
-          min:
-            type: integer
-            description: The minimum number of product options a shopper can select from this component.
-          max:
-            type: integer
-            description: The maximum number of product options a shopper can select from this component.
-          sort_order:
-            type: integer
-            description: The sort order of the components. The `create a bundle` and `update a bundle` endpoints do not sort the components. You can use the `sort_order` attribute when programming your storefront to display the components in the order that you want.
-    multi_meta:
-      type: object
+      description: Included is an array of resources that are included in the response.
       properties:
-        results:
-          description: Contains the results for the entire collection.
-          type: object
-          properties:
-            total:
-              description: Total number of results for the entire collection.
-              type: integer
-              example: 30
-              minimum: 0
-    product_association_response:
-      type: object
-      properties:
-        meta:
-          type: object
-          properties:
-            associated_products:
-              description: A list of product IDs that have been successfully associated with this custom relationship.
-              type: array
-              items:
-                type: string
-              example:
-              - 68c48149-0e94-4ef2-93d5-8d5f3774980a
-              - ab4826d1-4a5a-4951-a2a5-98058899f891
-            products_not_associated:
-              description: A list of products that could not be associated, including the reasons why.
-              type: array
-              items:
-                type: object
-                properties:
-                  ID:
-                    description: The ID of the product that could not be associated.
-                    type: string
-                    example: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
-                  Details:
-                    description: Details about why the product could not be associated.
-                    type: string
-                    example: could not find product
-              example:
-              - ID: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
-                Details: could not find product
-              - ID: a0ef3291-2ec1-4d7d-9d6d-1705ae01bb99
-                Details: product already has 5 custom relationships, cannot associate more as it has reached the limit of 5 custom relationships
-              - ID: bde79675-4783-40b7-8a7e-ac6df41459c6
-                Details: product already has 5 custom relationships, cannot associate more as it has reached the limit of 5 custom relationships
-              - ID: aaddd5f4-a5f8-42e8-be9a-097986f22e58
-                Details: exceeded maximum allowed associations (2000). Please review and try again
-            owner:
-              description: The owner of the resource.
-              type: string
-              example: store
-            timestamps:
-              type: object
-              properties:
-                created_at:
-                  description: The date and time the resource was created.
-                  type: string
-                  example: '2024-08-08T09:29:08.295Z'
-                  format: date-time
-                updated_at:
-                  description: The date and time the resource was last updated.
-                  type: string
-                  example: '2024-08-08T09:29:08.295Z'
-                  format: date-time
-    product_locales:
-      type: object
-      description: Product Experience Manager supports localization of products and hierarchies. If your store supports multiple languages, you can localize product names and descriptions. You can have as many locales as you want.
-      additionalProperties:
-        description: A [three-letter language code](https://www.iso.org/iso-639-language-code) that represents the name of language you have used.
-        type: object
-        required:
-        - name
-        properties:
-          name:
-            type: string
-            description: A localized name for the product.
-          description:
-            type: string
-            description: A localized description for the product.
-  parameters:
-    product_id:
-      name: productID
-      in: path
-      schema:
-        type: string
-        example: 00000000-0000-0000-0000-000000000000
-        x-postman-example: '{{productID}}'
-      required: true
-      description: A unique identifier for the product.
-    page_limit:
-      name: page[limit]
-      in: query
-      description: The number of records per page. The maximum limit is 100.
-      schema:
-        type: integer
-        minimum: 0
-        maximum: 10000
-        format: int64
-        example: 10
-    page_offset:
-      name: page[offset]
-      in: query
-      description: The number of records to offset the results by.
-      schema:
-        type: integer
-        minimum: 0
-        maximum: 10000
-        format: int64
-        example: 0
-    custom_relationship_slug:
-      name: customRelationshipSlug
-      in: path
-      schema:
-        type: string
-        example: CRP_electric_devices_2024
-      required: true
-      description: A custom relationship slug.
+        main_images:
+          description: The main images associated with a product.
+          type: array
+          items:
+            $ref: '#/components/schemas/elastic_path_file'
+        component_products:
+          description: Returns a list of component products in a product bundle. If a bundle has no component products (in other words, is not a product bundle), an empty array is returned.
+          type: array
+          items:
+            $ref: '#/components/schemas/product_response'
+        files:
+          description: The files associated with a product.
+          type: array
+          items:
+            $ref: '#/components/schemas/elastic_path_file'
   responses:
     not_found:
       description: Bad Request. Not Found.
@@ -1258,6 +1258,19 @@ components:
                 - title: Forbidden
                   status: '403'
                   detail: entity owned by organization
+    write_conflict:
+      description: Write conflict detected
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Conflict
+                  status: '409'
+                  detail: write conflict detected
     internal:
       description: Internal server error. There was a system failure in the platform.
       content:
@@ -1272,19 +1285,6 @@ components:
                   title: Internal Server Error
                   detail: There was an internal server error, you can report with your request id.
                   request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
-    bad_request:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            bad-request:
-              value:
-                errors:
-                - title: Bad Request
-                  detail: Could not parse the supplied filter
-                  status: '400'
     unprocessable_entity:
       description: Bad request. The request failed validation.
       content:
@@ -1298,48 +1298,20 @@ components:
                 - title: Failed Validation
                   status: '422'
                   detail: <XYZ> can not be empty
-    write_conflict:
-      description: Write conflict detected
+    bad_request:
+      description: Bad request. The request failed validation.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/error'
           examples:
-            internal-server-error:
+            bad-request:
               value:
                 errors:
-                - title: Conflict
-                  status: '409'
-                  detail: write conflict detected
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
   examples:
-    create_product_association_request:
-      value:
-        data:
-        - type: product
-          id: 68c48149-0e94-4ef2-93d5-8d5f3774980a
-          attributes:
-            sort_order: 5
-        - type: product
-          id: ab4826d1-4a5a-4951-a2a5-98058899f891
-        - type: product
-          id: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
-        - type: product
-          id: a0ef3291-2ec1-4d7d-9d6d-1705ae01bb99
-          attributes:
-            sort_order: 2
-        - type: product
-          id: bde79675-4783-40b7-8a7e-ac6df41459c6
-        - type: product
-          id: aaddd5f4-a5f8-42e8-be9a-097986f22e58
-    list_product_association_product_ids_response:
-      value:
-        data:
-        - id: 68c48149-0e94-4ef2-93d5-8d5f3774980a
-          type: product
-          attributes:
-            sort_order: 5
-        - id: ab4826d1-4a5a-4951-a2a5-98058899f891
-          type: product
     multi_product_response:
       value:
         data:
@@ -1410,6 +1382,56 @@ components:
         meta:
           results:
             total: 1
+    attach_custom_relationship_request:
+      value:
+        data:
+        - type: custom-relationship
+          slug: CRP_related_products
+        - type: custom-relationship
+          slug: CRP_cart_products
+    delete_product_association_request:
+      value:
+        data:
+        - type: product
+          id: 68c48149-0e94-4ef2-93d5-8d5f3774980a
+        - type: product
+          id: ab4826d1-4a5a-4951-a2a5-98058899f891
+        - type: product
+          id: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
+        - type: product
+          id: a0ef3291-2ec1-4d7d-9d6d-1705ae01bb99
+        - type: product
+          id: bde79675-4783-40b7-8a7e-ac6df41459c6
+        - type: product
+          id: aaddd5f4-a5f8-42e8-be9a-097986f22e58
+    list_product_association_product_ids_response:
+      value:
+        data:
+        - id: 68c48149-0e94-4ef2-93d5-8d5f3774980a
+          type: product
+          attributes:
+            sort_order: 5
+        - id: ab4826d1-4a5a-4951-a2a5-98058899f891
+          type: product
+    create_product_association_request:
+      value:
+        data:
+        - type: product
+          id: 68c48149-0e94-4ef2-93d5-8d5f3774980a
+          attributes:
+            sort_order: 5
+        - type: product
+          id: ab4826d1-4a5a-4951-a2a5-98058899f891
+        - type: product
+          id: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
+        - type: product
+          id: a0ef3291-2ec1-4d7d-9d6d-1705ae01bb99
+          attributes:
+            sort_order: 2
+        - type: product
+          id: bde79675-4783-40b7-8a7e-ac6df41459c6
+        - type: product
+          id: aaddd5f4-a5f8-42e8-be9a-097986f22e58
     resp_multi_custom_relationships:
       value:
         data:
@@ -1458,28 +1480,6 @@ components:
         meta:
           results:
             total: 3
-    attach_custom_relationship_request:
-      value:
-        data:
-        - type: custom-relationship
-          slug: CRP_related_products
-        - type: custom-relationship
-          slug: CRP_cart_products
-    delete_product_association_request:
-      value:
-        data:
-        - type: product
-          id: 68c48149-0e94-4ef2-93d5-8d5f3774980a
-        - type: product
-          id: ab4826d1-4a5a-4951-a2a5-98058899f891
-        - type: product
-          id: 97b7fac2-91dd-4755-81b0-bdffe8e7eabd
-        - type: product
-          id: a0ef3291-2ec1-4d7d-9d6d-1705ae01bb99
-        - type: product
-          id: bde79675-4783-40b7-8a7e-ac6df41459c6
-        - type: product
-          id: aaddd5f4-a5f8-42e8-be9a-097986f22e58
     create_product_association_created_response:
       value:
         meta:

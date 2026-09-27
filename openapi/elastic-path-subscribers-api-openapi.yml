@@ -173,69 +173,105 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  responses:
-    ForbiddenError:
-      description: Forbidden. The operation is forbidden on this entity.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Permission denied
-                  status: '404'
-                  detail: 'Permission denied: plan tenancy mismatch'
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: 'data.attributes.name: "name" is required'
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No plan found
-    WriteConflictError:
-      description: Write conflict. Unable to perform the operation at this time.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            errors:
-            - title: Write Conflict
-              status: '409'
   schemas:
+    SubscriberResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/SubscriberAttributes'
+      - $ref: '#/components/schemas/Timestamps'
+    PaymentAuthorityEPPayments:
+      writeOnly: true
+      type: object
+      required:
+      - type
+      properties:
+        type:
+          description: The name of the payment gateway facilitating the secure transmission of payment data.
+          type: string
+          example: elastic_path_payments_stripe
+          enum:
+          - elastic_path_payments_stripe
+          x-go-type: paymentgateways.GatewayName
+          x-go-type-import:
+            name: paymentgateways
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
+        customer_id:
+          description: The unique identifier for a customer.
+          type: string
+          minLength: 3
+          maxLength: 1024
+          example: cus_OPfKlxWV3hp9h6
+        card_id:
+          description: The unique identifier of the card used to facilitate payment of the subscription. If a card payment fails, you can use the `card_id` and `customer_id` attributes to program your front-end implementation to allow your preferred payment service provider to update a subscription with new card details. See [Card declines](/docs/api/subscriptions/invoices#card-declines).
+          type: string
+          minLength: 3
+          maxLength: 1024
+          example: card_8Diw3FQPhxK27WADPVMeXieP
+    PaymentAuthority:
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/PaymentAuthorityEPPayments'
+      - $ref: '#/components/schemas/PaymentAuthorityStripe'
+      - $ref: '#/components/schemas/PaymentAuthorityAuthorizeNet'
+      discriminator:
+        propertyName: type
+        mapping:
+          elastic_path_payments_stripe: '#/components/schemas/PaymentAuthorityEPPayments'
+          stripe_payment_intents: '#/components/schemas/PaymentAuthorityStripe'
+          authorize_net: '#/components/schemas/PaymentAuthorityAuthorizeNet'
+      required:
+      - type
+      properties:
+        type:
+          description: The name of the payment gateway facilitating the secure transmission of payment data.
+          type: string
+          example: elastic_path_payments_stripe
+          enum:
+          - authorize_net
+          - elastic_path_payments_stripe
+          - stripe_payment_intents
+          x-go-type: paymentgateways.GatewayName
+          x-go-type-import:
+            name: paymentgateways
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
+    SubscriberCreate:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/SubscriptionSubscriberType'
+        attributes:
+          $ref: '#/components/schemas/SubscriberAttributes'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    SubscriberUpdate:
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionSubscriberType'
+        attributes:
+          $ref: '#/components/schemas/SubscriberUpdateAttributes'
     SubscriberAttributes:
       required:
       - name
@@ -263,173 +299,6 @@ components:
             path: github.com/oapi-codegen/runtime/types
         payment_authority:
           $ref: '#/components/schemas/PaymentAuthority'
-    SubscriberUpdateAttributes:
-      properties:
-        name:
-          type: string
-          description: The name of the subscriber.
-          minLength: 3
-          maxLength: 1024
-          example: John Doe
-        email:
-          type: string
-          format: email
-          description: The email of the subscriber.
-          minLength: 3
-          maxLength: 1024
-          example: john.doe@example.com
-          x-go-type: types.Email
-          x-go-type-import:
-            name: email
-            path: github.com/oapi-codegen/runtime/types
-        payment_authority:
-          $ref: '#/components/schemas/NullablePaymentAuthority'
-    SubscriberResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/SubscriberAttributes'
-      - $ref: '#/components/schemas/Timestamps'
-    SubscriptionSubscriberType:
-      type: string
-      example: subscription_subscriber
-      enum:
-      - subscription_subscriber
-    SubscriberMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        feature_entitlements:
-          type: array
-          description: A list of entitlement tags currently active for the subscriber
-          example:
-          - tag1
-          - tag2
-          items:
-            $ref: '#/components/schemas/FeatureTag'
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    FeatureTag:
-      type: string
-      description: A tag to add to the customer's account when entitled to the feature.
-      minLength: 1
-      maxLength: 64
-      pattern: ^[0-9A-Za-z_-]+$
-      example: digital_library_access
-    PaymentAuthorityStripe:
-      writeOnly: true
-      type: object
-      required:
-      - type
-      properties:
-        type:
-          description: The name of the payment gateway facilitating the secure transmission of payment data.
-          type: string
-          example: stripe_payment_intents
-          enum:
-          - stripe_payment_intents
-          x-go-type: paymentgateways.GatewayName
-          x-go-type-import:
-            name: paymentgateways
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
-        customer_id:
-          description: The unique identifier for a customer.
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: cus_OPfKlxWV3hp9h6
-        card_id:
-          description: The unique identifier of the card used to facilitate payment of the subscription. If a card payment fails, you can use the `card_id` and `customer_id` attributes to program your front-end implementation to allow your preferred payment service provider to update a subscription with new card details. See [Card declines](/docs/api/subscriptions/invoices#card-declines).
-          type: string
-          minLength: 3
-          maxLength: 1024
-          example: card_8Diw3FQPhxK27WADPVMeXieP
-    Subscriber:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionSubscriberType'
-        attributes:
-          $ref: '#/components/schemas/SubscriberResponseAttributes'
-        meta:
-          $ref: '#/components/schemas/SubscriberMeta'
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 11111111-2222-3333-4444-555555555555
-    Timestamps:
-      required:
-      - created_at
-      - updated_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    SubscriberUpdate:
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionSubscriberType'
-        attributes:
-          $ref: '#/components/schemas/SubscriberUpdateAttributes'
     NullablePaymentAuthority:
       type:
       - object
@@ -459,7 +328,7 @@ components:
           x-go-type-import:
             name: paymentgateways
             path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
-    PaymentAuthorityEPPayments:
+    PaymentAuthorityStripe:
       writeOnly: true
       type: object
       required:
@@ -468,9 +337,9 @@ components:
         type:
           description: The name of the payment gateway facilitating the secure transmission of payment data.
           type: string
-          example: elastic_path_payments_stripe
+          example: stripe_payment_intents
           enum:
-          - elastic_path_payments_stripe
+          - stripe_payment_intents
           x-go-type: paymentgateways.GatewayName
           x-go-type-import:
             name: paymentgateways
@@ -487,6 +356,85 @@ components:
           minLength: 3
           maxLength: 1024
           example: card_8Diw3FQPhxK27WADPVMeXieP
+    SubscriberMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      properties:
+        feature_entitlements:
+          type: array
+          description: A list of entitlement tags currently active for the subscriber
+          example:
+          - tag1
+          - tag2
+          items:
+            $ref: '#/components/schemas/FeatureTag'
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
+    Timestamps:
+      required:
+      - created_at
+      - updated_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    Subscriber:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionSubscriberType'
+        attributes:
+          $ref: '#/components/schemas/SubscriberResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/SubscriberMeta'
+    SubscriptionSubscriberType:
+      type: string
+      example: subscription_subscriber
+      enum:
+      - subscription_subscriber
     PaymentAuthorityAuthorizeNet:
       type: object
       required:
@@ -514,82 +462,62 @@ components:
           minLength: 3
           maxLength: 1024
           example: '1511736979'
-    PaymentAuthority:
-      type: object
-      oneOf:
-      - $ref: '#/components/schemas/PaymentAuthorityEPPayments'
-      - $ref: '#/components/schemas/PaymentAuthorityStripe'
-      - $ref: '#/components/schemas/PaymentAuthorityAuthorizeNet'
-      discriminator:
-        propertyName: type
-        mapping:
-          elastic_path_payments_stripe: '#/components/schemas/PaymentAuthorityEPPayments'
-          stripe_payment_intents: '#/components/schemas/PaymentAuthorityStripe'
-          authorize_net: '#/components/schemas/PaymentAuthorityAuthorizeNet'
-      required:
-      - type
-      properties:
-        type:
-          description: The name of the payment gateway facilitating the secure transmission of payment data.
-          type: string
-          example: elastic_path_payments_stripe
-          enum:
-          - authorize_net
-          - elastic_path_payments_stripe
-          - stripe_payment_intents
-          x-go-type: paymentgateways.GatewayName
-          x-go-type-import:
-            name: paymentgateways
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    OwnerMeta:
-      readOnly: true
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    FeatureTag:
       type: string
-      format: string
-      description: The owner of a resource, either `store` or `organization`.
-      example: store
-    SubscriberCreate:
-      required:
-      - type
-      - attributes
+      description: A tag to add to the customer's account when entitled to the feature.
+      minLength: 1
+      maxLength: 64
+      pattern: ^[0-9A-Za-z_-]+$
+      example: digital_library_access
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    SubscriberUpdateAttributes:
       properties:
-        type:
-          $ref: '#/components/schemas/SubscriptionSubscriberType'
-        attributes:
-          $ref: '#/components/schemas/SubscriberAttributes'
+        name:
+          type: string
+          description: The name of the subscriber.
+          minLength: 3
+          maxLength: 1024
+          example: John Doe
+        email:
+          type: string
+          format: email
+          description: The email of the subscriber.
+          minLength: 3
+          maxLength: 1024
+          example: john.doe@example.com
+          x-go-type: types.Email
+          x-go-type-import:
+            name: email
+            path: github.com/oapi-codegen/runtime/types
+        payment_authority:
+          $ref: '#/components/schemas/NullablePaymentAuthority'
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
   parameters:
-    PageLimit:
-      name: page[limit]
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 100
     Filter:
       name: filter
       in: query
@@ -612,6 +540,78 @@ components:
         minimum: 0
         maximum: 10000
         example: 10
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No plan found
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: 'data.attributes.name: "name" is required'
+    ForbiddenError:
+      description: Forbidden. The operation is forbidden on this entity.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Permission denied
+                  status: '404'
+                  detail: 'Permission denied: plan tenancy mismatch'
+    WriteConflictError:
+      description: Write conflict. Unable to perform the operation at this time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - title: Write Conflict
+              status: '409'
   securitySchemes:
     BearerToken:
       scheme: bearer

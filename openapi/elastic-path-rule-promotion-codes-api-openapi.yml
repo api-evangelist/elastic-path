@@ -541,44 +541,31 @@ paths:
           description: No Content
 components:
   schemas:
-    CreatePromotionCodesResponse:
+    PromotionCodeMessage:
       type: object
       properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/CreatePromotionCodeResponse'
-        messages:
-          type: array
-          items:
-            $ref: '#/components/schemas/PromotionCodeMessage'
-    PaginationMeta:
-      type: object
-      properties:
-        page:
+        source:
           type: object
+          description: Information about the affected promotion codes.
           properties:
-            current:
-              type: integer
-              description: Current page number
-            limit:
-              type: integer
-              description: Number of items per page
-            offset:
-              type: integer
-              description: Offset from the first result
-            total:
-              type: integer
-              description: Total number of pages
-        results:
-          type: object
-          properties:
-            total:
-              type: integer
-              description: Total number of results
-            total_method:
+            type:
               type: string
-              description: Method used to calculate the total (e.g., 'exact')
+              const: promotion_codes
+              description: Indicates that the affected entity is a promotion code.
+            codes:
+              type: array
+              description: A list of promotion codes that triggered the message.
+              items:
+                type: string
+                example: spring2024
+        title:
+          type: string
+          description: A brief title summarizing the message.
+          example: Duplicate code names
+        description:
+          type: string
+          description: A detailed explanation of the message.
+          example: Code names duplicated in other promotions
     GetPromotionCodesResponse:
       type: object
       properties:
@@ -590,35 +577,6 @@ components:
           $ref: '#/components/schemas/PaginationLinks'
         meta:
           $ref: '#/components/schemas/PaginationMeta'
-    Response.Error:
-      type: object
-      properties:
-        errors:
-          type: array
-          items:
-            type: object
-            properties:
-              status:
-                type:
-                - string
-                - integer
-                description: HTTP status code.
-              title:
-                type: string
-                description: Error title.
-              detail:
-                type: string
-                description: Error details.
-              source:
-                type: string
-                description: Source of the error (e.g., which field or parameter caused the error)
-              meta:
-                type: object
-                properties:
-                  usage_ids:
-                    type: array
-                    items:
-                      type: string
     PromotionCodesRequest:
       type: object
       properties:
@@ -656,6 +614,85 @@ components:
                   is_for_new_shopper:
                     type: boolean
                     description: A flag indicating whether the coupon is for first-time shoppers. If set to `true`, the discount will only apply if the shopper has never made a payment on any order in the store. If set to `false` or left unset, it will be a regular discount that applies to all shoppers. When this flag is set to `true`, the coupon cannot have usage limitations or be assigned to specific users.
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: object
+          properties:
+            current:
+              type: integer
+              description: Current page number
+            limit:
+              type: integer
+              description: Number of items per page
+            offset:
+              type: integer
+              description: Offset from the first result
+            total:
+              type: integer
+              description: Total number of pages
+        results:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total number of results
+            total_method:
+              type: string
+              description: Method used to calculate the total (e.g., 'exact')
+    Response.Error:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type:
+                - string
+                - integer
+                description: HTTP status code.
+              title:
+                type: string
+                description: Error title.
+              detail:
+                type: string
+                description: Error details.
+              source:
+                type: string
+                description: Source of the error (e.g., which field or parameter caused the error)
+              meta:
+                type: object
+                properties:
+                  usage_ids:
+                    type: array
+                    items:
+                      type: string
+    PaginationLinks:
+      type: object
+      properties:
+        current:
+          type: string
+          format: uri
+          description: URL for the current page of results
+        first:
+          type: string
+          format: uri
+          description: URL for the first page of results
+        last:
+          type: string
+          format: uri
+          description: URL for the last page of results
+        next:
+          type: string
+          format: uri
+          description: URL for the next page of results
+        prev:
+          type: string
+          format: uri
+          description: URL for the previous page of results
     GetPromotionCodeResponse:
       type: object
       properties:
@@ -697,65 +734,17 @@ components:
                 created_at:
                   type: string
                   format: date-time
-    MaxUsesPerShopper:
-      type: object
-      description: Object for setting max uses per shopper. Only include this object, when you want to set limit per shopper.
-      properties:
-        max_uses:
-          type: integer
-          description: Sets max number of times the code can be used by a shopper. NOTE - This cannot be set with `per_application` consume unit.
-        includes_guests:
-          type: boolean
-          default: false
-          description: The flag to include guest shoppers for the discount with max use restriction. **If this field is provided, the max_uses value is required.** When set to `true`, guest shoppers must have an email associated with the cart to use the code. A guest cart without an email cannot use the code. When set to `false`, guest shoppers cannot use the promo code, even if the cart has an associated guest email.
-    PaginationLinks:
+    CreatePromotionCodesResponse:
       type: object
       properties:
-        current:
-          type: string
-          format: uri
-          description: URL for the current page of results
-        first:
-          type: string
-          format: uri
-          description: URL for the first page of results
-        last:
-          type: string
-          format: uri
-          description: URL for the last page of results
-        next:
-          type: string
-          format: uri
-          description: URL for the next page of results
-        prev:
-          type: string
-          format: uri
-          description: URL for the previous page of results
-    PromotionCodeMessage:
-      type: object
-      properties:
-        source:
-          type: object
-          description: Information about the affected promotion codes.
-          properties:
-            type:
-              type: string
-              const: promotion_codes
-              description: Indicates that the affected entity is a promotion code.
-            codes:
-              type: array
-              description: A list of promotion codes that triggered the message.
-              items:
-                type: string
-                example: spring2024
-        title:
-          type: string
-          description: A brief title summarizing the message.
-          example: Duplicate code names
-        description:
-          type: string
-          description: A detailed explanation of the message.
-          example: Code names duplicated in other promotions
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreatePromotionCodeResponse'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionCodeMessage'
     CreatePromotionCodeResponse:
       type: object
       properties:
@@ -782,6 +771,17 @@ components:
           $ref: '#/components/schemas/MaxUsesPerShopper'
         is_for_new_shopper:
           type: boolean
+    MaxUsesPerShopper:
+      type: object
+      description: Object for setting max uses per shopper. Only include this object, when you want to set limit per shopper.
+      properties:
+        max_uses:
+          type: integer
+          description: Sets max number of times the code can be used by a shopper. NOTE - This cannot be set with `per_application` consume unit.
+        includes_guests:
+          type: boolean
+          default: false
+          description: The flag to include guest shoppers for the discount with max use restriction. **If this field is provided, the max_uses value is required.** When set to `true`, guest shoppers must have an email associated with the cart to use the code. A guest cart without an email cannot use the code. When set to `false`, guest shoppers cannot use the promo code, even if the cart has an associated guest email.
   parameters:
     Authorization:
       name: Authorization

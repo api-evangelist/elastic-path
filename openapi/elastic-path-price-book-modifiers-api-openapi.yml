@@ -164,200 +164,6 @@ paths:
                 $ref: '#/components/schemas/error-response-modifiers'
 components:
   schemas:
-    currencies:
-      type: object
-      description: A collection of one or more currencies objects that consists of the [**three-letter ISO code**](https://www.iso.org/iso-3166-country-codes.html) of the currencies associated with this price and the amount. This is the product's price.
-      example:
-        USD:
-          amount: 100
-          includes_tax: false
-          tiers:
-            min_5:
-              minimum_quantity: 5
-              amount: 50
-        CAD:
-          amount: 127
-          includes_tax: false
-          tiers:
-            min_10:
-              minimum_quantity: 10
-              amount: 100
-        GBP:
-          amount: 73
-          includes_tax: true
-          tiers:
-            min_20:
-              minimum_quantity: 20
-              amount: 60
-      additionalProperties:
-        $ref: '#/components/schemas/amount'
-    error-modifiers:
-      type: object
-      title: ApiError
-      description: This is a json-api style part of an error response
-      properties:
-        detail:
-          type: string
-          example: The modifier already exists
-          x-go-name: Detail
-        status:
-          type: string
-          example: '409'
-          x-go-name: Status
-        title:
-          type: string
-          example: conflict
-          x-go-name: Title
-      additionalProperties: false
-      x-go-name: ApiError
-    price-modifier-update:
-      type: object
-      title: PriceModifier
-      description: Price modifier update request.
-      properties:
-        id:
-          description: A unique identifier for the price modifier.
-          type: string
-          example: 37f2eed6-0bea-4d0b-a3c6-24cc76143bfd
-          x-go-name: ID
-        type:
-          type: string
-          x-go-name: Type
-          default: price-modifier
-          example: price-modifier
-          enum:
-          - price-modifier
-        attributes:
-          type: object
-          properties:
-            currencies:
-              $ref: '#/components/schemas/currencies'
-            name:
-              description: A name for the modifier. You must give the price modifier a unique name. Price modifier names are case-sensitive
-              type:
-              - string
-              - 'null'
-              example: large-supplement
-              minLength: 1
-              x-go-name: Name
-            modifier_type:
-              description: 'There are three modifier types.
-
-
-                * `price_increment` - Increases the price of a product.
-
-                * `price_decrement` - Decreases the price of a product.
-
-                * `price_equals` - Sets the price of a product to the amount you specify.
-
-                '
-              type:
-              - string
-              - 'null'
-              example: price_equals
-              enum:
-              - price_equals
-              - price_increment
-              - price_decrement
-              x-go-name: ModifierType
-            external_ref:
-              description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-              type:
-              - string
-              - 'null'
-              example: external-ref
-              x-go-name: External Ref
-          additionalProperties: false
-      required:
-      - id
-      - type
-      - attributes
-      additionalProperties: false
-      x-go-name: PriceModifierUpdate
-    price-modifier-create-data:
-      type: object
-      title: PriceModifierCreateData
-      description: Json-api style data object containing a price modifier to be created.
-      properties:
-        data:
-          $ref: '#/components/schemas/price-modifier-create'
-      required:
-      - data
-      additionalProperties: false
-      x-go-name: PriceModifierCreateData
-    amount:
-      type: object
-      description: The three-letter ISO code for the currency associated with this price.
-      properties:
-        amount:
-          description: The price in the lowest denomination for the specified currency. This is a product's list price.
-          type:
-          - integer
-          - 'null'
-          format: int64
-          example: 100
-          x-go-name: Amount
-        includes_tax:
-          description: Whether this price includes tax.
-          type: boolean
-          example: false
-          default: false
-          x-go-name: IncludesTax
-        tiers:
-          type: object
-          description: The price tier that an item is eligible for based on the quantity purchased. You cannot have conflicting tiers within the same currencies block.
-          additionalProperties:
-            $ref: '#/components/schemas/tier-price'
-    page-meta:
-      type: object
-      description: Contains the results for the entire collection.
-      title: PageMeta
-      properties:
-        results:
-          type: object
-          properties:
-            total:
-              description: Total number of results for the entire collection.
-              type:
-              - integer
-              - 'null'
-              example: 1
-        page:
-          type: object
-          properties:
-            limit:
-              description: The maximum number of records for all pages.
-              type: integer
-              example: 10
-              x-omitempty: false
-            offset:
-              description: The current offset by number of pages.
-              type: integer
-              example: 0
-              x-omitempty: false
-            current:
-              description: The current number of pages.
-              type: integer
-              example: 0
-              x-omitempty: false
-            total:
-              description: The total number of records for the entire collection.
-              type: integer
-              example: 1
-              x-omitempty: false
-    price-modifier-data:
-      type: object
-      title: PriceModifierData
-      description: Json-api style data object containing a single price modifier.
-      properties:
-        data:
-          $ref: '#/components/schemas/price-modifier'
-        links:
-          $ref: '#/components/schemas/links-modifier'
-      required:
-      - data
-      additionalProperties: false
-      x-go-name: PriceModifierData
     tier-price:
       type: object
       description: The name of the tier, for example, `Pencils`.
@@ -427,45 +233,19 @@ components:
       - attributes
       additionalProperties: false
       x-go-name: PriceModifierCreate
-    links-modifiers:
-      description: Links are used to allow you to move between requests.
+    price-modifier-data:
       type: object
+      title: PriceModifierData
+      description: Json-api style data object containing a single price modifier.
       properties:
-        self:
-          description: Single entities use a self parameter with a link to that specific resource.
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers
-        first:
-          description: Always the first page.
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers?page[offset]=0&page[limit]=25
-        last:
-          description: This is `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers?page[offset]=0&page[limit]=25
-        prev:
-          description: This is `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers?page[offset]=0&page[limit]=25
-        next:
-          description: This is `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers?page[offset]=25&page[limit]=25
+        data:
+          $ref: '#/components/schemas/price-modifier'
+        links:
+          $ref: '#/components/schemas/links-modifier'
+      required:
+      - data
+      additionalProperties: false
+      x-go-name: PriceModifierData
     price-modifier-update-data:
       type: object
       title: PriceModifierUpdateData
@@ -477,29 +257,29 @@ components:
       - data
       additionalProperties: false
       x-go-name: PriceModifierUpdateData
-    error-response-modifiers:
+    amount:
       type: object
-      title: ErrorResponse
-      description: This is a json-api style error response
+      description: The three-letter ISO code for the currency associated with this price.
       properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/error-modifiers'
-          x-go-name: Errors
-      additionalProperties: false
-      x-go-name: ErrorResponse
-    links-modifier:
-      description: Links are used to allow you to move between requests.
-      type: object
-      properties:
-        self:
-          description: Single entities use a self parameter with a link to that specific resource.
+        amount:
+          description: The price in the lowest denomination for the specified currency. This is a product's list price.
           type:
-          - string
+          - integer
           - 'null'
-          format: uri
-          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers/f5bd1fc7-48a2-40ac-88dd-2bd9985050cd
+          format: int64
+          example: 100
+          x-go-name: Amount
+        includes_tax:
+          description: Whether this price includes tax.
+          type: boolean
+          example: false
+          default: false
+          x-go-name: IncludesTax
+        tiers:
+          type: object
+          description: The price tier that an item is eligible for based on the quantity purchased. You cannot have conflicting tiers within the same currencies block.
+          additionalProperties:
+            $ref: '#/components/schemas/tier-price'
     price-modifier:
       type: object
       title: PriceModifier
@@ -578,6 +358,128 @@ components:
       - id
       additionalProperties: false
       x-go-name: PriceModifier
+    price-modifier-update:
+      type: object
+      title: PriceModifier
+      description: Price modifier update request.
+      properties:
+        id:
+          description: A unique identifier for the price modifier.
+          type: string
+          example: 37f2eed6-0bea-4d0b-a3c6-24cc76143bfd
+          x-go-name: ID
+        type:
+          type: string
+          x-go-name: Type
+          default: price-modifier
+          example: price-modifier
+          enum:
+          - price-modifier
+        attributes:
+          type: object
+          properties:
+            currencies:
+              $ref: '#/components/schemas/currencies'
+            name:
+              description: A name for the modifier. You must give the price modifier a unique name. Price modifier names are case-sensitive
+              type:
+              - string
+              - 'null'
+              example: large-supplement
+              minLength: 1
+              x-go-name: Name
+            modifier_type:
+              description: 'There are three modifier types.
+
+
+                * `price_increment` - Increases the price of a product.
+
+                * `price_decrement` - Decreases the price of a product.
+
+                * `price_equals` - Sets the price of a product to the amount you specify.
+
+                '
+              type:
+              - string
+              - 'null'
+              example: price_equals
+              enum:
+              - price_equals
+              - price_increment
+              - price_decrement
+              x-go-name: ModifierType
+            external_ref:
+              description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+              type:
+              - string
+              - 'null'
+              example: external-ref
+              x-go-name: External Ref
+          additionalProperties: false
+      required:
+      - id
+      - type
+      - attributes
+      additionalProperties: false
+      x-go-name: PriceModifierUpdate
+    error-modifiers:
+      type: object
+      title: ApiError
+      description: This is a json-api style part of an error response
+      properties:
+        detail:
+          type: string
+          example: The modifier already exists
+          x-go-name: Detail
+        status:
+          type: string
+          example: '409'
+          x-go-name: Status
+        title:
+          type: string
+          example: conflict
+          x-go-name: Title
+      additionalProperties: false
+      x-go-name: ApiError
+    links-modifiers:
+      description: Links are used to allow you to move between requests.
+      type: object
+      properties:
+        self:
+          description: Single entities use a self parameter with a link to that specific resource.
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers
+        first:
+          description: Always the first page.
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers?page[offset]=0&page[limit]=25
+        last:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers?page[offset]=0&page[limit]=25
+        prev:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers?page[offset]=0&page[limit]=25
+        next:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers?page[offset]=25&page[limit]=25
     price-modifier-list-data:
       type: object
       title: PriceModifierListData
@@ -595,6 +497,104 @@ components:
       - data
       additionalProperties: false
       x-go-name: PriceModifierListData
+    error-response-modifiers:
+      type: object
+      title: ErrorResponse
+      description: This is a json-api style error response
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/error-modifiers'
+          x-go-name: Errors
+      additionalProperties: false
+      x-go-name: ErrorResponse
+    price-modifier-create-data:
+      type: object
+      title: PriceModifierCreateData
+      description: Json-api style data object containing a price modifier to be created.
+      properties:
+        data:
+          $ref: '#/components/schemas/price-modifier-create'
+      required:
+      - data
+      additionalProperties: false
+      x-go-name: PriceModifierCreateData
+    page-meta:
+      type: object
+      description: Contains the results for the entire collection.
+      title: PageMeta
+      properties:
+        results:
+          type: object
+          properties:
+            total:
+              description: Total number of results for the entire collection.
+              type:
+              - integer
+              - 'null'
+              example: 1
+        page:
+          type: object
+          properties:
+            limit:
+              description: The maximum number of records for all pages.
+              type: integer
+              example: 10
+              x-omitempty: false
+            offset:
+              description: The current offset by number of pages.
+              type: integer
+              example: 0
+              x-omitempty: false
+            current:
+              description: The current number of pages.
+              type: integer
+              example: 0
+              x-omitempty: false
+            total:
+              description: The total number of records for the entire collection.
+              type: integer
+              example: 1
+              x-omitempty: false
+    links-modifier:
+      description: Links are used to allow you to move between requests.
+      type: object
+      properties:
+        self:
+          description: Single entities use a self parameter with a link to that specific resource.
+          type:
+          - string
+          - 'null'
+          format: uri
+          example: /pcm/pricebooks/4c45e4ec-26e0-4043-86e4-c15b9cf985a7/modifiers/f5bd1fc7-48a2-40ac-88dd-2bd9985050cd
+    currencies:
+      type: object
+      description: A collection of one or more currencies objects that consists of the [**three-letter ISO code**](https://www.iso.org/iso-3166-country-codes.html) of the currencies associated with this price and the amount. This is the product's price.
+      example:
+        USD:
+          amount: 100
+          includes_tax: false
+          tiers:
+            min_5:
+              minimum_quantity: 5
+              amount: 50
+        CAD:
+          amount: 127
+          includes_tax: false
+          tiers:
+            min_10:
+              minimum_quantity: 10
+              amount: 100
+        GBP:
+          amount: 73
+          includes_tax: true
+          tiers:
+            min_20:
+              minimum_quantity: 20
+              amount: 60
+      additionalProperties:
+        $ref: '#/components/schemas/amount'
   parameters:
     limit:
       name: page[limit]

@@ -160,47 +160,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    ListResponseMeta:
-      type: object
-      required:
-      - results
-      properties:
-        results:
-          $ref: '#/components/schemas/ListResponseMetaResults'
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    ListResponseMetaResults:
-      description: Contains the results for the entire collection.
-      type: object
-      required:
-      - total
-      properties:
-        total:
-          description: Total number of results for the entire collection.
-          type: integer
-          example: 100
-    SynonymSetAttributes:
-      type: object
-      required:
-      - name
-      - items
-      properties:
-        name:
-          type: string
-          description: Human-readable name for the synonym set.
-          example: Apparel terms
-        items:
-          type: array
-          description: The synonym items in this set.
-          items:
-            $ref: '#/components/schemas/SynonymSetItem'
-          minItems: 1
     ResourceOwner:
       description: The resource owner, either `organization` or `store`.
       type: string
@@ -211,6 +170,19 @@ components:
       x-go-type: tenancy.Owner
       x-go-type-import:
         path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
+    SynonymSetType:
+      type: string
+      description: Represents the type of object being returned. Always `catalog_search_synonym_set`.
+      example: catalog_search_synonym_set
+      enum:
+      - catalog_search_synonym_set
+    ListResponseMeta:
+      type: object
+      required:
+      - results
+      properties:
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
     SynonymSetResponse:
       type: object
       required:
@@ -218,45 +190,7 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/SynonymSet'
-    SynonymSetMeta:
-      type: object
-      required:
-      - created_at
-      - updated_at
-      - owner
-      - sync_status
-      properties:
-        created_at:
-          type: string
-          format: date-time
-          description: The date and time the synonym set was created.
-          example: '2026-03-05T12:00:00Z'
-        updated_at:
-          type: string
-          format: date-time
-          description: The date and time the synonym set was last updated.
-          example: '2026-03-05T12:00:00Z'
-        owner:
-          $ref: '#/components/schemas/ResourceOwner'
-        sync_status:
-          type: string
-          description: The sync status of the synonym set.
-          enum:
-          - pending_sync
-          - synced
-          - sync_failed
-          - pending_delete
-          example: pending_sync
-          x-go-type: model.SyncStatus
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/model
-        last_synced_at:
-          type: string
-          format: date-time
-          description: The date and time the synonym set was last successfully synced.
-          example: '2026-03-05T12:01:00Z'
-    CreateSynonymSetRequest:
+    UpdateSynonymSetRequest:
       type: object
       required:
       - data
@@ -264,13 +198,62 @@ components:
         data:
           type: object
           required:
+          - id
           - type
           - attributes
           properties:
+            id:
+              type: string
+              format: uuid
+              example: 8fccaa19-dba9-4621-8d11-31a222a68c7c
+              x-go-name: ID
             type:
               $ref: '#/components/schemas/SynonymSetType'
             attributes:
-              $ref: '#/components/schemas/SynonymSetAttributes'
+              $ref: '#/components/schemas/UpdateSynonymSetAttributes'
+    SynonymSet:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: The unique identifier for the synonym set.
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/SynonymSetType'
+        attributes:
+          $ref: '#/components/schemas/SynonymSetAttributes'
+        meta:
+          $ref: '#/components/schemas/SynonymSetMeta'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     ListSynonymSetsResponse:
       type: object
       required:
@@ -325,55 +308,77 @@ components:
           example:
           - '-'
           x-go-type-skip-optional-pointer: true
-    SynonymSetType:
-      type: string
-      description: Represents the type of object being returned. Always `catalog_search_synonym_set`.
-      example: catalog_search_synonym_set
-      enum:
-      - catalog_search_synonym_set
-    SynonymSet:
+    SynonymSetMeta:
       type: object
       required:
-      - id
-      - type
-      - attributes
-      - meta
+      - created_at
+      - updated_at
+      - owner
+      - sync_status
       properties:
-        id:
-          description: The unique identifier for the synonym set.
+        created_at:
           type: string
-          format: uuid
-          example: 550e8400-e29b-41d4-a716-446655440000
-          x-go-name: ID
-        type:
-          $ref: '#/components/schemas/SynonymSetType'
-        attributes:
-          $ref: '#/components/schemas/SynonymSetAttributes'
-        meta:
-          $ref: '#/components/schemas/SynonymSetMeta'
-    Error:
+          format: date-time
+          description: The date and time the synonym set was created.
+          example: '2026-03-05T12:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: The date and time the synonym set was last updated.
+          example: '2026-03-05T12:00:00Z'
+        owner:
+          $ref: '#/components/schemas/ResourceOwner'
+        sync_status:
+          type: string
+          description: The sync status of the synonym set.
+          enum:
+          - pending_sync
+          - synced
+          - sync_failed
+          - pending_delete
+          example: pending_sync
+          x-go-type: model.SyncStatus
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/model
+        last_synced_at:
+          type: string
+          format: date-time
+          description: The date and time the synonym set was last successfully synced.
+          example: '2026-03-05T12:01:00Z'
+    ListResponseMetaResults:
+      description: Contains the results for the entire collection.
+      type: object
       required:
-      - status
-      - title
+      - total
       properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
+        total:
+          description: Total number of results for the entire collection.
+          type: integer
+          example: 100
+    CreateSynonymSetRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
           type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+          required:
+          - type
+          - attributes
+          properties:
+            type:
+              $ref: '#/components/schemas/SynonymSetType'
+            attributes:
+              $ref: '#/components/schemas/SynonymSetAttributes'
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     UpdateSynonymSetAttributes:
       type: object
       properties:
@@ -387,27 +392,22 @@ components:
           items:
             $ref: '#/components/schemas/SynonymSetItem'
           minItems: 1
-    UpdateSynonymSetRequest:
+    SynonymSetAttributes:
       type: object
       required:
-      - data
+      - name
+      - items
       properties:
-        data:
-          type: object
-          required:
-          - id
-          - type
-          - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              example: 8fccaa19-dba9-4621-8d11-31a222a68c7c
-              x-go-name: ID
-            type:
-              $ref: '#/components/schemas/SynonymSetType'
-            attributes:
-              $ref: '#/components/schemas/UpdateSynonymSetAttributes'
+        name:
+          type: string
+          description: Human-readable name for the synonym set.
+          example: Apparel terms
+        items:
+          type: array
+          description: The synonym items in this set.
+          items:
+            $ref: '#/components/schemas/SynonymSetItem'
+          minItems: 1
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.

@@ -46,23 +46,16 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    ListResponseMeta:
-      type: object
-      required:
-      - results
-      properties:
-        results:
-          $ref: '#/components/schemas/ListResponseMetaResults'
-    ListResponseMetaResults:
-      description: Contains the results for the entire collection.
-      type: object
-      required:
-      - total
-      properties:
-        total:
-          description: Total number of results for the entire collection.
-          type: integer
-          example: 100
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
     ListSearchIndexesResponse:
       type: object
       required:
@@ -75,47 +68,13 @@ components:
             $ref: '#/components/schemas/SearchIndex'
         meta:
           $ref: '#/components/schemas/ListResponseMeta'
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    SearchIndexType:
-      description: Represents the type of object being returned. Always `catalog_search_index`.
-      type: string
-      example: catalog_search_index
-      enum:
-      - catalog_search_index
-    ResourceOwner:
-      description: The resource owner, either `organization` or `store`.
-      type: string
-      example: organization
-      enum:
-      - organization
-      - store
-      x-go-type: tenancy.Owner
-      x-go-type-import:
-        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
-    SearchIndex:
+    ListResponseMeta:
       type: object
       required:
-      - id
-      - type
-      - meta
+      - results
       properties:
-        id:
-          description: The unique identifier for the search index.
-          type: string
-          format: uuid
-          example: 805103ff-0a37-4f83-8fe0-95a16039bd98
-          x-go-name: ID
-        type:
-          $ref: '#/components/schemas/SearchIndexType'
-        meta:
-          $ref: '#/components/schemas/SearchIndexMeta'
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
     Error:
       required:
       - status
@@ -139,6 +98,12 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    SearchIndexType:
+      description: Represents the type of object being returned. Always `catalog_search_index`.
+      type: string
+      example: catalog_search_index
+      enum:
+      - catalog_search_index
     SearchIndexMeta:
       type: object
       required:
@@ -163,6 +128,41 @@ components:
           example: false
         owner:
           $ref: '#/components/schemas/ResourceOwner'
+    SearchIndex:
+      type: object
+      required:
+      - id
+      - type
+      - meta
+      properties:
+        id:
+          description: The unique identifier for the search index.
+          type: string
+          format: uuid
+          example: 805103ff-0a37-4f83-8fe0-95a16039bd98
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/SearchIndexType'
+        meta:
+          $ref: '#/components/schemas/SearchIndexMeta'
+    ListResponseMetaResults:
+      description: Contains the results for the entire collection.
+      type: object
+      required:
+      - total
+      properties:
+        total:
+          description: Total number of results for the entire collection.
+          type: integer
+          example: 100
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.

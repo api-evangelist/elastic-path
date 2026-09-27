@@ -85,15 +85,47 @@ paths:
         default:
           $ref: '#/components/responses/InternalServerError'
 components:
+  responses:
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Unauthorized\",\n      \"status\": \"401\"\n    }\n  ]\n}\n"
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"enum\",\n      \"source\": \"data.type\",\n      \"detail\": \"data.type must be one of the following: \\\"settings\\\"\"\n    }\n  ]\n}\n"
   schemas:
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
+    SettingsResponse:
+      allOf:
+      - $ref: '#/components/schemas/SettingsData'
+      - type: object
+        properties:
+          meta:
+            type: object
+            properties:
+              owner:
+                type: string
+                example: store
     Settings:
       type: object
       properties:
@@ -176,17 +208,6 @@ components:
           description: Optional additional detail about the error.
           examples:
           - The field 'name' is required
-    SettingsResponse:
-      allOf:
-      - $ref: '#/components/schemas/SettingsData'
-      - type: object
-        properties:
-          meta:
-            type: object
-            properties:
-              owner:
-                type: string
-                example: store
     SettingsData:
       properties:
         data:
@@ -246,35 +267,14 @@ components:
                 description: The page offset limit.
                 type: integer
                 example: 10000
-  responses:
-    UnauthorizedError:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unauthorized-error:
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Unauthorized\",\n      \"status\": \"401\"\n    }\n  ]\n}\n"
-    BadRequestError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"enum\",\n      \"source\": \"data.type\",\n      \"detail\": \"data.type must be one of the following: \\\"settings\\\"\"\n    }\n  ]\n}\n"
-    InternalServerError:
-      description: Internal server error.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              summary: Internal server error
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     BearerToken:
       type: http

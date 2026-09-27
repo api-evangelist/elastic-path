@@ -171,44 +171,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   responses:
-    ForbiddenError:
-      description: Forbidden Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            forbidden-error:
-              value:
-                errors:
-                - title: Forbidden
-                  status: '403'
-                  detail: forbidden
-    UnauthorizedError:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unauthorized-error:
-              value:
-                errors:
-                - title: Unauthorized
-                  status: '401'
-    BadRequestError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              value:
-                errors:
-                - title: Bad Request
-                  status: '400'
-                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
     InternalServerError:
       description: Internal server error.
       content:
@@ -236,6 +198,44 @@ components:
                 - title: Not Found
                   status: '404'
                   detail: account not found
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value:
+                errors:
+                - title: Unauthorized
+                  status: '401'
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    ForbiddenError:
+      description: Forbidden Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            forbidden-error:
+              value:
+                errors:
+                - title: Forbidden
+                  status: '403'
+                  detail: forbidden
     UnprocessableEntity:
       description: Unprocessable Entity
       content:
@@ -250,18 +250,6 @@ components:
                   status: '422'
                   detail: store id mismatch
   schemas:
-    SwitchingAccountRequest:
-      allOf:
-      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
-      - type: object
-        properties:
-          authentication_mechanism:
-            description: Species the authentication mechanism. You must use `account_management_authentication_token`.
-            type: string
-            const: account_management_authentication_token
-      required:
-      - type
-      - authentication_mechanism
     AccountManagementAuthenticationTokenResponse:
       type: object
       properties:
@@ -287,32 +275,6 @@ components:
           type: string
           format: date-time
           example: '2021-03-16T19:36:11.070Z'
-    MetaListResults:
-      type: object
-      properties:
-        total:
-          type: integer
-          description: The total number of results after applying filters, if any, or all results.
-          example: 1
-    MetaListPage:
-      type: object
-      properties:
-        limit:
-          type: integer
-          description: The maximum number of records per page for this response. You can set this value up to 100.
-          example: 25
-        current:
-          type: integer
-          description: The current page.
-          example: 0
-        offset:
-          type: integer
-          description: The current offset by number of records, not pages. Offset is zero-based.
-          example: 0
-        total:
-          type: integer
-          description: The total page count.
-          example: 1
     MetaList:
       type: object
       properties:
@@ -349,15 +311,62 @@ components:
       - password_profile_id
       - username
       - password
-    ErrorResponse:
+    AccountManagementAuthenticationToken:
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the object. You must use `account_management_authentication_token`.
+          type: string
+          const: account_management_authentication_token
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
+    SwitchingAccountRequest:
+      allOf:
+      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
+      - type: object
+        properties:
+          authentication_mechanism:
+            description: Species the authentication mechanism. You must use `account_management_authentication_token`.
+            type: string
+            const: account_management_authentication_token
+      required:
+      - type
+      - authentication_mechanism
+    Error:
       type: object
       required:
-      - errors
+      - status
+      - title
       properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    MetaAccountMemberId:
+      type: object
+      properties:
+        account_member_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the Account Member that authenticated. This is useful if `account_member_self_management` is enabled in [Account Authentication Settings](/docs/api/accounts/get-v-2-settings-account-authentication), so that the user can update details for their account.
+          example: f5d08d48-bbc8-4f61-818f-a78583045f56
     SelfSignupRequest:
       allOf:
       - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
@@ -444,35 +453,34 @@ components:
       - password_profile_id
       - username
       - one_time_password_token
-    AccountManagementAuthenticationToken:
+    MetaListPage:
       type: object
       properties:
-        type:
-          description: Specifies the type of the object. You must use `account_management_authentication_token`.
-          type: string
-          const: account_management_authentication_token
-    Error:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
+        total:
+          type: integer
+          description: The total page count.
+          example: 1
+    ErrorResponse:
       type: object
       required:
-      - status
-      - title
+      - errors
       properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     OpenIDConnectRequest:
       allOf:
       - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
@@ -501,14 +509,6 @@ components:
       - oauth_authorization_code
       - oauth_redirect_uri
       - oauth_code_verifier
-    MetaAccountMemberId:
-      type: object
-      properties:
-        account_member_id:
-          type: string
-          format: uuid
-          description: The unique identifier for the Account Member that authenticated. This is useful if `account_member_self_management` is enabled in [Account Authentication Settings](/docs/api/accounts/get-v-2-settings-account-authentication), so that the user can update details for their account.
-          example: f5d08d48-bbc8-4f61-818f-a78583045f56
   securitySchemes:
     BearerToken:
       type: http

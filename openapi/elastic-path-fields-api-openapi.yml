@@ -407,78 +407,12 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  responses:
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: 400
-                  detail: 'data.attributes.name: "name" is required'
-    NotFound:
-      description: Bad request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: 404
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - status: 500
-                  title: Internal Server Error
-                  detail: There was an internal server error, you can report with your request id.
-                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
   schemas:
-    FieldRelationships:
-      type: object
-      description: Relationships are established between different flow/template entities. For example, a field/attribute is related to a flow/template, as the field/attribute is attached to the flow/template.
-      required:
-      - flow
-      properties:
-        flow:
-          type: object
-          required:
-          - data
-          properties:
-            data:
-              type: object
-              required:
-              - type
-              - id
-              properties:
-                id:
-                  $ref: '#/components/schemas/UUID'
-                type:
-                  type: string
-                  description: Represents the type of object being returned.
-                  example: flow
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
+    UUID:
+      type: string
+      description: A unique identifier for a resource.
+      format: uuid
+      example: 00000000-0000-0000-0000-000000000000
     Field:
       title: Field
       type: object
@@ -565,6 +499,189 @@ components:
           $ref: '#/components/schemas/FieldLinks'
         relationships:
           $ref: '#/components/schemas/FieldRelationships'
+    Meta:
+      type: object
+      properties:
+        owner:
+          type: string
+          description: The resource owner, either `organization` or `store`.
+          example: enum
+          enum:
+          - store
+          - organization
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              type: string
+              description: The date and time a resource is created.
+              example: '2023-10-11T13:02:25.293Z'
+            updated_at:
+              type: string
+              description: The date and time a resource is updated.
+              example: '2023-10-11T13:02:25.293Z'
+    FieldUpdateRequest:
+      title: FieldUpdateRequest
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            default:
+              type: number
+              description: A default value if none is supplied and the field/attribute is required.
+              examples:
+              - 1
+            description:
+              type: string
+              description: A description for a field/attribute.
+              examples:
+              - Average rating as given by our users
+            field_type:
+              type: string
+              description: "This field is immutable and cannot be updated. The type of field: \n- `string`\n- `integer`\n- `boolean`\n- `float`\n- `date`\n- `relationship`\n"
+              examples:
+              - integer
+            id:
+              $ref: '#/components/schemas/UUID'
+            name:
+              type: string
+              description: The name of a field/attribute.
+              examples:
+              - Product Rating
+            required:
+              type: boolean
+              description: '`true` if required on input, `false` if not. Always `false` if the `field_type` is `relationship`.
+
+                '
+              examples:
+              - true
+            slug:
+              type: string
+              description: A unique identifier of a field/attribute.
+              examples:
+              - product-rating
+            enabled:
+              type: boolean
+              examples:
+              - true
+            type:
+              type: string
+              description: Represents the object being returned.
+              examples:
+              - field
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: integer
+          format: int
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        request_id:
+          type: string
+          description: Internal request ID.
+          example: 00000000-0000-0000-0000-000000000000
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    FieldLinks:
+      type: object
+      description: 'Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:
+
+
+        | Property | Description |
+
+        | --- | --- |
+
+        | `current` | Always the current page |
+
+        | `first` | Always the first page |
+
+        | `last` | `null` if there is only one page. |
+
+        | `prev` | `null` if you are on the first page. |
+
+        | `next` | `null` if there is only one page. |
+
+        '
+      properties:
+        self:
+          type: string
+          example: https://euwest.api.elasticpath.com/v2/flows/3cf3ad3f-b12c-4a08-a6ab-05e6aab0122c/fields/c1c788d1-f1c7-4b90-938f-f158f3353c66
+    FieldValidationRules:
+      type: object
+      description: An array of validation rule objects. See [Field/attribute Validation Rules](#fieldattribute-validation-rules).
+      properties:
+        type:
+          type: string
+          description: The validation you use depends on the `field_type` of the field/attribute. Each validation rule is expressed as a validation rule object.
+          example: enum
+          enum:
+          - enum
+          - email
+          - slug
+          - between
+          - one-to-many
+          - one-to-one
+        options:
+          anyOf:
+          - type: array
+            description: An array of valid string values.
+            items:
+              type: string
+          - type: object
+            description: An object containing `from` and `to` integers.
+            properties:
+              from:
+                type:
+                - integer
+                - string
+                example: 1
+              to:
+                type:
+                - integer
+                - string
+                example: 5
+        to:
+          type: string
+          example: customer
+    FieldRelationships:
+      type: object
+      description: Relationships are established between different flow/template entities. For example, a field/attribute is related to a flow/template, as the field/attribute is attached to the flow/template.
+      required:
+      - flow
+      properties:
+        flow:
+          type: object
+          required:
+          - data
+          properties:
+            data:
+              type: object
+              required:
+              - type
+              - id
+              properties:
+                id:
+                  $ref: '#/components/schemas/UUID'
+                type:
+                  type: string
+                  description: Represents the type of object being returned.
+                  example: flow
     FieldRequest:
       title: FieldRequest
       type: object
@@ -639,171 +756,54 @@ components:
                   from: 1
                   to: 5
                 type: between
-    FieldUpdateRequest:
-      title: FieldUpdateRequest
-      type: object
-      properties:
-        data:
-          type: object
-          properties:
-            default:
-              type: number
-              description: A default value if none is supplied and the field/attribute is required.
-              examples:
-              - 1
-            description:
-              type: string
-              description: A description for a field/attribute.
-              examples:
-              - Average rating as given by our users
-            field_type:
-              type: string
-              description: "This field is immutable and cannot be updated. The type of field: \n- `string`\n- `integer`\n- `boolean`\n- `float`\n- `date`\n- `relationship`\n"
-              examples:
-              - integer
-            id:
-              $ref: '#/components/schemas/UUID'
-            name:
-              type: string
-              description: The name of a field/attribute.
-              examples:
-              - Product Rating
-            required:
-              type: boolean
-              description: '`true` if required on input, `false` if not. Always `false` if the `field_type` is `relationship`.
-
-                '
-              examples:
-              - true
-            slug:
-              type: string
-              description: A unique identifier of a field/attribute.
-              examples:
-              - product-rating
-            enabled:
-              type: boolean
-              examples:
-              - true
-            type:
-              type: string
-              description: Represents the object being returned.
-              examples:
-              - field
-    UUID:
-      type: string
-      description: A unique identifier for a resource.
-      format: uuid
-      example: 00000000-0000-0000-0000-000000000000
-    FieldLinks:
-      type: object
-      description: 'Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:
-
-
-        | Property | Description |
-
-        | --- | --- |
-
-        | `current` | Always the current page |
-
-        | `first` | Always the first page |
-
-        | `last` | `null` if there is only one page. |
-
-        | `prev` | `null` if you are on the first page. |
-
-        | `next` | `null` if there is only one page. |
-
-        '
-      properties:
-        self:
-          type: string
-          example: https://euwest.api.elasticpath.com/v2/flows/3cf3ad3f-b12c-4a08-a6ab-05e6aab0122c/fields/c1c788d1-f1c7-4b90-938f-f158f3353c66
-    Error:
+    ErrorResponse:
       required:
-      - status
-      - title
+      - errors
       properties:
-        status:
-          type: integer
-          format: int
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        request_id:
-          type: string
-          description: Internal request ID.
-          example: 00000000-0000-0000-0000-000000000000
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    FieldValidationRules:
-      type: object
-      description: An array of validation rule objects. See [Field/attribute Validation Rules](#fieldattribute-validation-rules).
-      properties:
-        type:
-          type: string
-          description: The validation you use depends on the `field_type` of the field/attribute. Each validation rule is expressed as a validation rule object.
-          example: enum
-          enum:
-          - enum
-          - email
-          - slug
-          - between
-          - one-to-many
-          - one-to-one
-        options:
-          anyOf:
-          - type: array
-            description: An array of valid string values.
-            items:
-              type: string
-          - type: object
-            description: An object containing `from` and `to` integers.
-            properties:
-              from:
-                type:
-                - integer
-                - string
-                example: 1
-              to:
-                type:
-                - integer
-                - string
-                example: 5
-        to:
-          type: string
-          example: customer
-    Meta:
-      type: object
-      properties:
-        owner:
-          type: string
-          description: The resource owner, either `organization` or `store`.
-          example: enum
-          enum:
-          - store
-          - organization
-        timestamps:
-          type: object
-          properties:
-            created_at:
-              type: string
-              description: The date and time a resource is created.
-              example: '2023-10-11T13:02:25.293Z'
-            updated_at:
-              type: string
-              description: The date and time a resource is updated.
-              example: '2023-10-11T13:02:25.293Z'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: 500
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+    NotFound:
+      description: Bad request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: 404
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: 400
+                  detail: 'data.attributes.name: "name" is required'
   securitySchemes:
     bearerAuth:
       type: http

@@ -246,6 +246,98 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
+    AccountTag:
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the resource object, use `account_tag` for Account Tags.
+          type: string
+          const: account_tag
+        name:
+          type: string
+          description: Specifies the name of the account tag.
+          example: account-name-tag
+        description:
+          type: string
+          description: Describes the account tag.
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    MetaListPage:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
+        total:
+          type: integer
+          description: The total page count.
+          example: 1
+    MetaList:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/MetaListPage'
+        results:
+          $ref: '#/components/schemas/MetaListResults'
+    MetaTimestamps:
+      type: object
+      properties:
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              description: The date the resource is created.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+            updated_at:
+              description: The date the resource is updated.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
     ErrorResponse:
       type: object
       required:
@@ -273,99 +365,81 @@ components:
                 description: A URL to the specific resource.
                 type: string
                 example: https://useast.api.elasticpath.com/v2/account-tags/deb6b25f-8451-4211-9a22-95610333df23
-    MetaListResults:
-      type: object
-      properties:
-        total:
-          type: integer
-          description: The total number of results after applying filters, if any, or all results.
-          example: 1
-    MetaListPage:
-      type: object
-      properties:
-        limit:
-          type: integer
-          description: The maximum number of records per page for this response. You can set this value up to 100.
-          example: 25
-        current:
-          type: integer
-          description: The current page.
-          example: 0
-        offset:
-          type: integer
-          description: The current offset by number of records, not pages. Offset is zero-based.
-          example: 0
-        total:
-          type: integer
-          description: The total page count.
-          example: 1
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: deb6b25f-8451-4211-9a22-95610333df23
-    AccountTag:
-      type: object
-      properties:
-        type:
-          description: Specifies the type of the resource object, use `account_tag` for Account Tags.
-          type: string
-          const: account_tag
-        name:
-          type: string
-          description: Specifies the name of the account tag.
-          example: account-name-tag
-        description:
-          type: string
-          description: Describes the account tag.
-    MetaList:
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/MetaListPage'
-        results:
-          $ref: '#/components/schemas/MetaListResults'
-    Error:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
+  responses:
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
           examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
           examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: account not found
+    ConflictError:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
           examples:
-          - The field 'name' is required
-    MetaTimestamps:
-      type: object
-      properties:
-        timestamps:
-          type: object
-          properties:
-            created_at:
-              description: The date the resource is created.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-            updated_at:
-              description: The date the resource is updated.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
+            conflict-error:
+              value:
+                errors:
+                - title: Conflict
+                  status: '409'
+                  detail: account membership with the given account id and account member id already exists
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
   parameters:
+    filter:
+      name: filter
+      in: query
+      description: Specifies the filter attributes.
+      required: false
+      schema:
+        type: string
+        format: string
+        example: ilike(name,"*swan*")
+    page-offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
     AccountTagId:
       name: tag_id
       description: The ID of the Account Tag.
@@ -385,80 +459,6 @@ components:
         format: int64
         minimum: 0
         example: 25
-    page-offset:
-      name: page[offset]
-      in: query
-      description: The number of records to offset the results by.
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 10
-    filter:
-      name: filter
-      in: query
-      description: Specifies the filter attributes.
-      required: false
-      schema:
-        type: string
-        format: string
-        example: ilike(name,"*swan*")
-  responses:
-    ConflictError:
-      description: Conflict
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            conflict-error:
-              value:
-                errors:
-                - title: Conflict
-                  status: '409'
-                  detail: account membership with the given account id and account member id already exists
-    NotFoundError:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: account not found
-    BadRequestError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              value:
-                errors:
-                - title: Bad Request
-                  status: '400'
-                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
-    InternalServerError:
-      description: Internal server error.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              summary: Internal server error
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-                  detail: there was a problem processing your request
   securitySchemes:
     BearerToken:
       type: http

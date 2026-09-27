@@ -292,6 +292,144 @@ paths:
       - BearerToken: []
 components:
   schemas:
+    PaginationResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results.
+          example: 75
+        total_method:
+          type: string
+          description: The method used to calculate the total. `exact` means the precise count is known, `lower_bound` means the count is at least this value, `observed` means the count is estimated from observations.
+          enum:
+          - exact
+          - lower_bound
+          - observed
+          example: exact
+    Error:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: The HTTP response code of the error.
+        title:
+          type: string
+          description: A brief summary of the error.
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+        source:
+          type: string
+          description: Optional field indicating the source of the error.
+    MetaTimestamps:
+      type: object
+      properties:
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              description: The date the address is created.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+            updated_at:
+              description: The date the address is updated.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+    PaginationLinks:
+      type: object
+      properties:
+        current:
+          type: string
+          description: The URL to the current page.
+          example: https://useast.api.elasticpath.com/v2/customers/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=0&page[limit]=25
+        first:
+          type: string
+          description: The URL to the first page.
+          example: https://useast.api.elasticpath.com/v2/customers/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=0&page[limit]=25
+        last:
+          type:
+          - string
+          - 'null'
+          description: The URL to the last page. May be null if the total is unknown.
+          example: https://useast.api.elasticpath.com/v2/customers/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=50&page[limit]=25
+        next:
+          type:
+          - string
+          - 'null'
+          description: The URL to the next page. Null if on the last page.
+          example: https://useast.api.elasticpath.com/v2/customers/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=25&page[limit]=25
+        prev:
+          type:
+          - string
+          - 'null'
+          description: The URL to the previous page. Null if on the first page.
+          example: null
+    AddressResponse:
+      allOf:
+      - $ref: '#/components/schemas/Address'
+      - type: object
+        properties:
+          id:
+            type: string
+            description: The unique identifier for an Address.
+            example: 5f8da740-6680-463e-b31c-190b2db4bf9d
+          meta:
+            $ref: '#/components/schemas/MetaTimestamps'
+          links:
+            type: object
+            properties:
+              self:
+                description: A URL to the specific resource.
+                type: string
+                example: https://useast.api.elasticpath.com/v2/customers/deb6b25f-8451-4211-9a22-95610333df23/addresses
+    CustomerAddressResponse:
+      allOf:
+      - $ref: '#/components/schemas/AddressResponse'
+      - type: object
+        properties:
+          relationships:
+            type: object
+            properties:
+              customer:
+                type: object
+                properties:
+                  id:
+                    description: The ID of the customer.
+                    type: string
+                    example: 11afcf9b-971b-4fdb-8e10-f2ecf970718e
+                  type:
+                    description: The type of object being returned.
+                    type: string
+                    example: customer
+    PaginationPage:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page.
+          example: 25
+        offset:
+          type: integer
+          description: The current offset by number of records.
+          example: 0
+        current:
+          type: integer
+          description: The current page number.
+          example: 1
+        total:
+          type: integer
+          description: The total number of pages.
+          example: 3
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     Address:
       type: object
       properties:
@@ -351,15 +489,6 @@ components:
           type: string
           description: A two digit code for the country this address is in, expressed as per the ISO 3166-2 standard.
           example: GB
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
     PaginationMeta:
       type: object
       properties:
@@ -367,135 +496,6 @@ components:
           $ref: '#/components/schemas/PaginationPage'
         results:
           $ref: '#/components/schemas/PaginationResults'
-    PaginationResults:
-      type: object
-      properties:
-        total:
-          type: integer
-          description: The total number of results.
-          example: 75
-        total_method:
-          type: string
-          description: The method used to calculate the total. `exact` means the precise count is known, `lower_bound` means the count is at least this value, `observed` means the count is estimated from observations.
-          enum:
-          - exact
-          - lower_bound
-          - observed
-          example: exact
-    CustomerAddressResponse:
-      allOf:
-      - $ref: '#/components/schemas/AddressResponse'
-      - type: object
-        properties:
-          relationships:
-            type: object
-            properties:
-              customer:
-                type: object
-                properties:
-                  id:
-                    description: The ID of the customer.
-                    type: string
-                    example: 11afcf9b-971b-4fdb-8e10-f2ecf970718e
-                  type:
-                    description: The type of object being returned.
-                    type: string
-                    example: customer
-    AddressResponse:
-      allOf:
-      - $ref: '#/components/schemas/Address'
-      - type: object
-        properties:
-          id:
-            type: string
-            description: The unique identifier for an Address.
-            example: 5f8da740-6680-463e-b31c-190b2db4bf9d
-          meta:
-            $ref: '#/components/schemas/MetaTimestamps'
-          links:
-            type: object
-            properties:
-              self:
-                description: A URL to the specific resource.
-                type: string
-                example: https://useast.api.elasticpath.com/v2/customers/deb6b25f-8451-4211-9a22-95610333df23/addresses
-    Error:
-      type: object
-      properties:
-        status:
-          type: integer
-          description: The HTTP response code of the error.
-        title:
-          type: string
-          description: A brief summary of the error.
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-        source:
-          type: string
-          description: Optional field indicating the source of the error.
-    PaginationLinks:
-      type: object
-      properties:
-        current:
-          type: string
-          description: The URL to the current page.
-          example: https://useast.api.elasticpath.com/v2/customers/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=0&page[limit]=25
-        first:
-          type: string
-          description: The URL to the first page.
-          example: https://useast.api.elasticpath.com/v2/customers/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=0&page[limit]=25
-        last:
-          type:
-          - string
-          - 'null'
-          description: The URL to the last page. May be null if the total is unknown.
-          example: https://useast.api.elasticpath.com/v2/customers/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=50&page[limit]=25
-        next:
-          type:
-          - string
-          - 'null'
-          description: The URL to the next page. Null if on the last page.
-          example: https://useast.api.elasticpath.com/v2/customers/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=25&page[limit]=25
-        prev:
-          type:
-          - string
-          - 'null'
-          description: The URL to the previous page. Null if on the first page.
-          example: null
-    MetaTimestamps:
-      type: object
-      properties:
-        timestamps:
-          type: object
-          properties:
-            created_at:
-              description: The date the address is created.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-            updated_at:
-              description: The date the address is updated.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-    PaginationPage:
-      type: object
-      properties:
-        limit:
-          type: integer
-          description: The maximum number of records per page.
-          example: 25
-        offset:
-          type: integer
-          description: The current offset by number of records.
-          example: 0
-        current:
-          type: integer
-          description: The current page number.
-          example: 1
-        total:
-          type: integer
-          description: The total number of pages.
-          example: 3
   responses:
     ErrorBadRequest:
       description: Bad Request
