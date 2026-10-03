@@ -154,16 +154,28 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    ResourceOwner:
-      description: The resource owner, either `organization` or `store`.
-      type: string
-      example: organization
-      enum:
-      - organization
-      - store
-      x-go-type: tenancy.Owner
-      x-go-type-import:
-        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
+    StopwordSetAttributes:
+      type: object
+      required:
+      - stopwords
+      properties:
+        locale:
+          type: string
+          description: '[ISO 639 language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) for the stopwords set. Omit or pass null for the default set. At most one stopwords set per locale is allowed.
+
+            '
+          example: en
+        stopwords:
+          type: array
+          description: The list of stopwords.
+          items:
+            type: string
+          minItems: 1
+          example:
+          - the
+          - a
+          - an
+          - is
     CreateStopwordSetRequest:
       type: object
       required:
@@ -185,13 +197,115 @@ components:
       example: catalog_search_stopword_set
       enum:
       - catalog_search_stopword_set
-    ListResponseMeta:
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    ListStopwordSetsResponse:
       type: object
       required:
-      - results
+      - data
+      - meta
       properties:
-        results:
-          $ref: '#/components/schemas/ListResponseMetaResults'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StopwordSet'
+        meta:
+          $ref: '#/components/schemas/ListResponseMeta'
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
+    UpdateStopwordSetRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - id
+          - type
+          - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 550e8400-e29b-41d4-a716-446655440000
+              x-go-name: ID
+            type:
+              $ref: '#/components/schemas/StopwordSetType'
+            attributes:
+              $ref: '#/components/schemas/UpdateStopwordSetAttributes'
+    StopwordSet:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: The unique identifier for the stopword set.
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/StopwordSetType'
+        attributes:
+          $ref: '#/components/schemas/StopwordSetAttributes'
+        meta:
+          $ref: '#/components/schemas/StopwordSetMeta'
+    UpdateStopwordSetAttributes:
+      type: object
+      required:
+      - stopwords
+      properties:
+        stopwords:
+          type: array
+          description: The replacement list of stopwords. Must contain at least one entry.
+          items:
+            type: string
+          minItems: 1
+          example:
+          - the
+          - a
+          - an
     StopwordSetMeta:
       type: object
       required:
@@ -230,90 +344,13 @@ components:
           format: date-time
           description: The date and time the stopword set was last successfully synced.
           example: '2026-03-05T12:01:00Z'
-    StopwordSetAttributes:
+    ListResponseMeta:
       type: object
       required:
-      - stopwords
+      - results
       properties:
-        locale:
-          type: string
-          description: '[ISO 639 language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) for the stopwords set. Omit or pass null for the default set. At most one stopwords set per locale is allowed.
-
-            '
-          example: en
-        stopwords:
-          type: array
-          description: The list of stopwords.
-          items:
-            type: string
-          minItems: 1
-          example:
-          - the
-          - a
-          - an
-          - is
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    StopwordSet:
-      type: object
-      required:
-      - id
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          description: The unique identifier for the stopword set.
-          type: string
-          format: uuid
-          example: 550e8400-e29b-41d4-a716-446655440000
-          x-go-name: ID
-        type:
-          $ref: '#/components/schemas/StopwordSetType'
-        attributes:
-          $ref: '#/components/schemas/StopwordSetAttributes'
-        meta:
-          $ref: '#/components/schemas/StopwordSetMeta'
-    StopwordSetResponse:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          $ref: '#/components/schemas/StopwordSet'
-    ListStopwordSetsResponse:
-      type: object
-      required:
-      - data
-      - meta
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/StopwordSet'
-        meta:
-          $ref: '#/components/schemas/ListResponseMeta'
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
     ListResponseMetaResults:
       description: Contains the results for the entire collection.
       type: object
@@ -324,50 +361,13 @@ components:
           description: Total number of results for the entire collection.
           type: integer
           example: 100
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    UpdateStopwordSetAttributes:
-      type: object
-      required:
-      - stopwords
-      properties:
-        stopwords:
-          type: array
-          description: The replacement list of stopwords. Must contain at least one entry.
-          items:
-            type: string
-          minItems: 1
-          example:
-          - the
-          - a
-          - an
-    UpdateStopwordSetRequest:
+    StopwordSetResponse:
       type: object
       required:
       - data
       properties:
         data:
-          type: object
-          required:
-          - id
-          - type
-          - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              example: 550e8400-e29b-41d4-a716-446655440000
-              x-go-name: ID
-            type:
-              $ref: '#/components/schemas/StopwordSetType'
-            attributes:
-              $ref: '#/components/schemas/UpdateStopwordSetAttributes'
+          $ref: '#/components/schemas/StopwordSet'
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.

@@ -1153,529 +1153,107 @@ paths:
           description: No Content
 components:
   schemas:
-    ItemsBundleCondition:
+    BaseCondition:
       type: object
-      description: Bundle condition for targeting specific item combinations. Only supported in items bundle discount actions for defining required item groups.
+      description: Specifies which items should be included or excluded when applying the discount. Can be based on factors such as item SKUs, product attributes, quantities, or categories.
       properties:
         strategy:
           type: string
-          const: items_bundle
-          description: Strategy for matching item bundles
-        children:
+          description: The condition strategy type (e.g., item_identifier, item_category, or)
+        operator:
+          type: string
+          description: The evaluation operator for the condition
+        args:
           type: array
           items:
-            $ref: '#/components/schemas/BaseCondition'
-          description: Child conditions defining the required items in the bundle
-    PercentArg:
-      type: array
-      description: Apply a percentage based discount to the amount.
-      minItems: 2
-      maxItems: 2
-      prefixItems:
-      - type: string
-        const: percent
-      - type: number
-        minimum: 0
-        maximum: 100
-    FixedPriceArg:
-      type: array
-      description: Set the amount to this fixed value.
-      minItems: 2
-      maxItems: 2
-      prefixItems:
-      - type: string
-        const: fixed_price
-      - type: integer
-        minimum: 0
-    OrCondition:
-      type: object
-      description: 'Logical OR condition requiring ANY child condition to be satisfied. Only valid at the top level of a `cart_discount` action condition.
-
-        The primary use case is combining cart-level strategies — for example, `or(cart_total gte 5000, cart_total lt 500)` to apply a discount when the cart total falls into one of multiple ranges.
-
-        Children must all be the same level (all cart-level or all item-level). Mixing cart-level and item-level children is not allowed.
-
-        For item-level targeting, prefer using `item_identifier` directly as the top-level condition rather than wrapping it in an `or`.'
-      properties:
-        strategy:
-          type: string
-          const: or
-          description: Logical OR strategy
+            additionalProperties: true
+          description: Arguments/values for the condition evaluation
         children:
           type: array
+          description: Nested conditions for complex targeting requirements (level 1)
           items:
-            $ref: '#/components/schemas/BaseCondition'
-          description: Array of child conditions where ANY one can satisfy the requirement
-    ItemCategoryCondition:
+            type: object
+            properties:
+              strategy:
+                type: string
+              operator:
+                type: string
+              args:
+                type: array
+                items:
+                  additionalProperties: true
+              children:
+                type: array
+                description: Nested conditions (level 2)
+                items:
+                  type: object
+                  properties:
+                    strategy:
+                      type: string
+                    operator:
+                      type: string
+                    args:
+                      type: array
+                      items:
+                        additionalProperties: true
+                    children:
+                      type: array
+                      description: Nested conditions (level 3)
+                      items:
+                        type: object
+                        properties:
+                          strategy:
+                            type: string
+                          operator:
+                            type: string
+                          args:
+                            type: array
+                            items:
+                              additionalProperties: true
+    CartTotalCondition:
       type: object
-      description: Category-based condition for targeting items by their category breadcrumbs (i.e., the [hierarchies or nodes](/docs/api/pxm/products/hierarchies) associated with the item). Matches against any category in the item's hierarchical category path.
+      description: 'Cart total condition for gating a `cart_discount` action. The action is applied only when the cart total (or the total of a filtered subset of items) meets the threshold. When the condition passes, the discount applies to all cart items.
+
+        **Placement rules:**
+
+        - Valid as the top-level condition strategy. - Valid as a direct child of `and`/`or` (when all siblings are also cart-level). - **Not valid** inside item-level condition children.
+
+        **Children (optional):** item-level strategies that filter which items count toward the total check. For example, a `cart_total(gte 10000)` with an `item_identifier` child means "apply this action if the total of matching items is at least $100". The discount itself still applies to all cart items once the gate passes.'
       properties:
         strategy:
           type: string
-          const: item_category
-          description: Strategy for matching items by category
+          const: cart_total
+          description: Cart total condition strategy
         operator:
           type: string
           enum:
-          - in
-          - nin
+          - gte
+          - gt
+          - lte
+          - lt
+          - eq
+          - range
+          description: Comparison operator for the cart total threshold.
           x-enumDescriptions:
-            in: The item hierarchy breadcrumbs must include the supplied value.
-            nin: The item hierarchy breadcrumbs must **NOT** include the supplied value.
-          description: Whether items must be in (in) or not in (nin) the specified categories
-        args:
-          type: array
-          minItems: 1
-          maxItems: 400
-          items:
-            type: string
-          description: Category names to match against item breadcrumbs
-    RulePromotionItem:
-      allOf:
-      - $ref: '#/components/schemas/RulePromotionBaseAttributes'
-      - $ref: '#/components/schemas/RulePromotionBaseRuleSetBaseAttributes'
-    ItemDiscount:
-      type: object
-      summary: Item Discount
-      properties:
-        strategy:
-          type: string
-          const: item_discount
-          description: Applies a discount to particular items in the cart matching the supplied conditions.
+            gte: Cart total must be greater than or equal to the value in `args`
+            gt: Cart total must be greater than the value in `args`
+            lte: Cart total must be less than or equal to the value in `args`
+            lt: Cart total must be less than the value in `args`
+            eq: Cart total must be equal to the value in `args`
+            range: Cart total must be between the first and second values in `args` (both inclusive)
         args:
           oneOf:
-          - $ref: '#/components/schemas/FixedArg'
-          - $ref: '#/components/schemas/PercentArg'
-          - $ref: '#/components/schemas/FixedPriceQuantityArg'
-        condition:
-          $ref: '#/components/schemas/Condition'
-          description: Specifies which items are eligible for the discount. Supports logical operations (and/or) and various item targeting strategies.
-        limitations:
-          type: object
-          properties:
-            max_discount:
-              type: integer
-              description: Specifies the maximum amount of discount applied to the shopping cart.
-            max_quantity:
-              type: integer
-              description: Specifies the maximum quantity of each eligible item to which the promotion is applied.
-            items:
-              type: object
-              properties:
-                max_items:
-                  type: integer
-                  description: Specifies the maximum number of items eligible for the discount.
-                max_units:
-                  type: integer
-                  minimum: 1
-                  description: 'Specifies the maximum total quantity of units eligible for the discount across all selected items. Units are sorted by price before selection, defaulting to cheapest first. Use `price_strategy` to change the sort order. For example, with `max_units: 2` and `price_strategy: expensive`, the 2 most expensive units across all eligible items receive the discount, regardless of which SKUs they belong to.'
-                price_strategy:
-                  type: string
-                  x-enumDescriptions:
-                    cheapest: The discount is applied to the cheapest item in the cart.
-                    expensive: The discount is applied to the most expensive item in the cart.
-                  enum:
-                  - cheapest
-                  - expensive
-                  description: Specifies the strategy for determining which items to discount based on their individual prices.
-                auto_add:
-                  type: boolean
-                  description: 'This flag determines whether eligible items should be automatically added to the cart. This can only be set to `true` when the target item discount is 100% and the promotion is **automatic**.  Otherwise, the API returns a validation error. NOTE: Item to be auto added should be from PXM catalog.'
-                show_suggestions:
-                  type: boolean
-                  description: A flag indicating whether to show suggestions for eligible items in the cart if the item is not in the cart.
-    And:
-      type: object
-      properties:
-        strategy:
-          type: string
-          const: and
-          description: Logical AND operator that requires ALL child conditions to be satisfied for the promotion to apply. Use when multiple criteria must be met simultaneously (e.g., minimum cart total AND specific customer segment).
+          - $ref: '#/components/schemas/CartTotalArg'
+          - $ref: '#/components/schemas/CartTotalRangeArg'
         children:
           type: array
-          items:
-            type: object
-            properties:
-              strategy:
-                type: string
-              operator:
-                type: string
-              args:
-                type: array
-                items:
-                  additionalProperties: true
-              children:
-                type: array
-                items:
-                  additionalProperties: true
-          description: Array of child conditions that must ALL be satisfied.
-    ItemQuantityCondition:
-      type: object
-      description: Quantity-based condition for targeting items based on their cart quantity. Useful for bulk discount requirements or minimum quantity thresholds.
-      properties:
-        strategy:
-          type: string
-          const: item_quantity
-          description: Strategy for matching items by quantity
-        operator:
-          type: string
-          enum:
-          - gt
-          - gte
-          - lt
-          - lte
-          - eq
-          - ne
-          description: Comparison operator for quantity evaluation
-        args:
-          type: array
-          minItems: 1
-          maxItems: 1
-          items:
-            type: number
-            minimum: 0
-          description: Quantity value for comparison
-    RulePromotionResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/RulePromotionItem'
-    ItemSku:
-      type: object
-      properties:
-        strategy:
-          type: string
-          const: item_sku
-          description: Considers products by matching against their SKU.  The `item_identifier` strategy is more flexible and recommended instead of this strategy.
-        operator:
-          type: string
-          enum:
-          - in
-          - nin
-          description: Specifies the operators used for the rule strategy.
-          x-enumDescriptions:
-            in: The sku must match the supplied values.
-            nin: The sku must **NOT** match the supplied values.
-        args:
-          type: array
-          items:
-            type: string
-            minItems: 1
-            maxItems: 400
-          description: 'The sku of the item to match, can be the sku of a [product](/docs/api/pxm/products/get-product) or a custom item. '
-    FixedArg:
-      type: array
-      description: Apply a fixed discount to the amount.
-      minItems: 2
-      maxItems: 2
-      prefixItems:
-      - type: string
-        const: fixed
-      - type: integer
-        minimum: 0
-    CartCustomAttributes:
-      type: object
-      properties:
-        strategy:
-          type: string
-          const: cart_custom_attribute
-          description: Considers custom attributes associated with the entire shopping cart.
-        operator:
-          type: string
-          enum:
-          - in
-          - nin
-          - eq
-          - gt
-          - lt
-          - gte
-          - lte
-          x-enumDescriptions:
-            in: The custom attribute on the cart must match one of the values specified in arguments. Supports all types with multiple values. **Note:** For type `float`, matching is exact (equality); floating-point representation can cause unexpected non-matches—prefer `gt`/`lt` for numeric ranges where practical.
-            nin: The custom attribute on the cart must **NOT** match one of the values specified in the arguments. Supports all types with multiple values. **Note:** For type `float`, matching is exact; floating-point precision may lead to unexpected behaviour.
-            eq: The custom attribute on the cart must equal the specified value. Supports string, boolean, and integer types. Requires exactly 3 arguments [key, type, value].
-            gt: The custom attribute on the cart must be greater than the specified value. Supports integer and float types. Requires exactly 3 arguments [key, type, value].
-            lt: The custom attribute on the cart must be less than the specified value. Supports integer and float types. Requires exactly 3 arguments [key, type, value].
-            gte: The custom attribute on the cart must be greater than or equal to the specified value. Supports integer type only. Requires exactly 3 arguments [key, type, value].
-            lte: The custom attribute on the cart must be less than or equal to the specified value. Supports integer type only. Requires exactly 3 arguments [key, type, value].
-          description: 'Specifies the restriction on cart custom_attributes for this rule promotion.
-
-            **Operator-Type Compatibility:** - `in` and `nin`: Support all types (string, boolean, integer, float). *Float matching is exact; floating-point precision can cause unexpected non-matches—use `gt`/`lt` for ranges when practical.* - `eq`: Supports string, boolean, and integer types with exactly 3 arguments - `gt` and `lt`: Support integer and float types with exactly 3 arguments - `gte` and `lte`: Support integer type only with exactly 3 arguments'
-        args:
-          type: array
-          minItems: 3
-          maxItems: 22
-          description: 'Arguments for the cart custom attribute rule. The structure depends on the operator:
-
-            - For `in` and `nin`: [key, type, value1, value2, ...valueN] where N can be 1-20 values - For comparison operators (`eq`, `gt`, `lt`, `gte`, `lte`): [key, type, value] - exactly 3 arguments'
-          prefixItems:
-          - type: string
-            pattern: ^[A-Za-z0-9_-]{1,255}$
-            description: The custom attribute key specified on the cart (in the `custom_attributes` field).
-          - type: string
-            description: The type of the custom attribute on the cart.
-            enum:
-            - string
-            - boolean
-            - integer
-            - float
-          items:
-            description: The remaining arguments are specific values for the `custom_attributes` on a cart, and should be of the same type specified in the second argument. For comparison operators (eq, gt, lt, gte, lte), only one value is allowed.
-            type:
-            - string
-            - boolean
-            - integer
-            - number
-    ItemPriceCondition:
-      type: object
-      description: Price-based condition for targeting items based on their unit price. Allows filtering by price ranges using comparison operators.
-      properties:
-        strategy:
-          type: string
-          const: item_price
-          description: Strategy for matching items by price
-        operator:
-          type: string
-          enum:
-          - gt
-          - gte
-          - lt
-          - lte
-          - eq
-          - ne
-          description: Comparison operator for price evaluation
-        args:
-          type: array
-          minItems: 1
-          maxItems: 1
-          items:
-            type: number
-            minimum: 0
-          description: Price value for comparison (in minor currency units)
-    ItemProductId:
-      type: object
-      properties:
-        strategy:
-          type: string
-          const: item_product_id
-          description: 'Considers products by matching against their product ID. Can be used for items without a SKU like skuless bundles.
-
-            The `item_identifier` strategy is more flexible and recommended instead of this strategy.'
-        operator:
-          type: string
-          enum:
-          - in
-          - nin
-          description: Specifies the operators used for the rule strategy.
-          x-enumDescriptions:
-            in: The product must match the supplied values.
-            nin: The product must **NOT** match the supplied values.
-        args:
-          type: array
-          items:
-            type: string
-            format: uuid
-            minItems: 1
-            maxItems: 400
-          description: The `id` of the [products](/docs/api/pxm/products/get-product) to match.
-    ItemsBundle:
-      type: object
-      properties:
-        strategy:
-          type: string
-          const: items_bundle
-          description: Matches multiple sets of conditions against distinct cart items.
-        children:
-          type: array
-          items:
-            type: object
-            properties:
-              strategy:
-                type: string
-              operator:
-                type: string
-              args:
-                type: array
-              children:
-                type: array
-    CartItemCustomAttributes:
-      type: object
-      properties:
-        strategy:
-          type: string
-          const: item_custom_attribute
-          description: Considers custom attributes associated with individual cart items.
-        operator:
-          type: string
-          enum:
-          - in
-          - nin
-          - eq
-          - gt
-          - lt
-          - gte
-          - lte
-          x-enumDescriptions:
-            in: The custom attribute on the cart item must match one of the values specified in arguments. Supports all types with multiple values. **Note:** For type `float`, matching is exact (equality); floating-point representation can cause unexpected non-matches—prefer `gt`/`lt` for numeric ranges where practical.
-            nin: The custom attribute on the cart item must **NOT** match one of the values specified in the arguments. Supports all types with multiple values. **Note:** For type `float`, matching is exact; floating-point precision may lead to unexpected behaviour.
-            eq: The custom attribute on the cart item must equal the specified value. Supports string, boolean, and integer types. Requires exactly 3 arguments [key, type, value].
-            gt: The custom attribute on the cart item must be greater than the specified value. Supports integer and float types. Requires exactly 3 arguments [key, type, value].
-            lt: The custom attribute on the cart item must be less than the specified value. Supports integer and float types. Requires exactly 3 arguments [key, type, value].
-            gte: The custom attribute on the cart item must be greater than or equal to the specified value. Supports integer type only. Requires exactly 3 arguments [key, type, value].
-            lte: The custom attribute on the cart item must be less than or equal to the specified value. Supports integer type only. Requires exactly 3 arguments [key, type, value].
-          description: 'Specifies the restriction on cart item custom_attributes for this rule promotion.
-
-            **Operator-Type Compatibility:** - `in` and `nin`: Support all types (string, boolean, integer, float). *Float matching is exact; floating-point precision can cause unexpected non-matches—use `gt`/`lt` for ranges when practical.* - `eq`: Supports string, boolean, and integer types with exactly 3 arguments - `gt` and `lt`: Support integer and float types with exactly 3 arguments - `gte` and `lte`: Support integer type only with exactly 3 arguments'
-        args:
-          type: array
-          minItems: 3
-          maxItems: 22
-          description: 'Arguments for the cart item custom attribute rule. The structure depends on the operator:
-
-            - For `in` and `nin`: [key, type, value1, value2, ...valueN] where N can be 1-20 values - For comparison operators (`eq`, `gt`, `lt`, `gte`, `lte`): [key, type, value] - exactly 3 arguments'
-          prefixItems:
-          - type: string
-            pattern: ^[A-Za-z0-9_-]{1,255}$
-            description: The custom attribute key specified on the cart item (in the `attributes` field).
-          - type: string
-            description: The type of the custom attribute on the cart item.
-            enum:
-            - string
-            - boolean
-            - integer
-            - float
-          items:
-            description: The remaining arguments are specific values for the `attributes` on a cart item, and should be of the same type specified in the second argument. For comparison operators (eq, gt, lt, gte, lte), only one value is allowed.
-            type:
-            - string
-            - boolean
-            - integer
-            - number
-        children:
-          type: array
-          items:
-            type: object
-            properties:
-              strategy:
-                type: string
-              operator:
-                type: string
-              args:
-                type: array
-          description: Optional nested rules that further refine the cart item custom attribute condition. Cart item custom attribute rules can have children to create more complex conditions.
-    AndCondition:
-      type: object
-      description: 'Logical AND condition requiring ALL child conditions to be satisfied. Only valid at the top level of an action condition.
-
-        Children must all be the same level — either all item-level strategies (e.g. `item_sku`, `item_price`) or all cart-level strategies (e.g. `cart_total`). Mixing cart-level and item-level children is not allowed.'
-      properties:
-        strategy:
-          type: string
-          const: and
-          description: Logical AND strategy
-        children:
-          type: array
+          description: Optional item-level conditions that filter which items count toward the total threshold check. Only leaf item strategies are allowed here — no `and`/`or` combinators and no nested `cart_total`.
           items:
             $ref: '#/components/schemas/BaseCondition'
-    RulePromotionBaseRuleSetBaseAttributes:
-      type: object
-      properties:
-        rule_set:
-          type: object
-          description: Controls the applicability of the promotion as well as the specific benefit or mechanic of the promotion.
-          properties:
-            catalog_ids:
-              type: array
-              items:
-                type: string
-                format: uuid
-              description: Specifies the [catalogs](https://elasticpath.dev/docs/api/pxm/catalog/catalogs) that are eligible for the promotion. By default, the promotion applies to all items, including custom items. However, when catalog_ids is defined, the promotion is only applied to items within the specified catalogs. If catalog IDs are specified, custom items cannot be applied as part of the promotion.
-            currencies:
-              type: array
-              items:
-                type: string
-              description: Specifies [currencies](https://elasticpath.dev/docs/api/pxm/currencies/currencies) that are applied for the promotion
-            rules:
-              type: object
-              description: The scope or applicability of the promotion (i.e., specifies what conditions must be true for a cart to be eligible for the promotion).
-              oneOf:
-              - $ref: '#/components/schemas/AccountTags'
-              - $ref: '#/components/schemas/And'
-              - $ref: '#/components/schemas/CartCustomAttributes'
-              - $ref: '#/components/schemas/CartItemCustomAttributes'
-              - $ref: '#/components/schemas/CartTotal'
-              - $ref: '#/components/schemas/ItemAttribute'
-              - $ref: '#/components/schemas/ItemCategory'
-              - $ref: '#/components/schemas/ItemIdentifier'
-              - $ref: '#/components/schemas/ItemPrice'
-              - $ref: '#/components/schemas/ItemProductId'
-              - $ref: '#/components/schemas/ItemQuantity'
-              - $ref: '#/components/schemas/ItemsBundle'
-              - $ref: '#/components/schemas/ItemSku'
-              - $ref: '#/components/schemas/Or'
-            actions:
-              type: array
-              description: Describes how this promotion should be applied to the cart and order.
-              items:
-                oneOf:
-                - $ref: '#/components/schemas/CartDiscount'
-                - $ref: '#/components/schemas/ItemDiscount'
-                - $ref: '#/components/schemas/ShippingDiscount'
-                - $ref: '#/components/schemas/BundleDiscount'
-    ItemPrice:
-      type: object
-      properties:
-        strategy:
-          type: string
-          const: item_price
-          description: Considers the price of items in the cart (after discount)
-        operator:
-          type: string
-          enum:
-          - gte
-          - gt
-          - lte
-          - lt
-          - eq
-          description: Specifies the kind of restriction on the price.
-          x-enumDescriptions:
-            gte: The discounted value of the item must be greater than or equal to the value specified in `args`
-            gt: The discounted value of the item must be greater than the value specified in `args`
-            lte: The discounted value of the item must be less or equal to than the value specified in `args`
-            lt: The discounted value of the item must be less than the value specified in `args`
-            eq: The discounted value of the item must be equal to the value specified in `args`
-        args:
-          type: array
-          minItems: 1
-          maxItems: 1
-          items:
-            type: number
-          description: The which we evaluate the rule against.
-        children:
-          type: array
-          items:
-            type: object
-            properties:
-              strategy:
-                type: string
-              operator:
-                type: string
-              args:
-                type: array
-    FixedPriceQuantityArg:
-      type: array
-      minItems: 3
-      maxItems: 3
-      description: Set the amount to this fixed value.
-      prefixItems:
-      - type: string
-        const: fixed_price
-      - type: integer
-        description: quantity of eligible units to include in the fixed price assignment
-        minimum: 1
-      - type: integer
-        description: total assigned price
-        minimum: 0
+      required:
+      - strategy
+      - operator
+      - args
     ShippingTypeCondition:
       type: object
       description: Shipping type condition for targeting discounts based on shipping method. Only supported in shipping discount actions.
@@ -1695,114 +1273,79 @@ components:
           items:
             type: string
           description: Shipping type identifiers to match against
-    PaginationMeta:
+    AndCondition:
       type: object
-      properties:
-        page:
-          type: object
-          properties:
-            current:
-              type: integer
-              description: Current page number
-            limit:
-              type: integer
-              description: Number of items per page
-            offset:
-              type: integer
-              description: Offset from the first result
-            total:
-              type: integer
-              description: Total number of pages
-        results:
-          type: object
-          properties:
-            total:
-              type: integer
-              description: Total number of results
-            total_method:
-              type: string
-              description: Method used to calculate the total (e.g., 'exact')
-    ItemAttributeCondition:
-      type: object
-      description: Attribute-based condition for targeting items by their custom attributes. Allows complex filtering based on product metadata and characteristics.
+      description: 'Logical AND condition requiring ALL child conditions to be satisfied. Only valid at the top level of an action condition.
+
+        Children must all be the same level — either all item-level strategies (e.g. `item_sku`, `item_price`) or all cart-level strategies (e.g. `cart_total`). Mixing cart-level and item-level children is not allowed.'
       properties:
         strategy:
           type: string
-          const: item_attribute
-          description: Strategy for matching items by attributes
-        operator:
-          type: string
-          enum:
-          - in
-          - nin
-          description: Whether items must have (in) or not have (nin) the specified attribute values
-          x-enumDescriptions:
-            in: The item attributes must include the supplied value
-            nin: The item attributes must **NOT** include the supplied value.
-        args:
+          const: and
+          description: Logical AND strategy
+        children:
           type: array
-          minItems: 4
-          maxItems: 23
-          prefixItems:
-          - type: string
-            summary: The product template (e.g., `product(book)`)
-            minLength: 1
-            maxLength: 255
-          - type: string
-            summary: The [slug](/docs/api/flows/fields) in the product template (e.g., `isbn`, `condition` or another field associated with the template).
-            minLength: 1
-            maxLength: 255
-          - type: string
-            summary: The [`field_type`](/docs/api/flows/fields) of the product template attribute.
-            enum:
-            - string
-            - boolean
-            - integer
-            - float
-            - date
           items:
-            summary: The values to check (either match in the case of `in`, or exclude in the case of `nin`).
-            type:
-            - string
-            - boolean
-            - integer
-            - number
-    CartTotalRangeArg:
+            $ref: '#/components/schemas/BaseCondition'
+    CartDiscount:
+      type: object
+      summary: Cart Discount
+      properties:
+        strategy:
+          type: string
+          const: cart_discount
+          description: Applies a discount across the entire cart.
+        args:
+          oneOf:
+          - $ref: '#/components/schemas/FixedArg'
+          - $ref: '#/components/schemas/PercentArg'
+        condition:
+          $ref: '#/components/schemas/Condition'
+          description: Specifies which items are eligible for the cart-wide discount. Supports all item-based targeting strategies and logical operations.
+        limitations:
+          type: object
+          properties:
+            max_discount:
+              type: integer
+              description: Specifies the maximum amount of discount applied to the shopping cart.
+    FixedArg:
       type: array
-      summary: The total value of the cart.
-      minItems: 1
-      maxItems: 1
-      items:
-        type: number
-    ItemQuantity:
+      description: Apply a fixed discount to the amount.
+      minItems: 2
+      maxItems: 2
+      prefixItems:
+      - type: string
+        const: fixed
+      - type: integer
+        minimum: 0
+    AccountTags:
       type: object
       properties:
         strategy:
           type: string
-          const: item_quantity
-          description: Considers the quantity of individual items.
+          const: account_tags
+          description: Considers the tags of the account associated with the cart.
         operator:
           type: string
-          enum:
-          - gte
-          - gt
-          - lte
-          - lt
-          - eq
-          description: Specifies the kind of restriction on the quantity.
           x-enumDescriptions:
-            gte: The quantity of the item must be greater than or equal to the value specified in `args`.
-            gt: The quantity of the item must be greater than the value specified in `args`.
-            lte: The quantity of the item must be less or equal to than the value specified in `args`.
-            lt: The quantity of the item must be less than the value specified in `args`.
-            eq: The quantity of the item must be equal to the value specified in `args`. When used with `items_bundle`, only this operator is valid.
+            contains_all: All tags must be present in the account.
+            contains_any: At least one tag must be present in the account.
+            not_contains_any: None of the specified tags must be present in the account (eligible if account has none of these tags).
+            not_contains_all: All of the specified tags must not be present in the account (eligible if account is missing at least one tag).
+          enum:
+          - contains_all
+          - contains_any
+          - not_contains_any
+          - not_contains_all
+          description: Specifies how the arguments are evaluated against the account tags.
         args:
           type: array
           minItems: 1
-          maxItems: 1
+          maxItems: 25
           items:
-            type: number
-            summary: The value to check against the quantity of the item. (This is the value of `quantity` on a [Cart Item](https://elasticpath.dev/docs/api/carts/get-cart-items)).
+            type: string
+            format: uuid
+          description: The `id` of an account tag [Account Tag](/docs/api/accounts/list-account-tags)
     CartItemCustomAttributeCondition:
       type: object
       description: Custom attribute-based condition for targeting cart items by their custom attributes. Allows complex filtering based on item-level custom metadata.
@@ -1875,6 +1418,517 @@ components:
         condition:
           $ref: '#/components/schemas/Condition'
           description: Specifies which shipping types are eligible for the discount. Only shipping_type strategy is supported for shipping discounts.
+    ItemCategory:
+      type: object
+      properties:
+        strategy:
+          type: string
+          const: item_category
+          description: Considers the item categories (i.e., the [hierarchy or node](/docs/api/pxm/products/hierarchies)) associated with the item. For particular items, the check is against the node of that item, and all parent nodes.
+        operator:
+          type: string
+          enum:
+          - in
+          - nin
+          x-enumDescriptions:
+            in: The product is in a node or a sub-node that matches one of the supplied values.
+            nin: The product is **NOT** in a node or a sub-node that matches one of the supplied values.
+          description: Specifies the operators used for the rule strategy.
+        args:
+          type: array
+          items:
+            type: string
+            format: uuid
+            minItems: 1
+            maxItems: 400
+          description: An array of `id` values for [nodes or hierarchies](/docs/api/pxm/products/get-hierarchy-node)
+        children:
+          type: array
+          items:
+            type: object
+            properties:
+              strategy:
+                type: string
+              operator:
+                type: string
+              args:
+                type: array
+    ItemQuantity:
+      type: object
+      properties:
+        strategy:
+          type: string
+          const: item_quantity
+          description: Considers the quantity of individual items.
+        operator:
+          type: string
+          enum:
+          - gte
+          - gt
+          - lte
+          - lt
+          - eq
+          description: Specifies the kind of restriction on the quantity.
+          x-enumDescriptions:
+            gte: The quantity of the item must be greater than or equal to the value specified in `args`.
+            gt: The quantity of the item must be greater than the value specified in `args`.
+            lte: The quantity of the item must be less or equal to than the value specified in `args`.
+            lt: The quantity of the item must be less than the value specified in `args`.
+            eq: The quantity of the item must be equal to the value specified in `args`. When used with `items_bundle`, only this operator is valid.
+        args:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            type: number
+            summary: The value to check against the quantity of the item. (This is the value of `quantity` on a [Cart Item](https://elasticpath.dev/docs/api/carts/get-cart-items)).
+    ItemIdentifierCondition:
+      type: object
+      description: Identifies specific items by SKU or Product ID for targeted discounting. This is the recommended approach for precise item targeting in action conditions.
+      properties:
+        strategy:
+          type: string
+          const: item_identifier
+          description: Strategy for matching items by SKU or Product ID
+        operator:
+          type: string
+          enum:
+          - in
+          - nin
+          description: Whether items must match (in) or not match (nin) the specified identifiers
+        args:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            type: object
+            properties:
+              skus:
+                type: array
+                items:
+                  type: string
+                maxItems: 400
+                description: SKUs to match against cart items
+              ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                maxItems: 400
+                description: Product IDs to match against cart items
+            additionalProperties: false
+          description: Object containing arrays of identifiers to match
+        children:
+          type: array
+          description: Optional nested conditions to further refine item matching. Only `item_custom_attribute` strategies are allowed as children. When children are specified, items must match both the identifier (SKU/Product ID) AND all child conditions.
+          items:
+            $ref: '#/components/schemas/CartItemCustomAttributes'
+    BundleDiscount:
+      type: object
+      summary: Items Bundle Discount
+      properties:
+        strategy:
+          type: string
+          const: items_bundle_discount
+          description: Applies a discount to specific combinations of items purchased together.
+        args:
+          oneOf:
+          - $ref: '#/components/schemas/FixedArg'
+          - $ref: '#/components/schemas/PercentArg'
+          - $ref: '#/components/schemas/FixedPriceArg'
+        condition:
+          $ref: '#/components/schemas/Condition'
+        limitations:
+          type: object
+          properties:
+            max_discount:
+              type: integer
+              description: Specifies the maximum amount of discount applied to the shopping cart.
+    CartCustomAttributes:
+      type: object
+      properties:
+        strategy:
+          type: string
+          const: cart_custom_attribute
+          description: Considers custom attributes associated with the entire shopping cart.
+        operator:
+          type: string
+          enum:
+          - in
+          - nin
+          - eq
+          - gt
+          - lt
+          - gte
+          - lte
+          x-enumDescriptions:
+            in: The custom attribute on the cart must match one of the values specified in arguments. Supports all types with multiple values. **Note:** For type `float`, matching is exact (equality); floating-point representation can cause unexpected non-matches—prefer `gt`/`lt` for numeric ranges where practical.
+            nin: The custom attribute on the cart must **NOT** match one of the values specified in the arguments. Supports all types with multiple values. **Note:** For type `float`, matching is exact; floating-point precision may lead to unexpected behaviour.
+            eq: The custom attribute on the cart must equal the specified value. Supports string, boolean, and integer types. Requires exactly 3 arguments [key, type, value].
+            gt: The custom attribute on the cart must be greater than the specified value. Supports integer and float types. Requires exactly 3 arguments [key, type, value].
+            lt: The custom attribute on the cart must be less than the specified value. Supports integer and float types. Requires exactly 3 arguments [key, type, value].
+            gte: The custom attribute on the cart must be greater than or equal to the specified value. Supports integer type only. Requires exactly 3 arguments [key, type, value].
+            lte: The custom attribute on the cart must be less than or equal to the specified value. Supports integer type only. Requires exactly 3 arguments [key, type, value].
+          description: 'Specifies the restriction on cart custom_attributes for this rule promotion.
+
+            **Operator-Type Compatibility:** - `in` and `nin`: Support all types (string, boolean, integer, float). *Float matching is exact; floating-point precision can cause unexpected non-matches—use `gt`/`lt` for ranges when practical.* - `eq`: Supports string, boolean, and integer types with exactly 3 arguments - `gt` and `lt`: Support integer and float types with exactly 3 arguments - `gte` and `lte`: Support integer type only with exactly 3 arguments'
+        args:
+          type: array
+          minItems: 3
+          maxItems: 22
+          description: 'Arguments for the cart custom attribute rule. The structure depends on the operator:
+
+            - For `in` and `nin`: [key, type, value1, value2, ...valueN] where N can be 1-20 values - For comparison operators (`eq`, `gt`, `lt`, `gte`, `lte`): [key, type, value] - exactly 3 arguments'
+          prefixItems:
+          - type: string
+            pattern: ^[A-Za-z0-9_-]{1,255}$
+            description: The custom attribute key specified on the cart (in the `custom_attributes` field).
+          - type: string
+            description: The type of the custom attribute on the cart.
+            enum:
+            - string
+            - boolean
+            - integer
+            - float
+          items:
+            description: The remaining arguments are specific values for the `custom_attributes` on a cart, and should be of the same type specified in the second argument. For comparison operators (eq, gt, lt, gte, lte), only one value is allowed.
+            type:
+            - string
+            - boolean
+            - integer
+            - number
+    ItemProductId:
+      type: object
+      properties:
+        strategy:
+          type: string
+          const: item_product_id
+          description: 'Considers products by matching against their product ID. Can be used for items without a SKU like skuless bundles.
+
+            The `item_identifier` strategy is more flexible and recommended instead of this strategy.'
+        operator:
+          type: string
+          enum:
+          - in
+          - nin
+          description: Specifies the operators used for the rule strategy.
+          x-enumDescriptions:
+            in: The product must match the supplied values.
+            nin: The product must **NOT** match the supplied values.
+        args:
+          type: array
+          items:
+            type: string
+            format: uuid
+            minItems: 1
+            maxItems: 400
+          description: The `id` of the [products](/docs/api/pxm/products/get-product) to match.
+    CartTotalRangeArg:
+      type: array
+      summary: The total value of the cart.
+      minItems: 1
+      maxItems: 1
+      items:
+        type: number
+    ItemAttribute:
+      type: object
+      properties:
+        strategy:
+          type: string
+          const: item_attribute
+          description: Considers the [Product Templates](/docs/api/pxm/products/extending-products-with-templates) associated with cart items.
+        operator:
+          type: string
+          enum:
+          - in
+          - nin
+          x-enumDescriptions:
+            in: The value of the product template for the item must match one of the specified values.
+            nin: The value of the product template for the item must **NOT** match one of the specified values.
+          description: Specifies how the arguments are evaluated against the item.
+        args:
+          type: array
+          minItems: 4
+          maxItems: 23
+          prefixItems:
+          - type: string
+            summary: The product template (e.g., `product(book)`)
+            minLength: 1
+            maxLength: 255
+          - type: string
+            summary: The [slug](/docs/api/flows/fields) in the product template (e.g., `isbn`, `condition` or another field associated with the template).
+            minLength: 1
+            maxLength: 255
+          - type: string
+            summary: The [`field_type`](/docs/api/flows/fields) of the product template attribute.
+            enum:
+            - string
+            - boolean
+            - integer
+            - float
+            - date
+          items:
+            summary: The values to check (either match in the case of `in`, or exclude in the case of `nin`).
+            type:
+            - string
+            - boolean
+            - integer
+            - number
+        children:
+          type: array
+          items:
+            type: object
+            properties:
+              strategy:
+                type: string
+              operator:
+                type: string
+              args:
+                type: array
+    PercentArg:
+      type: array
+      description: Apply a percentage based discount to the amount.
+      minItems: 2
+      maxItems: 2
+      prefixItems:
+      - type: string
+        const: percent
+      - type: number
+        minimum: 0
+        maximum: 100
+    ItemQuantityCondition:
+      type: object
+      description: Quantity-based condition for targeting items based on their cart quantity. Useful for bulk discount requirements or minimum quantity thresholds.
+      properties:
+        strategy:
+          type: string
+          const: item_quantity
+          description: Strategy for matching items by quantity
+        operator:
+          type: string
+          enum:
+          - gt
+          - gte
+          - lt
+          - lte
+          - eq
+          - ne
+          description: Comparison operator for quantity evaluation
+        args:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            type: number
+            minimum: 0
+          description: Quantity value for comparison
+    And:
+      type: object
+      properties:
+        strategy:
+          type: string
+          const: and
+          description: Logical AND operator that requires ALL child conditions to be satisfied for the promotion to apply. Use when multiple criteria must be met simultaneously (e.g., minimum cart total AND specific customer segment).
+        children:
+          type: array
+          items:
+            type: object
+            properties:
+              strategy:
+                type: string
+              operator:
+                type: string
+              args:
+                type: array
+                items:
+                  additionalProperties: true
+              children:
+                type: array
+                items:
+                  additionalProperties: true
+          description: Array of child conditions that must ALL be satisfied.
+    ItemPrice:
+      type: object
+      properties:
+        strategy:
+          type: string
+          const: item_price
+          description: Considers the price of items in the cart (after discount)
+        operator:
+          type: string
+          enum:
+          - gte
+          - gt
+          - lte
+          - lt
+          - eq
+          description: Specifies the kind of restriction on the price.
+          x-enumDescriptions:
+            gte: The discounted value of the item must be greater than or equal to the value specified in `args`
+            gt: The discounted value of the item must be greater than the value specified in `args`
+            lte: The discounted value of the item must be less or equal to than the value specified in `args`
+            lt: The discounted value of the item must be less than the value specified in `args`
+            eq: The discounted value of the item must be equal to the value specified in `args`
+        args:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            type: number
+          description: The which we evaluate the rule against.
+        children:
+          type: array
+          items:
+            type: object
+            properties:
+              strategy:
+                type: string
+              operator:
+                type: string
+              args:
+                type: array
+    PaginationLinks:
+      type: object
+      properties:
+        current:
+          type: string
+          format: uri
+          description: URL for the current page of results
+        first:
+          type: string
+          format: uri
+          description: URL for the first page of results
+        last:
+          type: string
+          format: uri
+          description: URL for the last page of results
+        next:
+          type: string
+          format: uri
+          description: URL for the next page of results
+        prev:
+          type: string
+          format: uri
+          description: URL for the previous page of results
+    OrCondition:
+      type: object
+      description: 'Logical OR condition requiring ANY child condition to be satisfied. Only valid at the top level of a `cart_discount` action condition.
+
+        The primary use case is combining cart-level strategies — for example, `or(cart_total gte 5000, cart_total lt 500)` to apply a discount when the cart total falls into one of multiple ranges.
+
+        Children must all be the same level (all cart-level or all item-level). Mixing cart-level and item-level children is not allowed.
+
+        For item-level targeting, prefer using `item_identifier` directly as the top-level condition rather than wrapping it in an `or`.'
+      properties:
+        strategy:
+          type: string
+          const: or
+          description: Logical OR strategy
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/BaseCondition'
+          description: Array of child conditions where ANY one can satisfy the requirement
+    ItemPriceCondition:
+      type: object
+      description: Price-based condition for targeting items based on their unit price. Allows filtering by price ranges using comparison operators.
+      properties:
+        strategy:
+          type: string
+          const: item_price
+          description: Strategy for matching items by price
+        operator:
+          type: string
+          enum:
+          - gt
+          - gte
+          - lt
+          - lte
+          - eq
+          - ne
+          description: Comparison operator for price evaluation
+        args:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            type: number
+            minimum: 0
+          description: Price value for comparison (in minor currency units)
+    Or:
+      type: object
+      properties:
+        strategy:
+          type: string
+          const: or
+          description: Logical OR operator that requires ANY child condition to be satisfied for the promotion to apply. Provides flexible eligibility pathways, allowing multiple ways to qualify for a promotion.
+        children:
+          type: array
+          items:
+            type: object
+            properties:
+              strategy:
+                type: string
+              operator:
+                type: string
+              args:
+                type: array
+                items:
+                  additionalProperties: true
+              children:
+                type: array
+                items:
+                  additionalProperties: true
+    RulePromotionResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/RulePromotionItem'
+    ItemAttributeCondition:
+      type: object
+      description: Attribute-based condition for targeting items by their custom attributes. Allows complex filtering based on product metadata and characteristics.
+      properties:
+        strategy:
+          type: string
+          const: item_attribute
+          description: Strategy for matching items by attributes
+        operator:
+          type: string
+          enum:
+          - in
+          - nin
+          description: Whether items must have (in) or not have (nin) the specified attribute values
+          x-enumDescriptions:
+            in: The item attributes must include the supplied value
+            nin: The item attributes must **NOT** include the supplied value.
+        args:
+          type: array
+          minItems: 4
+          maxItems: 23
+          prefixItems:
+          - type: string
+            summary: The product template (e.g., `product(book)`)
+            minLength: 1
+            maxLength: 255
+          - type: string
+            summary: The [slug](/docs/api/flows/fields) in the product template (e.g., `isbn`, `condition` or another field associated with the template).
+            minLength: 1
+            maxLength: 255
+          - type: string
+            summary: The [`field_type`](/docs/api/flows/fields) of the product template attribute.
+            enum:
+            - string
+            - boolean
+            - integer
+            - float
+            - date
+          items:
+            summary: The values to check (either match in the case of `in`, or exclude in the case of `nin`).
+            type:
+            - string
+            - boolean
+            - integer
+            - number
     RulePromotionListResponse:
       type: object
       properties:
@@ -1886,35 +1940,6 @@ components:
           $ref: '#/components/schemas/PaginationLinks'
         meta:
           $ref: '#/components/schemas/PaginationMeta'
-    Response.Error:
-      type: object
-      properties:
-        errors:
-          type: array
-          items:
-            type: object
-            properties:
-              status:
-                type:
-                - string
-                - integer
-                description: HTTP status code.
-              title:
-                type: string
-                description: Error title.
-              detail:
-                type: string
-                description: Error details.
-              source:
-                type: string
-                description: Source of the error (e.g., which field or parameter caused the error)
-              meta:
-                type: object
-                properties:
-                  usage_ids:
-                    type: array
-                    items:
-                      type: string
     RulePromotionBaseAttributes:
       type: object
       properties:
@@ -1983,274 +2008,6 @@ components:
               - updated_at
           required:
           - timestamps
-    ItemIdentifierCondition:
-      type: object
-      description: Identifies specific items by SKU or Product ID for targeted discounting. This is the recommended approach for precise item targeting in action conditions.
-      properties:
-        strategy:
-          type: string
-          const: item_identifier
-          description: Strategy for matching items by SKU or Product ID
-        operator:
-          type: string
-          enum:
-          - in
-          - nin
-          description: Whether items must match (in) or not match (nin) the specified identifiers
-        args:
-          type: array
-          minItems: 1
-          maxItems: 1
-          items:
-            type: object
-            properties:
-              skus:
-                type: array
-                items:
-                  type: string
-                maxItems: 400
-                description: SKUs to match against cart items
-              ids:
-                type: array
-                items:
-                  type: string
-                  format: uuid
-                maxItems: 400
-                description: Product IDs to match against cart items
-            additionalProperties: false
-          description: Object containing arrays of identifiers to match
-        children:
-          type: array
-          description: Optional nested conditions to further refine item matching. Only `item_custom_attribute` strategies are allowed as children. When children are specified, items must match both the identifier (SKU/Product ID) AND all child conditions.
-          items:
-            $ref: '#/components/schemas/CartItemCustomAttributes'
-    AccountTags:
-      type: object
-      properties:
-        strategy:
-          type: string
-          const: account_tags
-          description: Considers the tags of the account associated with the cart.
-        operator:
-          type: string
-          x-enumDescriptions:
-            contains_all: All tags must be present in the account.
-            contains_any: At least one tag must be present in the account.
-            not_contains_any: None of the specified tags must be present in the account (eligible if account has none of these tags).
-            not_contains_all: All of the specified tags must not be present in the account (eligible if account is missing at least one tag).
-          enum:
-          - contains_all
-          - contains_any
-          - not_contains_any
-          - not_contains_all
-          description: Specifies how the arguments are evaluated against the account tags.
-        args:
-          type: array
-          minItems: 1
-          maxItems: 25
-          items:
-            type: string
-            format: uuid
-          description: The `id` of an account tag [Account Tag](/docs/api/accounts/list-account-tags)
-    ItemCategory:
-      type: object
-      properties:
-        strategy:
-          type: string
-          const: item_category
-          description: Considers the item categories (i.e., the [hierarchy or node](/docs/api/pxm/products/hierarchies)) associated with the item. For particular items, the check is against the node of that item, and all parent nodes.
-        operator:
-          type: string
-          enum:
-          - in
-          - nin
-          x-enumDescriptions:
-            in: The product is in a node or a sub-node that matches one of the supplied values.
-            nin: The product is **NOT** in a node or a sub-node that matches one of the supplied values.
-          description: Specifies the operators used for the rule strategy.
-        args:
-          type: array
-          items:
-            type: string
-            format: uuid
-            minItems: 1
-            maxItems: 400
-          description: An array of `id` values for [nodes or hierarchies](/docs/api/pxm/products/get-hierarchy-node)
-        children:
-          type: array
-          items:
-            type: object
-            properties:
-              strategy:
-                type: string
-              operator:
-                type: string
-              args:
-                type: array
-    CartTotal:
-      type: object
-      properties:
-        strategy:
-          const: cart_total
-          description: Considers the total value of items in the shopping cart.
-        operator:
-          type: string
-          enum:
-          - gte
-          - gt
-          - lte
-          - lt
-          - eq
-          - range
-          description: Specifies the kind of restriction on the total amount of the cart.
-          x-enumDescriptions:
-            gte: The total value of the cart must be greater than or equal to the value specified in `args`
-            gt: The total value of the cart must be greater than the value specified in `args`
-            lte: The total value of the cart must be less or equal to than the value specified in `args`
-            lt: The total value of the cart must be less than the value specified in `args`
-            eq: The total value of the cart must be equal to the value specified in `args`
-            range: The total value of the cart must be between the first and second values specified in `args` (both inclusive)
-        args:
-          oneOf:
-          - $ref: '#/components/schemas/CartTotalRangeArg'
-          - $ref: '#/components/schemas/CartTotalArg'
-    ItemAttribute:
-      type: object
-      properties:
-        strategy:
-          type: string
-          const: item_attribute
-          description: Considers the [Product Templates](/docs/api/pxm/products/extending-products-with-templates) associated with cart items.
-        operator:
-          type: string
-          enum:
-          - in
-          - nin
-          x-enumDescriptions:
-            in: The value of the product template for the item must match one of the specified values.
-            nin: The value of the product template for the item must **NOT** match one of the specified values.
-          description: Specifies how the arguments are evaluated against the item.
-        args:
-          type: array
-          minItems: 4
-          maxItems: 23
-          prefixItems:
-          - type: string
-            summary: The product template (e.g., `product(book)`)
-            minLength: 1
-            maxLength: 255
-          - type: string
-            summary: The [slug](/docs/api/flows/fields) in the product template (e.g., `isbn`, `condition` or another field associated with the template).
-            minLength: 1
-            maxLength: 255
-          - type: string
-            summary: The [`field_type`](/docs/api/flows/fields) of the product template attribute.
-            enum:
-            - string
-            - boolean
-            - integer
-            - float
-            - date
-          items:
-            summary: The values to check (either match in the case of `in`, or exclude in the case of `nin`).
-            type:
-            - string
-            - boolean
-            - integer
-            - number
-        children:
-          type: array
-          items:
-            type: object
-            properties:
-              strategy:
-                type: string
-              operator:
-                type: string
-              args:
-                type: array
-    Condition:
-      type: object
-      description: "The condition that gates this action. When present, the action is applied only if the condition is satisfied.\n**Valid top-level strategies:**\n- `cart_total` — gates the action based on the cart total (or filtered item total).\n  Supported on `cart_discount` actions only.\n- `and` / `or` — logical combinators. Children must all be the same level (all\n  cart-level or all item-level). `and`/`or` is only valid at the top level.\n- Item-level strategies (`item_identifier`, `item_price`, `item_quantity`,\n  `item_category`, `item_attribute`, `item_custom_attribute`) — filter which\n  items the cart discount applies to.\n\n**Placement rules for `cart_total`:**\n- Valid at the top level or as a direct child of `and`/`or` (all-cart siblings). - Not valid inside item-level condition children."
-      discriminator:
-        propertyName: strategy
-      oneOf:
-      - $ref: '#/components/schemas/AndCondition'
-      - $ref: '#/components/schemas/OrCondition'
-      - $ref: '#/components/schemas/CartTotalCondition'
-      - $ref: '#/components/schemas/ItemIdentifierCondition'
-      - $ref: '#/components/schemas/ItemPriceCondition'
-      - $ref: '#/components/schemas/ItemQuantityCondition'
-      - $ref: '#/components/schemas/ItemCategoryCondition'
-      - $ref: '#/components/schemas/ItemAttributeCondition'
-      - $ref: '#/components/schemas/CartItemCustomAttributeCondition'
-      - $ref: '#/components/schemas/ShippingTypeCondition'
-      - $ref: '#/components/schemas/ItemsBundleCondition'
-    BundleDiscount:
-      type: object
-      summary: Items Bundle Discount
-      properties:
-        strategy:
-          type: string
-          const: items_bundle_discount
-          description: Applies a discount to specific combinations of items purchased together.
-        args:
-          oneOf:
-          - $ref: '#/components/schemas/FixedArg'
-          - $ref: '#/components/schemas/PercentArg'
-          - $ref: '#/components/schemas/FixedPriceArg'
-        condition:
-          $ref: '#/components/schemas/Condition'
-        limitations:
-          type: object
-          properties:
-            max_discount:
-              type: integer
-              description: Specifies the maximum amount of discount applied to the shopping cart.
-    CartTotalCondition:
-      type: object
-      description: 'Cart total condition for gating a `cart_discount` action. The action is applied only when the cart total (or the total of a filtered subset of items) meets the threshold. When the condition passes, the discount applies to all cart items.
-
-        **Placement rules:**
-
-        - Valid as the top-level condition strategy. - Valid as a direct child of `and`/`or` (when all siblings are also cart-level). - **Not valid** inside item-level condition children.
-
-        **Children (optional):** item-level strategies that filter which items count toward the total check. For example, a `cart_total(gte 10000)` with an `item_identifier` child means "apply this action if the total of matching items is at least $100". The discount itself still applies to all cart items once the gate passes.'
-      properties:
-        strategy:
-          type: string
-          const: cart_total
-          description: Cart total condition strategy
-        operator:
-          type: string
-          enum:
-          - gte
-          - gt
-          - lte
-          - lt
-          - eq
-          - range
-          description: Comparison operator for the cart total threshold.
-          x-enumDescriptions:
-            gte: Cart total must be greater than or equal to the value in `args`
-            gt: Cart total must be greater than the value in `args`
-            lte: Cart total must be less than or equal to the value in `args`
-            lt: Cart total must be less than the value in `args`
-            eq: Cart total must be equal to the value in `args`
-            range: Cart total must be between the first and second values in `args` (both inclusive)
-        args:
-          oneOf:
-          - $ref: '#/components/schemas/CartTotalArg'
-          - $ref: '#/components/schemas/CartTotalRangeArg'
-        children:
-          type: array
-          description: Optional item-level conditions that filter which items count toward the total threshold check. Only leaf item strategies are allowed here — no `and`/`or` combinators and no nested `cart_total`.
-          items:
-            $ref: '#/components/schemas/BaseCondition'
-      required:
-      - strategy
-      - operator
-      - args
     ItemIdentifier:
       type: object
       properties:
@@ -2295,131 +2052,313 @@ components:
           description: Optional nested rules to further refine item matching. Only `item_custom_attribute` strategies are allowed as children. When children are specified, items must match both the identifier (SKU/Product ID) AND all child conditions.
           items:
             $ref: '#/components/schemas/CartItemCustomAttributes'
-    Or:
+    ItemDiscount:
       type: object
+      summary: Item Discount
       properties:
         strategy:
           type: string
-          const: or
-          description: Logical OR operator that requires ANY child condition to be satisfied for the promotion to apply. Provides flexible eligibility pathways, allowing multiple ways to qualify for a promotion.
-        children:
-          type: array
-          items:
-            type: object
-            properties:
-              strategy:
-                type: string
-              operator:
-                type: string
-              args:
-                type: array
-                items:
-                  additionalProperties: true
-              children:
-                type: array
-                items:
-                  additionalProperties: true
-    BaseCondition:
-      type: object
-      description: Specifies which items should be included or excluded when applying the discount. Can be based on factors such as item SKUs, product attributes, quantities, or categories.
-      properties:
-        strategy:
-          type: string
-          description: The condition strategy type (e.g., item_identifier, item_category, or)
-        operator:
-          type: string
-          description: The evaluation operator for the condition
-        args:
-          type: array
-          items:
-            additionalProperties: true
-          description: Arguments/values for the condition evaluation
-        children:
-          type: array
-          description: Nested conditions for complex targeting requirements (level 1)
-          items:
-            type: object
-            properties:
-              strategy:
-                type: string
-              operator:
-                type: string
-              args:
-                type: array
-                items:
-                  additionalProperties: true
-              children:
-                type: array
-                description: Nested conditions (level 2)
-                items:
-                  type: object
-                  properties:
-                    strategy:
-                      type: string
-                    operator:
-                      type: string
-                    args:
-                      type: array
-                      items:
-                        additionalProperties: true
-                    children:
-                      type: array
-                      description: Nested conditions (level 3)
-                      items:
-                        type: object
-                        properties:
-                          strategy:
-                            type: string
-                          operator:
-                            type: string
-                          args:
-                            type: array
-                            items:
-                              additionalProperties: true
-    PaginationLinks:
-      type: object
-      properties:
-        current:
-          type: string
-          format: uri
-          description: URL for the current page of results
-        first:
-          type: string
-          format: uri
-          description: URL for the first page of results
-        last:
-          type: string
-          format: uri
-          description: URL for the last page of results
-        next:
-          type: string
-          format: uri
-          description: URL for the next page of results
-        prev:
-          type: string
-          format: uri
-          description: URL for the previous page of results
-    CartDiscount:
-      type: object
-      summary: Cart Discount
-      properties:
-        strategy:
-          type: string
-          const: cart_discount
-          description: Applies a discount across the entire cart.
+          const: item_discount
+          description: Applies a discount to particular items in the cart matching the supplied conditions.
         args:
           oneOf:
           - $ref: '#/components/schemas/FixedArg'
           - $ref: '#/components/schemas/PercentArg'
+          - $ref: '#/components/schemas/FixedPriceQuantityArg'
         condition:
           $ref: '#/components/schemas/Condition'
-          description: Specifies which items are eligible for the cart-wide discount. Supports all item-based targeting strategies and logical operations.
+          description: Specifies which items are eligible for the discount. Supports logical operations (and/or) and various item targeting strategies.
         limitations:
           type: object
           properties:
             max_discount:
               type: integer
               description: Specifies the maximum amount of discount applied to the shopping cart.
+            max_quantity:
+              type: integer
+              description: Specifies the maximum quantity of each eligible item to which the promotion is applied.
+            items:
+              type: object
+              properties:
+                max_items:
+                  type: integer
+                  description: Specifies the maximum number of items eligible for the discount.
+                max_units:
+                  type: integer
+                  minimum: 1
+                  description: 'Specifies the maximum total quantity of units eligible for the discount across all selected items. Units are sorted by price before selection, defaulting to cheapest first. Use `price_strategy` to change the sort order. For example, with `max_units: 2` and `price_strategy: expensive`, the 2 most expensive units across all eligible items receive the discount, regardless of which SKUs they belong to.'
+                price_strategy:
+                  type: string
+                  x-enumDescriptions:
+                    cheapest: The discount is applied to the cheapest item in the cart.
+                    expensive: The discount is applied to the most expensive item in the cart.
+                  enum:
+                  - cheapest
+                  - expensive
+                  description: Specifies the strategy for determining which items to discount based on their individual prices.
+                auto_add:
+                  type: boolean
+                  description: 'This flag determines whether eligible items should be automatically added to the cart. This can only be set to `true` when the target item discount is 100% and the promotion is **automatic**.  Otherwise, the API returns a validation error. NOTE: Item to be auto added should be from PXM catalog.'
+                show_suggestions:
+                  type: boolean
+                  description: A flag indicating whether to show suggestions for eligible items in the cart if the item is not in the cart.
+    FixedPriceArg:
+      type: array
+      description: Set the amount to this fixed value.
+      minItems: 2
+      maxItems: 2
+      prefixItems:
+      - type: string
+        const: fixed_price
+      - type: integer
+        minimum: 0
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: object
+          properties:
+            current:
+              type: integer
+              description: Current page number
+            limit:
+              type: integer
+              description: Number of items per page
+            offset:
+              type: integer
+              description: Offset from the first result
+            total:
+              type: integer
+              description: Total number of pages
+        results:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total number of results
+            total_method:
+              type: string
+              description: Method used to calculate the total (e.g., 'exact')
+    CartItemCustomAttributes:
+      type: object
+      properties:
+        strategy:
+          type: string
+          const: item_custom_attribute
+          description: Considers custom attributes associated with individual cart items.
+        operator:
+          type: string
+          enum:
+          - in
+          - nin
+          - eq
+          - gt
+          - lt
+          - gte
+          - lte
+          x-enumDescriptions:
+            in: The custom attribute on the cart item must match one of the values specified in arguments. Supports all types with multiple values. **Note:** For type `float`, matching is exact (equality); floating-point representation can cause unexpected non-matches—prefer `gt`/`lt` for numeric ranges where practical.
+            nin: The custom attribute on the cart item must **NOT** match one of the values specified in the arguments. Supports all types with multiple values. **Note:** For type `float`, matching is exact; floating-point precision may lead to unexpected behaviour.
+            eq: The custom attribute on the cart item must equal the specified value. Supports string, boolean, and integer types. Requires exactly 3 arguments [key, type, value].
+            gt: The custom attribute on the cart item must be greater than the specified value. Supports integer and float types. Requires exactly 3 arguments [key, type, value].
+            lt: The custom attribute on the cart item must be less than the specified value. Supports integer and float types. Requires exactly 3 arguments [key, type, value].
+            gte: The custom attribute on the cart item must be greater than or equal to the specified value. Supports integer type only. Requires exactly 3 arguments [key, type, value].
+            lte: The custom attribute on the cart item must be less than or equal to the specified value. Supports integer type only. Requires exactly 3 arguments [key, type, value].
+          description: 'Specifies the restriction on cart item custom_attributes for this rule promotion.
+
+            **Operator-Type Compatibility:** - `in` and `nin`: Support all types (string, boolean, integer, float). *Float matching is exact; floating-point precision can cause unexpected non-matches—use `gt`/`lt` for ranges when practical.* - `eq`: Supports string, boolean, and integer types with exactly 3 arguments - `gt` and `lt`: Support integer and float types with exactly 3 arguments - `gte` and `lte`: Support integer type only with exactly 3 arguments'
+        args:
+          type: array
+          minItems: 3
+          maxItems: 22
+          description: 'Arguments for the cart item custom attribute rule. The structure depends on the operator:
+
+            - For `in` and `nin`: [key, type, value1, value2, ...valueN] where N can be 1-20 values - For comparison operators (`eq`, `gt`, `lt`, `gte`, `lte`): [key, type, value] - exactly 3 arguments'
+          prefixItems:
+          - type: string
+            pattern: ^[A-Za-z0-9_-]{1,255}$
+            description: The custom attribute key specified on the cart item (in the `attributes` field).
+          - type: string
+            description: The type of the custom attribute on the cart item.
+            enum:
+            - string
+            - boolean
+            - integer
+            - float
+          items:
+            description: The remaining arguments are specific values for the `attributes` on a cart item, and should be of the same type specified in the second argument. For comparison operators (eq, gt, lt, gte, lte), only one value is allowed.
+            type:
+            - string
+            - boolean
+            - integer
+            - number
+        children:
+          type: array
+          items:
+            type: object
+            properties:
+              strategy:
+                type: string
+              operator:
+                type: string
+              args:
+                type: array
+          description: Optional nested rules that further refine the cart item custom attribute condition. Cart item custom attribute rules can have children to create more complex conditions.
+    FixedPriceQuantityArg:
+      type: array
+      minItems: 3
+      maxItems: 3
+      description: Set the amount to this fixed value.
+      prefixItems:
+      - type: string
+        const: fixed_price
+      - type: integer
+        description: quantity of eligible units to include in the fixed price assignment
+        minimum: 1
+      - type: integer
+        description: total assigned price
+        minimum: 0
+    Response.Error:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type:
+                - string
+                - integer
+                description: HTTP status code.
+              title:
+                type: string
+                description: Error title.
+              detail:
+                type: string
+                description: Error details.
+              source:
+                type: string
+                description: Source of the error (e.g., which field or parameter caused the error)
+              meta:
+                type: object
+                properties:
+                  usage_ids:
+                    type: array
+                    items:
+                      type: string
+    ItemSku:
+      type: object
+      properties:
+        strategy:
+          type: string
+          const: item_sku
+          description: Considers products by matching against their SKU.  The `item_identifier` strategy is more flexible and recommended instead of this strategy.
+        operator:
+          type: string
+          enum:
+          - in
+          - nin
+          description: Specifies the operators used for the rule strategy.
+          x-enumDescriptions:
+            in: The sku must match the supplied values.
+            nin: The sku must **NOT** match the supplied values.
+        args:
+          type: array
+          items:
+            type: string
+            minItems: 1
+            maxItems: 400
+          description: 'The sku of the item to match, can be the sku of a [product](/docs/api/pxm/products/get-product) or a custom item. '
+    RulePromotionBaseRuleSetBaseAttributes:
+      type: object
+      properties:
+        rule_set:
+          type: object
+          description: Controls the applicability of the promotion as well as the specific benefit or mechanic of the promotion.
+          properties:
+            catalog_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Specifies the [catalogs](https://elasticpath.dev/docs/api/pxm/catalog/catalogs) that are eligible for the promotion. By default, the promotion applies to all items, including custom items. However, when catalog_ids is defined, the promotion is only applied to items within the specified catalogs. If catalog IDs are specified, custom items cannot be applied as part of the promotion.
+            currencies:
+              type: array
+              items:
+                type: string
+              description: Specifies [currencies](https://elasticpath.dev/docs/api/pxm/currencies/currencies) that are applied for the promotion
+            rules:
+              type: object
+              description: The scope or applicability of the promotion (i.e., specifies what conditions must be true for a cart to be eligible for the promotion).
+              oneOf:
+              - $ref: '#/components/schemas/AccountTags'
+              - $ref: '#/components/schemas/And'
+              - $ref: '#/components/schemas/CartCustomAttributes'
+              - $ref: '#/components/schemas/CartItemCustomAttributes'
+              - $ref: '#/components/schemas/CartTotal'
+              - $ref: '#/components/schemas/ItemAttribute'
+              - $ref: '#/components/schemas/ItemCategory'
+              - $ref: '#/components/schemas/ItemIdentifier'
+              - $ref: '#/components/schemas/ItemPrice'
+              - $ref: '#/components/schemas/ItemProductId'
+              - $ref: '#/components/schemas/ItemQuantity'
+              - $ref: '#/components/schemas/ItemsBundle'
+              - $ref: '#/components/schemas/ItemSku'
+              - $ref: '#/components/schemas/Or'
+            actions:
+              type: array
+              description: Describes how this promotion should be applied to the cart and order.
+              items:
+                oneOf:
+                - $ref: '#/components/schemas/CartDiscount'
+                - $ref: '#/components/schemas/ItemDiscount'
+                - $ref: '#/components/schemas/ShippingDiscount'
+                - $ref: '#/components/schemas/BundleDiscount'
+    CartTotal:
+      type: object
+      properties:
+        strategy:
+          const: cart_total
+          description: Considers the total value of items in the shopping cart.
+        operator:
+          type: string
+          enum:
+          - gte
+          - gt
+          - lte
+          - lt
+          - eq
+          - range
+          description: Specifies the kind of restriction on the total amount of the cart.
+          x-enumDescriptions:
+            gte: The total value of the cart must be greater than or equal to the value specified in `args`
+            gt: The total value of the cart must be greater than the value specified in `args`
+            lte: The total value of the cart must be less or equal to than the value specified in `args`
+            lt: The total value of the cart must be less than the value specified in `args`
+            eq: The total value of the cart must be equal to the value specified in `args`
+            range: The total value of the cart must be between the first and second values specified in `args` (both inclusive)
+        args:
+          oneOf:
+          - $ref: '#/components/schemas/CartTotalRangeArg'
+          - $ref: '#/components/schemas/CartTotalArg'
+    Condition:
+      type: object
+      description: "The condition that gates this action. When present, the action is applied only if the condition is satisfied.\n**Valid top-level strategies:**\n- `cart_total` — gates the action based on the cart total (or filtered item total).\n  Supported on `cart_discount` actions only.\n- `and` / `or` — logical combinators. Children must all be the same level (all\n  cart-level or all item-level). `and`/`or` is only valid at the top level.\n- Item-level strategies (`item_identifier`, `item_price`, `item_quantity`,\n  `item_category`, `item_attribute`, `item_custom_attribute`) — filter which\n  items the cart discount applies to.\n\n**Placement rules for `cart_total`:**\n- Valid at the top level or as a direct child of `and`/`or` (all-cart siblings). - Not valid inside item-level condition children."
+      discriminator:
+        propertyName: strategy
+      oneOf:
+      - $ref: '#/components/schemas/AndCondition'
+      - $ref: '#/components/schemas/OrCondition'
+      - $ref: '#/components/schemas/CartTotalCondition'
+      - $ref: '#/components/schemas/ItemIdentifierCondition'
+      - $ref: '#/components/schemas/ItemPriceCondition'
+      - $ref: '#/components/schemas/ItemQuantityCondition'
+      - $ref: '#/components/schemas/ItemCategoryCondition'
+      - $ref: '#/components/schemas/ItemAttributeCondition'
+      - $ref: '#/components/schemas/CartItemCustomAttributeCondition'
+      - $ref: '#/components/schemas/ShippingTypeCondition'
+      - $ref: '#/components/schemas/ItemsBundleCondition'
     CartTotalArg:
       type: array
       summary: The minimum and maximum value of the cart, both are inclusive.
@@ -2427,6 +2366,67 @@ components:
       maxItems: 2
       items:
         type: number
+    ItemsBundleCondition:
+      type: object
+      description: Bundle condition for targeting specific item combinations. Only supported in items bundle discount actions for defining required item groups.
+      properties:
+        strategy:
+          type: string
+          const: items_bundle
+          description: Strategy for matching item bundles
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/BaseCondition'
+          description: Child conditions defining the required items in the bundle
+    RulePromotionItem:
+      allOf:
+      - $ref: '#/components/schemas/RulePromotionBaseAttributes'
+      - $ref: '#/components/schemas/RulePromotionBaseRuleSetBaseAttributes'
+    ItemsBundle:
+      type: object
+      properties:
+        strategy:
+          type: string
+          const: items_bundle
+          description: Matches multiple sets of conditions against distinct cart items.
+        children:
+          type: array
+          items:
+            type: object
+            properties:
+              strategy:
+                type: string
+              operator:
+                type: string
+              args:
+                type: array
+              children:
+                type: array
+    ItemCategoryCondition:
+      type: object
+      description: Category-based condition for targeting items by their category breadcrumbs (i.e., the [hierarchies or nodes](/docs/api/pxm/products/hierarchies) associated with the item). Matches against any category in the item's hierarchical category path.
+      properties:
+        strategy:
+          type: string
+          const: item_category
+          description: Strategy for matching items by category
+        operator:
+          type: string
+          enum:
+          - in
+          - nin
+          x-enumDescriptions:
+            in: The item hierarchy breadcrumbs must include the supplied value.
+            nin: The item hierarchy breadcrumbs must **NOT** include the supplied value.
+          description: Whether items must be in (in) or not in (nin) the specified categories
+        args:
+          type: array
+          minItems: 1
+          maxItems: 400
+          items:
+            type: string
+          description: Category names to match against item breadcrumbs
   parameters:
     PageOffset:
       name: page[offset]
@@ -2439,6 +2439,14 @@ components:
         minimum: 0
         maximum: 10000
         example: 10
+    Authorization:
+      name: Authorization
+      in: header
+      description: The Bearer token required to get access to the API.
+      required: true
+      schema:
+        type: string
+        format: Bearer
     PageLimit:
       name: page[limit]
       description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
@@ -2449,14 +2457,6 @@ components:
         format: int64
         minimum: 0
         example: 100
-    Authorization:
-      name: Authorization
-      in: header
-      description: The Bearer token required to get access to the API.
-      required: true
-      schema:
-        type: string
-        format: Bearer
   securitySchemes:
     bearerAuth:
       type: http

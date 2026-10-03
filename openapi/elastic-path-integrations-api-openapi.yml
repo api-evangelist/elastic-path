@@ -260,114 +260,15 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  responses:
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: 500
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: 404
-                  detail: The resource could not be found
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: 400
-                  detail: Your request was invalid
   schemas:
-    IntegrationUpdate:
+    ErrorResponse:
       required:
-      - type
+      - errors
       properties:
-        type:
-          description: The type represents the object being returned. Always `integration`.
-          type: string
-          example: integration
-          enum:
-          - integration
-          default: integration
-        name:
-          type: string
-          example: Order shipping notification
-          description: The name of the integration.
-        description:
-          type: string
-          example: Send a shipping notification via email with discount code
-          description: A description of what the integration is for.
-        enabled:
-          type: boolean
-          example: true
-          description: Whether the integration is enabled.
-        integration_type:
-          type: string
-          example: webhook
-          enum:
-          - webhook
-          - aws_sqs
-          - stomp
-          default: webhook
-        observes:
+        errors:
           type: array
-          description: The list of events you want to observe. See [**Observable Events**](#observable-events).
           items:
-            type: string
-        configuration:
-          description: The content of the configuration object depends on the value of `integration_type`.
-          type: object
-          oneOf:
-          - $ref: '#/components/schemas/AWSSQSConfigurationObject'
-          - $ref: '#/components/schemas/WebhookConfigurationObject'
-          - $ref: '#/components/schemas/STOMPConfigurationObject'
-    Meta:
-      type: object
-      properties:
-        meta:
-          type: object
-          properties:
-            timestamps:
-              $ref: '#/components/schemas/Timestamps'
-    ErrorBody:
-      required:
-      - title
-      properties:
-        status:
-          type: integer
-          format: int
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
+            $ref: '#/components/schemas/ErrorBody'
     IntegrationCreate:
       required:
       - type
@@ -416,57 +317,31 @@ components:
           - $ref: '#/components/schemas/AWSSQSConfigurationObject'
           - $ref: '#/components/schemas/WebhookConfigurationObject'
           - $ref: '#/components/schemas/STOMPConfigurationObject'
-    WebhookConfigurationObject:
+    Results:
+      description: The results for this response for the entire collection.
+      type: object
+      properties:
+        total:
+          description: The total number of records for this response for the entire collection.
+          type: integer
+          example: 1
+    ErrorBody:
       required:
-      - url
+      - title
       properties:
-        url:
+        status:
+          type: integer
+          format: int
+          description: The HTTP response code of the error.
+          example: 500
+        title:
           type: string
-          example: https://yourwebsite.com/order-created-notification
-          description: A required URL that the integration fires.
-          format: uri
-        secret_key:
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
           type: string
-          example: secret_key_to_validate_on_your_endpoint
-          description: An optional header. Useful to authenticate the response came from Elastic Path. This is sent as `X-MOLTIN-SECRET-KEY`.
-    STOMPConfigurationObject:
-      required:
-      - url
-      properties:
-        username:
-          type: string
-          example: epcc-integration-1
-          description: The username used to authenticate against a STOMP server.
-        password:
-          type: string
-          example: '****************************CDKn'
-          description: The password used to authenticate against a STOMP server.
-        destination:
-          type: string
-          example: /queue/epcc-integrations.order-created
-          description: The destination in the messaging queuing system.
-        addresses:
-          type: array
-          items:
-            type: string
-            format: uri
-          example:
-          - stomp+ssl://b-618354a5-e04f-4eff-99c7-734e9d8b91a5-2.mq.us-west-2.amazonaws.com:61614
-          - stomp+ssl://b-618354a5-e04f-4eff-99c7-734e9d8b91a5-1.mq.us-west-2.amazonaws.com:61614
-          description: The addresses that correspond with the destination name.
-    Timestamps:
-      description: The date and time a transaction is created.
-      properties:
-        created_at:
-          description: The date and time an integration is updated.
-          type: string
-          format: date-time
-          example: '2017-07-21T17:32:28Z'
-        updated_at:
-          description: The date and time an integration is updated.
-          type: string
-          format: date-time
-          example: '2017-07-21T17:32:28Z'
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
     IntegrationJob:
       properties:
         id:
@@ -479,131 +354,16 @@ components:
           enum:
           - integration-job
           example: integration-job
-    Results:
-      description: The results for this response for the entire collection.
+    Links:
       type: object
       properties:
-        total:
-          description: The total number of records for this response for the entire collection.
-          type: integer
-          example: 1
-    LinkURI:
-      type: string
-      format: uri
-      example: ?page[offset]=0&page[limit]=25
-    Integration:
-      properties:
-        id:
-          description: The unique identifier of the integration.
-          type: string
-          example: 2da46671-b4c2-44ac-b133-d1221aafc77b
-        type:
-          description: The type represents the object being returned. Always `integration`.
-          type: string
-          example: integration
-          enum:
-          - integration
-          default: integration
-        name:
-          type: string
-          example: Order shipping notification
-          description: The name of the integration.
-        description:
-          type: string
-          example: Send a shipping notification via email with discount code
-          description: A description of what the integration is for.
-        enabled:
-          type: boolean
-          example: true
-          description: Whether the integration is enabled.
-        integration_type:
-          type: string
-          example: webhook
-          description: Specifies how the event is delivered. The options are `webhook`, `aws-sqs`, or `stomp`.
-          enum:
-          - webhook
-          - aws_sqs
-          - stomp
-          default: webhook
-        observes:
-          description: The list of events you want to observe. See [**Observable Events**](#observable-events).
-          type: array
-          items:
-            type: string
-        configuration:
+        links:
+          description: Links are used to allow you to move between requests.
           type: object
-          oneOf:
-          - $ref: '#/components/schemas/AWSSQSConfigurationObject'
-          - $ref: '#/components/schemas/WebhookConfigurationObject'
-          - $ref: '#/components/schemas/STOMPConfigurationObject'
-    LogsPaginationLinks:
-      type: object
-      description: Links are used to allow you to move between pages.
-      properties:
-        first:
-          description: Always the first page. This is not present on the first page.
-          type: string
-          example: /integrations/logs?page[offset]=0&page[limit]=10
-        next:
-          description: Next page link.
-          type: string
-          example: /integrations/logs?page[offset]=10&page[limit]=10
-        prev:
-          description: This is not present on the first page.
-          type: string
-          example: /integrations/logs?page[offset]=8&page[limit]=10
-    PaginationLinks:
-      type: object
-      description: Links are used to allow you to move between pages.
-      properties:
-        first:
-          description: Always the first page. This is not present on the first page.
-          type: string
-          example: /integrations?page[offset]=0&page[limit]=10
-        last:
-          description: This is not present if there is only one page.
-          type: string
-          example: /integrations?page[offset]=20&page[limit]=10
-        next:
-          description: This is not present if there is no next page.
-          type: string
-          example: /integrations?page[offset]=10&page[limit]=10
-        prev:
-          description: This is not present on the first page.
-          type: string
-          example: /integrations?page[offset]=8&page[limit]=10
-    AWSSQSConfigurationObject:
-      required:
-      - url
-      - aws_access_key_id
-      - aws_secret_access_key
-      - region
-      properties:
-        url:
-          type: string
-          format: uri
-          example: https://sqs.eu-west-1.amazonaws.com/123456789/epcc-external-queue
-          description: The required SQS queue URL.
-        aws_access_key_id:
-          type: string
-          example: '****************JIMB'
-          description: The required AWS access key ID.
-        aws_secret_access_key:
-          type: string
-          example: '************************************HK4o'
-          description: The required AWS secret key ID.
-        region:
-          type: string
-          example: eu-west-1
-          description: The required AWS region.
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ErrorBody'
+          properties:
+            self:
+              description: Single entities use a self parameter with a link to that specific resource.
+              $ref: '#/components/schemas/LinkURI'
     IntegrationLog:
       description: As integrations can fail over time, Commerce provides the ability to browse all logs for your integrations.
       properties:
@@ -670,16 +430,256 @@ components:
                       type: string
                       description: This represents the resource type of the object being returned. Always `integration-job`.
                       example: job
-    Links:
+    PaginationLinks:
+      type: object
+      description: Links are used to allow you to move between pages.
+      properties:
+        first:
+          description: Always the first page. This is not present on the first page.
+          type: string
+          example: /integrations?page[offset]=0&page[limit]=10
+        last:
+          description: This is not present if there is only one page.
+          type: string
+          example: /integrations?page[offset]=20&page[limit]=10
+        next:
+          description: This is not present if there is no next page.
+          type: string
+          example: /integrations?page[offset]=10&page[limit]=10
+        prev:
+          description: This is not present on the first page.
+          type: string
+          example: /integrations?page[offset]=8&page[limit]=10
+    Integration:
+      properties:
+        id:
+          description: The unique identifier of the integration.
+          type: string
+          example: 2da46671-b4c2-44ac-b133-d1221aafc77b
+        type:
+          description: The type represents the object being returned. Always `integration`.
+          type: string
+          example: integration
+          enum:
+          - integration
+          default: integration
+        name:
+          type: string
+          example: Order shipping notification
+          description: The name of the integration.
+        description:
+          type: string
+          example: Send a shipping notification via email with discount code
+          description: A description of what the integration is for.
+        enabled:
+          type: boolean
+          example: true
+          description: Whether the integration is enabled.
+        integration_type:
+          type: string
+          example: webhook
+          description: Specifies how the event is delivered. The options are `webhook`, `aws-sqs`, or `stomp`.
+          enum:
+          - webhook
+          - aws_sqs
+          - stomp
+          default: webhook
+        observes:
+          description: The list of events you want to observe. See [**Observable Events**](#observable-events).
+          type: array
+          items:
+            type: string
+        configuration:
+          type: object
+          oneOf:
+          - $ref: '#/components/schemas/AWSSQSConfigurationObject'
+          - $ref: '#/components/schemas/WebhookConfigurationObject'
+          - $ref: '#/components/schemas/STOMPConfigurationObject'
+    AWSSQSConfigurationObject:
+      required:
+      - url
+      - aws_access_key_id
+      - aws_secret_access_key
+      - region
+      properties:
+        url:
+          type: string
+          format: uri
+          example: https://sqs.eu-west-1.amazonaws.com/123456789/epcc-external-queue
+          description: The required SQS queue URL.
+        aws_access_key_id:
+          type: string
+          example: '****************JIMB'
+          description: The required AWS access key ID.
+        aws_secret_access_key:
+          type: string
+          example: '************************************HK4o'
+          description: The required AWS secret key ID.
+        region:
+          type: string
+          example: eu-west-1
+          description: The required AWS region.
+    IntegrationUpdate:
+      required:
+      - type
+      properties:
+        type:
+          description: The type represents the object being returned. Always `integration`.
+          type: string
+          example: integration
+          enum:
+          - integration
+          default: integration
+        name:
+          type: string
+          example: Order shipping notification
+          description: The name of the integration.
+        description:
+          type: string
+          example: Send a shipping notification via email with discount code
+          description: A description of what the integration is for.
+        enabled:
+          type: boolean
+          example: true
+          description: Whether the integration is enabled.
+        integration_type:
+          type: string
+          example: webhook
+          enum:
+          - webhook
+          - aws_sqs
+          - stomp
+          default: webhook
+        observes:
+          type: array
+          description: The list of events you want to observe. See [**Observable Events**](#observable-events).
+          items:
+            type: string
+        configuration:
+          description: The content of the configuration object depends on the value of `integration_type`.
+          type: object
+          oneOf:
+          - $ref: '#/components/schemas/AWSSQSConfigurationObject'
+          - $ref: '#/components/schemas/WebhookConfigurationObject'
+          - $ref: '#/components/schemas/STOMPConfigurationObject'
+    LinkURI:
+      type: string
+      format: uri
+      example: ?page[offset]=0&page[limit]=25
+    Meta:
       type: object
       properties:
-        links:
-          description: Links are used to allow you to move between requests.
+        meta:
           type: object
           properties:
-            self:
-              description: Single entities use a self parameter with a link to that specific resource.
-              $ref: '#/components/schemas/LinkURI'
+            timestamps:
+              $ref: '#/components/schemas/Timestamps'
+    Timestamps:
+      description: The date and time a transaction is created.
+      properties:
+        created_at:
+          description: The date and time an integration is updated.
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+        updated_at:
+          description: The date and time an integration is updated.
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+    LogsPaginationLinks:
+      type: object
+      description: Links are used to allow you to move between pages.
+      properties:
+        first:
+          description: Always the first page. This is not present on the first page.
+          type: string
+          example: /integrations/logs?page[offset]=0&page[limit]=10
+        next:
+          description: Next page link.
+          type: string
+          example: /integrations/logs?page[offset]=10&page[limit]=10
+        prev:
+          description: This is not present on the first page.
+          type: string
+          example: /integrations/logs?page[offset]=8&page[limit]=10
+    STOMPConfigurationObject:
+      required:
+      - url
+      properties:
+        username:
+          type: string
+          example: epcc-integration-1
+          description: The username used to authenticate against a STOMP server.
+        password:
+          type: string
+          example: '****************************CDKn'
+          description: The password used to authenticate against a STOMP server.
+        destination:
+          type: string
+          example: /queue/epcc-integrations.order-created
+          description: The destination in the messaging queuing system.
+        addresses:
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+          - stomp+ssl://b-618354a5-e04f-4eff-99c7-734e9d8b91a5-2.mq.us-west-2.amazonaws.com:61614
+          - stomp+ssl://b-618354a5-e04f-4eff-99c7-734e9d8b91a5-1.mq.us-west-2.amazonaws.com:61614
+          description: The addresses that correspond with the destination name.
+    WebhookConfigurationObject:
+      required:
+      - url
+      properties:
+        url:
+          type: string
+          example: https://yourwebsite.com/order-created-notification
+          description: A required URL that the integration fires.
+          format: uri
+        secret_key:
+          type: string
+          example: secret_key_to_validate_on_your_endpoint
+          description: An optional header. Useful to authenticate the response came from Elastic Path. This is sent as `X-MOLTIN-SECRET-KEY`.
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: 500
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: 404
+                  detail: The resource could not be found
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: 400
+                  detail: Your request was invalid
   parameters:
     IntegrationUUID:
       name: integration_uuid

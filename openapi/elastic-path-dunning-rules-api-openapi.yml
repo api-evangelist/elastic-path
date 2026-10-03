@@ -196,239 +196,24 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  responses:
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No plan found
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: 'data.attributes.name: "name" is required'
-    WriteConflictError:
-      description: Write conflict. Unable to perform the operation at this time.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            errors:
-            - title: Write Conflict
-              status: '409'
-    ForbiddenError:
-      description: Forbidden. The operation is forbidden on this entity.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Permission denied
-                  status: '404'
-                  detail: 'Permission denied: plan tenancy mismatch'
-  parameters:
-    Filter:
-      name: filter
-      in: query
-      required: false
-      schema:
-        type: string
-        format: string
-        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
-
-          '
-        example: eq(name,Alan Turing)
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 10
-    PageLimit:
-      name: page[limit]
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 100
   schemas:
-    DunningRuleUpdate:
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    ErrorResponse:
       required:
-      - id
-      - type
-      - attributes
+      - errors
       properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionDunningRuleType'
-        attributes:
-          $ref: '#/components/schemas/DunningRuleUpdateAttributes'
-    DunningRule:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionDunningRuleType'
-        attributes:
-          $ref: '#/components/schemas/DunningRuleAttributes'
-        meta:
-          $ref: '#/components/schemas/DunningRuleMeta'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    DunningRuleUpdateAttributes:
-      properties:
-        payment_retry_type:
-          type: string
-          enum:
-          - fixed
-          - backoff
-          - tiered
-          example: fixed
-          description: 'The strategy used to make payments. Always `fixed`. This means payments are retried on a fixed schedule as defined by the `payment_retry_unit` and `payment_retry_interval`, for example, every two days.
-
-            '
-          x-go-type: model.PaymentRetryType
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-        payment_retry_interval:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-          maximum: 1024
-          example: 1
-          description: The number of `payment_interval_unit`s to wait between each payment retry attempt.
-        payment_retry_unit:
-          type:
-          - string
-          - 'null'
-          enum:
-          - day
-          - week
-          example: day
-          description: The unit of time used to measure the intervals between payment attempts or retries.
-          x-go-type: model.PaymentRetryUnit
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-        payment_retry_multiplier:
-          type:
-          - number
-          - 'null'
-          format: double
-          minimum: 1
-          maximum: 1024
-          example: 1
-          description: The multiplier that increases the interval between consecutive each payment attempts or retries. This is typically used to gradually extend the time between retries. Allowing more time between attempts as failures persist, helps reduce the risk of triggering multiple failures in a short period and gives the subscriber more time to resolve the issue. Must only be set for backup types.
-        payment_retries_limit:
-          type: integer
-          format: int64
-          minimum: 0
-          example: 5
-          description: The number of times Subscriptions attempts payment retries before `action` is taken.
-        action:
-          type: string
-          enum:
-          - none
-          - pause
-          - close
-          - suspend
-          example: none
-          description: The action to take after all payment attempts for an invoice have failed.
-          x-go-type: model.DunningAction
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-        default:
-          type: boolean
-          example: false
-          description: Set to `true` if you want this rule to be the default for the store.
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    DunningRuleMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    DunningRuleCreate:
-      required:
-      - type
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/SubscriptionDunningRuleType'
-        attributes:
-          $ref: '#/components/schemas/DunningRuleAttributes'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     DunningRuleAttributes:
       description: 'The dunning rule attributes you can use to configure your payment retry strategy.
 
@@ -515,12 +300,137 @@ components:
           type: boolean
           example: false
           description: Set to `true` if you want this rule to be the default for the store.
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
     OwnerMeta:
       readOnly: true
       type: string
       format: string
       description: The owner of a resource, either `store` or `organization`.
       example: store
+    DunningRuleCreate:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/SubscriptionDunningRuleType'
+        attributes:
+          $ref: '#/components/schemas/DunningRuleAttributes'
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    DunningRuleUpdateAttributes:
+      properties:
+        payment_retry_type:
+          type: string
+          enum:
+          - fixed
+          - backoff
+          - tiered
+          example: fixed
+          description: 'The strategy used to make payments. Always `fixed`. This means payments are retried on a fixed schedule as defined by the `payment_retry_unit` and `payment_retry_interval`, for example, every two days.
+
+            '
+          x-go-type: model.PaymentRetryType
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+        payment_retry_interval:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+          maximum: 1024
+          example: 1
+          description: The number of `payment_interval_unit`s to wait between each payment retry attempt.
+        payment_retry_unit:
+          type:
+          - string
+          - 'null'
+          enum:
+          - day
+          - week
+          example: day
+          description: The unit of time used to measure the intervals between payment attempts or retries.
+          x-go-type: model.PaymentRetryUnit
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+        payment_retry_multiplier:
+          type:
+          - number
+          - 'null'
+          format: double
+          minimum: 1
+          maximum: 1024
+          example: 1
+          description: The multiplier that increases the interval between consecutive each payment attempts or retries. This is typically used to gradually extend the time between retries. Allowing more time between attempts as failures persist, helps reduce the risk of triggering multiple failures in a short period and gives the subscriber more time to resolve the issue. Must only be set for backup types.
+        payment_retries_limit:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 5
+          description: The number of times Subscriptions attempts payment retries before `action` is taken.
+        action:
+          type: string
+          enum:
+          - none
+          - pause
+          - close
+          - suspend
+          example: none
+          description: The action to take after all payment attempts for an invoice have failed.
+          x-go-type: model.DunningAction
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+        default:
+          type: boolean
+          example: false
+          description: Set to `true` if you want this rule to be the default for the store.
+    DunningRuleMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      properties:
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    DunningRuleUpdate:
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionDunningRuleType'
+        attributes:
+          $ref: '#/components/schemas/DunningRuleUpdateAttributes'
     Timestamps:
       required:
       - created_at
@@ -534,6 +444,29 @@ components:
           description: The date and time a resource was created.
           type: string
           example: '2017-01-10T11:41:19.244842Z'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    SubscriptionDunningRuleType:
+      type: string
+      example: subscription_dunning_rule
+      enum:
+      - subscription_dunning_rule
+    DunningRule:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionDunningRuleType'
+        attributes:
+          $ref: '#/components/schemas/DunningRuleAttributes'
+        meta:
+          $ref: '#/components/schemas/DunningRuleMeta'
     Error:
       required:
       - status
@@ -557,34 +490,101 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 11111111-2222-3333-4444-555555555555
-    SubscriptionDunningRuleType:
-      type: string
-      example: subscription_dunning_rule
-      enum:
-      - subscription_dunning_rule
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
+  parameters:
+    Filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(name,Alan Turing)
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No plan found
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: 'data.attributes.name: "name" is required'
+    WriteConflictError:
+      description: Write conflict. Unable to perform the operation at this time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - title: Write Conflict
+              status: '409'
+    ForbiddenError:
+      description: Forbidden. The operation is forbidden on this entity.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Permission denied
+                  status: '404'
+                  detail: 'Permission denied: plan tenancy mismatch'
   securitySchemes:
     BearerToken:
       scheme: bearer

@@ -407,25 +407,6 @@ paths:
       deprecated: false
 components:
   schemas:
-    Data.Promotions.Schema.Targets:
-      title: Data.Promotions.Schema.Targets
-      type: object
-      properties:
-        targets:
-          description: Specifies the product SKUs or unique identifiers of the products included in the promotion. Set "targets:all" if you want to apply the promotion to all SKUs. Leaving this field empty might cause errors. You need to define `schema.targets`, `schema.target_nodes` or `schema.target_attributes`, or all three of them to qualify for this promotion.
-          type: array
-          items:
-            type: string
-          examples:
-          - sku1
-    Response.Meta.Promotions:
-      title: Response.Meta.Promotions
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/Response.PaginationPage'
-        results:
-          $ref: '#/components/schemas/Response.PaginationResults'
     Data.Promotions.Schema.Requirement:
       title: Data.Promotions.Schema.Requirement
       type: object
@@ -441,88 +422,95 @@ components:
         quantity:
           description: Specifies the quantities of products to be applied for the promotion.
           type: integer
-    Response.PaginationPage:
+    Response.PageLinks:
       type: object
       properties:
         current:
-          description: The current page.
-          type: integer
-        limit:
-          description: The maximum number of records per page for this response. You can set this value up to 100.
-          type: integer
-        offset:
-          description: The current offset by number of records, not pages. Offset is zero-based.
-          type: integer
-        total:
-          description: The total page count.
-          type: integer
-    Data.Promotions.Schema.PercentageAndCurrencyArray:
-      title: Data.Promotions.Schema.PercentageAndCurrencyArray
-      type: object
-      required:
-      - currencies
-      properties:
-        currencies:
-          type: array
-          items:
-            $ref: '#/components/schemas/Data.Promotions.Schema.Currencies.PercentageAndCurrency'
-    Data.Promotions.Schema.Requirements:
-      title: Data.Promotions.Schema.Requirements
-      type: object
-      required:
-      - requirements
-      properties:
-        requirements:
-          type: array
-          items:
-            $ref: '#/components/schemas/Data.Promotions.Schema.Requirement'
-    Data.PromotionObject:
-      type: object
-      oneOf:
-      - $ref: '#/components/schemas/Data.CartFixedDiscountPromotion'
-      - $ref: '#/components/schemas/Data.CartPercentDiscountPromotion'
-      - $ref: '#/components/schemas/Data.ItemFixedDiscountPromotion'
-      - $ref: '#/components/schemas/Data.ItemPercentDiscountPromotion'
-      - $ref: '#/components/schemas/Data.XForYDiscountPromotion'
-      - $ref: '#/components/schemas/Data.XForAmountDiscountPromotion'
-      - $ref: '#/components/schemas/Data.FixedBundleDiscountPromotion'
-      - $ref: '#/components/schemas/Data.FreeGiftPromotion'
-      discriminator:
-        propertyName: promotion_type
-        mapping:
-          fixed_discount: '#/components/schemas/Data.CartFixedDiscountPromotion'
-          percent_discount: '#/components/schemas/Data.CartPercentDiscountPromotion'
-          item_fixed_discount: '#/components/schemas/Data.ItemFixedDiscountPromotion'
-          item_percent_discount: '#/components/schemas/Data.ItemPercentDiscountPromotion'
-          x_for_y: '#/components/schemas/Data.XForYDiscountPromotion'
-          x_for_amount: '#/components/schemas/Data.XForAmountDiscountPromotion'
-          bundle_fixed_discount: '#/components/schemas/Data.FixedBundleDiscountPromotion'
-          bundle_gift: '#/components/schemas/Data.FreeGiftPromotion'
-      required:
-      - promotion_type
-      properties:
-        promotion_type:
+          description: Always the current page.
           type: string
-          enum:
-          - fixed_discount
-          - percent_discount
-          - item_fixed_discount
-          - item_percent_discount
-          - x_for_y
-          - x_for_amount
-          - bundle_fixed_discount
-          - bundle_gift
-    Data.Promotions.Schema.TargetNodes:
-      title: Data.Promotions.Schema.TargetNodes
+        first:
+          description: Always the first page.
+          type: string
+        last:
+          description: If there is only one page, it returns `null`.
+          type: string
+        next:
+          description: If there is only one page, it returns `null`.
+          type: string
+        prev:
+          description: If the user is on the first page, it returns `null`.
+          type: string
+    Data.FreeGiftPromotion:
+      title: Data.FreeGiftPromotion
+      allOf:
+      - $ref: '#/components/schemas/Data.BasePromotions'
+      - type: object
+        properties:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/Data.Promotions.Schema.TargetCatalogs'
+            - $ref: '#/components/schemas/Data.Promotions.Schema.Requirements'
+            - $ref: '#/components/schemas/Data.Promotions.Schema.Gifts'
+    Data.XForAmountDiscountPromotion:
+      title: Data.XForAmountDiscountPromotion
+      allOf:
+      - $ref: '#/components/schemas/Data.BasePromotions'
+      - type: object
+        properties:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/Data.Promotions.Schema.TargetCatalogs'
+            - $ref: '#/components/schemas/Data.Promotions.Schema.Targets'
+            - $ref: '#/components/schemas/Data.Promotions.Schema.TargetNodes'
+            - $ref: '#/components/schemas/Data.Promotions.Schema.AmountAndCurrencyArray'
+            - $ref: '#/components/schemas/Data.Promotions.Schema.Exclude'
+            - $ref: '#/components/schemas/Data.Promotions.Schema.XValue'
+    Data.Promotions.Schema.YValue:
+      title: Data.Promotions.Schema.YValue
       type: object
+      required:
+      - y
       properties:
-        target_nodes:
-          description: Specifies the unique identifiers of the nodes to be applied for the promotion in addition to the product SKUs applied in targets. You can also define `schema.target_nodes` without defining the `schema.targets` if the promotion is intended for a certain node. You cannot define "targets":"all" and `schema.target_nodes` within the same schema. This will result in a validation error.
-          type: array
-          items:
-            type: string
-            examples:
-            - ff7d62d4-740c-43ac-97cd-a7b0c32221c2
+        y:
+          description: Specifies the Y value for the promotion.
+          type: integer
+    Data.Promotions.Schema.Currencies.PercentageAndCurrency:
+      title: Data.Promotions.Schema.Currencies.PercentageAndCurrency
+      type: object
+      required:
+      - percentage
+      - currency
+      properties:
+        percentage:
+          description: Specifies the discount percentage of the cart total value. For example, 10 represents 10% discount of the cart value of $100. You can add up to six decimal places for the discount percentage to be applied for the promotion.
+          type: number
+        currency:
+          description: Specifies a three-letter currency code. For example, USD.
+          type: string
+    Data.CartPercentDiscountPromotion:
+      title: Data.CartPercentDiscountPromotion
+      allOf:
+      - $ref: '#/components/schemas/Data.BasePromotions'
+      - type: object
+        properties:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/Data.Promotions.Schema.TargetCatalogs'
+            - $ref: '#/components/schemas/Data.Promotions.Schema.PercentageAndCurrencyArray'
+            - $ref: '#/components/schemas/Data.Promotions.Schema.Exclude'
+    Data.Promotions.Schema.Currencies.AmountAndCurrency:
+      title: Data.Promotions.Schema.Currencies.AmountAndCurrency
+      type: object
+      required:
+      - amount
+      - currency
+      properties:
+        amount:
+          description: Specifies the fixed discount amount to be applied to the cart. For example, $10 off the total amount in the cart.
+          type: integer
+        currency:
+          description: Specifies a three-letter currency code. For example, USD.
+          type: string
     Data.Promotions.Schema.XValue:
       title: Data.Promotions.Schema.XValue
       type: object
@@ -532,6 +520,17 @@ components:
         x:
           description: Specifies the X value for the promotion.
           type: integer
+    Data.CartFixedDiscountPromotion:
+      title: Data.CartFixedDiscountPromotion
+      allOf:
+      - $ref: '#/components/schemas/Data.BasePromotions'
+      - type: object
+        properties:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/Data.Promotions.Schema.TargetCatalogs'
+            - $ref: '#/components/schemas/Data.Promotions.Schema.AmountAndCurrencyArray'
+            - $ref: '#/components/schemas/Data.Promotions.Schema.Exclude'
     Data.XForYDiscountPromotion:
       title: Data.XForYDiscountPromotion
       allOf:
@@ -561,150 +560,6 @@ components:
             - $ref: '#/components/schemas/Data.Promotions.Schema.TargetAttributes'
             - $ref: '#/components/schemas/Data.Promotions.Schema.AmountAndCurrencyArray'
             - $ref: '#/components/schemas/Data.Promotions.Schema.Exclude'
-    Data.XForAmountDiscountPromotion:
-      title: Data.XForAmountDiscountPromotion
-      allOf:
-      - $ref: '#/components/schemas/Data.BasePromotions'
-      - type: object
-        properties:
-          schema:
-            allOf:
-            - $ref: '#/components/schemas/Data.Promotions.Schema.TargetCatalogs'
-            - $ref: '#/components/schemas/Data.Promotions.Schema.Targets'
-            - $ref: '#/components/schemas/Data.Promotions.Schema.TargetNodes'
-            - $ref: '#/components/schemas/Data.Promotions.Schema.AmountAndCurrencyArray'
-            - $ref: '#/components/schemas/Data.Promotions.Schema.Exclude'
-            - $ref: '#/components/schemas/Data.Promotions.Schema.XValue'
-    Data.Promotions.Schema.TargetAttributes:
-      title: Data.Promotions.Schema.TargetAttributes
-      type: object
-      properties:
-        target_attributes:
-          type: array
-          items:
-            type: object
-            properties:
-              template:
-                description: Specifies the name of the template slug to be included in a promotion.
-                type: string
-                examples:
-                - products(shoes)
-              field:
-                description: Specifies the unique slug identifier for the field to be included in a promotion.
-                type: string
-                examples:
-                - brand
-              type:
-                description: Specifies the type of the field, such as `string`, `integer`, `boolean`, `float`, or `date`.
-                type: string
-                examples:
-                - string
-              value:
-                description: Specifies the value of the field that was specified in the `attributes.type`. For example, you can specify any color in the value if you indicate color in the `attributes.field`.
-                type: string
-                examples:
-                - adidas
-    Data.Promotions.Schema.Exclude:
-      title: Data.Promotions.Schema.Exclude
-      type: object
-      properties:
-        conditions:
-          type: object
-          $ref: '#/components/schemas/Data.Conditions'
-    Data.FixedBundleDiscountPromotion:
-      title: Data.FixedBundleDiscountPromotion
-      allOf:
-      - $ref: '#/components/schemas/Data.BasePromotions'
-      - type: object
-        properties:
-          schema:
-            allOf:
-            - $ref: '#/components/schemas/Data.Promotions.Schema.TargetCatalogs'
-            - $ref: '#/components/schemas/Data.Promotions.Schema.AmountAndCurrencyArray'
-            - $ref: '#/components/schemas/Data.Promotions.Schema.Requirements'
-    Data.Promotions.Schema.Gifts:
-      title: Data.Promotions.Schema.Gifts
-      type: object
-      required:
-      - gifts
-      properties:
-        gifts:
-          description: Specifies all the gift items that a shopper can avail when they qualify for the promotion. The gift quantity applies to each specified item. For example, if the promotion includes `giftA` and `giftB`, shopper can avail both the gifts if the cart qualifies for the gift promotion. If the cart qualifies for two gift promotions, the shopper can use two `giftA` and two `giftB`.
-          type: array
-          items:
-            type: string
-        auto_add_free_gift:
-          description: When set to `true`, free gift items are automatically added to the shopping cart for all the eligible products. Default is `false`.
-          type: boolean
-    Response.PaginationResults:
-      type: object
-      properties:
-        total:
-          description: The total number of results.
-          type: integer
-    Data.Promotions.Schema.Percent:
-      title: Data.Promotions.Schema.Percent
-      type: object
-      required:
-      - percent
-      properties:
-        percent:
-          description: Specifies the discount percentage to be applied to the targeted SKU price. For example, 10% discount on a product SKU priced at $100. You can specify the discount percentage with up to six decimal places.
-          type: integer
-    Data.NodesObject:
-      title: Data.NodesObject
-      type: object
-      properties:
-        node:
-          type: object
-          properties:
-            values:
-              description: Specifies unique identifiers of the nodes to be excluded from the promotion.
-              type: array
-              items:
-                type: string
-                description: node or hierarchy ids
-                examples:
-                - 19650d2e-7e9d-496a-8658-5107dd8ad803
-                - fe0cff14-1b7e-4abf-88db-cd0fd6a3ec5b
-    Data.CartFixedDiscountPromotion:
-      title: Data.CartFixedDiscountPromotion
-      allOf:
-      - $ref: '#/components/schemas/Data.BasePromotions'
-      - type: object
-        properties:
-          schema:
-            allOf:
-            - $ref: '#/components/schemas/Data.Promotions.Schema.TargetCatalogs'
-            - $ref: '#/components/schemas/Data.Promotions.Schema.AmountAndCurrencyArray'
-            - $ref: '#/components/schemas/Data.Promotions.Schema.Exclude'
-    Data.Promotions.Schema.YValue:
-      title: Data.Promotions.Schema.YValue
-      type: object
-      required:
-      - y
-      properties:
-        y:
-          description: Specifies the Y value for the promotion.
-          type: integer
-    Response.PageLinks:
-      type: object
-      properties:
-        current:
-          description: Always the current page.
-          type: string
-        first:
-          description: Always the first page.
-          type: string
-        last:
-          description: If there is only one page, it returns `null`.
-          type: string
-        next:
-          description: If there is only one page, it returns `null`.
-          type: string
-        prev:
-          description: If the user is on the first page, it returns `null`.
-          type: string
     Data.AttributeObject:
       title: Data.AttributeObject
       type: object
@@ -732,15 +587,57 @@ components:
               type: string
               examples:
               - adidas
-    Response.Error:
-      type: array
+    Response.PaginationPage:
+      type: object
       properties:
-        detail:
-          type: string
-        status:
-          type: string
-        title:
-          type: string
+        current:
+          description: The current page.
+          type: integer
+        limit:
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          type: integer
+        offset:
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          type: integer
+        total:
+          description: The total page count.
+          type: integer
+    Response.Data:
+      description: Specifies the type of the resource. The type of resource for promotions is, `promotion_codes`.
+      type: object
+      properties:
+        data: {}
+    Data.Promotions.Schema.Gifts:
+      title: Data.Promotions.Schema.Gifts
+      type: object
+      required:
+      - gifts
+      properties:
+        gifts:
+          description: Specifies all the gift items that a shopper can avail when they qualify for the promotion. The gift quantity applies to each specified item. For example, if the promotion includes `giftA` and `giftB`, shopper can avail both the gifts if the cart qualifies for the gift promotion. If the cart qualifies for two gift promotions, the shopper can use two `giftA` and two `giftB`.
+          type: array
+          items:
+            type: string
+        auto_add_free_gift:
+          description: When set to `true`, free gift items are automatically added to the shopping cart for all the eligible products. Default is `false`.
+          type: boolean
+    Data.Promotions.Schema.Exclude:
+      title: Data.Promotions.Schema.Exclude
+      type: object
+      properties:
+        conditions:
+          type: object
+          $ref: '#/components/schemas/Data.Conditions'
+    Data.Promotions.Schema.PercentageAndCurrencyArray:
+      title: Data.Promotions.Schema.PercentageAndCurrencyArray
+      type: object
+      required:
+      - currencies
+      properties:
+        currencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Data.Promotions.Schema.Currencies.PercentageAndCurrency'
     Data.BasePromotions:
       title: Data.Promotions
       type: object
@@ -817,8 +714,60 @@ components:
           type: number
           examples:
           - 0
-    Data.FreeGiftPromotion:
-      title: Data.FreeGiftPromotion
+    Data.NodesObject:
+      title: Data.NodesObject
+      type: object
+      properties:
+        node:
+          type: object
+          properties:
+            values:
+              description: Specifies unique identifiers of the nodes to be excluded from the promotion.
+              type: array
+              items:
+                type: string
+                description: node or hierarchy ids
+                examples:
+                - 19650d2e-7e9d-496a-8658-5107dd8ad803
+                - fe0cff14-1b7e-4abf-88db-cd0fd6a3ec5b
+    Data.PromotionObject:
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/Data.CartFixedDiscountPromotion'
+      - $ref: '#/components/schemas/Data.CartPercentDiscountPromotion'
+      - $ref: '#/components/schemas/Data.ItemFixedDiscountPromotion'
+      - $ref: '#/components/schemas/Data.ItemPercentDiscountPromotion'
+      - $ref: '#/components/schemas/Data.XForYDiscountPromotion'
+      - $ref: '#/components/schemas/Data.XForAmountDiscountPromotion'
+      - $ref: '#/components/schemas/Data.FixedBundleDiscountPromotion'
+      - $ref: '#/components/schemas/Data.FreeGiftPromotion'
+      discriminator:
+        propertyName: promotion_type
+        mapping:
+          fixed_discount: '#/components/schemas/Data.CartFixedDiscountPromotion'
+          percent_discount: '#/components/schemas/Data.CartPercentDiscountPromotion'
+          item_fixed_discount: '#/components/schemas/Data.ItemFixedDiscountPromotion'
+          item_percent_discount: '#/components/schemas/Data.ItemPercentDiscountPromotion'
+          x_for_y: '#/components/schemas/Data.XForYDiscountPromotion'
+          x_for_amount: '#/components/schemas/Data.XForAmountDiscountPromotion'
+          bundle_fixed_discount: '#/components/schemas/Data.FixedBundleDiscountPromotion'
+          bundle_gift: '#/components/schemas/Data.FreeGiftPromotion'
+      required:
+      - promotion_type
+      properties:
+        promotion_type:
+          type: string
+          enum:
+          - fixed_discount
+          - percent_discount
+          - item_fixed_discount
+          - item_percent_discount
+          - x_for_y
+          - x_for_amount
+          - bundle_fixed_discount
+          - bundle_gift
+    Data.FixedBundleDiscountPromotion:
+      title: Data.FixedBundleDiscountPromotion
       allOf:
       - $ref: '#/components/schemas/Data.BasePromotions'
       - type: object
@@ -826,13 +775,106 @@ components:
           schema:
             allOf:
             - $ref: '#/components/schemas/Data.Promotions.Schema.TargetCatalogs'
+            - $ref: '#/components/schemas/Data.Promotions.Schema.AmountAndCurrencyArray'
             - $ref: '#/components/schemas/Data.Promotions.Schema.Requirements'
-            - $ref: '#/components/schemas/Data.Promotions.Schema.Gifts'
-    Response.Data:
-      description: Specifies the type of the resource. The type of resource for promotions is, `promotion_codes`.
+    Response.Meta.Promotions:
+      title: Response.Meta.Promotions
       type: object
       properties:
-        data: {}
+        page:
+          $ref: '#/components/schemas/Response.PaginationPage'
+        results:
+          $ref: '#/components/schemas/Response.PaginationResults'
+    Data.Promotions.Schema.Requirements:
+      title: Data.Promotions.Schema.Requirements
+      type: object
+      required:
+      - requirements
+      properties:
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Data.Promotions.Schema.Requirement'
+    Data.Promotions.Schema.TargetNodes:
+      title: Data.Promotions.Schema.TargetNodes
+      type: object
+      properties:
+        target_nodes:
+          description: Specifies the unique identifiers of the nodes to be applied for the promotion in addition to the product SKUs applied in targets. You can also define `schema.target_nodes` without defining the `schema.targets` if the promotion is intended for a certain node. You cannot define "targets":"all" and `schema.target_nodes` within the same schema. This will result in a validation error.
+          type: array
+          items:
+            type: string
+            examples:
+            - ff7d62d4-740c-43ac-97cd-a7b0c32221c2
+    Data.Promotions.Schema.TargetAttributes:
+      title: Data.Promotions.Schema.TargetAttributes
+      type: object
+      properties:
+        target_attributes:
+          type: array
+          items:
+            type: object
+            properties:
+              template:
+                description: Specifies the name of the template slug to be included in a promotion.
+                type: string
+                examples:
+                - products(shoes)
+              field:
+                description: Specifies the unique slug identifier for the field to be included in a promotion.
+                type: string
+                examples:
+                - brand
+              type:
+                description: Specifies the type of the field, such as `string`, `integer`, `boolean`, `float`, or `date`.
+                type: string
+                examples:
+                - string
+              value:
+                description: Specifies the value of the field that was specified in the `attributes.type`. For example, you can specify any color in the value if you indicate color in the `attributes.field`.
+                type: string
+                examples:
+                - adidas
+    Data.Promotions.Schema.Targets:
+      title: Data.Promotions.Schema.Targets
+      type: object
+      properties:
+        targets:
+          description: Specifies the product SKUs or unique identifiers of the products included in the promotion. Set "targets:all" if you want to apply the promotion to all SKUs. Leaving this field empty might cause errors. You need to define `schema.targets`, `schema.target_nodes` or `schema.target_attributes`, or all three of them to qualify for this promotion.
+          type: array
+          items:
+            type: string
+          examples:
+          - sku1
+    Data.Promotions.Schema.Percent:
+      title: Data.Promotions.Schema.Percent
+      type: object
+      required:
+      - percent
+      properties:
+        percent:
+          description: Specifies the discount percentage to be applied to the targeted SKU price. For example, 10% discount on a product SKU priced at $100. You can specify the discount percentage with up to six decimal places.
+          type: integer
+    Response.Error:
+      type: array
+      properties:
+        detail:
+          type: string
+        status:
+          type: string
+        title:
+          type: string
+    Data.Promotions.Schema.TargetCatalogs:
+      title: Data.Promotions.Schema.TargetCatalogs
+      type: object
+      properties:
+        target_catalogs:
+          description: Specifies the unique identifiers of the catalogs to be applied for this promotion. If you do not set this parameter, promotion will be applied to all catalogs.
+          type: array
+          items:
+            type: string
+            examples:
+            - baff37e6-1c9b-449d-852c-80ec4d0e39c6
     Data.ItemPercentDiscountPromotion:
       title: Data.ItemPercentDiscountPromotion
       allOf:
@@ -847,19 +889,16 @@ components:
             - $ref: '#/components/schemas/Data.Promotions.Schema.TargetAttributes'
             - $ref: '#/components/schemas/Data.Promotions.Schema.Exclude'
             - $ref: '#/components/schemas/Data.Promotions.Schema.Percent'
-    Data.Promotions.Schema.Currencies.PercentageAndCurrency:
-      title: Data.Promotions.Schema.Currencies.PercentageAndCurrency
+    Data.Promotions.Schema.AmountAndCurrencyArray:
+      title: Data.Promotions.Schema.AmountAndCurrencyArray
       type: object
       required:
-      - percentage
-      - currency
+      - currencies
       properties:
-        percentage:
-          description: Specifies the discount percentage of the cart total value. For example, 10 represents 10% discount of the cart value of $100. You can add up to six decimal places for the discount percentage to be applied for the promotion.
-          type: number
-        currency:
-          description: Specifies a three-letter currency code. For example, USD.
-          type: string
+        currencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Data.Promotions.Schema.Currencies.AmountAndCurrency'
     Data.Conditions:
       title: Data.Conditions
       type: object
@@ -875,51 +914,12 @@ components:
                   oneOf:
                   - $ref: '#/components/schemas/Data.AttributeObject'
                   - $ref: '#/components/schemas/Data.NodesObject'
-    Data.Promotions.Schema.Currencies.AmountAndCurrency:
-      title: Data.Promotions.Schema.Currencies.AmountAndCurrency
+    Response.PaginationResults:
       type: object
-      required:
-      - amount
-      - currency
       properties:
-        amount:
-          description: Specifies the fixed discount amount to be applied to the cart. For example, $10 off the total amount in the cart.
+        total:
+          description: The total number of results.
           type: integer
-        currency:
-          description: Specifies a three-letter currency code. For example, USD.
-          type: string
-    Data.Promotions.Schema.TargetCatalogs:
-      title: Data.Promotions.Schema.TargetCatalogs
-      type: object
-      properties:
-        target_catalogs:
-          description: Specifies the unique identifiers of the catalogs to be applied for this promotion. If you do not set this parameter, promotion will be applied to all catalogs.
-          type: array
-          items:
-            type: string
-            examples:
-            - baff37e6-1c9b-449d-852c-80ec4d0e39c6
-    Data.CartPercentDiscountPromotion:
-      title: Data.CartPercentDiscountPromotion
-      allOf:
-      - $ref: '#/components/schemas/Data.BasePromotions'
-      - type: object
-        properties:
-          schema:
-            allOf:
-            - $ref: '#/components/schemas/Data.Promotions.Schema.TargetCatalogs'
-            - $ref: '#/components/schemas/Data.Promotions.Schema.PercentageAndCurrencyArray'
-            - $ref: '#/components/schemas/Data.Promotions.Schema.Exclude'
-    Data.Promotions.Schema.AmountAndCurrencyArray:
-      title: Data.Promotions.Schema.AmountAndCurrencyArray
-      type: object
-      required:
-      - currencies
-      properties:
-        currencies:
-          type: array
-          items:
-            $ref: '#/components/schemas/Data.Promotions.Schema.Currencies.AmountAndCurrency'
   parameters:
     Authorization:
       name: Authorization

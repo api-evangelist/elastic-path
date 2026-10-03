@@ -246,6 +246,27 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
+    MetaTimestamps:
+      type: object
+      properties:
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              description: The date the resource is created.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+            updated_at:
+              description: The date the resource is updated.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
     UUID:
       type: string
       description: The unique identifier.
@@ -269,35 +290,15 @@ components:
         description:
           type: string
           description: Describes the account tag.
-    MetaListResults:
-      type: object
-      properties:
-        total:
-          type: integer
-          description: The total number of results after applying filters, if any, or all results.
-          example: 1
-    Error:
+    ErrorResponse:
       type: object
       required:
-      - status
-      - title
+      - errors
       properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     MetaListPage:
       type: object
       properties:
@@ -324,29 +325,6 @@ components:
           $ref: '#/components/schemas/MetaListPage'
         results:
           $ref: '#/components/schemas/MetaListResults'
-    MetaTimestamps:
-      type: object
-      properties:
-        timestamps:
-          type: object
-          properties:
-            created_at:
-              description: The date the resource is created.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-            updated_at:
-              description: The date the resource is updated.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
     AccountTagResponse:
       allOf:
       - $ref: '#/components/schemas/AccountTag'
@@ -365,7 +343,55 @@ components:
                 description: A URL to the specific resource.
                 type: string
                 example: https://useast.api.elasticpath.com/v2/account-tags/deb6b25f-8451-4211-9a22-95610333df23
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
   responses:
+    ConflictError:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            conflict-error:
+              value:
+                errors:
+                - title: Conflict
+                  status: '409'
+                  detail: account membership with the given account id and account member id already exists
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
     InternalServerError:
       description: Internal server error.
       content:
@@ -393,32 +419,6 @@ components:
                 - title: Not Found
                   status: '404'
                   detail: account not found
-    ConflictError:
-      description: Conflict
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            conflict-error:
-              value:
-                errors:
-                - title: Conflict
-                  status: '409'
-                  detail: account membership with the given account id and account member id already exists
-    BadRequestError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              value:
-                errors:
-                - title: Bad Request
-                  status: '400'
-                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
   parameters:
     filter:
       name: filter
@@ -429,6 +429,16 @@ components:
         type: string
         format: string
         example: ilike(name,"*swan*")
+    page-limit:
+      name: page[limit]
+      in: query
+      description: The number of records per page.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 25
     page-offset:
       name: page[offset]
       in: query
@@ -449,16 +459,6 @@ components:
         type: string
         format: uuid
       example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-    page-limit:
-      name: page[limit]
-      in: query
-      description: The number of records per page.
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 25
   securitySchemes:
     BearerToken:
       type: http

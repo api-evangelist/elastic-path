@@ -46,16 +46,31 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    ResourceOwner:
-      description: The resource owner, either `organization` or `store`.
-      type: string
-      example: organization
-      enum:
-      - organization
-      - store
-      x-go-type: tenancy.Owner
-      x-go-type-import:
-        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    SearchIndex:
+      type: object
+      required:
+      - id
+      - type
+      - meta
+      properties:
+        id:
+          description: The unique identifier for the search index.
+          type: string
+          format: uuid
+          example: 805103ff-0a37-4f83-8fe0-95a16039bd98
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/SearchIndexType'
+        meta:
+          $ref: '#/components/schemas/SearchIndexMeta'
     ListSearchIndexesResponse:
       type: object
       required:
@@ -68,6 +83,16 @@ components:
             $ref: '#/components/schemas/SearchIndex'
         meta:
           $ref: '#/components/schemas/ListResponseMeta'
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
     ListResponseMeta:
       type: object
       required:
@@ -75,6 +100,40 @@ components:
       properties:
         results:
           $ref: '#/components/schemas/ListResponseMetaResults'
+    SearchIndexMeta:
+      type: object
+      required:
+      - catalog_id
+      - release_id
+      - out_of_sync
+      - owner
+      properties:
+        catalog_id:
+          description: The ID of the catalog.
+          type: string
+          example: ac107ce9-96ac-4bd5-aa3d-59f40b91279b
+          x-go-name: CatalogID
+        release_id:
+          description: The ID of the catalog release.
+          type: string
+          example: b2ddd253-d9bd-4344-a18b-581c1e0b25f8
+          x-go-name: ReleaseID
+        out_of_sync:
+          description: Whether the search index is out of sync and needs to re-indexed.
+          type: boolean
+          example: false
+        owner:
+          $ref: '#/components/schemas/ResourceOwner'
+    ListResponseMetaResults:
+      description: Contains the results for the entire collection.
+      type: object
+      required:
+      - total
+      properties:
+        total:
+          description: Total number of results for the entire collection.
+          type: integer
+          example: 100
     Error:
       required:
       - status
@@ -104,65 +163,6 @@ components:
       example: catalog_search_index
       enum:
       - catalog_search_index
-    SearchIndexMeta:
-      type: object
-      required:
-      - catalog_id
-      - release_id
-      - out_of_sync
-      - owner
-      properties:
-        catalog_id:
-          description: The ID of the catalog.
-          type: string
-          example: ac107ce9-96ac-4bd5-aa3d-59f40b91279b
-          x-go-name: CatalogID
-        release_id:
-          description: The ID of the catalog release.
-          type: string
-          example: b2ddd253-d9bd-4344-a18b-581c1e0b25f8
-          x-go-name: ReleaseID
-        out_of_sync:
-          description: Whether the search index is out of sync and needs to re-indexed.
-          type: boolean
-          example: false
-        owner:
-          $ref: '#/components/schemas/ResourceOwner'
-    SearchIndex:
-      type: object
-      required:
-      - id
-      - type
-      - meta
-      properties:
-        id:
-          description: The unique identifier for the search index.
-          type: string
-          format: uuid
-          example: 805103ff-0a37-4f83-8fe0-95a16039bd98
-          x-go-name: ID
-        type:
-          $ref: '#/components/schemas/SearchIndexType'
-        meta:
-          $ref: '#/components/schemas/SearchIndexMeta'
-    ListResponseMetaResults:
-      description: Contains the results for the entire collection.
-      type: object
-      required:
-      - total
-      properties:
-        total:
-          description: Total number of results for the entire collection.
-          type: integer
-          example: 100
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.

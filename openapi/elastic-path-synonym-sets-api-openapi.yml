@@ -160,29 +160,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    ResourceOwner:
-      description: The resource owner, either `organization` or `store`.
-      type: string
-      example: organization
-      enum:
-      - organization
-      - store
-      x-go-type: tenancy.Owner
-      x-go-type-import:
-        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
-    SynonymSetType:
-      type: string
-      description: Represents the type of object being returned. Always `catalog_search_synonym_set`.
-      example: catalog_search_synonym_set
-      enum:
-      - catalog_search_synonym_set
-    ListResponseMeta:
-      type: object
-      required:
-      - results
-      properties:
-        results:
-          $ref: '#/components/schemas/ListResponseMetaResults'
     SynonymSetResponse:
       type: object
       required:
@@ -190,27 +167,6 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/SynonymSet'
-    UpdateSynonymSetRequest:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: object
-          required:
-          - id
-          - type
-          - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              example: 8fccaa19-dba9-4621-8d11-31a222a68c7c
-              x-go-name: ID
-            type:
-              $ref: '#/components/schemas/SynonymSetType'
-            attributes:
-              $ref: '#/components/schemas/UpdateSynonymSetAttributes'
     SynonymSet:
       type: object
       required:
@@ -231,6 +187,19 @@ components:
           $ref: '#/components/schemas/SynonymSetAttributes'
         meta:
           $ref: '#/components/schemas/SynonymSetMeta'
+    UpdateSynonymSetAttributes:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Human-readable name for the synonym set.
+          example: Apparel terms
+        items:
+          type: array
+          description: The synonym items in this set.
+          items:
+            $ref: '#/components/schemas/SynonymSetItem'
+          minItems: 1
     Error:
       required:
       - status
@@ -254,6 +223,62 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    SynonymSetMeta:
+      type: object
+      required:
+      - created_at
+      - updated_at
+      - owner
+      - sync_status
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: The date and time the synonym set was created.
+          example: '2026-03-05T12:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: The date and time the synonym set was last updated.
+          example: '2026-03-05T12:00:00Z'
+        owner:
+          $ref: '#/components/schemas/ResourceOwner'
+        sync_status:
+          type: string
+          description: The sync status of the synonym set.
+          enum:
+          - pending_sync
+          - synced
+          - sync_failed
+          - pending_delete
+          example: pending_sync
+          x-go-type: model.SyncStatus
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/model
+        last_synced_at:
+          type: string
+          format: date-time
+          description: The date and time the synonym set was last successfully synced.
+          example: '2026-03-05T12:01:00Z'
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
     ListSynonymSetsResponse:
       type: object
       required:
@@ -266,6 +291,29 @@ components:
             $ref: '#/components/schemas/SynonymSet'
         meta:
           $ref: '#/components/schemas/ListResponseMeta'
+    SynonymSetAttributes:
+      type: object
+      required:
+      - name
+      - items
+      properties:
+        name:
+          type: string
+          description: Human-readable name for the synonym set.
+          example: Apparel terms
+        items:
+          type: array
+          description: The synonym items in this set.
+          items:
+            $ref: '#/components/schemas/SynonymSetItem'
+          minItems: 1
+    ListResponseMeta:
+      type: object
+      required:
+      - results
+      properties:
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
     SynonymSetItem:
       type: object
       required:
@@ -308,44 +356,6 @@ components:
           example:
           - '-'
           x-go-type-skip-optional-pointer: true
-    SynonymSetMeta:
-      type: object
-      required:
-      - created_at
-      - updated_at
-      - owner
-      - sync_status
-      properties:
-        created_at:
-          type: string
-          format: date-time
-          description: The date and time the synonym set was created.
-          example: '2026-03-05T12:00:00Z'
-        updated_at:
-          type: string
-          format: date-time
-          description: The date and time the synonym set was last updated.
-          example: '2026-03-05T12:00:00Z'
-        owner:
-          $ref: '#/components/schemas/ResourceOwner'
-        sync_status:
-          type: string
-          description: The sync status of the synonym set.
-          enum:
-          - pending_sync
-          - synced
-          - sync_failed
-          - pending_delete
-          example: pending_sync
-          x-go-type: model.SyncStatus
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/model
-        last_synced_at:
-          type: string
-          format: date-time
-          description: The date and time the synonym set was last successfully synced.
-          example: '2026-03-05T12:01:00Z'
     ListResponseMetaResults:
       description: Contains the results for the entire collection.
       type: object
@@ -356,6 +366,33 @@ components:
           description: Total number of results for the entire collection.
           type: integer
           example: 100
+    UpdateSynonymSetRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - id
+          - type
+          - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 8fccaa19-dba9-4621-8d11-31a222a68c7c
+              x-go-name: ID
+            type:
+              $ref: '#/components/schemas/SynonymSetType'
+            attributes:
+              $ref: '#/components/schemas/UpdateSynonymSetAttributes'
+    SynonymSetType:
+      type: string
+      description: Represents the type of object being returned. Always `catalog_search_synonym_set`.
+      example: catalog_search_synonym_set
+      enum:
+      - catalog_search_synonym_set
     CreateSynonymSetRequest:
       type: object
       required:
@@ -371,43 +408,6 @@ components:
               $ref: '#/components/schemas/SynonymSetType'
             attributes:
               $ref: '#/components/schemas/SynonymSetAttributes'
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    UpdateSynonymSetAttributes:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Human-readable name for the synonym set.
-          example: Apparel terms
-        items:
-          type: array
-          description: The synonym items in this set.
-          items:
-            $ref: '#/components/schemas/SynonymSetItem'
-          minItems: 1
-    SynonymSetAttributes:
-      type: object
-      required:
-      - name
-      - items
-      properties:
-        name:
-          type: string
-          description: Human-readable name for the synonym set.
-          example: Apparel terms
-        items:
-          type: array
-          description: The synonym items in this set.
-          items:
-            $ref: '#/components/schemas/SynonymSetItem'
-          minItems: 1
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.

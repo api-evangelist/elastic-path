@@ -285,6 +285,15 @@ components:
       description: A unique identifier for a resource.
       format: uuid
       example: 00000000-0000-0000-0000-000000000000
+    FlowsRelationships:
+      type: object
+      description: Relationships are established between different flows/templates entities. For example, a field and an entry are related to a flow as both are attached to it.
+      properties:
+        fields:
+          type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Relationships'
     Relationships:
       title: Relationships
       type: object
@@ -295,6 +304,45 @@ components:
           type: string
           description: Represents the type of object being returned.
           example: brand
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Flows:
+      title: Flows
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          type: string
+          description: A unique identifier for a flow/template.
+          example: flow
+        name:
+          type: string
+          description: The name of a flow/template.
+          example: Products
+        slug:
+          type: string
+          description: A unique identifier of a flow/template.
+          example: products
+        description:
+          type: string
+          description: A short description for a flow/template.
+          example: Extends the default product object
+        enabled:
+          type: boolean
+          example: true
+        links:
+          $ref: '#/components/schemas/FlowsLinks'
+        relationships:
+          $ref: '#/components/schemas/FlowsRelationships'
+        meta:
+          $ref: '#/components/schemas/Meta'
     Meta:
       type: object
       properties:
@@ -316,6 +364,39 @@ components:
               type: string
               description: The date and time a resource is updated.
               example: '2023-10-11T13:02:25.293Z'
+    FlowsUpdateRequest:
+      title: FlowsUpdateRequest
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            description:
+              type: string
+              description: A brief description of a flow/template outlining details such as purpose, usage instructions, and so on.
+              examples:
+              - Extends the default product object
+            enabled:
+              type: boolean
+              examples:
+              - true
+            name:
+              type: string
+              description: The name of a flow/template.
+              examples:
+              - Products
+            id:
+              $ref: '#/components/schemas/UUID'
+            slug:
+              type: string
+              description: A unique slug identifier for a flow/template.
+              examples:
+              - products
+            type:
+              type: string
+              description: Represents the type of object being returned.
+              examples:
+              - flow
     FlowsRequest:
       title: FlowsRequest
       type: object
@@ -384,79 +465,6 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    Flows:
-      title: Flows
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          type: string
-          description: A unique identifier for a flow/template.
-          example: flow
-        name:
-          type: string
-          description: The name of a flow/template.
-          example: Products
-        slug:
-          type: string
-          description: A unique identifier of a flow/template.
-          example: products
-        description:
-          type: string
-          description: A short description for a flow/template.
-          example: Extends the default product object
-        enabled:
-          type: boolean
-          example: true
-        links:
-          $ref: '#/components/schemas/FlowsLinks'
-        relationships:
-          $ref: '#/components/schemas/FlowsRelationships'
-        meta:
-          $ref: '#/components/schemas/Meta'
-    FlowsRelationships:
-      type: object
-      description: Relationships are established between different flows/templates entities. For example, a field and an entry are related to a flow as both are attached to it.
-      properties:
-        fields:
-          type: object
-          properties:
-            data:
-              $ref: '#/components/schemas/Relationships'
-    FlowsUpdateRequest:
-      title: FlowsUpdateRequest
-      type: object
-      properties:
-        data:
-          type: object
-          properties:
-            description:
-              type: string
-              description: A brief description of a flow/template outlining details such as purpose, usage instructions, and so on.
-              examples:
-              - Extends the default product object
-            enabled:
-              type: boolean
-              examples:
-              - true
-            name:
-              type: string
-              description: The name of a flow/template.
-              examples:
-              - Products
-            id:
-              $ref: '#/components/schemas/UUID'
-            slug:
-              type: string
-              description: A unique slug identifier for a flow/template.
-              examples:
-              - products
-            type:
-              type: string
-              description: Represents the type of object being returned.
-              examples:
-              - flow
     FlowsLinks:
       type: object
       description: "Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:\n \n | Property | Description |\n | --- | --- |\n | `current` | Always the current page |\n | `first` | Always the first page |\n | `last` | `null` if there is only one page. |\n | `prev` | `null` if you are on the first page. |\n | `next` | `null` if there is only one page. |\n"
@@ -464,15 +472,21 @@ components:
         self:
           type: string
           example: https://euwest.api.elasticpath.com/v2/flows/d2a9b22a-b4b0-456b-bbc7-d8723aaffa84
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
   responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: 500
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
     NotFound:
       description: Bad request. Not Found.
       content:
@@ -498,20 +512,6 @@ components:
                 - title: Validation Error
                   status: 400
                   detail: 'data.attributes.name: "name" is required'
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - status: 500
-                  title: Internal Server Error
-                  detail: There was an internal server error, you can report with your request id.
-                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
   securitySchemes:
     bearerAuth:
       type: http

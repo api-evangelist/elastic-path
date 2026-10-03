@@ -308,88 +308,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      example: deb6b25f-8451-4211-9a22-95610333df23
-    SelfLink:
-      type: object
-      properties:
-        self:
-          description: A URL to the specific resource.
-          type: string
-          format: uri
-    Error:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
-    MetaTimestamps:
-      type: object
-      properties:
-        created_at:
-          description: The date the resource is created.
-          type: string
-          format: date-time
-          example: '2021-02-23T09:40:33.882Z'
-        updated_at:
-          description: The date the resource is updated.
-          type: string
-          format: date-time
-          example: '2021-02-23T09:40:33.882Z'
-    PaginationLinks:
-      type: object
-      properties:
-        current:
-          type: string
-          format: uri
-          description: The current page of data.
-        first:
-          type:
-          - string
-          - 'null'
-          format: uri
-          description: The first page of data.
-        last:
-          type:
-          - string
-          - 'null'
-          format: uri
-          description: The last page of data.
-        next:
-          type:
-          - string
-          - 'null'
-          format: uri
-          description: The next page of data.
-        prev:
-          type:
-          - string
-          - 'null'
-          format: uri
-          description: The previous page of data.
-        self:
-          type: string
-          format: uri
-          description: The current resource URL.
     UserAuthenticationOidcProfileInfoResponse:
       allOf:
       - $ref: '#/components/schemas/UserAuthenticationOidcProfileInfo'
@@ -409,6 +327,24 @@ components:
                 type: string
                 format: uri
                 example: https://useast.api.elasticpath.com/v2/authentication-realms/deb6b25f-8451-4211-9a22-95610333df23/user-authentication-info/abc123/user-authentication-oidc-profile-info/def456
+    MetaTimestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date the resource is created.
+          type: string
+          format: date-time
+          example: '2021-02-23T09:40:33.882Z'
+        updated_at:
+          description: The date the resource is updated.
+          type: string
+          format: date-time
+          example: '2021-02-23T09:40:33.882Z'
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
     ErrorResponse:
       type: object
       required:
@@ -444,6 +380,70 @@ components:
       required:
       - type
       - oidc_profile_id
+    PaginationLinks:
+      type: object
+      properties:
+        current:
+          type: string
+          format: uri
+          description: The current page of data.
+        first:
+          type:
+          - string
+          - 'null'
+          format: uri
+          description: The first page of data.
+        last:
+          type:
+          - string
+          - 'null'
+          format: uri
+          description: The last page of data.
+        next:
+          type:
+          - string
+          - 'null'
+          format: uri
+          description: The next page of data.
+        prev:
+          type:
+          - string
+          - 'null'
+          format: uri
+          description: The previous page of data.
+        self:
+          type: string
+          format: uri
+          description: The current resource URL.
+    SelfLink:
+      type: object
+      properties:
+        self:
+          description: A URL to the specific resource.
+          type: string
+          format: uri
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
     PaginationMeta:
       type: object
       properties:
@@ -474,6 +474,32 @@ components:
               description: The total number of results after applying filters, if any, or all results.
               example: 1
   responses:
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    UnprocessableEntityError:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unprocessable-entity-error:
+              value:
+                errors:
+                - title: Unprocessable Entity
+                  status: '422'
+                  detail: Constraint violation
     InternalServerError:
       description: Internal server error.
       content:
@@ -501,43 +527,7 @@ components:
                 - title: Not Found
                   status: '404'
                   detail: Resource not found
-    UnprocessableEntityError:
-      description: Unprocessable Entity
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unprocessable-entity-error:
-              value:
-                errors:
-                - title: Unprocessable Entity
-                  status: '422'
-                  detail: Constraint violation
-    BadRequestError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              value:
-                errors:
-                - title: Bad Request
-                  status: '400'
-                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
   parameters:
-    page-offset:
-      name: page[offset]
-      in: query
-      description: The number of records to offset the results by.
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        default: 0
     page-limit:
       name: page[limit]
       in: query
@@ -549,6 +539,16 @@ components:
         minimum: 1
         maximum: 100
         default: 25
+    page-offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        default: 0
   securitySchemes:
     BearerToken:
       type: http

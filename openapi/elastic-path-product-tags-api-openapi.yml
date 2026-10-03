@@ -75,6 +75,68 @@ paths:
         '500':
           $ref: '#/components/responses/internal'
 components:
+  parameters:
+    tag_id:
+      name: tagID
+      in: path
+      schema:
+        type: string
+        example: 00000000-0000-0000-0000-000000000000
+      required: true
+      description: A unique identifier for the tag.
+  responses:
+    internal:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: '500'
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+    not_found:
+      description: Bad Request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+    bad_request:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            bad-request:
+              value:
+                errors:
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
   examples:
     resp_multi_tags:
       value:
@@ -110,11 +172,6 @@ components:
             owner: organization
             updated_at: '2024-03-20T18:37:43.398Z'
   schemas:
-    single_tag:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/tag'
     tag:
       type: object
       properties:
@@ -154,25 +211,6 @@ components:
               enum:
               - store
               - organization
-    multi_tag:
-      type: object
-      properties:
-        data:
-          description: An array of tags.
-          type: array
-          items:
-            $ref: '#/components/schemas/tag'
-        meta:
-          type: object
-          properties:
-            results:
-              description: Contains the results for the entire collection.
-              type: object
-              properties:
-                total:
-                  description: Total number of results for the entire collection.
-                  type: integer
-                  example: 2
     error:
       required:
       - errors
@@ -206,68 +244,30 @@ components:
                 example:
                   missing_ids:
                   - e7d50bd5-1833-43c0-9848-f9d325b08be8
-  responses:
-    not_found:
-      description: Bad Request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-    unprocessable_entity:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            failed-validation:
-              value:
-                errors:
-                - title: Failed Validation
-                  status: '422'
-                  detail: <XYZ> can not be empty
-    bad_request:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            bad-request:
-              value:
-                errors:
-                - title: Bad Request
-                  detail: Could not parse the supplied filter
-                  status: '400'
-    internal:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - status: '500'
-                  title: Internal Server Error
-                  detail: There was an internal server error, you can report with your request id.
-                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
-  parameters:
-    tag_id:
-      name: tagID
-      in: path
-      schema:
-        type: string
-        example: 00000000-0000-0000-0000-000000000000
-      required: true
-      description: A unique identifier for the tag.
+    single_tag:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/tag'
+    multi_tag:
+      type: object
+      properties:
+        data:
+          description: An array of tags.
+          type: array
+          items:
+            $ref: '#/components/schemas/tag'
+        meta:
+          type: object
+          properties:
+            results:
+              description: Contains the results for the entire collection.
+              type: object
+              properties:
+                total:
+                  description: Total number of results for the entire collection.
+                  type: integer
+                  example: 2
   securitySchemes:
     bearerAuth:
       type: http

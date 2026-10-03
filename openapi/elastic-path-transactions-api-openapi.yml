@@ -123,71 +123,6 @@ paths:
     - url: https://useast.api.elasticpath.com/v2
       description: US East cluster
 components:
-  responses:
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No stock found
-    UnprocessableEntityError:
-      description: The request was understood, but could not be processed by the server
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Cannot complete request
-                  status: '422'
-                  detail: Your request could not be completed due to insufficient stock levels
-    NotFoundError_2:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No location found
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: Your request was invalid
   schemas:
     UUID:
       type: string
@@ -197,9 +132,47 @@ components:
         name: uuid
         path: github.com/google/uuid
       example: 00000000-0000-0000-0000-000000000000
-    Meta:
-      allOf:
-      - $ref: '#/components/schemas/Timestamps'
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    TransactionCreate:
+      required:
+      - action
+      - type
+      properties:
+        product_id:
+          description: The ID of the product to perform the transaction against
+          type: string
+          format: uuid
+          example: b9ad64bd-fc21-4918-b6ec-768809f4a1e9
+        type:
+          description: The type of object being returned. Always `stock-transaction`.
+          type: string
+          enum:
+          - stock-transaction
+          default: stock-transaction
+          example: stock-transaction
+        action:
+          description: "The type of action being performed by this transaction.\n\n - **increment** - use this when you want to make products available for purchase, for example, when you have received stock from a supplier.\n\n - **decrement** - Use this when you want to remove stock from product inventory.\n\n - **allocate** - Use this when you want to allocate stock, normally to a reseller who sells on the stock.\n\n - **deallocate** - Use this when you want to deallocate any previously allocated stock.\n"
+          type: string
+          enum:
+          - increment
+          - decrement
+          - allocate
+          - deallocate
+          example: allocate
+        quantity:
+          description: The amount of stock affected by the stock transaction.
+          type: integer
+          format: int64
+          example: 5
+          minimum: 1
     Transaction:
       required:
       - type
@@ -259,6 +232,9 @@ components:
           description: The date and time a resource was created.
           type: string
           example: '2017-01-10T11:41:19.244842Z'
+    Meta:
+      allOf:
+      - $ref: '#/components/schemas/Timestamps'
     Error:
       type: object
       required:
@@ -283,87 +259,6 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    TransactionCreate:
-      required:
-      - action
-      - type
-      properties:
-        product_id:
-          description: The ID of the product to perform the transaction against
-          type: string
-          format: uuid
-          example: b9ad64bd-fc21-4918-b6ec-768809f4a1e9
-        type:
-          description: The type of object being returned. Always `stock-transaction`.
-          type: string
-          enum:
-          - stock-transaction
-          default: stock-transaction
-          example: stock-transaction
-        action:
-          description: "The type of action being performed by this transaction.\n\n - **increment** - use this when you want to make products available for purchase, for example, when you have received stock from a supplier.\n\n - **decrement** - Use this when you want to remove stock from product inventory.\n\n - **allocate** - Use this when you want to allocate stock, normally to a reseller who sells on the stock.\n\n - **deallocate** - Use this when you want to deallocate any previously allocated stock.\n"
-          type: string
-          enum:
-          - increment
-          - decrement
-          - allocate
-          - deallocate
-          example: allocate
-        quantity:
-          description: The amount of stock affected by the stock transaction.
-          type: integer
-          format: int64
-          example: 5
-          minimum: 1
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    StockTransactionType:
-      type: string
-      enum:
-      - stock-transaction
-      default: stock-transaction
-      example: stock-transaction
-    Meta_2:
-      type: object
-      required:
-      - timestamps
-      properties:
-        timestamps:
-          $ref: '#/components/schemas/Timestamps_2'
-    TransactionCreate_2:
-      required:
-      - type
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/StockTransactionType'
-        attributes:
-          $ref: '#/components/schemas/TransactionCreateAttributes'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
     TransactionResponse:
       type: object
       required:
@@ -379,24 +274,10 @@ components:
           $ref: '#/components/schemas/TransactionResponseAttributes'
         meta:
           $ref: '#/components/schemas/Meta_2'
-    Timestamps_2:
-      required:
-      - created_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
     TransactionCreateAttributes:
       required:
       - action
@@ -430,6 +311,64 @@ components:
           minLength: 1
           maxLength: 128
           example: milton-keynes-warehouse
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    Meta_2:
+      type: object
+      required:
+      - timestamps
+      properties:
+        timestamps:
+          $ref: '#/components/schemas/Timestamps_2'
+    Timestamps_2:
+      required:
+      - created_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    StockTransactionType:
+      type: string
+      enum:
+      - stock-transaction
+      default: stock-transaction
+      example: stock-transaction
+    TransactionCreate_2:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/StockTransactionType'
+        attributes:
+          $ref: '#/components/schemas/TransactionCreateAttributes'
     TransactionResponseAttributes:
       type: object
       required:
@@ -477,10 +416,71 @@ components:
           minLength: 1
           maxLength: 128
           example: milton-keynes-warehouse
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
+  responses:
+    UnprocessableEntityError:
+      description: The request was understood, but could not be processed by the server
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Cannot complete request
+                  status: '422'
+                  detail: Your request could not be completed due to insufficient stock levels
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No stock found
+    NotFoundError_2:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No location found
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: Your request was invalid
   parameters:
     PageOffset:
       name: page[offset]

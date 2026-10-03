@@ -131,16 +131,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   responses:
-    InternalServerError:
-      description: Internal server error.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              summary: Internal server error
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
     BadFilterError:
       description: Bad Request
       content:
@@ -151,6 +141,47 @@ components:
             missing-filter:
               summary: Required filter missing
               value: "{\n  \"errors\": [\n    {\n      \"detail\": \"bad filter: resource_id and resource_type are the filter fields that are both mandatory and only they are allowed\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}\n"
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
+  parameters:
+    Filter:
+      name: filter
+      in: query
+      required: false
+      description: Filter attributes. For more information, see the [Filtering](/guides/Getting-Started/filtering) section.
+      schema:
+        type: string
+        format: string
+        example: eq(resource_id,0f850c15-d643-480a-a2b4-9e3c26067178)
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 0
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
   schemas:
     ErrorResponse:
       required:
@@ -160,64 +191,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
-    PaginationLinks:
-      required:
-      - current
-      - first
-      - last
-      - next
-      - prev
-      type: object
-      properties:
-        current:
-          description: Always the current page.
-          type:
-          - string
-          - 'null'
-          format: uri
-        first:
-          description: Always the first page.
-          type:
-          - string
-          - 'null'
-          format: uri
-        last:
-          description: Always `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-        next:
-          description: Always `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-        prev:
-          description: Always `null` if the user is on the first page.
-          type:
-          - string
-          - 'null'
     PersonalDataLog:
       properties:
         id:
@@ -336,37 +309,64 @@ components:
               description: The total number of records for the entire collection.
               type: integer
               example: 1
-  parameters:
-    Filter:
-      name: filter
-      in: query
-      required: false
-      description: Filter attributes. For more information, see the [Filtering](/guides/Getting-Started/filtering) section.
-      schema:
-        type: string
-        format: string
-        example: eq(resource_id,0f850c15-d643-480a-a2b4-9e3c26067178)
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 0
-    PageLimit:
-      name: page[limit]
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 100
+    PaginationLinks:
+      required:
+      - current
+      - first
+      - last
+      - next
+      - prev
+      type: object
+      properties:
+        current:
+          description: Always the current page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        first:
+          description: Always the first page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        last:
+          description: Always `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        next:
+          description: Always `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+        prev:
+          description: Always `null` if the user is on the first page.
+          type:
+          - string
+          - 'null'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
   securitySchemes:
     bearerAuth:
       type: http

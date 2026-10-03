@@ -916,6 +916,58 @@ components:
                       format: uuid
                       examples:
                       - 5601a4b1-9d13-42d3-8fb7-03b35169d1b6
+    CartsItemsTaxesObject:
+      title: Carts Items Taxes Object
+      description: 'A tax item that can be applied to cart items or bundle components. You must specify either a rate (percentage) or an amount (fixed value), but not both.
+
+        '
+      oneOf:
+      - $ref: '#/components/schemas/CartsItemsTaxesWithRate'
+      - $ref: '#/components/schemas/CartsItemsTaxesWithAmount'
+      examples:
+      - type: tax_item
+        code: VAT
+        jurisdiction: UK
+        name: Value Added Tax
+        rate: 0.2
+      - type: tax_item
+        code: EXCISE
+        jurisdiction: US
+        name: Excise Tax
+        amount: 500
+    CartsItemsTaxesCommon:
+      type: object
+      required:
+      - type
+      properties:
+        code:
+          description: A unique tax code in this jurisdiction.
+          type: string
+        jurisdiction:
+          description: The relevant tax jurisdiction.
+          type: string
+        name:
+          description: The name of the tax item.
+          type: string
+        rate:
+          description: 'The tax rate as a decimal (12.5% -> 0.125). You must specify either `rate` or `amount`, but not both.
+
+            '
+          type: number
+        amount:
+          description: 'The tax as an absolute amount in the smallest currency unit (e.g., $10 -> 1000). You must specify either `rate` or `amount`, but not both.
+
+            '
+          type: number
+        type:
+          description: The type of object being returned. Use `tax_item`.
+          type: string
+          const: tax_item
+        id:
+          description: The unique identifier for this tax item.
+          type: string
+          format: uuid
+          readOnly: true
     Response.ErrorItem:
       type: object
       required:
@@ -1008,96 +1060,6 @@ components:
           type: boolean
           examples:
           - false
-    CartsItemsTaxesCommon:
-      type: object
-      required:
-      - type
-      properties:
-        code:
-          description: A unique tax code in this jurisdiction.
-          type: string
-        jurisdiction:
-          description: The relevant tax jurisdiction.
-          type: string
-        name:
-          description: The name of the tax item.
-          type: string
-        rate:
-          description: 'The tax rate as a decimal (12.5% -> 0.125). You must specify either `rate` or `amount`, but not both.
-
-            '
-          type: number
-        amount:
-          description: 'The tax as an absolute amount in the smallest currency unit (e.g., $10 -> 1000). You must specify either `rate` or `amount`, but not both.
-
-            '
-          type: number
-        type:
-          description: The type of object being returned. Use `tax_item`.
-          type: string
-          const: tax_item
-        id:
-          description: The unique identifier for this tax item.
-          type: string
-          format: uuid
-          readOnly: true
-    Response.ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    CartsItemsTaxesObject:
-      title: Carts Items Taxes Object
-      description: 'A tax item that can be applied to cart items or bundle components. You must specify either a rate (percentage) or an amount (fixed value), but not both.
-
-        '
-      oneOf:
-      - $ref: '#/components/schemas/CartsItemsTaxesWithRate'
-      - $ref: '#/components/schemas/CartsItemsTaxesWithAmount'
-      examples:
-      - type: tax_item
-        code: VAT
-        jurisdiction: UK
-        name: Value Added Tax
-        rate: 0.2
-      - type: tax_item
-        code: EXCISE
-        jurisdiction: US
-        name: Excise Tax
-        amount: 500
-    CartsItemsTaxesWithAmount:
-      title: Tax Object (With Amount)
-      allOf:
-      - $ref: '#/components/schemas/CartsItemsTaxesCommon'
-      - type: object
-        required:
-        - amount
-        properties:
-          amount:
-            description: 'The tax as an absolute amount in the smallest currency unit (e.g., $10 -> 1000). Required when using amount-based taxation.
-
-              '
-            type: number
-            examples:
-            - 1000
-          rate:
-            description: 'The tax rate as a decimal. Not allowed when amount is specified.
-
-              '
-            type: number
-            examples:
-            - 0.2
-        not:
-          type: object
-          required:
-          - rate
-          properties:
-            rate:
-              type: number
     CartsItemsTaxesWithRate:
       title: Tax Object (With Rate)
       allOf:
@@ -1127,14 +1089,6 @@ components:
           properties:
             amount:
               type: number
-    CartItemTaxesEntityResponse:
-      type: object
-      properties:
-        data:
-          type: object
-          $ref: '#/components/schemas/CartsItemsTaxesObject'
-      required:
-      - data
     CartsBulkTaxes:
       title: CartsBulkTaxes
       type: object
@@ -1151,6 +1105,52 @@ components:
             $ref: '#/components/schemas/Response.ErrorItem'
         options:
           $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
+    CartItemTaxesEntityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/CartsItemsTaxesObject'
+      required:
+      - data
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    CartsItemsTaxesWithAmount:
+      title: Tax Object (With Amount)
+      allOf:
+      - $ref: '#/components/schemas/CartsItemsTaxesCommon'
+      - type: object
+        required:
+        - amount
+        properties:
+          amount:
+            description: 'The tax as an absolute amount in the smallest currency unit (e.g., $10 -> 1000). Required when using amount-based taxation.
+
+              '
+            type: number
+            examples:
+            - 1000
+          rate:
+            description: 'The tax rate as a decimal. Not allowed when amount is specified.
+
+              '
+            type: number
+            examples:
+            - 0.2
+        not:
+          type: object
+          required:
+          - rate
+          properties:
+            rate:
+              type: number
   securitySchemes:
     bearerAuth:
       type: http

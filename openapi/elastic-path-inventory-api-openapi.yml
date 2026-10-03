@@ -261,6 +261,55 @@ components:
         name: uuid
         path: github.com/google/uuid
       example: 00000000-0000-0000-0000-000000000000
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    MultipleProducts:
+      type: object
+      required:
+      - id
+      properties:
+        type:
+          type: string
+          enum:
+          - stock
+          default: stock
+          example: stock
+        id:
+          description: The unique identifier of the product.
+          type: string
+          format: uuid
+          example: 3c78777a-cf09-4b2d-be91-a73acbf9166f
     Meta:
       allOf:
       - $ref: '#/components/schemas/Timestamps'
@@ -304,6 +353,12 @@ components:
           example: 25
         meta:
           $ref: '#/components/schemas/Meta'
+    InventoryCreate:
+      properties:
+        quantity:
+          description: The amount of inventory available.
+          type: integer
+          example: 5
     Timestamps:
       properties:
         updated_at:
@@ -314,82 +369,6 @@ components:
           description: The date and time a resource was created.
           type: string
           example: '2017-01-10T11:41:19.244842Z'
-    Error:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    MultipleProducts:
-      type: object
-      required:
-      - id
-      properties:
-        type:
-          type: string
-          enum:
-          - stock
-          default: stock
-          example: stock
-        id:
-          description: The unique identifier of the product.
-          type: string
-          format: uuid
-          example: 3c78777a-cf09-4b2d-be91-a73acbf9166f
-    InventoryCreate:
-      properties:
-        quantity:
-          description: The amount of inventory available.
-          type: integer
-          example: 5
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    StockLocations:
-      type: object
-      additionalProperties:
-        type: object
-        required:
-        - available
-        - total
-        - allocated
-        properties:
-          available:
-            type: integer
-            format: int64
-            example: 20
-          allocated:
-            type: integer
-            format: int64
-            example: 10
-          total:
-            type: integer
-            format: int64
-            example: 30
     StockUpdateRequest:
       type: object
       required:
@@ -403,14 +382,53 @@ components:
           $ref: '#/components/schemas/StockType'
         attributes:
           $ref: '#/components/schemas/StockUpdateAttributes'
-    NullableLocations:
+    StockCreate:
+      type: object
+      required:
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/StockType'
+        attributes:
+          $ref: '#/components/schemas/StockCreateAttributes'
+    Links:
       type: object
       additionalProperties:
-        $ref: '#/components/schemas/NullableLocation'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
+        $ref: '#/components/schemas/Link'
+    StockResponseAttributes:
+      type: object
+      required:
+      - available
+      - total
+      - allocated
+      properties:
+        available:
+          type: integer
+          format: int64
+          example: 20
+        allocated:
+          type: integer
+          format: int64
+          example: 10
+        total:
+          type: integer
+          format: int64
+          example: 30
+        locations:
+          $ref: '#/components/schemas/StockLocations'
+    StockMeta:
+      type: object
+      required:
+      - stock_id
+      - timestamps
+      properties:
+        stock_id:
+          $ref: '#/components/schemas/UUID'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps_2'
     StockCreateAttributes:
       type: object
       properties:
@@ -434,6 +452,17 @@ components:
               available: 10
             stevenage_warehouse:
               available: 20
+    NullableLocation:
+      type:
+      - object
+      - 'null'
+      required:
+      - available
+      properties:
+        available:
+          type: integer
+          format: int64
+          example: 20
     LinkObject:
       type: object
       properties:
@@ -448,27 +477,63 @@ components:
           type: string
           format: uri
           example: http://example.com/schemas/article-comments
-    StockResponseAttributes:
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    StockLocations:
       type: object
+      additionalProperties:
+        type: object
+        required:
+        - available
+        - total
+        - allocated
+        properties:
+          available:
+            type: integer
+            format: int64
+            example: 20
+          allocated:
+            type: integer
+            format: int64
+            example: 10
+          total:
+            type: integer
+            format: int64
+            example: 30
+    Timestamps_2:
       required:
-      - available
-      - total
-      - allocated
+      - created_at
       properties:
-        available:
-          type: integer
-          format: int64
-          example: 20
-        allocated:
-          type: integer
-          format: int64
-          example: 10
-        total:
-          type: integer
-          format: int64
-          example: 30
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    StockType:
+      type: string
+      enum:
+      - stock
+      default: stock
+      example: stock
+    NullableLocations:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/NullableLocation'
+    StockUpdateAttributes:
+      properties:
         locations:
-          $ref: '#/components/schemas/StockLocations'
+          $ref: '#/components/schemas/NullableLocations'
     StockResponse:
       type: object
       required:
@@ -485,71 +550,6 @@ components:
           $ref: '#/components/schemas/StockResponseAttributes'
         meta:
           $ref: '#/components/schemas/StockMeta'
-    StockType:
-      type: string
-      enum:
-      - stock
-      default: stock
-      example: stock
-    Timestamps_2:
-      required:
-      - created_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    StockCreate:
-      type: object
-      required:
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/StockType'
-        attributes:
-          $ref: '#/components/schemas/StockCreateAttributes'
-    StockMeta:
-      type: object
-      required:
-      - stock_id
-      - timestamps
-      properties:
-        stock_id:
-          $ref: '#/components/schemas/UUID'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps_2'
-    StockUpdateAttributes:
-      properties:
-        locations:
-          $ref: '#/components/schemas/NullableLocations'
-    NullableLocation:
-      type:
-      - object
-      - 'null'
-      required:
-      - available
-      properties:
-        available:
-          type: integer
-          format: int64
-          example: 20
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.

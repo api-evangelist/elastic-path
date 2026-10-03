@@ -170,86 +170,23 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  responses:
-    InternalServerError:
-      description: Internal server error.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              summary: Internal server error
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-                  detail: there was a problem processing your request
-    NotFoundError:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: account not found
-    UnauthorizedError:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unauthorized-error:
-              value:
-                errors:
-                - title: Unauthorized
-                  status: '401'
-    BadRequestError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              value:
-                errors:
-                - title: Bad Request
-                  status: '400'
-                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
-    ForbiddenError:
-      description: Forbidden Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            forbidden-error:
-              value:
-                errors:
-                - title: Forbidden
-                  status: '403'
-                  detail: forbidden
-    UnprocessableEntity:
-      description: Unprocessable Entity
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unprocessable-entity:
-              value:
-                errors:
-                - title: Unprocessable Entity
-                  status: '422'
-                  detail: store id mismatch
   schemas:
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     AccountManagementAuthenticationTokenResponse:
       type: object
       properties:
@@ -275,6 +212,34 @@ components:
           type: string
           format: date-time
           example: '2021-03-16T19:36:11.070Z'
+    PasswordlessRequest:
+      allOf:
+      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
+      - type: object
+        properties:
+          authentication_mechanism:
+            description: Species the authentication mechanism. You must use `passwordless`.
+            type: string
+            const: passwordless
+          password_profile_id:
+            description: The password profile ID. For more information, see [password profiles page](https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/password-profiles-api/overview).
+            type: string
+            format: uuid
+            example: c2490f06-6d8e-4927-99aa-4bf02b419e96
+          username:
+            description: The username.
+            type: string
+            example: jane.doe@gmail.com
+          one_time_password_token:
+            description: The one-time password token.
+            type: string
+            example: abd1g5
+      required:
+      - type
+      - authentication_mechanism
+      - password_profile_id
+      - username
+      - one_time_password_token
     MetaList:
       type: object
       properties:
@@ -282,6 +247,61 @@ components:
           $ref: '#/components/schemas/MetaListPage'
         results:
           $ref: '#/components/schemas/MetaListResults'
+    AccountManagementAuthenticationToken:
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the object. You must use `account_management_authentication_token`.
+          type: string
+          const: account_management_authentication_token
+    MetaAccountMemberId:
+      type: object
+      properties:
+        account_member_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the Account Member that authenticated. This is useful if `account_member_self_management` is enabled in [Account Authentication Settings](/docs/api/accounts/get-v-2-settings-account-authentication), so that the user can update details for their account.
+          example: f5d08d48-bbc8-4f61-818f-a78583045f56
+    OpenIDConnectRequest:
+      allOf:
+      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
+      - type: object
+        properties:
+          authentication_mechanism:
+            description: Species the authentication mechanism. You must use `oidc`.
+            type: string
+            const: oidc
+          oauth_authorization_code:
+            description: Specifies the code returned from the OpenID Connect Provider authentication.
+            type: string
+            example: c2490f06-6d8e-4927-99aa-4bf02b419e96
+          oauth_redirect_uri:
+            description: Specifies the URL of the front-end that handles the callback of the token.
+            type: string
+            format: uri
+            example: https://example-store.com/oauth2/callback
+          oauth_code_verifier:
+            description: Specifies the Proof Key for Code Exchange (PKCE) code verifier corresponding to the code challenge supplied to the authorization endpoint. For more information about code verifier and challenge, see Generating a [Code Verifier and Challenge](https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/get-single-sign-on-customer-token#generate-proof-key-for-code-exchange-pkce-parameters).
+            type: string
+            example: 0E934PurR8ExVg6Pj7T4kQewxKzWSfSFG5d15FGfww8
+      required:
+      - type
+      - authentication_mechanism
+      - oauth_authorization_code
+      - oauth_redirect_uri
+      - oauth_code_verifier
+    SwitchingAccountRequest:
+      allOf:
+      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
+      - type: object
+        properties:
+          authentication_mechanism:
+            description: Species the authentication mechanism. You must use `account_management_authentication_token`.
+            type: string
+            const: account_management_authentication_token
+      required:
+      - type
+      - authentication_mechanism
     PasswordRequest:
       allOf:
       - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
@@ -311,62 +331,25 @@ components:
       - password_profile_id
       - username
       - password
-    AccountManagementAuthenticationToken:
+    MetaListPage:
       type: object
       properties:
-        type:
-          description: Specifies the type of the object. You must use `account_management_authentication_token`.
-          type: string
-          const: account_management_authentication_token
-    MetaListResults:
-      type: object
-      properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
         total:
           type: integer
-          description: The total number of results after applying filters, if any, or all results.
+          description: The total page count.
           example: 1
-    SwitchingAccountRequest:
-      allOf:
-      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
-      - type: object
-        properties:
-          authentication_mechanism:
-            description: Species the authentication mechanism. You must use `account_management_authentication_token`.
-            type: string
-            const: account_management_authentication_token
-      required:
-      - type
-      - authentication_mechanism
-    Error:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
-    MetaAccountMemberId:
-      type: object
-      properties:
-        account_member_id:
-          type: string
-          format: uuid
-          description: The unique identifier for the Account Member that authenticated. This is useful if `account_member_self_management` is enabled in [Account Authentication Settings](/docs/api/accounts/get-v-2-settings-account-authentication), so that the user can update details for their account.
-          example: f5d08d48-bbc8-4f61-818f-a78583045f56
     SelfSignupRequest:
       allOf:
       - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
@@ -425,90 +408,107 @@ components:
       - password
       - name
       - email
-    PasswordlessRequest:
-      allOf:
-      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
-      - type: object
-        properties:
-          authentication_mechanism:
-            description: Species the authentication mechanism. You must use `passwordless`.
-            type: string
-            const: passwordless
-          password_profile_id:
-            description: The password profile ID. For more information, see [password profiles page](https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/password-profiles-api/overview).
-            type: string
-            format: uuid
-            example: c2490f06-6d8e-4927-99aa-4bf02b419e96
-          username:
-            description: The username.
-            type: string
-            example: jane.doe@gmail.com
-          one_time_password_token:
-            description: The one-time password token.
-            type: string
-            example: abd1g5
-      required:
-      - type
-      - authentication_mechanism
-      - password_profile_id
-      - username
-      - one_time_password_token
-    MetaListPage:
-      type: object
-      properties:
-        limit:
-          type: integer
-          description: The maximum number of records per page for this response. You can set this value up to 100.
-          example: 25
-        current:
-          type: integer
-          description: The current page.
-          example: 0
-        offset:
-          type: integer
-          description: The current offset by number of records, not pages. Offset is zero-based.
-          example: 0
-        total:
-          type: integer
-          description: The total page count.
-          example: 1
-    ErrorResponse:
+    Error:
       type: object
       required:
-      - errors
+      - status
+      - title
       properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    OpenIDConnectRequest:
-      allOf:
-      - $ref: '#/components/schemas/AccountManagementAuthenticationToken'
-      - type: object
-        properties:
-          authentication_mechanism:
-            description: Species the authentication mechanism. You must use `oidc`.
-            type: string
-            const: oidc
-          oauth_authorization_code:
-            description: Specifies the code returned from the OpenID Connect Provider authentication.
-            type: string
-            example: c2490f06-6d8e-4927-99aa-4bf02b419e96
-          oauth_redirect_uri:
-            description: Specifies the URL of the front-end that handles the callback of the token.
-            type: string
-            format: uri
-            example: https://example-store.com/oauth2/callback
-          oauth_code_verifier:
-            description: Specifies the Proof Key for Code Exchange (PKCE) code verifier corresponding to the code challenge supplied to the authorization endpoint. For more information about code verifier and challenge, see Generating a [Code Verifier and Challenge](https://elasticpath.dev/docs/commerce-cloud/authentication/single-sign-on/get-single-sign-on-customer-token#generate-proof-key-for-code-exchange-pkce-parameters).
-            type: string
-            example: 0E934PurR8ExVg6Pj7T4kQewxKzWSfSFG5d15FGfww8
-      required:
-      - type
-      - authentication_mechanism
-      - oauth_authorization_code
-      - oauth_redirect_uri
-      - oauth_code_verifier
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+  responses:
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: account not found
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unprocessable-entity:
+              value:
+                errors:
+                - title: Unprocessable Entity
+                  status: '422'
+                  detail: store id mismatch
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value:
+                errors:
+                - title: Unauthorized
+                  status: '401'
+    ForbiddenError:
+      description: Forbidden Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            forbidden-error:
+              value:
+                errors:
+                - title: Forbidden
+                  status: '403'
+                  detail: forbidden
   securitySchemes:
     BearerToken:
       type: http

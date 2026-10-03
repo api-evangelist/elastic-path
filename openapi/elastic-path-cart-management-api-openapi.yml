@@ -570,6 +570,16 @@ paths:
       deprecated: false
 components:
   schemas:
+    CartContact:
+      title: CartContact
+      type: object
+      properties:
+        email:
+          description: The email address attached to a cart.
+          type: string
+          format: email
+          examples:
+          - tester@email.com
     RelationshipItem:
       title: RelationshipItem
       description: Relationship data entry
@@ -585,16 +595,24 @@ components:
           description: The ID of the related resource.
           type: string
           format: uuid
-    RelationshipArray:
-      title: RelationshipArray
-      description: Array of relationships
+    Response.PageLinks:
       type: object
       properties:
-        data:
-          description: Individual relationships
-          type: array
-          items:
-            $ref: '#/components/schemas/RelationshipItem'
+        current:
+          description: Always the current page.
+          type: string
+        first:
+          description: Always the first page.
+          type: string
+        last:
+          description: If there is only one page, it is `null`.
+          type: string
+        next:
+          description: If there is only one page, it is `null`.
+          type: string
+        prev:
+          description: if the user is on the first page, it is `null`.
+          type: string
     CondensedPromotionResponse:
       title: CondensedPromotionResponse
       type: object
@@ -649,6 +667,57 @@ components:
           format: date-time
           examples:
           - '2024-08-31T23:59:59Z'
+    ItemSettings:
+      title: ItemSettings
+      type: object
+      properties:
+        separate_items_by_location:
+          description: When set to true, cart items with the same SKU but different locations are kept as separate line items instead of being merged. When false (default), items with the same SKU are merged and the location is updated to the most recent value.
+          type: boolean
+          examples:
+          - false
+    CartTimestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this was created.
+          type: string
+        updated_at:
+          description: The date this was last updated.
+          type: string
+        expires_at:
+          description: The date this expires.
+          type: string
+    CartEntityResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/CartResponse'
+        included:
+          type: object
+          description: Related objects that are included in the response.
+          properties:
+            custom_discounts:
+              type: array
+              items:
+                $ref: '#/components/schemas/CustomDiscountResponse'
+            promotions:
+              type: array
+              items:
+                $ref: '#/components/schemas/CondensedPromotionResponse'
+        meta:
+          type: object
+          description: Additional metadata for the cart response.
+          properties:
+            payment_intent:
+              type: object
+              description: Payment intent details with nested structure including status and other Stripe payment intent fields
+              additionalProperties: true
+        errors:
+          type: array
+          description: Array of error objects, if any errors occurred.
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
     Response.PaginationPage:
       type: object
       properties:
@@ -664,225 +733,6 @@ components:
         total:
           description: The total page count.
           type: integer
-    ItemSettings:
-      title: ItemSettings
-      type: object
-      properties:
-        separate_items_by_location:
-          description: When set to true, cart items with the same SKU but different locations are kept as separate line items instead of being merged. When false (default), items with the same SKU are merged and the location is updated to the most recent value.
-          type: boolean
-          examples:
-          - false
-    DiscountSettings:
-      title: DiscountSettings
-      type: object
-      properties:
-        custom_discounts_enabled:
-          description: This parameter enables custom discounts for a cart. When set to true, Elastic Path promotions will not be applied to the new carts. Default is set from cart discount settings for the store. See [Cart Settings](/docs/api/carts/put-v-2-settings-cart).
-          type: boolean
-          examples:
-          - false
-        use_rule_promotions:
-          description: When set to true, this parameter allows the cart to use rule promotions.
-          type: boolean
-          examples:
-          - false
-    CustomDiscountResponse:
-      title: CustomDiscountResponse
-      type: object
-      properties:
-        type:
-          description: Specifies the type of the resource. Always `custom_discount`.
-          type: string
-          const: custom_discount
-        id:
-          description: Specifies the UUID of the custom discount.
-          type: string
-          format: uuid
-          examples:
-          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
-        external_id:
-          description: Specifies an external id for the custom discount.
-          type: string
-          examples:
-          - custom-discount-external-id
-        discount_engine:
-          description: 'Specifies from where the custom discount is applied.
-
-            '
-          type: string
-          examples:
-          - Custom Discount Engine
-        amount:
-          description: The amount of the custom discount.
-          $ref: '#/components/schemas/FormattedPriceData'
-        description:
-          description: Specifies a description for the custom discount.
-          type: string
-          examples:
-          - Custom discount description
-        discount_code:
-          description: Specifies the discount code used for the custom discount.
-          type: string
-          examples:
-          - cart-custom-promo-code
-        relationships:
-          description: Relationships to other resources like cart items
-          type: object
-          properties:
-            item:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                      description: The cart item ID this discount is related to
-                    type:
-                      type: string
-                      enum:
-                      - cart_item
-                      - custom_item
-    CustomAttributes:
-      title: CustomAttributes
-      type: object
-      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
-      additionalProperties:
-        type: object
-        required:
-        - type
-        - value
-        properties:
-          type:
-            type: string
-            description: The type of the custom attribute value.
-            enum:
-            - string
-            - integer
-            - boolean
-            - float
-          value:
-            description: The value of the custom attribute.
-            type:
-            - string
-            - boolean
-            - number
-    Response.PaginationResults:
-      type: object
-      properties:
-        total:
-          description: The total page count.
-          type: integer
-    Response.PageLinks:
-      type: object
-      properties:
-        current:
-          description: Always the current page.
-          type: string
-        first:
-          description: Always the first page.
-          type: string
-        last:
-          description: If there is only one page, it is `null`.
-          type: string
-        next:
-          description: If there is only one page, it is `null`.
-          type: string
-        prev:
-          description: if the user is on the first page, it is `null`.
-          type: string
-    Response.ErrorItem:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type:
-          - string
-          - integer
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
-        source:
-          type: string
-          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
-        meta:
-          type: object
-          description: Additional metadata associated with the error. May include arbitrary keys.
-          properties:
-            id:
-              type: string
-              description: The resource id associated with the error
-            ids:
-              type: array
-              items:
-                type: string
-                description: The resource ids associated with the error
-            item_ids:
-              type: array
-              items:
-                type: string
-                description: The cart_item ids associated with the error
-            shipping_group_id:
-              type: string
-              description: The shipping group id associated with the error
-            shipping_group_ids:
-              type: array
-              items:
-                type: string
-                description: The shipping group ids associated with the error
-            cart_id:
-              type: string
-              description: The cart id associated with the error
-            code:
-              type: string
-              description: The code associated with the error.
-            order_id:
-              type: string
-              description: The order id associated with the error.
-            sku:
-              type: string
-              description: The SKU associated with the error.
-            email:
-              type: string
-              format: email
-              description: The email address associated with the error.
-            component_product_id:
-              type: string
-              format: uuid
-              description: The component product ID associated with the error.
-            error-meta-key:
-              type: string
-              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
-            value:
-              description: The value associated with the error.
-              oneOf:
-              - type: string
-              - type: integer
-              - type: boolean
-              - type: object
-                additionalProperties: true
-              - type: array
-    Response.Meta.Carts:
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/Response.PaginationPage'
-        results:
-          $ref: '#/components/schemas/Response.PaginationResults'
     FormattedPriceData:
       title: FormattedPriceData
       type: object
@@ -912,24 +762,40 @@ components:
             description: The type of object being returned.
             type: string
             const: cart
-    Response.ErrorResponse:
+    RelationshipArray:
+      title: RelationshipArray
+      description: Array of relationships
       type: object
-      required:
-      - errors
       properties:
-        errors:
+        data:
+          description: Individual relationships
           type: array
           items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    InventorySettings:
-      title: InventorySettings
+            $ref: '#/components/schemas/RelationshipItem'
+    CustomAttributes:
+      title: CustomAttributes
       type: object
-      properties:
-        defer_inventory_check:
-          description: This parameter enables deferring inventory checks on the cart. This allows items to be added to or updating in the cart without checking stock levels. Inventory checks are still performed as normal on checkout
-          type: boolean
-          examples:
-          - false
+      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
+      additionalProperties:
+        type: object
+        required:
+        - type
+        - value
+        properties:
+          type:
+            type: string
+            description: The type of the custom attribute value.
+            enum:
+            - string
+            - integer
+            - boolean
+            - float
+          value:
+            description: The value of the custom attribute.
+            type:
+            - string
+            - boolean
+            - number
     BaseCartResponse:
       title: BaseCartResponse
       type: object
@@ -1064,6 +930,185 @@ components:
               $ref: '#/components/schemas/RelationshipArray'
             promotions:
               $ref: '#/components/schemas/RelationshipArray'
+    CartCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartResponse'
+        links:
+          $ref: '#/components/schemas/Response.PageLinks'
+        meta:
+          $ref: '#/components/schemas/Response.Meta.Carts'
+      required:
+      - data
+    Response.Meta.Carts:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/Response.PaginationPage'
+        results:
+          $ref: '#/components/schemas/Response.PaginationResults'
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    CustomDiscountResponse:
+      title: CustomDiscountResponse
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the resource. Always `custom_discount`.
+          type: string
+          const: custom_discount
+        id:
+          description: Specifies the UUID of the custom discount.
+          type: string
+          format: uuid
+          examples:
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        external_id:
+          description: Specifies an external id for the custom discount.
+          type: string
+          examples:
+          - custom-discount-external-id
+        discount_engine:
+          description: 'Specifies from where the custom discount is applied.
+
+            '
+          type: string
+          examples:
+          - Custom Discount Engine
+        amount:
+          description: The amount of the custom discount.
+          $ref: '#/components/schemas/FormattedPriceData'
+        description:
+          description: Specifies a description for the custom discount.
+          type: string
+          examples:
+          - Custom discount description
+        discount_code:
+          description: Specifies the discount code used for the custom discount.
+          type: string
+          examples:
+          - cart-custom-promo-code
+        relationships:
+          description: Relationships to other resources like cart items
+          type: object
+          properties:
+            item:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: The cart item ID this discount is related to
+                    type:
+                      type: string
+                      enum:
+                      - cart_item
+                      - custom_item
+    Response.ErrorItem:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type:
+          - string
+          - integer
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+        source:
+          type: string
+          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
+        meta:
+          type: object
+          description: Additional metadata associated with the error. May include arbitrary keys.
+          properties:
+            id:
+              type: string
+              description: The resource id associated with the error
+            ids:
+              type: array
+              items:
+                type: string
+                description: The resource ids associated with the error
+            item_ids:
+              type: array
+              items:
+                type: string
+                description: The cart_item ids associated with the error
+            shipping_group_id:
+              type: string
+              description: The shipping group id associated with the error
+            shipping_group_ids:
+              type: array
+              items:
+                type: string
+                description: The shipping group ids associated with the error
+            cart_id:
+              type: string
+              description: The cart id associated with the error
+            code:
+              type: string
+              description: The code associated with the error.
+            order_id:
+              type: string
+              description: The order id associated with the error.
+            sku:
+              type: string
+              description: The SKU associated with the error.
+            email:
+              type: string
+              format: email
+              description: The email address associated with the error.
+            component_product_id:
+              type: string
+              format: uuid
+              description: The component product ID associated with the error.
+            error-meta-key:
+              type: string
+              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
+            value:
+              description: The value associated with the error.
+              oneOf:
+              - type: string
+              - type: integer
+              - type: boolean
+              - type: object
+                additionalProperties: true
+              - type: array
+    InventorySettings:
+      title: InventorySettings
+      type: object
+      properties:
+        defer_inventory_check:
+          description: This parameter enables deferring inventory checks on the cart. This allows items to be added to or updating in the cart without checking stock levels. Inventory checks are still performed as normal on checkout
+          type: boolean
+          examples:
+          - false
     CartsRequest:
       title: CartsRequest
       type: object
@@ -1102,71 +1147,26 @@ components:
               type: string
               examples:
               - ''
-    CartTimestamps:
+    DiscountSettings:
+      title: DiscountSettings
       type: object
       properties:
-        created_at:
-          description: The date this was created.
-          type: string
-        updated_at:
-          description: The date this was last updated.
-          type: string
-        expires_at:
-          description: The date this expires.
-          type: string
-    CartContact:
-      title: CartContact
-      type: object
-      properties:
-        email:
-          description: The email address attached to a cart.
-          type: string
-          format: email
+        custom_discounts_enabled:
+          description: This parameter enables custom discounts for a cart. When set to true, Elastic Path promotions will not be applied to the new carts. Default is set from cart discount settings for the store. See [Cart Settings](/docs/api/carts/put-v-2-settings-cart).
+          type: boolean
           examples:
-          - tester@email.com
-    CartCollectionResponse:
+          - false
+        use_rule_promotions:
+          description: When set to true, this parameter allows the cart to use rule promotions.
+          type: boolean
+          examples:
+          - false
+    Response.PaginationResults:
       type: object
       properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/CartResponse'
-        links:
-          $ref: '#/components/schemas/Response.PageLinks'
-        meta:
-          $ref: '#/components/schemas/Response.Meta.Carts'
-      required:
-      - data
-    CartEntityResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/CartResponse'
-        included:
-          type: object
-          description: Related objects that are included in the response.
-          properties:
-            custom_discounts:
-              type: array
-              items:
-                $ref: '#/components/schemas/CustomDiscountResponse'
-            promotions:
-              type: array
-              items:
-                $ref: '#/components/schemas/CondensedPromotionResponse'
-        meta:
-          type: object
-          description: Additional metadata for the cart response.
-          properties:
-            payment_intent:
-              type: object
-              description: Payment intent details with nested structure including status and other Stripe payment intent fields
-              additionalProperties: true
-        errors:
-          type: array
-          description: Array of error objects, if any errors occurred.
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
+        total:
+          description: The total page count.
+          type: integer
   securitySchemes:
     bearerAuth:
       type: http

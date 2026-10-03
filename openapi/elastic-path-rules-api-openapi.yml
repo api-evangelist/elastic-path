@@ -207,6 +207,57 @@ paths:
                 $ref: '#/components/schemas/error-response'
 components:
   schemas:
+    prioritized-pricebooks:
+      description: If you want multiple price books for different scenarios, such as seasonal sales, business versus retail pricing, and reward programs, when creating a catalog, you can specify up to five price books. You must configure a priority for your price books. Product prices are displayed in the catalog according to the priority of the price books.
+      type: array
+      maxItems: 5
+      items:
+        type: object
+        properties:
+          id:
+            description: A unique identifier of a price book.
+            type: string
+            format: uuid
+          priority:
+            description: Priority is a number and the price book with the highest number has the highest priority.
+            type: integer
+        required:
+        - priority
+        - id
+        x-go-name: PrioritizedPricebook
+    rule-data:
+      type: object
+      title: CatalogRuleData
+      description: Container for a single catalog rule.
+      properties:
+        data:
+          $ref: '#/components/schemas/rule'
+        links:
+          $ref: '#/components/schemas/links'
+      required:
+      - data
+    rule-schedule:
+      type: object
+      title: Catalog Schedule
+      description: A period of time during which a catalog is valid
+      properties:
+        valid_from:
+          description: Matches the date and time that the catalog is displayed from.
+          type:
+          - string
+          - 'null'
+          example: '2020-09-22T09:00:00'
+          format: date-time
+          x-go-name: ValidFrom
+        valid_to:
+          description: Matches the date and time the catalog is displayed to.
+          type:
+          - string
+          - 'null'
+          example: '2020-09-22T09:00:00'
+          format: date-time
+          x-go-name: ValidTo
+      x-go-name: RuleSchedule
     rule-meta:
       type: object
       title: ruleMeta
@@ -239,104 +290,120 @@ components:
           x-omitempty: true
       x-go-name: ruleMeta
       x-omitempty: true
-    rule:
+    error:
       type: object
-      title: Catalog Rule
+      title: APIError
+      description: APIError is a json-api style part of an error response.
+      properties:
+        detail:
+          type: string
+          example: not processable
+          x-go-name: Detail
+        status:
+          type: string
+          example: '422'
+          x-go-name: Status
+        title:
+          type: string
+          example: There was a problem processing your request.
+          x-go-name: Title
+      x-go-name: APIError
+    rule-create-data:
+      type: object
+      title: CatalogRuleCreateData
       description: A catalog rule specifies which catalog to use for a given shopper context.
       properties:
-        id:
-          type: string
-          description: The catalog rule ID. Use this to get, modify, or delete the catalog rule.
-          example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
-        attributes:
+        data:
           type: object
           properties:
-            name:
-              description: The name of a catalog rule. The name must not contain any spaces.
+            attributes:
+              type: object
+              properties:
+                name:
+                  description: The name of a catalog rule. The name must not contain spaces.
+                  type: string
+                  minLength: 1
+                  example: rule-123
+                description:
+                  description: A brief description of the purpose of a catalog rule.
+                  type:
+                  - string
+                  - 'null'
+                  example: Catalog Rule for most favored customers
+                  default: ''
+                account_ids:
+                  description: The list of accounts who are eligible to see this catalog. If this field is empty, the rule matches all accounts.
+                  type:
+                  - array
+                  - 'null'
+                  items:
+                    type: string
+                account_tag_ids:
+                  description: The list of account tag UUIDs. Accounts must have at least one of these tags to see this catalog. If this field is empty, the rule matches all accounts regardless of tags.
+                  type:
+                  - array
+                  - 'null'
+                  items:
+                    type: string
+                customer_ids:
+                  description: The list of customers who are eligible to see this catalog. If empty, the rule matches all customers.
+                  type:
+                  - array
+                  - 'null'
+                  items:
+                    type: string
+                channels:
+                  description: The list of channels in which this catalog can be displayed. A channel is the shopping experience, such as a mobile app or web storefront. If empty, the catalog rule matches all channels. The channel will eventually be included in the bearer token that is used for authorization, but currently, you must set the `EP-Channel` header in your requests.
+                  type:
+                  - array
+                  - 'null'
+                  items:
+                    type: string
+                tags:
+                  description: A list of user-defined tags that can be used to further restrict the eligibility criteria for this rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
+                  type:
+                  - array
+                  - 'null'
+                  items:
+                    type: string
+                schedules:
+                  description: "Specifies a time period when a catalog is displayed, such as on a specific date or during summer. Requests populate the rule tag using the `EP-Context-Tag` header. \n\nThe schedules attribute must include the following.\n\n- `valid_from` matches the date and time that the catalog is displayed from. \n- `valid_to` matches the date and time the catalog is displayed to. \n\nCommerce runs on UTC time. \n\nYou can offset the timezone by adding the offset to the end of the date and time. For example, a catalog which contains a sale hierarchy that should appear for a set timeframe may be scheduled to publish on a given date and time within a given timezone. For instance, a sale that should begin on 1st of June 2022 05:00 ET and end on the 15th of June 2022 at 23:50 PT would have a valid schedule of `\"valid_from\": \"2022-06-01T05:00:00.000-05:00\"`, `\"valid_to\": \"2022-06-15T11:59:99.000-08:00\"`.\n"
+                  type:
+                  - array
+                  - 'null'
+                  items:
+                    $ref: '#/components/schemas/rule-schedule'
+                catalog_id:
+                  type: string
+                  description: The unique identifier of a catalog.
+                  example: d09b4e16-08a5-4f42-817c-6e0d98acbb63
+                pricebook_ids:
+                  $ref: '#/components/schemas/prioritized-pricebooks'
+              required:
+              - name
+              - catalog_id
+            type:
+              description: This represents the type of object being returned. Always `catalog_rule`.
               type: string
-              example: rule-123
-            description:
-              description: A brief description of the purpose of a catalog rule.
-              type: string
-              example: Catalog Rule for most favored customers
-              default: ''
-              x-omitempty: true
-            account_ids:
-              description: The list of accounts who are eligible to see this catalog. If this field is empty, the rule matches all accounts.
-              type: array
-              items:
-                type: string
-              x-omitempty: true
-            account_tag_ids:
-              description: The list of account tag UUIDs. Accounts must have at least one of these tags to see this catalog. If this field is empty, the rule matches all accounts regardless of tags.
-              type: array
-              items:
-                type: string
-              x-omitempty: true
-            customer_ids:
-              description: The list of customers who are eligible to see this catalog. If empty, the rule matches all customers.
-              type: array
-              items:
-                type: string
-              x-omitempty: true
-            channels:
-              description: The list of channels in which this catalog can be displayed. A channel is the shopping experience, such as a mobile app or web storefront. If empty, the catalog rule matches all channels. The channel will eventually be included in the bearer token that is used for authorization, but currently, you must set the `EP-Channel` header in your requests.
-              type: array
-              items:
-                type: string
-              x-omitempty: true
-            tags:
-              description: A list of user-defined tags that can be used to further restrict the eligibility criteria for this rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
-              type: array
-              items:
-                type: string
-              x-omitempty: true
-            schedules:
-              description: "Specifies a time period when a catalog is displayed, such as on a specific date or during summer. Requests populate the rule tag using the `EP-Context-Tag` header. \n\nThe schedules attribute must include the following.\n\n- `valid_from` matches the date and time that the catalog is displayed from. \n- `valid_to` matches the date and time the catalog is displayed to. \n\nCommerce runs on UTC time. \n\nYou can offset the timezone by adding the offset to the end of the date and time. For example, a catalog which contains a sale hierarchy that should appear for a set timeframe may be scheduled to publish on a given date and time within a given timezone. For instance, a sale that should begin on 1st of June 2022 05:00 ET and end on the 15th of June 2022 at 23:50 PT would have a valid schedule of `\"valid_from\": \"2022-06-01T05:00:00.000-05:00\"`, `\"valid_to\": \"2022-06-15T11:59:99.000-08:00\"`.\n"
-              type: array
-              items:
-                $ref: '#/components/schemas/rule-schedule'
-              x-omitempty: true
-            catalog_id:
-              type: string
-              description: The unique identifier of a catalog.
-              example: d09b4e16-08a5-4f42-817c-6e0d98acbb63
-            created_at:
-              description: The date and time a catalog rule was created.
-              type: string
-              example: '2020-09-22T09:00:00'
-              format: date-time
-            updated_at:
-              description: The date and time a catalog release is updated.
-              type: string
-              example: '2020-09-22T09:00:00'
-              format: date-time
-            pricebook_ids:
-              $ref: '#/components/schemas/prioritized-pricebooks'
+              example: catalog_rule
+              enum:
+              - catalog_rule
           required:
-          - name
-          - catalog_id
-          - created_at
-          - updated_at
-        type:
-          description: This represents the type of object being returned. Always `catalog_rule`.
-          type: string
-          example: catalog_rule
-          enum:
-          - catalog_rule
-        meta:
-          $ref: '#/components/schemas/rule-meta'
+          - type
+          - attributes
       required:
-      - id
-      - type
-      - attributes
-    rule-data:
+      - data
+    rule-list-data:
       type: object
-      title: CatalogRuleData
-      description: Container for a single catalog rule.
+      title: CatalogRuleListData
+      description: Container for a list of catalog rules.
       properties:
+        meta:
+          $ref: '#/components/schemas/page-meta'
         data:
-          $ref: '#/components/schemas/rule'
+          type: array
+          items:
+            $ref: '#/components/schemas/rule'
         links:
           $ref: '#/components/schemas/links'
       required:
@@ -428,113 +495,6 @@ components:
               - 'null'
               format: date-time
               description: The date to match against the schedules.
-    rule-schedule:
-      type: object
-      title: Catalog Schedule
-      description: A period of time during which a catalog is valid
-      properties:
-        valid_from:
-          description: Matches the date and time that the catalog is displayed from.
-          type:
-          - string
-          - 'null'
-          example: '2020-09-22T09:00:00'
-          format: date-time
-          x-go-name: ValidFrom
-        valid_to:
-          description: Matches the date and time the catalog is displayed to.
-          type:
-          - string
-          - 'null'
-          example: '2020-09-22T09:00:00'
-          format: date-time
-          x-go-name: ValidTo
-      x-go-name: RuleSchedule
-    rule-list-data:
-      type: object
-      title: CatalogRuleListData
-      description: Container for a list of catalog rules.
-      properties:
-        meta:
-          $ref: '#/components/schemas/page-meta'
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/rule'
-        links:
-          $ref: '#/components/schemas/links'
-      required:
-      - data
-    links:
-      description: Links allow you to move between requests.
-      type: object
-      properties:
-        self:
-          description: Single entities use a `self` parameter with a link the specific resource.
-          type:
-          - string
-          - 'null'
-          format: uri
-        first:
-          description: Always the first page.
-          type:
-          - string
-          - 'null'
-          format: uri
-        last:
-          description: This is `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-        prev:
-          description: This is `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-        next:
-          description: This is `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-    prioritized-pricebooks:
-      description: If you want multiple price books for different scenarios, such as seasonal sales, business versus retail pricing, and reward programs, when creating a catalog, you can specify up to five price books. You must configure a priority for your price books. Product prices are displayed in the catalog according to the priority of the price books.
-      type: array
-      maxItems: 5
-      items:
-        type: object
-        properties:
-          id:
-            description: A unique identifier of a price book.
-            type: string
-            format: uuid
-          priority:
-            description: Priority is a number and the price book with the highest number has the highest priority.
-            type: integer
-        required:
-        - priority
-        - id
-        x-go-name: PrioritizedPricebook
-    error:
-      type: object
-      title: APIError
-      description: APIError is a json-api style part of an error response.
-      properties:
-        detail:
-          type: string
-          example: not processable
-          x-go-name: Detail
-        status:
-          type: string
-          example: '422'
-          x-go-name: Status
-        title:
-          type: string
-          example: There was a problem processing your request.
-          x-go-name: Title
-      x-go-name: APIError
     rule-update-data:
       type: object
       title: CatalogRuleUpdateData
@@ -625,91 +585,17 @@ components:
           - type
       required:
       - data
-    rule-create-data:
+    error-response:
       type: object
-      title: CatalogRuleCreateData
-      description: A catalog rule specifies which catalog to use for a given shopper context.
+      title: ErrorResponse
+      description: ErrorResponse is a json-api style Error response.
       properties:
-        data:
-          type: object
-          properties:
-            attributes:
-              type: object
-              properties:
-                name:
-                  description: The name of a catalog rule. The name must not contain spaces.
-                  type: string
-                  minLength: 1
-                  example: rule-123
-                description:
-                  description: A brief description of the purpose of a catalog rule.
-                  type:
-                  - string
-                  - 'null'
-                  example: Catalog Rule for most favored customers
-                  default: ''
-                account_ids:
-                  description: The list of accounts who are eligible to see this catalog. If this field is empty, the rule matches all accounts.
-                  type:
-                  - array
-                  - 'null'
-                  items:
-                    type: string
-                account_tag_ids:
-                  description: The list of account tag UUIDs. Accounts must have at least one of these tags to see this catalog. If this field is empty, the rule matches all accounts regardless of tags.
-                  type:
-                  - array
-                  - 'null'
-                  items:
-                    type: string
-                customer_ids:
-                  description: The list of customers who are eligible to see this catalog. If empty, the rule matches all customers.
-                  type:
-                  - array
-                  - 'null'
-                  items:
-                    type: string
-                channels:
-                  description: The list of channels in which this catalog can be displayed. A channel is the shopping experience, such as a mobile app or web storefront. If empty, the catalog rule matches all channels. The channel will eventually be included in the bearer token that is used for authorization, but currently, you must set the `EP-Channel` header in your requests.
-                  type:
-                  - array
-                  - 'null'
-                  items:
-                    type: string
-                tags:
-                  description: A list of user-defined tags that can be used to further restrict the eligibility criteria for this rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
-                  type:
-                  - array
-                  - 'null'
-                  items:
-                    type: string
-                schedules:
-                  description: "Specifies a time period when a catalog is displayed, such as on a specific date or during summer. Requests populate the rule tag using the `EP-Context-Tag` header. \n\nThe schedules attribute must include the following.\n\n- `valid_from` matches the date and time that the catalog is displayed from. \n- `valid_to` matches the date and time the catalog is displayed to. \n\nCommerce runs on UTC time. \n\nYou can offset the timezone by adding the offset to the end of the date and time. For example, a catalog which contains a sale hierarchy that should appear for a set timeframe may be scheduled to publish on a given date and time within a given timezone. For instance, a sale that should begin on 1st of June 2022 05:00 ET and end on the 15th of June 2022 at 23:50 PT would have a valid schedule of `\"valid_from\": \"2022-06-01T05:00:00.000-05:00\"`, `\"valid_to\": \"2022-06-15T11:59:99.000-08:00\"`.\n"
-                  type:
-                  - array
-                  - 'null'
-                  items:
-                    $ref: '#/components/schemas/rule-schedule'
-                catalog_id:
-                  type: string
-                  description: The unique identifier of a catalog.
-                  example: d09b4e16-08a5-4f42-817c-6e0d98acbb63
-                pricebook_ids:
-                  $ref: '#/components/schemas/prioritized-pricebooks'
-              required:
-              - name
-              - catalog_id
-            type:
-              description: This represents the type of object being returned. Always `catalog_rule`.
-              type: string
-              example: catalog_rule
-              enum:
-              - catalog_rule
-          required:
-          - type
-          - attributes
-      required:
-      - data
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/error'
+          x-go-name: Errors
+      x-go-name: ErrorResponse
     page-meta:
       type: object
       description: Contains the results for the entire collection.
@@ -742,17 +628,131 @@ components:
               description: The total number of records for the entire collection.
               type: integer
               format: int64
-    error-response:
+    links:
+      description: Links allow you to move between requests.
       type: object
-      title: ErrorResponse
-      description: ErrorResponse is a json-api style Error response.
       properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/error'
-          x-go-name: Errors
-      x-go-name: ErrorResponse
+        self:
+          description: Single entities use a `self` parameter with a link the specific resource.
+          type:
+          - string
+          - 'null'
+          format: uri
+        first:
+          description: Always the first page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        last:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        prev:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        next:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+    rule:
+      type: object
+      title: Catalog Rule
+      description: A catalog rule specifies which catalog to use for a given shopper context.
+      properties:
+        id:
+          type: string
+          description: The catalog rule ID. Use this to get, modify, or delete the catalog rule.
+          example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
+        attributes:
+          type: object
+          properties:
+            name:
+              description: The name of a catalog rule. The name must not contain any spaces.
+              type: string
+              example: rule-123
+            description:
+              description: A brief description of the purpose of a catalog rule.
+              type: string
+              example: Catalog Rule for most favored customers
+              default: ''
+              x-omitempty: true
+            account_ids:
+              description: The list of accounts who are eligible to see this catalog. If this field is empty, the rule matches all accounts.
+              type: array
+              items:
+                type: string
+              x-omitempty: true
+            account_tag_ids:
+              description: The list of account tag UUIDs. Accounts must have at least one of these tags to see this catalog. If this field is empty, the rule matches all accounts regardless of tags.
+              type: array
+              items:
+                type: string
+              x-omitempty: true
+            customer_ids:
+              description: The list of customers who are eligible to see this catalog. If empty, the rule matches all customers.
+              type: array
+              items:
+                type: string
+              x-omitempty: true
+            channels:
+              description: The list of channels in which this catalog can be displayed. A channel is the shopping experience, such as a mobile app or web storefront. If empty, the catalog rule matches all channels. The channel will eventually be included in the bearer token that is used for authorization, but currently, you must set the `EP-Channel` header in your requests.
+              type: array
+              items:
+                type: string
+              x-omitempty: true
+            tags:
+              description: A list of user-defined tags that can be used to further restrict the eligibility criteria for this rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
+              type: array
+              items:
+                type: string
+              x-omitempty: true
+            schedules:
+              description: "Specifies a time period when a catalog is displayed, such as on a specific date or during summer. Requests populate the rule tag using the `EP-Context-Tag` header. \n\nThe schedules attribute must include the following.\n\n- `valid_from` matches the date and time that the catalog is displayed from. \n- `valid_to` matches the date and time the catalog is displayed to. \n\nCommerce runs on UTC time. \n\nYou can offset the timezone by adding the offset to the end of the date and time. For example, a catalog which contains a sale hierarchy that should appear for a set timeframe may be scheduled to publish on a given date and time within a given timezone. For instance, a sale that should begin on 1st of June 2022 05:00 ET and end on the 15th of June 2022 at 23:50 PT would have a valid schedule of `\"valid_from\": \"2022-06-01T05:00:00.000-05:00\"`, `\"valid_to\": \"2022-06-15T11:59:99.000-08:00\"`.\n"
+              type: array
+              items:
+                $ref: '#/components/schemas/rule-schedule'
+              x-omitempty: true
+            catalog_id:
+              type: string
+              description: The unique identifier of a catalog.
+              example: d09b4e16-08a5-4f42-817c-6e0d98acbb63
+            created_at:
+              description: The date and time a catalog rule was created.
+              type: string
+              example: '2020-09-22T09:00:00'
+              format: date-time
+            updated_at:
+              description: The date and time a catalog release is updated.
+              type: string
+              example: '2020-09-22T09:00:00'
+              format: date-time
+            pricebook_ids:
+              $ref: '#/components/schemas/prioritized-pricebooks'
+          required:
+          - name
+          - catalog_id
+          - created_at
+          - updated_at
+        type:
+          description: This represents the type of object being returned. Always `catalog_rule`.
+          type: string
+          example: catalog_rule
+          enum:
+          - catalog_rule
+        meta:
+          $ref: '#/components/schemas/rule-meta'
+      required:
+      - id
+      - type
+      - attributes
   parameters:
     filter-rule:
       name: filter

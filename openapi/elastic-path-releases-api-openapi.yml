@@ -259,27 +259,6 @@ paths:
                 $ref: '#/components/schemas/error-response'
 components:
   schemas:
-    node-reference:
-      type: object
-      title: NodeReference
-      description: Minimum set of information to identify a catalog node.
-      properties:
-        id:
-          description: The unique identifier of a hierarchy.
-          type: string
-          example: 65477ce0-fcb8-436b-a120-3d57979421dd
-          x-go-name: ID
-        label:
-          description: A label for a hierarchy.
-          type: string
-          example: category
-          x-go-name: Label
-        name:
-          description: The name of a hierarchy.
-          type: string
-          example: Formal dresswear
-          x-go-name: Name
-      x-go-name: NodeReference
     release:
       type: object
       title: Release
@@ -328,6 +307,74 @@ components:
         meta:
           $ref: '#/components/schemas/release-meta'
       x-go-name: Release
+    release-list-data:
+      type: object
+      title: ReleaseListData
+      description: Container for a list of catalog releases.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/release'
+        links:
+          $ref: '#/components/schemas/links'
+    release-data:
+      type: object
+      title: Release Data
+      description: Container for a catalog release.
+      properties:
+        data:
+          $ref: '#/components/schemas/release'
+        links:
+          $ref: '#/components/schemas/links'
+    related-link:
+      description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+      type: object
+      properties:
+        related:
+          description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+          type: string
+      required:
+      - related
+    node-reference:
+      type: object
+      title: NodeReference
+      description: Minimum set of information to identify a catalog node.
+      properties:
+        id:
+          description: The unique identifier of a hierarchy.
+          type: string
+          example: 65477ce0-fcb8-436b-a120-3d57979421dd
+          x-go-name: ID
+        label:
+          description: A label for a hierarchy.
+          type: string
+          example: category
+          x-go-name: Label
+        name:
+          description: The name of a hierarchy.
+          type: string
+          example: Formal dresswear
+          x-go-name: Name
+      x-go-name: NodeReference
+    error:
+      type: object
+      title: APIError
+      description: APIError is a json-api style part of an error response.
+      properties:
+        detail:
+          type: string
+          example: not processable
+          x-go-name: Detail
+        status:
+          type: string
+          example: '422'
+          x-go-name: Status
+        title:
+          type: string
+          example: There was a problem processing your request.
+          x-go-name: Title
+      x-go-name: APIError
     release-meta:
       type: object
       title: ReleaseMeta
@@ -421,6 +468,37 @@ components:
           x-go-name: IncludesDraftProducts
       x-go-name: ReleaseMeta
       x-omitempty: true
+    catalog-release-create-data:
+      type: object
+      title: CatalogReleaseCreateData
+      description: Creates a catalog release with the following attributes.
+      properties:
+        data:
+          type: object
+          properties:
+            export_full_delta:
+              type: boolean
+              description: 'Set to `true` if you want to export all the data from a catalog release in a delta link. The `is_full_delta` attribute is returned from the `get a release of a catalog` endpoint. The `is_full_delta` attribute tells you if the delta file contains the full content of a catalog release. You can use the `is_full_delta` to determine if you need to refresh the data in your company system before publishing a catalog release with fresh data in a delta link. Using a search service as an example, if the `is_full_delta` attribute is true, you should remove all data about that catalog from the search service before publishing a catalog release and injecting fresh data from the delta file. If the `is_full_delta` attribute is false, then data from the previous catalog overlays the existing data in the delta file. The `is_full_delta` attribute is always `true` the first time a catalog is published.
+
+                '
+              x-go-name: ExportFullDelta
+            include_organization_resources:
+              type:
+              - boolean
+              - 'null'
+              description: If you are publishing a catalog in a store that contains resources from an organization, you must set this to true and you must enable the **Include Organization Resources in Catalog Publishes** checkbox in Commerce Manager. See [**Multi-Store Management Solutions**](/docs/api/pxm/catalog/publish-release).
+              x-go-name: IncludeOrganizationResources
+    error-response:
+      type: object
+      title: ErrorResponse
+      description: ErrorResponse is a json-api style Error response.
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/error'
+          x-go-name: Errors
+      x-go-name: ErrorResponse
     links:
       description: Links allow you to move between requests.
       type: object
@@ -481,92 +559,7 @@ components:
           required:
           - links
       x-go-name: ReleaseRelationships
-    release-data:
-      type: object
-      title: Release Data
-      description: Container for a catalog release.
-      properties:
-        data:
-          $ref: '#/components/schemas/release'
-        links:
-          $ref: '#/components/schemas/links'
-    error:
-      type: object
-      title: APIError
-      description: APIError is a json-api style part of an error response.
-      properties:
-        detail:
-          type: string
-          example: not processable
-          x-go-name: Detail
-        status:
-          type: string
-          example: '422'
-          x-go-name: Status
-        title:
-          type: string
-          example: There was a problem processing your request.
-          x-go-name: Title
-      x-go-name: APIError
-    catalog-release-create-data:
-      type: object
-      title: CatalogReleaseCreateData
-      description: Creates a catalog release with the following attributes.
-      properties:
-        data:
-          type: object
-          properties:
-            export_full_delta:
-              type: boolean
-              description: 'Set to `true` if you want to export all the data from a catalog release in a delta link. The `is_full_delta` attribute is returned from the `get a release of a catalog` endpoint. The `is_full_delta` attribute tells you if the delta file contains the full content of a catalog release. You can use the `is_full_delta` to determine if you need to refresh the data in your company system before publishing a catalog release with fresh data in a delta link. Using a search service as an example, if the `is_full_delta` attribute is true, you should remove all data about that catalog from the search service before publishing a catalog release and injecting fresh data from the delta file. If the `is_full_delta` attribute is false, then data from the previous catalog overlays the existing data in the delta file. The `is_full_delta` attribute is always `true` the first time a catalog is published.
-
-                '
-              x-go-name: ExportFullDelta
-            include_organization_resources:
-              type:
-              - boolean
-              - 'null'
-              description: If you are publishing a catalog in a store that contains resources from an organization, you must set this to true and you must enable the **Include Organization Resources in Catalog Publishes** checkbox in Commerce Manager. See [**Multi-Store Management Solutions**](/docs/api/pxm/catalog/publish-release).
-              x-go-name: IncludeOrganizationResources
-    related-link:
-      description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
-      type: object
-      properties:
-        related:
-          description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
-          type: string
-      required:
-      - related
-    release-list-data:
-      type: object
-      title: ReleaseListData
-      description: Container for a list of catalog releases.
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/release'
-        links:
-          $ref: '#/components/schemas/links'
-    error-response:
-      type: object
-      title: ErrorResponse
-      description: ErrorResponse is a json-api style Error response.
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/error'
-          x-go-name: Errors
-      x-go-name: ErrorResponse
   parameters:
-    tag:
-      description: Tags are used to refine the eligibility criteria for a rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
-      in: header
-      name: EP-Context-Tag
-      required: false
-      schema:
-        type: string
     channel:
       description: The list of channels in which this catalog can be displayed. A channel is the shopping experience, such as a mobile app or web storefront. If empty, the catalog rule matches all channels. The channel will eventually be included in the bearer token that is used for authorization, but currently, you must set the `EP-Channel` header in your requests.
       in: header
@@ -578,6 +571,13 @@ components:
       description: The language and locale your storefront prefers. See [Accept-Language](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language).
       in: header
       name: accept-language
+      required: false
+      schema:
+        type: string
+    tag:
+      description: Tags are used to refine the eligibility criteria for a rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
+      in: header
+      name: EP-Context-Tag
       required: false
       schema:
         type: string

@@ -475,93 +475,138 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  responses:
-    InternalServerError:
-      description: Internal server error.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              summary: Internal server error
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-                  detail: there was a problem processing your request
-    UnprocessableEntity:
-      description: Unprocessable Entity
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unprocessable-entity:
-              value:
-                errors:
-                - title: Unprocessable Entity
-                  status: '422'
-                  detail: store id mismatch
-    NotFoundError:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: account not found
-    UnauthorizedError:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unauthorized-error:
-              value:
-                errors:
-                - title: Unauthorized
-                  status: '401'
-    BadRequestError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              value:
-                errors:
-                - title: Bad Request
-                  status: '400'
-                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
-    ConflictError:
-      description: Conflict
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            conflict-error:
-              value:
-                errors:
-                - title: Conflict
-                  status: '409'
-                  detail: account membership with the given account id and account member id already exists
   schemas:
-    AddAccountTagsOnAccount:
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
+    AccountTagsRelationshipIdentifier:
+      type: object
+      properties:
+        id:
+          description: The unique identifier for the related Account Tag.
+          type: string
+          example: 652e39d8-d613-493e-8c20-fef99ad6327a
+        type:
+          description: Specifies the type of the resource object.
+          type: string
+          const: account_tag
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Account:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Specifies the type of object. Set this value to `account`.
+          const: account
+        name:
+          type: string
+          description: Specifies the name of the account.
+          example: acc-name
+        legal_name:
+          type:
+          - string
+          - 'null'
+          description: Specifies the legal name of the account.
+          example: acc-legal-name
+        registration_id:
+          type:
+          - string
+          - 'null'
+          description: Specifies the registration ID. If specified, this field is checked for uniqueness.
+          example: reg-id
+        external_ref:
+          type:
+          - string
+          - 'null'
+          description: The unique attribute associated with the account. For example, this could be an external reference from a separate company system. The maximum length is 2048 characters. Default is `null`.
+          example: ext-ref
+      required:
+      - type
+      - name
+    RemoveAccountTagsOnAccount:
       type: object
       properties:
         data:
           type: array
           items:
             $ref: '#/components/schemas/AccountTagsRelationshipIdentifier'
+    AccountTagsRelationshipResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountTagsRelationshipIdentifier'
+        links:
+          type: object
+          properties:
+            self:
+              description: A URL to the specific resource.
+              type: string
+              example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/relationships/account-tags
+    MetaList:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/MetaListPage'
+        results:
+          $ref: '#/components/schemas/MetaListResults'
+    MetaTimestamps:
+      type: object
+      properties:
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              description: The date the resource is created.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+            updated_at:
+              description: The date the resource is updated.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+    WritableParentId:
+      type: object
+      properties:
+        parent_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: Specifies the ID of the parent account, this field cannot be changed after creation.
+          example: 96b1f750-55d3-4768-a3f8-adffba694a2c
+    ReadOnlyParentId:
+      type: object
+      properties:
+        parent_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          readOnly: true
+          description: Specifies the ID of the parent account.
+          example: 96b1f750-55d3-4768-a3f8-adffba694a2c
     AccountResponse:
       allOf:
       - $ref: '#/components/schemas/Account'
@@ -619,38 +664,32 @@ components:
                       id:
                         $ref: '#/components/schemas/UUID'
                         description: The unique identifier for an Account.
-    MetaList:
+    MetaListPage:
       type: object
       properties:
-        page:
-          $ref: '#/components/schemas/MetaListPage'
-        results:
-          $ref: '#/components/schemas/MetaListResults'
-    RemoveAccountTagsOnAccount:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
+        total:
+          type: integer
+          description: The total page count.
+          example: 1
+    AddAccountTagsOnAccount:
       type: object
       properties:
         data:
           type: array
           items:
             $ref: '#/components/schemas/AccountTagsRelationshipIdentifier'
-    MetaListResults:
-      type: object
-      properties:
-        total:
-          type: integer
-          description: The total number of results after applying filters, if any, or all results.
-          example: 1
-    AccountTagsRelationshipIdentifier:
-      type: object
-      properties:
-        id:
-          description: The unique identifier for the related Account Tag.
-          type: string
-          example: 652e39d8-d613-493e-8c20-fef99ad6327a
-        type:
-          description: Specifies the type of the resource object.
-          type: string
-          const: account_tag
     Error:
       type: object
       required:
@@ -673,136 +712,86 @@ components:
           description: Optional additional detail about the error.
           examples:
           - The field 'name' is required
-    AccountTagsRelationshipResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/AccountTagsRelationshipIdentifier'
-        links:
-          type: object
-          properties:
-            self:
-              description: A URL to the specific resource.
-              type: string
-              example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/relationships/account-tags
-    MetaTimestamps:
-      type: object
-      properties:
-        timestamps:
-          type: object
-          properties:
-            created_at:
-              description: The date the resource is created.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-            updated_at:
-              description: The date the resource is updated.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-    WritableParentId:
-      type: object
-      properties:
-        parent_id:
-          type:
-          - string
-          - 'null'
-          format: uuid
-          description: Specifies the ID of the parent account, this field cannot be changed after creation.
-          example: 96b1f750-55d3-4768-a3f8-adffba694a2c
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: deb6b25f-8451-4211-9a22-95610333df23
-    MetaListPage:
-      type: object
-      properties:
-        limit:
-          type: integer
-          description: The maximum number of records per page for this response. You can set this value up to 100.
-          example: 25
-        current:
-          type: integer
-          description: The current page.
-          example: 0
-        offset:
-          type: integer
-          description: The current offset by number of records, not pages. Offset is zero-based.
-          example: 0
-        total:
-          type: integer
-          description: The total page count.
-          example: 1
-    ReadOnlyParentId:
-      type: object
-      properties:
-        parent_id:
-          type:
-          - string
-          - 'null'
-          format: uuid
-          readOnly: true
-          description: Specifies the ID of the parent account.
-          example: 96b1f750-55d3-4768-a3f8-adffba694a2c
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    Account:
-      type: object
-      properties:
-        type:
-          type: string
-          description: Specifies the type of object. Set this value to `account`.
-          const: account
-        name:
-          type: string
-          description: Specifies the name of the account.
-          example: acc-name
-        legal_name:
-          type:
-          - string
-          - 'null'
-          description: Specifies the legal name of the account.
-          example: acc-legal-name
-        registration_id:
-          type:
-          - string
-          - 'null'
-          description: Specifies the registration ID. If specified, this field is checked for uniqueness.
-          example: reg-id
-        external_ref:
-          type:
-          - string
-          - 'null'
-          description: The unique attribute associated with the account. For example, this could be an external reference from a separate company system. The maximum length is 2048 characters. Default is `null`.
-          example: ext-ref
-      required:
-      - type
-      - name
+  responses:
+    ConflictError:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            conflict-error:
+              value:
+                errors:
+                - title: Conflict
+                  status: '409'
+                  detail: account membership with the given account id and account member id already exists
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - title: Bad Request
+                  status: '400'
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: account not found
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unprocessable-entity:
+              value:
+                errors:
+                - title: Unprocessable Entity
+                  status: '422'
+                  detail: store id mismatch
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value:
+                errors:
+                - title: Unauthorized
+                  status: '401'
   parameters:
-    page-offset:
-      name: page[offset]
-      in: query
-      description: The number of records to offset the results by.
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 10
     page-limit:
       name: page[limit]
       in: query
@@ -822,6 +811,17 @@ components:
         type: string
         format: string
         example: ilike(name,"*swan*")
+    page-offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
   securitySchemes:
     BearerToken:
       type: http

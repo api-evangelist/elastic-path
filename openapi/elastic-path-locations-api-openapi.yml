@@ -210,59 +210,29 @@ paths:
         '204':
           description: Success. The location is deleted
 components:
-  parameters:
-    Filter:
-      name: filter
-      in: query
-      required: false
-      schema:
-        type: string
-        format: string
-        description: 'Some Inventories API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
-
-          '
-        example: eq(location,new-york)
-    EpGeolocation:
-      description: Latitude, Longitude representing current location
-      name: Ep-Geolocation
-      in: header
-      schema:
-        type: string
-        pattern: ^-?\d+(\.\d+)?,-?\d+(\.\d+)?$
-      example: 49.2847027,-123.1109329
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [**page length**](https://elasticpath.dev/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int
-        minimum: 0
-        maximum: 10000
-        example: 10
-    PageLimit:
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the the [**page length**](https://elasticpath.dev/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      name: page[limit]
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int
-        minimum: 0
-        example: 100
   schemas:
-    Meta:
+    UUID:
+      type: string
+      description: The unique identifier.
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 00000000-0000-0000-0000-000000000000
+    ErrorResponse:
       type: object
       required:
-      - timestamps
+      - errors
       properties:
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    InventoryLocationType:
+      type: string
+      enum:
+      - inventory_location
+      example: inventory_location
     LocationUpdateAttributes:
       properties:
         name:
@@ -302,40 +272,6 @@ components:
             maxLength: 1024
         geolocation:
           $ref: '#/components/schemas/GeolocationDetails'
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    InventoryLocationType:
-      type: string
-      enum:
-      - inventory_location
-      example: inventory_location
-    Location:
-      type: object
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/InventoryLocationType'
-        attributes:
-          $ref: '#/components/schemas/LocationAttributes'
-        meta:
-          $ref: '#/components/schemas/Meta'
     LocationUpdateRequest:
       type: object
       required:
@@ -349,42 +285,10 @@ components:
           $ref: '#/components/schemas/InventoryLocationType'
         attributes:
           $ref: '#/components/schemas/LocationUpdateAttributes'
-    Timestamps:
-      required:
-      - created_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    Error:
+    Links:
       type: object
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
     GeolocationDetails:
       type:
       - object
@@ -405,29 +309,6 @@ components:
       example:
         lat: 51.477928
         lon: -0.001545
-    LocationRequest:
-      type: object
-      required:
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/InventoryLocationType'
-        attributes:
-          $ref: '#/components/schemas/LocationAttributes'
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    UUID:
-      type: string
-      description: The unique identifier.
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 00000000-0000-0000-0000-000000000000
     LocationAttributes:
       required:
       - name
@@ -462,19 +343,138 @@ components:
             maxLength: 1024
         geolocation:
           $ref: '#/components/schemas/GeolocationDetails'
-    ErrorResponse:
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    Meta:
       type: object
       required:
-      - errors
+      - timestamps
       properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    Links:
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    Timestamps:
+      required:
+      - created_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    LocationRequest:
       type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
+      required:
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/InventoryLocationType'
+        attributes:
+          $ref: '#/components/schemas/LocationAttributes'
+    Location:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/InventoryLocationType'
+        attributes:
+          $ref: '#/components/schemas/LocationAttributes'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+  parameters:
+    Filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Inventories API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(location,new-york)
+    PageLimit:
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the the [**page length**](https://elasticpath.dev/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      name: page[limit]
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int
+        minimum: 0
+        example: 100
+    EpGeolocation:
+      description: Latitude, Longitude representing current location
+      name: Ep-Geolocation
+      in: header
+      schema:
+        type: string
+        pattern: ^-?\d+(\.\d+)?,-?\d+(\.\d+)?$
+      example: 49.2847027,-123.1109329
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [**page length**](https://elasticpath.dev/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int
+        minimum: 0
+        maximum: 10000
+        example: 10
   responses:
     NotFoundError:
       description: Not found. The requested entity does not exist.

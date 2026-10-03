@@ -239,47 +239,6 @@ paths:
         default:
           $ref: '#/components/responses/InternalServerError'
 components:
-  responses:
-    InternalServerError:
-      description: Internal server error.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              summary: Internal server error
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
-    NotFoundError:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found-error:
-              summary: Not Found
-              value: "{\n  \"errors\": [\n    {\n      \"detail\": \"not found\",\n      \"status\": \"404\",\n      \"title\": \"Not Found\"\n    }\n  ]\n}\n"
-    UnauthorizedError:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            unauthorized-error:
-              summary: Unauthorized
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Unauthorized\",\n      \"status\": \"401\"\n    }\n  ]\n}\n"
-    BadRequestError:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              summary: Required field missing
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Bad Request\",\n      \"status\": \"400\",\n      \"detail\": \"Validation failed: field 'Type' on the 'ttl-type' tag.\"\n    }\n  ]\n}\n"
   parameters:
     Filter:
       name: filter
@@ -290,6 +249,14 @@ components:
         type: string
         format: string
         example: eq(resource_id,0f850c15-d643-480a-a2b4-9e3c26067178)
+    ErasureRequestId:
+      name: erasure_request_id
+      in: path
+      required: true
+      description: The id of the Personal-Data Erasure Request.
+      schema:
+        type: string
+      example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
     PageOffset:
       name: page[offset]
       description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
@@ -311,14 +278,6 @@ components:
         format: int64
         minimum: 0
         example: 100
-    ErasureRequestId:
-      name: erasure_request_id
-      in: path
-      required: true
-      description: The id of the Personal-Data Erasure Request.
-      schema:
-        type: string
-      example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
   schemas:
     Error:
       required:
@@ -341,43 +300,6 @@ components:
           description: Optional additional detail about the error.
           examples:
           - The field 'name' is required
-    PaginationLinks:
-      required:
-      - current
-      - first
-      - last
-      - next
-      - prev
-      type: object
-      properties:
-        current:
-          description: Always the current page.
-          type:
-          - string
-          - 'null'
-          format: uri
-        first:
-          description: Always the first page.
-          type:
-          - string
-          - 'null'
-          format: uri
-        last:
-          description: Always `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-        next:
-          description: Always `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-        prev:
-          description: Always `null` if the user is on the first page.
-          type:
-          - string
-          - 'null'
     ErrorResponse:
       required:
       - errors
@@ -386,21 +308,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-    ErasureRequest:
-      properties:
-        resource_type:
-          type: string
-          description: The type of the data entry to be erased.
-          example: account
-        resource_id:
-          type: string
-          format: uuid
-          description: The ID of the data entry to be erased (note that also all data entries in the personal data set will be erased).
-          example: 98140362-6caf-4829-b93d-953ac6adbe6e
-        type:
-          type: string
-          const: erasure_request
-          description: The type of the object. Always equal to `erasure_request`.
     ErasureRequestResponse:
       properties:
         id:
@@ -490,6 +397,99 @@ components:
               description: The total number of records for the entire collection.
               type: integer
               example: 1
+    PaginationLinks:
+      required:
+      - current
+      - first
+      - last
+      - next
+      - prev
+      type: object
+      properties:
+        current:
+          description: Always the current page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        first:
+          description: Always the first page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        last:
+          description: Always `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        next:
+          description: Always `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+        prev:
+          description: Always `null` if the user is on the first page.
+          type:
+          - string
+          - 'null'
+    ErasureRequest:
+      properties:
+        resource_type:
+          type: string
+          description: The type of the data entry to be erased.
+          example: account
+        resource_id:
+          type: string
+          format: uuid
+          description: The ID of the data entry to be erased (note that also all data entries in the personal data set will be erased).
+          example: 98140362-6caf-4829-b93d-953ac6adbe6e
+        type:
+          type: string
+          const: erasure_request
+          description: The type of the object. Always equal to `erasure_request`.
+  responses:
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              summary: Required field missing
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Bad Request\",\n      \"status\": \"400\",\n      \"detail\": \"Validation failed: field 'Type' on the 'ttl-type' tag.\"\n    }\n  ]\n}\n"
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              summary: Unauthorized
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Unauthorized\",\n      \"status\": \"401\"\n    }\n  ]\n}\n"
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              summary: Not Found
+              value: "{\n  \"errors\": [\n    {\n      \"detail\": \"not found\",\n      \"status\": \"404\",\n      \"title\": \"Not Found\"\n    }\n  ]\n}\n"
   securitySchemes:
     bearerAuth:
       type: http

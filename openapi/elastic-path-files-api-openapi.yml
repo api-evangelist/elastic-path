@@ -311,10 +311,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    UUID:
-      type: string
-      format: uuid
-      example: 00000000-0000-0000-0000-000000000000
     Links:
       description: Links are used to allow you to move between requests.
       type: object
@@ -323,56 +319,6 @@ components:
           description: Single entities use a self parameter with a link to that specific resource.
           type: string
           example: https://https://euwest.api.elasticpath.com//v2/files/ddc28c74-a7df-46be-b262-8fa69a6e7d52
-    FileMeta:
-      properties:
-        timestamps:
-          type: object
-          description: The date and time the file was created.
-          properties:
-            created_at:
-              description: The date and time the file was created.
-              type: string
-              example: '2023-10-11T13:02:25.293Z'
-        dimensions:
-          description: The file dimensions.
-          type: object
-          properties:
-            width:
-              description: The width of the file.
-              type: integer
-              example: 1800
-            height:
-              description: The height of the file.
-              type: integer
-              example: 1000
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: integer
-          format: int
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        request_id:
-          type: string
-          description: Internal request ID.
-          example: 00000000-0000-0000-0000-000000000000
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     FileLink:
       type: object
       description: The publicly available URL for this file.
@@ -381,6 +327,10 @@ components:
           description: The publicly available URL for this file.
           type: string
           example: https://files-eu.epusercontent.com/e8c53cb0-120d-4ea5-8941-ce74dec06038/f8cf26b3-6d38-4275-937a-624a83994702.png
+    UUID:
+      type: string
+      format: uuid
+      example: 00000000-0000-0000-0000-000000000000
     ResultsLinks:
       type: object
       description: Links are used to allow you to move between requests.
@@ -403,6 +353,36 @@ components:
           - string
           - 'null'
           example: https://useast.api.elasticpath.com/v2/files?page[offset]=10&page[limit]=100
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    FileMeta:
+      properties:
+        timestamps:
+          type: object
+          description: The date and time the file was created.
+          properties:
+            created_at:
+              description: The date and time the file was created.
+              type: string
+              example: '2023-10-11T13:02:25.293Z'
+        dimensions:
+          description: The file dimensions.
+          type: object
+          properties:
+            width:
+              description: The width of the file.
+              type: integer
+              example: 1800
+            height:
+              description: The height of the file.
+              type: integer
+              example: 1000
     File:
       properties:
         id:
@@ -434,14 +414,6 @@ components:
           $ref: '#/components/schemas/Links'
         link:
           $ref: '#/components/schemas/FileLink'
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
     ResultsMeta:
       properties:
         page:
@@ -472,80 +444,35 @@ components:
               description: The total number of records for the entire collection.
               type: integer
               example: 1
-  responses:
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - status: 500
-                  title: Internal Server Error
-                  detail: There was an internal server error, you can report with your request id.
-                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            file-location-invalid:
-              value:
-                errors:
-                - title: file_location invalid
-                  status: 422
-                  detail: '@/path/to/file.jpg is not a valid URL'
-            file-not-uploaded:
-              value:
-                errors:
-                - title: Validation Failed
-                  status: 400
-                  detail: You have not supplied a file to store
-    NotFoundError:
-      description: Forbidden. The operation is forbidden on this entity.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            file-not-found:
-              value:
-                errors:
-                - title: Resource Not Found
-                  status: 404
-                  detail: The resource you are requesting does not exist
-    ForbiddenError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            file-location-invalid:
-              value:
-                errors:
-                - title: Permission denied
-                  status: 403
-                  detail: You are trying to remove a file outside of the tenancy
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: integer
+          format: int
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        request_id:
+          type: string
+          description: Internal request ID.
+          example: 00000000-0000-0000-0000-000000000000
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
   parameters:
-    page-offset:
-      name: page[offset]
-      in: query
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      style: form
-      explode: true
-      schema:
-        type: string
-        minimum: 0
-        maximum: 10000
-        format: int64
-        examples:
-        - '0'
     filter:
       description: '
 
@@ -572,6 +499,79 @@ components:
         format: int64
         examples:
         - '10'
+    page-offset:
+      name: page[offset]
+      in: query
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [**page length**](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      style: form
+      explode: true
+      schema:
+        type: string
+        minimum: 0
+        maximum: 10000
+        format: int64
+        examples:
+        - '0'
+  responses:
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: 500
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+    NotFoundError:
+      description: Forbidden. The operation is forbidden on this entity.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            file-not-found:
+              value:
+                errors:
+                - title: Resource Not Found
+                  status: 404
+                  detail: The resource you are requesting does not exist
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            file-location-invalid:
+              value:
+                errors:
+                - title: file_location invalid
+                  status: 422
+                  detail: '@/path/to/file.jpg is not a valid URL'
+            file-not-uploaded:
+              value:
+                errors:
+                - title: Validation Failed
+                  status: 400
+                  detail: You have not supplied a file to store
+    ForbiddenError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            file-location-invalid:
+              value:
+                errors:
+                - title: Permission denied
+                  status: 403
+                  detail: You are trying to remove a file outside of the tenancy
   securitySchemes:
     bearerAuth:
       type: http

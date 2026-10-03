@@ -39,29 +39,60 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    ResourceOwner:
-      description: The resource owner, either `organization` or `store`.
-      type: string
-      example: organization
-      enum:
-      - organization
-      - store
-      x-go-type: tenancy.Owner
-      x-go-type-import:
-        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
     SearchableFieldType:
       description: Represents the type of object being returned. Always `catalog_searchable_field`.
       type: string
       example: catalog_searchable_field
       enum:
       - catalog_searchable_field
-    ListResponseMeta:
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    SearchableFieldAttributes:
       type: object
       required:
-      - results
+      - name
+      - type
       properties:
-        results:
-          $ref: '#/components/schemas/ListResponseMetaResults'
+        name:
+          type: string
+          description: The name of the field.
+          example: name
+          minLength: 1
+        type:
+          $ref: '#/components/schemas/FieldType'
+        facetable:
+          type: boolean
+          description: Enables faceting on the field.
+          default: false
+          example: true
+        sortable:
+          type: boolean
+          description: 'When set to true, the field will be sortable. Default: true for numbers, false otherwise.'
+          example: true
+        locale:
+          type: string
+          description: 'For configuring language specific tokenization, e.g. jp for Japanese. Default: en which also broadly supports most European languages. For valid values, see [ISO 639 language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes).'
+          default: en
+          example: en
+    SearchableFieldsResponse:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          description: A collection of searchable fields.
+          items:
+            $ref: '#/components/schemas/SearchableField'
+        meta:
+          $ref: '#/components/schemas/ListResponseMeta'
     FieldType:
       type: string
       description: The type of the field.
@@ -76,19 +107,40 @@ components:
       x-go-type-import:
         name: model
         path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/model
-    SearchableFieldsResponse:
+    SearchableFieldMeta:
       type: object
       required:
-      - data
-      - meta
+      - owner
       properties:
-        data:
-          type: array
-          description: A collection of searchable fields.
-          items:
-            $ref: '#/components/schemas/SearchableField'
-        meta:
-          $ref: '#/components/schemas/ListResponseMeta'
+        owner:
+          $ref: '#/components/schemas/ResourceOwner'
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
+    ListResponseMeta:
+      type: object
+      required:
+      - results
+      properties:
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
+    ListResponseMetaResults:
+      description: Contains the results for the entire collection.
+      type: object
+      required:
+      - total
+      properties:
+        total:
+          description: Total number of results for the entire collection.
+          type: integer
+          example: 100
     SearchableField:
       type: object
       required:
@@ -131,58 +183,6 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    SearchableFieldAttributes:
-      type: object
-      required:
-      - name
-      - type
-      properties:
-        name:
-          type: string
-          description: The name of the field.
-          example: name
-          minLength: 1
-        type:
-          $ref: '#/components/schemas/FieldType'
-        facetable:
-          type: boolean
-          description: Enables faceting on the field.
-          default: false
-          example: true
-        sortable:
-          type: boolean
-          description: 'When set to true, the field will be sortable. Default: true for numbers, false otherwise.'
-          example: true
-        locale:
-          type: string
-          description: 'For configuring language specific tokenization, e.g. jp for Japanese. Default: en which also broadly supports most European languages. For valid values, see [ISO 639 language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes).'
-          default: en
-          example: en
-    ListResponseMetaResults:
-      description: Contains the results for the entire collection.
-      type: object
-      required:
-      - total
-      properties:
-        total:
-          description: Total number of results for the entire collection.
-          type: integer
-          example: 100
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    SearchableFieldMeta:
-      type: object
-      required:
-      - owner
-      properties:
-        owner:
-          $ref: '#/components/schemas/ResourceOwner'
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.
