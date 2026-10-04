@@ -476,13 +476,51 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    MetaListResults:
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    MetaListPage:
       type: object
       properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
         total:
           type: integer
-          description: The total number of results after applying filters, if any, or all results.
+          description: The total page count.
           example: 1
+    AddAccountTagsOnAccount:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountTagsRelationshipIdentifier'
+    WritableParentId:
+      type: object
+      properties:
+        parent_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: Specifies the ID of the parent account, this field cannot be changed after creation.
+          example: 96b1f750-55d3-4768-a3f8-adffba694a2c
     AccountTagsRelationshipIdentifier:
       type: object
       properties:
@@ -494,24 +532,6 @@ components:
           description: Specifies the type of the resource object.
           type: string
           const: account_tag
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: deb6b25f-8451-4211-9a22-95610333df23
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
     Account:
       type: object
       properties:
@@ -544,13 +564,13 @@ components:
       required:
       - type
       - name
-    RemoveAccountTagsOnAccount:
+    MetaList:
       type: object
       properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/AccountTagsRelationshipIdentifier'
+        page:
+          $ref: '#/components/schemas/MetaListPage'
+        results:
+          $ref: '#/components/schemas/MetaListResults'
     AccountTagsRelationshipResponse:
       type: object
       properties:
@@ -565,13 +585,6 @@ components:
               description: A URL to the specific resource.
               type: string
               example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/relationships/account-tags
-    MetaList:
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/MetaListPage'
-        results:
-          $ref: '#/components/schemas/MetaListResults'
     MetaTimestamps:
       type: object
       properties:
@@ -586,16 +599,51 @@ components:
               description: The date the resource is updated.
               type: string
               example: '2021-02-23T09:40:33.882Z'
-    WritableParentId:
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    RemoveAccountTagsOnAccount:
       type: object
       properties:
-        parent_id:
-          type:
-          - string
-          - 'null'
-          format: uuid
-          description: Specifies the ID of the parent account, this field cannot be changed after creation.
-          example: 96b1f750-55d3-4768-a3f8-adffba694a2c
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountTagsRelationshipIdentifier'
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
     ReadOnlyParentId:
       type: object
       properties:
@@ -664,68 +712,38 @@ components:
                       id:
                         $ref: '#/components/schemas/UUID'
                         description: The unique identifier for an Account.
-    MetaListPage:
-      type: object
-      properties:
-        limit:
-          type: integer
-          description: The maximum number of records per page for this response. You can set this value up to 100.
-          example: 25
-        current:
-          type: integer
-          description: The current page.
-          example: 0
-        offset:
-          type: integer
-          description: The current offset by number of records, not pages. Offset is zero-based.
-          example: 0
-        total:
-          type: integer
-          description: The total page count.
-          example: 1
-    AddAccountTagsOnAccount:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/AccountTagsRelationshipIdentifier'
-    Error:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
+  parameters:
+    page-offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+    filter:
+      name: filter
+      in: query
+      description: Specifies the filter attributes.
+      required: false
+      schema:
+        type: string
+        format: string
+        example: ilike(name,"*swan*")
+    page-limit:
+      name: page[limit]
+      in: query
+      description: The number of records per page.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 25
   responses:
-    ConflictError:
-      description: Conflict
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            conflict-error:
-              value:
-                errors:
-                - title: Conflict
-                  status: '409'
-                  detail: account membership with the given account id and account member id already exists
     BadRequestError:
       description: Bad Request
       content:
@@ -739,6 +757,18 @@ components:
                 - title: Bad Request
                   status: '400'
                   detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized-error:
+              value:
+                errors:
+                - title: Unauthorized
+                  status: '401'
     InternalServerError:
       description: Internal server error.
       content:
@@ -753,19 +783,6 @@ components:
                 - title: Internal Server Error
                   status: '500'
                   detail: there was a problem processing your request
-    NotFoundError:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: account not found
     UnprocessableEntity:
       description: Unprocessable Entity
       content:
@@ -779,49 +796,32 @@ components:
                 - title: Unprocessable Entity
                   status: '422'
                   detail: store id mismatch
-    UnauthorizedError:
-      description: Unauthorized
+    ConflictError:
+      description: Conflict
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           examples:
-            unauthorized-error:
+            conflict-error:
               value:
                 errors:
-                - title: Unauthorized
-                  status: '401'
-  parameters:
-    page-limit:
-      name: page[limit]
-      in: query
-      description: The number of records per page.
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 25
-    filter:
-      name: filter
-      in: query
-      description: Specifies the filter attributes.
-      required: false
-      schema:
-        type: string
-        format: string
-        example: ilike(name,"*swan*")
-    page-offset:
-      name: page[offset]
-      in: query
-      description: The number of records to offset the results by.
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 10
+                - title: Conflict
+                  status: '409'
+                  detail: account membership with the given account id and account member id already exists
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: account not found
   securitySchemes:
     BearerToken:
       type: http

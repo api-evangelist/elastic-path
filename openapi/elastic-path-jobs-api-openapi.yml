@@ -546,37 +546,6 @@ paths:
       description: US east cluster
 components:
   schemas:
-    ReindexTenantReleasesJobRequest:
-      type: object
-      properties:
-        data:
-          description: The primary data for the request.
-          type: object
-          required:
-          - force_reindex
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    JobMetaResult:
-      description: Result of the job
-      type: object
-    JobMetaError:
-      type: object
-      required:
-      - detail
-      properties:
-        detail:
-          description: A string describing the error.
-          type: string
-          example: Failed to get release
-        context:
-          description: Any additional context of the error.
-          type: object
     JobAttributes:
       type: object
       required:
@@ -617,6 +586,26 @@ components:
           x-go-type-import:
             name: model
             path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/model
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    JobMetaError:
+      type: object
+      required:
+      - detail
+      properties:
+        detail:
+          description: A string describing the error.
+          type: string
+          example: Failed to get release
+        context:
+          description: Any additional context of the error.
+          type: object
     Job:
       type: object
       required:
@@ -641,20 +630,17 @@ components:
           $ref: '#/components/schemas/JobAttributes'
         meta:
           $ref: '#/components/schemas/JobMeta'
-    JobMeta:
-      description: Meta information of the job
+    JobMetaResult:
+      description: Result of the job
+      type: object
+    ReindexTenantReleasesJobRequest:
       type: object
       properties:
-        results:
-          description: Results of the job
-          type: array
-          items:
-            $ref: '#/components/schemas/JobMetaResult'
-        errors:
-          description: Errors occurred during the job
-          type: array
-          items:
-            $ref: '#/components/schemas/JobMetaError'
+        data:
+          description: The primary data for the request.
+          type: object
+          required:
+          - force_reindex
     Error:
       required:
       - status
@@ -678,54 +664,20 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    Links:
+    JobMeta:
+      description: Meta information of the job
       type: object
-      description: Links are used to allow you to move between requests
       properties:
-        self:
-          description: Single entities use a self parameter with a link to that specific resource.
-          type: string
-          example: https://useast.api.elasticpath.com/v2/jobs/974c9db4-38da-4dbf-90c2-33eed5f3e77c
-    FileLink:
-      type: object
-      description: A link to the exported data.
-      properties:
-        href:
-          description: The publicly available URL for this CSV file that contains the exported data.
-          type: string
-    UUID:
-      type: string
-      description: A unique ID generated when a job is created.
-      format: uuid
-      example: 00000000-0000-0000-0000-000000000000
-    Error_2:
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: integer
-          format: int
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        request_id:
-          type: string
-          description: Internal request ID.
-          example: 00000000-0000-0000-0000-000000000000
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+        results:
+          description: Results of the job
+          type: array
+          items:
+            $ref: '#/components/schemas/JobMetaResult'
+        errors:
+          description: Errors occurred during the job
+          type: array
+          items:
+            $ref: '#/components/schemas/JobMetaError'
     CreateJob:
       type: object
       properties:
@@ -778,6 +730,54 @@ components:
           $ref: '#/components/schemas/Links'
         link:
           $ref: '#/components/schemas/FileLink'
+    FileLink:
+      type: object
+      description: A link to the exported data.
+      properties:
+        href:
+          description: The publicly available URL for this CSV file that contains the exported data.
+          type: string
+    UUID:
+      type: string
+      description: A unique ID generated when a job is created.
+      format: uuid
+      example: 00000000-0000-0000-0000-000000000000
+    Links:
+      type: object
+      description: Links are used to allow you to move between requests
+      properties:
+        self:
+          description: Single entities use a self parameter with a link to that specific resource.
+          type: string
+          example: https://useast.api.elasticpath.com/v2/jobs/974c9db4-38da-4dbf-90c2-33eed5f3e77c
+    Error_2:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: integer
+          format: int
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        request_id:
+          type: string
+          description: Internal request ID.
+          example: 00000000-0000-0000-0000-000000000000
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     Timestamps:
       type: object
       description: The date and time a job is created/updated.
@@ -790,6 +790,90 @@ components:
           description: The date and time a job is updated.
           type: string
           example: '2018-10-04T11:08:49.162867081Z'
+    single:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/job'
+    multi_links:
+      type: object
+      description: 'Links allow you to navigate between pages of results.
+
+
+        :::caution Planned pagination changes — on or after 1 September 2026
+
+
+        The pagination behaviour of PIM list endpoints (for example, `GET /pcm/products` and `GET /pcm/hierarchies`) currently differs from the rest of the Elastic Path Commerce Cloud platform. We plan to align PIM pagination with the platform standard on or after **1 September 2026**. Please review the details below and check that your integration code will handle the new behaviour correctly.
+
+
+        :::
+
+
+        #### Current behaviour
+
+
+        The current pagination link behaviour in PIM has the following known issues:
+
+
+        - The `current` link is **not returned**.
+
+        - The `first` and `last` links are **not always returned**.
+
+        - The `prev` link is omitted on both the first **and** second pages. It should only be omitted on the first page.
+
+        - The `next` link is omitted on both the last **and** second-to-last pages. It should only be omitted on the last page.
+
+
+        #### Planned behaviour (on or after 1 September 2026)
+
+
+        On or after 1 September 2026, PIM list endpoints will adopt the following pagination link behaviour, aligning with the rest of the platform:
+
+
+        - `current` — always present, pointing to the current page.
+
+        - `first` — always present.
+
+        - `last` — present on all pages **except the final page**. Omitting `last` on the final page is intentional, to avoid triggering infinite‑loop bugs in integration code that uses the presence of `last` to detect whether more pages remain.
+
+        - `next` — present on all pages except the last page.
+
+        - `prev` — present on all pages except the first page.
+
+        '
+      properties:
+        current:
+          description: 'A link to the current page of results. **Note:** this link is not currently returned by PIM endpoints. It will be introduced on or after 1 September 2026.
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=10&page[limit]=10
+        first:
+          description: 'A link to the first page of results. Currently this may not always be present. After the planned changes it will always be present.
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=0&page[limit]=10
+        last:
+          description: 'A link to the last page of results. Currently this may not always be present. After the planned changes it will be present on all pages except the final page (where it is intentionally omitted).
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=20&page[limit]=10
+        next:
+          description: 'A link to the next page of results. Should be absent on the last page. Currently this is incorrectly absent on the second-to-last page as well; this will be fixed on or after 1 September 2026.
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=10&page[limit]=10
+        prev:
+          description: 'A link to the previous page of results. Should be absent on the first page. Currently this is incorrectly absent on the second page as well; this will be fixed on or after 1 September 2026.
+
+            '
+          type: string
+          example: /pcm/hierarchies?page[offset]=8&page[limit]=10
     multi:
       type: object
       required:
@@ -818,49 +902,6 @@ components:
                   description: Total number of results for the entire collection.
                   type: integer
                   example: 2
-    errors:
-      type: object
-      required:
-      - data
-      - meta
-      properties:
-        links:
-          $ref: '#/components/schemas/multi_links'
-        meta:
-          type: object
-          required:
-          - results
-          properties:
-            results:
-              type: object
-              required:
-              - total
-              properties:
-                total:
-                  type: integer
-                  description: Total number of job errors for this job.
-        data:
-          type: array
-          description: An array of job errors.
-          items:
-            type: object
-            properties:
-              type:
-                description: This represents the type of resource object being returned. Always `pim-job-error`.
-                type: string
-                example: pim-job-error
-                enum:
-                - pim-job-error
-              id:
-                description: A unique identifier for a job error generated when a job error is created.
-                type: string
-              attributes:
-                type: object
-                properties:
-                  message:
-                    description: A description of an error message.
-                    type: string
-                    example: 'data.attributes.sku: Must be unique amongst products.'
     job:
       type: object
       required:
@@ -969,90 +1010,49 @@ components:
               - string
               - 'null'
               description: The entities included in the job. For example, if the job type is `product-export`, the PXM products included in the export.
-    single:
+    errors:
       type: object
       required:
       - data
+      - meta
       properties:
+        links:
+          $ref: '#/components/schemas/multi_links'
+        meta:
+          type: object
+          required:
+          - results
+          properties:
+            results:
+              type: object
+              required:
+              - total
+              properties:
+                total:
+                  type: integer
+                  description: Total number of job errors for this job.
         data:
-          $ref: '#/components/schemas/job'
-    multi_links:
-      type: object
-      description: 'Links allow you to navigate between pages of results.
-
-
-        :::caution Planned pagination changes — on or after 1 September 2026
-
-
-        The pagination behaviour of PIM list endpoints (for example, `GET /pcm/products` and `GET /pcm/hierarchies`) currently differs from the rest of the Elastic Path Commerce Cloud platform. We plan to align PIM pagination with the platform standard on or after **1 September 2026**. Please review the details below and check that your integration code will handle the new behaviour correctly.
-
-
-        :::
-
-
-        #### Current behaviour
-
-
-        The current pagination link behaviour in PIM has the following known issues:
-
-
-        - The `current` link is **not returned**.
-
-        - The `first` and `last` links are **not always returned**.
-
-        - The `prev` link is omitted on both the first **and** second pages. It should only be omitted on the first page.
-
-        - The `next` link is omitted on both the last **and** second-to-last pages. It should only be omitted on the last page.
-
-
-        #### Planned behaviour (on or after 1 September 2026)
-
-
-        On or after 1 September 2026, PIM list endpoints will adopt the following pagination link behaviour, aligning with the rest of the platform:
-
-
-        - `current` — always present, pointing to the current page.
-
-        - `first` — always present.
-
-        - `last` — present on all pages **except the final page**. Omitting `last` on the final page is intentional, to avoid triggering infinite‑loop bugs in integration code that uses the presence of `last` to detect whether more pages remain.
-
-        - `next` — present on all pages except the last page.
-
-        - `prev` — present on all pages except the first page.
-
-        '
-      properties:
-        current:
-          description: 'A link to the current page of results. **Note:** this link is not currently returned by PIM endpoints. It will be introduced on or after 1 September 2026.
-
-            '
-          type: string
-          example: /pcm/hierarchies?page[offset]=10&page[limit]=10
-        first:
-          description: 'A link to the first page of results. Currently this may not always be present. After the planned changes it will always be present.
-
-            '
-          type: string
-          example: /pcm/hierarchies?page[offset]=0&page[limit]=10
-        last:
-          description: 'A link to the last page of results. Currently this may not always be present. After the planned changes it will be present on all pages except the final page (where it is intentionally omitted).
-
-            '
-          type: string
-          example: /pcm/hierarchies?page[offset]=20&page[limit]=10
-        next:
-          description: 'A link to the next page of results. Should be absent on the last page. Currently this is incorrectly absent on the second-to-last page as well; this will be fixed on or after 1 September 2026.
-
-            '
-          type: string
-          example: /pcm/hierarchies?page[offset]=10&page[limit]=10
-        prev:
-          description: 'A link to the previous page of results. Should be absent on the first page. Currently this is incorrectly absent on the second page as well; this will be fixed on or after 1 September 2026.
-
-            '
-          type: string
-          example: /pcm/hierarchies?page[offset]=8&page[limit]=10
+          type: array
+          description: An array of job errors.
+          items:
+            type: object
+            properties:
+              type:
+                description: This represents the type of resource object being returned. Always `pim-job-error`.
+                type: string
+                example: pim-job-error
+                enum:
+                - pim-job-error
+              id:
+                description: A unique identifier for a job error generated when a job error is created.
+                type: string
+              attributes:
+                type: object
+                properties:
+                  message:
+                    description: A description of an error message.
+                    type: string
+                    example: 'data.attributes.sku: Must be unique amongst products.'
     error:
       required:
       - errors
@@ -1086,33 +1086,74 @@ components:
                 example:
                   missing_ids:
                   - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    UUID_2:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 11111111-2222-3333-4444-555555555555
-    SubscriptionUpdateReport:
+    JobAttributes_2:
       required:
-      - subscriptions_updated
-      - subscription_failures
-      - total_processed
+      - status
       properties:
-        subscriptions_updated:
-          description: The total number of subscriptions updated.
-          type: integer
-          example: 100
-        subscription_failures:
-          description: The total number of subscriptions that failed to be updated.
-          type: integer
-          example: 0
-        total_processed:
-          description: The total number of subscriptions processed.
-          type: integer
-          example: 100
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+        status:
+          type: string
+          description: The status of job.
+          enum:
+          - pending
+          - started
+          - success
+          - failed
+          example: pending
+          x-go-type: model.JobStatus
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+    JobReport:
+      description: You can track your Subscriptions billing, tax, and payment operations using reports.
+      oneOf:
+      - $ref: '#/components/schemas/BillingRunReport'
+      - $ref: '#/components/schemas/TaxRunReport'
+      - $ref: '#/components/schemas/PaymentRunReport'
+      - $ref: '#/components/schemas/NotificationRunReport'
+      - $ref: '#/components/schemas/SubscriptionUpdateReport'
+    Price:
+      additionalProperties:
+        type: object
+        description: The base price.
+        required:
+        - amount
+        properties:
+          amount:
+            type: integer
+            format: int64
+            minimum: 0
+            example: 100
+            description: The value as a whole number of the currency's smallest subdivision.
+          includes_tax:
+            type: boolean
+            example: true
+            description: Indicates whether the amount includes any taxes.
+      example:
+        USD:
+          amount: 100
+          includes_tax: false
+        GBP:
+          amount: 90
+          includes_tax: true
+    BillingRunJobAttributes:
+      required:
+      - job_type
+      properties:
+        job_type:
+          type: string
+          example: billing-run
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
     SubscriptionUpdateRunJobAttributes:
       required:
       - job_type
@@ -1150,17 +1191,66 @@ components:
           x-go-type-skip-optional-pointer: true
         price_changes:
           $ref: '#/components/schemas/SubscriptionPriceChanges'
-    PricingOptionPrice:
+    Relationship:
+      anyOf:
+      - $ref: '#/components/schemas/SingleRelationship'
+      - $ref: '#/components/schemas/ManyRelationship'
+    PaymentRunReport:
+      required:
+      - total_payment_attempts
+      - failed_payments
+      - total_collected
       properties:
-        base_price_percentage:
-          type: number
-          format: double
-          description: A percentage discount on the total cost of any plans within an offering. For example, you can configure a percentage that equates the cost of a pricing option to the total value of all plans within the offering, reduced by a percentage. For example, if you specify `10`, a 10% discount is applied to the total value of all repeat plans in an offering.
-          example: 90
-          minimum: 0
-          maximum: 100
-        fixed_price:
-          $ref: '#/components/schemas/Price'
+        total_payment_attempts:
+          description: The total number of invoices for which payment was attempted.
+          type: integer
+          example: 100
+        failed_payments:
+          description: The number of failed payment attempts.
+          type: integer
+          example: 0
+        total_collected:
+          allOf:
+          - description: The total amount collected by the payment run, segmented by currency.
+          - $ref: '#/components/schemas/Price'
+    Relationships:
+      description: Relationships are established between different subscription entities. For example, a plan and a pricing option are related to an offering, as both are attached to it.
+      additionalProperties:
+        $ref: '#/components/schemas/Relationship'
+      example:
+        pricing-options:
+          links:
+            related: /offerings/:offering-id/pricing-options
+            self: /offerings/:offering-id
+          data:
+            type: offering-pricing-option
+            id: 625fe958-7b4b-40a0-a2c0-dbb8f31eec0d
+    SubscriptionJobType:
+      type: string
+      example: subscription_job
+      enum:
+      - subscription_job
+    RelationshipLinks:
+      description: "Links are used to allow you, as an API consumer, to move between requests. Single entities use a self parameter with a link to that specific resource. Sometimes, there aren’t enough entities for a project to fill multiple pages. In this situation, we return some defaults, instead of expecting you to check for these special cases. \n\n - current - Always the current page.\n - first - Always the first page.\n - last - always `null`.\n - next - `null` if the user is on the first page.\n - previous - `null` if there is only one page.\n"
+      type: object
+      properties:
+        related:
+          type: string
+          example: foo.bar
+    ExternalRef:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
+    JobCreate:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/SubscriptionJobType'
+        attributes:
+          $ref: '#/components/schemas/JobCreateAttributes'
     NotificationRunReport:
       required:
       - total_notifications_sent
@@ -1174,16 +1264,26 @@ components:
           description: The number of failed notifications.
           type: integer
           example: 0
-    ExternalRef:
-      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-      type: string
-      example: abc123
-      maxLength: 2048
-    SubscriptionJobType:
-      type: string
-      example: subscription_job
-      enum:
-      - subscription_job
+    SingleRelationship:
+      description: The subscription resource that is related.
+      properties:
+        data:
+          $ref: '#/components/schemas/RelationshipData'
+        links:
+          $ref: '#/components/schemas/RelationshipLinks'
+    Timestamps_2:
+      required:
+      - created_at
+      - updated_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
     Job_3:
       required:
       - type
@@ -1200,23 +1300,6 @@ components:
           $ref: '#/components/schemas/Relationships'
         meta:
           $ref: '#/components/schemas/JobMeta_2'
-    JobResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/JobCreateAttributes'
-      - $ref: '#/components/schemas/JobAttributes_2'
-      - $ref: '#/components/schemas/Timestamps_2'
-    Links_2:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
-    JobReport:
-      description: You can track your Subscriptions billing, tax, and payment operations using reports.
-      oneOf:
-      - $ref: '#/components/schemas/BillingRunReport'
-      - $ref: '#/components/schemas/TaxRunReport'
-      - $ref: '#/components/schemas/PaymentRunReport'
-      - $ref: '#/components/schemas/NotificationRunReport'
-      - $ref: '#/components/schemas/SubscriptionUpdateReport'
     TaxRunJobAttributes:
       required:
       - job_type
@@ -1229,113 +1312,6 @@ components:
           minItems: 1
           items:
             $ref: '#/components/schemas/InvoiceTaxItems'
-    Price:
-      additionalProperties:
-        type: object
-        description: The base price.
-        required:
-        - amount
-        properties:
-          amount:
-            type: integer
-            format: int64
-            minimum: 0
-            example: 100
-            description: The value as a whole number of the currency's smallest subdivision.
-          includes_tax:
-            type: boolean
-            example: true
-            description: Indicates whether the amount includes any taxes.
-      example:
-        USD:
-          amount: 100
-          includes_tax: false
-        GBP:
-          amount: 90
-          includes_tax: true
-    SingleRelationship:
-      description: The subscription resource that is related.
-      properties:
-        data:
-          $ref: '#/components/schemas/RelationshipData'
-        links:
-          $ref: '#/components/schemas/RelationshipLinks'
-    JobTimestamps:
-      allOf:
-      - $ref: '#/components/schemas/Timestamps_2'
-      - properties:
-          started_at:
-            description: The date and time a job is started.
-            type: string
-            example: '2017-01-10T11:41:19.244842Z'
-          finished_at:
-            description: The date and time a job finished.
-            type: string
-            example: '2017-01-10T11:41:19.244842Z'
-    Relationship:
-      anyOf:
-      - $ref: '#/components/schemas/SingleRelationship'
-      - $ref: '#/components/schemas/ManyRelationship'
-    RelationshipData:
-      type: object
-      required:
-      - id
-      - type
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID_2'
-        type:
-          type: string
-          description: This represents the type of resource being returned.
-          example: 11111111-2222-3333-4444-555555555555
-    RelationshipLinks:
-      description: "Links are used to allow you, as an API consumer, to move between requests. Single entities use a self parameter with a link to that specific resource. Sometimes, there aren’t enough entities for a project to fill multiple pages. In this situation, we return some defaults, instead of expecting you to check for these special cases. \n\n - current - Always the current page.\n - first - Always the first page.\n - last - always `null`.\n - next - `null` if the user is on the first page.\n - previous - `null` if there is only one page.\n"
-      type: object
-      properties:
-        related:
-          type: string
-          example: foo.bar
-    JobCreate:
-      required:
-      - type
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/SubscriptionJobType'
-        attributes:
-          $ref: '#/components/schemas/JobCreateAttributes'
-    JobMeta_2:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/JobTimestamps'
-        report:
-          $ref: '#/components/schemas/JobReport'
-    OwnerMeta:
-      readOnly: true
-      type: string
-      format: string
-      description: The owner of a resource, either `store` or `organization`.
-      example: store
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
     TaxItem:
       required:
       - type
@@ -1367,56 +1343,108 @@ components:
           type: string
           maxLength: 1024
           example: USA
-    NotificationRunJobAttributes:
+    SubscriptionUpdateReport:
+      required:
+      - subscriptions_updated
+      - subscription_failures
+      - total_processed
+      properties:
+        subscriptions_updated:
+          description: The total number of subscriptions updated.
+          type: integer
+          example: 100
+        subscription_failures:
+          description: The total number of subscriptions that failed to be updated.
+          type: integer
+          example: 0
+        total_processed:
+          description: The total number of subscriptions processed.
+          type: integer
+          example: 100
+    RelationshipData:
+      type: object
+      required:
+      - id
+      - type
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID_2'
+        type:
+          type: string
+          description: This represents the type of resource being returned.
+          example: 11111111-2222-3333-4444-555555555555
+    PricingOptionPrice:
+      properties:
+        base_price_percentage:
+          type: number
+          format: double
+          description: A percentage discount on the total cost of any plans within an offering. For example, you can configure a percentage that equates the cost of a pricing option to the total value of all plans within the offering, reduced by a percentage. For example, if you specify `10`, a 10% discount is applied to the total value of all repeat plans in an offering.
+          example: 90
+          minimum: 0
+          maximum: 100
+        fixed_price:
+          $ref: '#/components/schemas/Price'
+    JobResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/JobCreateAttributes'
+      - $ref: '#/components/schemas/JobAttributes_2'
+      - $ref: '#/components/schemas/Timestamps_2'
+    BillingRunReport:
+      required:
+      - invoices_ready_for_payment
+      - invoices_tax_required
+      - invoice_failures
+      - total_ready_for_payment
+      - total_tax_required
+      properties:
+        invoices_ready_for_payment:
+          description: The total number of invoices created that are ready for payment.
+          type: integer
+          example: 100
+        invoices_tax_required:
+          description: The total number of invoices created that need taxes to be applied before payment can be made.
+          type: integer
+          example: 100
+        invoice_failures:
+          description: The total number of invoices that were scheduled but creation failed.
+          type: integer
+          example: 0
+        total_ready_for_payment:
+          allOf:
+          - description: The total amount ready for payment invoiced in the billing run, segmented by currency.
+          - $ref: '#/components/schemas/Price'
+        total_tax_required:
+          allOf:
+          - description: The total amount (excluding tax) invoiced in the billing run but still requiring taxes, segmented by currency.
+          - $ref: '#/components/schemas/Price'
+    UUID_2:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    ImportJobAttributes:
       required:
       - job_type
       properties:
         job_type:
           type: string
-          example: notification-run
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    JobAttributes_2:
+          example: import
+    JobMeta_2:
+      readOnly: true
       required:
-      - status
+      - owner
+      - timestamps
       properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRef'
-        status:
-          type: string
-          description: The status of job.
-          enum:
-          - pending
-          - started
-          - success
-          - failed
-          example: pending
-          x-go-type: model.JobStatus
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-    PaymentRunReport:
-      required:
-      - total_payment_attempts
-      - failed_payments
-      - total_collected
-      properties:
-        total_payment_attempts:
-          description: The total number of invoices for which payment was attempted.
-          type: integer
-          example: 100
-        failed_payments:
-          description: The number of failed payment attempts.
-          type: integer
-          example: 0
-        total_collected:
-          allOf:
-          - description: The total amount collected by the payment run, segmented by currency.
-          - $ref: '#/components/schemas/Price'
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/JobTimestamps'
+        report:
+          $ref: '#/components/schemas/JobReport'
     JobCreateAttributes:
       required:
       - job_type
@@ -1451,13 +1479,83 @@ components:
           import: '#/components/schemas/ImportJobAttributes'
           notification-run: '#/components/schemas/NotificationRunJobAttributes'
           subscription-update: '#/components/schemas/SubscriptionUpdateRunJobAttributes'
-    ImportJobAttributes:
+    InvoiceTaxItems:
+      required:
+      - invoice_id
+      - tax_items
+      properties:
+        invoice_id:
+          $ref: '#/components/schemas/UUID_2'
+        tax_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxItem'
+    JobTimestamps:
+      allOf:
+      - $ref: '#/components/schemas/Timestamps_2'
+      - properties:
+          started_at:
+            description: The date and time a job is started.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+          finished_at:
+            description: The date and time a job finished.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+    TaxRunReport:
+      required:
+      - invoices_updated
+      - invoice_failures
+      properties:
+        invoices_updated:
+          description: The total number of invoices to which tax was successfully added.
+          type: integer
+          example: 100
+        invoice_failures:
+          description: The total number of invoices to which tax could not be added.
+          type: integer
+          example: 0
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    NotificationRunJobAttributes:
       required:
       - job_type
       properties:
         job_type:
           type: string
-          example: import
+          example: notification-run
+    ManyRelationship:
+      description: The list of resources that are related.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipData'
+        links:
+          $ref: '#/components/schemas/RelationshipLinks'
+    PaymentRunJobAttributes:
+      required:
+      - job_type
+      properties:
+        job_type:
+          type: string
+          example: payment-run
+    Links_2:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
     SubscriptionPriceChanges:
       properties:
         plan_prices:
@@ -1486,110 +1584,12 @@ components:
               GBP:
                 amount: 90
                 includes_tax: true
-    Timestamps_2:
-      required:
-      - created_at
-      - updated_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    Relationships:
-      description: Relationships are established between different subscription entities. For example, a plan and a pricing option are related to an offering, as both are attached to it.
-      additionalProperties:
-        $ref: '#/components/schemas/Relationship'
-      example:
-        pricing-options:
-          links:
-            related: /offerings/:offering-id/pricing-options
-            self: /offerings/:offering-id
-          data:
-            type: offering-pricing-option
-            id: 625fe958-7b4b-40a0-a2c0-dbb8f31eec0d
-    PaymentRunJobAttributes:
-      required:
-      - job_type
-      properties:
-        job_type:
-          type: string
-          example: payment-run
-    BillingRunJobAttributes:
-      required:
-      - job_type
-      properties:
-        job_type:
-          type: string
-          example: billing-run
-    TaxRunReport:
-      required:
-      - invoices_updated
-      - invoice_failures
-      properties:
-        invoices_updated:
-          description: The total number of invoices to which tax was successfully added.
-          type: integer
-          example: 100
-        invoice_failures:
-          description: The total number of invoices to which tax could not be added.
-          type: integer
-          example: 0
-    ManyRelationship:
-      description: The list of resources that are related.
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/RelationshipData'
-        links:
-          $ref: '#/components/schemas/RelationshipLinks'
-    BillingRunReport:
-      required:
-      - invoices_ready_for_payment
-      - invoices_tax_required
-      - invoice_failures
-      - total_ready_for_payment
-      - total_tax_required
-      properties:
-        invoices_ready_for_payment:
-          description: The total number of invoices created that are ready for payment.
-          type: integer
-          example: 100
-        invoices_tax_required:
-          description: The total number of invoices created that need taxes to be applied before payment can be made.
-          type: integer
-          example: 100
-        invoice_failures:
-          description: The total number of invoices that were scheduled but creation failed.
-          type: integer
-          example: 0
-        total_ready_for_payment:
-          allOf:
-          - description: The total amount ready for payment invoiced in the billing run, segmented by currency.
-          - $ref: '#/components/schemas/Price'
-        total_tax_required:
-          allOf:
-          - description: The total amount (excluding tax) invoiced in the billing run but still requiring taxes, segmented by currency.
-          - $ref: '#/components/schemas/Price'
-    InvoiceTaxItems:
-      required:
-      - invoice_id
-      - tax_items
-      properties:
-        invoice_id:
-          $ref: '#/components/schemas/UUID_2'
-        tax_items:
-          type: array
-          items:
-            $ref: '#/components/schemas/TaxItem'
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.
@@ -1603,6 +1603,16 @@ components:
                 errors:
                 - title: Internal Server Error
                   status: '500'
+    NotFoundError:
+      description: Forbidden. The operation is forbidden on this entity.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+            example:
+              title: Resource Not Found
+              status: 404
+              detail: The resource you are requesting does not exist
     InternalServerError_2:
       description: Internal server error. There was a system failure in the platform.
       content:
@@ -1617,16 +1627,6 @@ components:
                   title: Internal Server Error
                   detail: There was an internal server error, you can report with your request id.
                   request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
-    NotFoundError:
-      description: Forbidden. The operation is forbidden on this entity.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-            example:
-              title: Resource Not Found
-              status: 404
-              detail: The resource you are requesting does not exist
     internal:
       description: Internal server error. There was a system failure in the platform.
       content:
@@ -1641,18 +1641,6 @@ components:
                   title: Internal Server Error
                   detail: There was an internal server error, you can report with your request id.
                   request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
-    not_found:
-      description: Bad Request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
     unprocessable_entity:
       description: Bad request. The request failed validation.
       content:
@@ -1666,6 +1654,18 @@ components:
                 - title: Failed Validation
                   status: '422'
                   detail: <XYZ> can not be empty
+    not_found:
+      description: Bad Request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
     bad_request:
       description: Bad request. The request failed validation.
       content:
@@ -1679,19 +1679,6 @@ components:
                 - title: Bad Request
                   detail: Could not parse the supplied filter
                   status: '400'
-    NotFoundError_2:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No plan found
     ValidationError:
       description: Bad request. The request failed validation.
       content:
@@ -1715,7 +1702,118 @@ components:
             errors:
             - title: Write Conflict
               status: '409'
+    NotFoundError_2:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No plan found
   examples:
+    product-export:
+      value:
+        data:
+          type: pim-job
+          id: 7e1b9ba1-c844-4556-9b16-4ae3f0988b0f
+          attributes:
+            completed_at: '2024-01-05T15:27:23.663Z'
+            created_at: '2024-01-05T15:27:23.161Z'
+            started_at: '2024-01-05T15:27:23.65Z'
+            status: success
+            type: product-export
+            updated_at: '2024-01-05T15:27:23.65Z'
+          meta:
+            file_locations: []
+            filter: eq(sku,product-1)
+            x_request_id: fad8c5c0-9546-4e0c-b68e-8a2d809891e5
+    hierarchy-duplicate:
+      value:
+        data:
+          type: pim-job
+          id: 5ba1c98d-87b8-4d63-b2ed-3d3c6c876523
+          attributes:
+            completed_at: '2024-01-08T11:56:29.257Z'
+            created_at: '2024-01-08T11:56:27.553Z'
+            started_at: '2024-01-08T11:56:29.222Z'
+            status: success
+            type: hierarchy-duplicate
+            updated_at: '2024-01-08T11:56:29.237Z'
+          meta:
+            copied_from: 5b912d00-db5a-4e18-86f2-3a652967ee48
+            hierarchy_id: c05bfefc-8de4-43ea-858b-eb8984ad9f8f
+            x_request_id: an-x-request-id
+    errors:
+      value:
+        data:
+        - type: pim-job-error
+          id: 2950cae3-1050-4c43-9fbd-2aa60dc5c249
+          attributes:
+            message: 'data.attributes.sku: Must be unique amongst products.'
+        meta:
+          results:
+            total: 1
+    cancelled:
+      value:
+        data:
+          type: pim-job
+          id: 1e5da4bf-b2c0-4619-bb3d-f749875b15bb
+          attributes:
+            started_at: null
+            completed_at: null
+            created_at: '2023-11-14T15:37:13.589Z'
+            status: cancelled
+            type: product-import
+            updated_at: '2023-11-14T15:37:13.589Z'
+          meta:
+            x_request_id: 4fde01c1-95ba-4dd6-948e-b9d5763ff9c2
+    successful:
+      value:
+        data:
+          type: pim-job
+          id: 1ea62172-57f6-45e5-a708-ab5bd634e3f9
+          attributes:
+            completed_at: '2024-01-05T13:46:42.142Z'
+            created_at: '2024-01-05T13:46:41.695Z'
+            started_at: '2024-01-05T13:46:42.07Z'
+            status: success
+            type: product-import
+            updated_at: '2024-01-05T13:46:42.07Z'
+          meta:
+            x_request_id: 7e832a26-d615-4305-b26a-e33c9c2fc06a
+    build-child-products:
+      value:
+        data:
+          type: pim-job
+          id: 14a0a190-cd03-4d7f-a449-e2051ac539ea
+          attributes:
+            completed_at: '2024-01-08T11:58:19.113Z'
+            created_at: '2024-01-08T11:58:04.416Z'
+            started_at: '2024-01-08T11:58:19.067Z'
+            status: success
+            type: child-products
+            updated_at: '2024-01-08T11:58:19.067Z'
+          meta:
+            x_request_id: an-x-request-id
+    started:
+      value:
+        data:
+          type: pim-job
+          id: 1ea62172-57f6-45e5-a708-ab5bd634e3f9
+          attributes:
+            started_at: null
+            completed_at: null
+            created_at: '2024-01-05T13:46:41.695Z'
+            status: started
+            type: product-import
+            updated_at: '2024-01-05T13:46:42.07Z'
+          meta:
+            x_request_id: 7e832a26-d615-4305-b26a-e33c9c2fc06a
     multi:
       value:
         data:
@@ -1757,104 +1855,6 @@ components:
         meta:
           results:
             total: 1
-    hierarchy-duplicate:
-      value:
-        data:
-          type: pim-job
-          id: 5ba1c98d-87b8-4d63-b2ed-3d3c6c876523
-          attributes:
-            completed_at: '2024-01-08T11:56:29.257Z'
-            created_at: '2024-01-08T11:56:27.553Z'
-            started_at: '2024-01-08T11:56:29.222Z'
-            status: success
-            type: hierarchy-duplicate
-            updated_at: '2024-01-08T11:56:29.237Z'
-          meta:
-            copied_from: 5b912d00-db5a-4e18-86f2-3a652967ee48
-            hierarchy_id: c05bfefc-8de4-43ea-858b-eb8984ad9f8f
-            x_request_id: an-x-request-id
-    product-export:
-      value:
-        data:
-          type: pim-job
-          id: 7e1b9ba1-c844-4556-9b16-4ae3f0988b0f
-          attributes:
-            completed_at: '2024-01-05T15:27:23.663Z'
-            created_at: '2024-01-05T15:27:23.161Z'
-            started_at: '2024-01-05T15:27:23.65Z'
-            status: success
-            type: product-export
-            updated_at: '2024-01-05T15:27:23.65Z'
-          meta:
-            file_locations: []
-            filter: eq(sku,product-1)
-            x_request_id: fad8c5c0-9546-4e0c-b68e-8a2d809891e5
-    cancelled:
-      value:
-        data:
-          type: pim-job
-          id: 1e5da4bf-b2c0-4619-bb3d-f749875b15bb
-          attributes:
-            started_at: null
-            completed_at: null
-            created_at: '2023-11-14T15:37:13.589Z'
-            status: cancelled
-            type: product-import
-            updated_at: '2023-11-14T15:37:13.589Z'
-          meta:
-            x_request_id: 4fde01c1-95ba-4dd6-948e-b9d5763ff9c2
-    build-child-products:
-      value:
-        data:
-          type: pim-job
-          id: 14a0a190-cd03-4d7f-a449-e2051ac539ea
-          attributes:
-            completed_at: '2024-01-08T11:58:19.113Z'
-            created_at: '2024-01-08T11:58:04.416Z'
-            started_at: '2024-01-08T11:58:19.067Z'
-            status: success
-            type: child-products
-            updated_at: '2024-01-08T11:58:19.067Z'
-          meta:
-            x_request_id: an-x-request-id
-    successful:
-      value:
-        data:
-          type: pim-job
-          id: 1ea62172-57f6-45e5-a708-ab5bd634e3f9
-          attributes:
-            completed_at: '2024-01-05T13:46:42.142Z'
-            created_at: '2024-01-05T13:46:41.695Z'
-            started_at: '2024-01-05T13:46:42.07Z'
-            status: success
-            type: product-import
-            updated_at: '2024-01-05T13:46:42.07Z'
-          meta:
-            x_request_id: 7e832a26-d615-4305-b26a-e33c9c2fc06a
-    errors:
-      value:
-        data:
-        - type: pim-job-error
-          id: 2950cae3-1050-4c43-9fbd-2aa60dc5c249
-          attributes:
-            message: 'data.attributes.sku: Must be unique amongst products.'
-        meta:
-          results:
-            total: 1
-    started:
-      value:
-        data:
-          type: pim-job
-          id: 1ea62172-57f6-45e5-a708-ab5bd634e3f9
-          attributes:
-            started_at: null
-            completed_at: null
-            created_at: '2024-01-05T13:46:41.695Z'
-            status: started
-            type: product-import
-            updated_at: '2024-01-05T13:46:42.07Z'
-          meta:
-            x_request_id: 7e832a26-d615-4305-b26a-e33c9c2fc06a
   parameters:
     job_id:
       name: jobID
@@ -1864,17 +1864,6 @@ components:
         example: 00000000-0000-0000-0000-000000000000
       required: true
       description: A unique identifier for the job.
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 10
     Filter:
       name: filter
       in: query
@@ -1886,6 +1875,17 @@ components:
 
           '
         example: eq(name,Alan Turing)
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
     PageLimit:
       name: page[limit]
       description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.

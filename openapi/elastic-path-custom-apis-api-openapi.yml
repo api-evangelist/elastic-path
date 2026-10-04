@@ -172,187 +172,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  responses:
-    ConflictError:
-      description: Unable to perform the operation at this time.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Errors'
-          examples:
-            Duplicate Custom API:
-              summary: Duplicate Custom API
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Conflict\",\n      \"status\": \"409\",\n      \"detail\": \"custom_api with the given api_type already exists\"\n    }\n  ]\n}\n"
-            Duplicate Custom Field:
-              summary: Duplicate Custom Field
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Conflict\",\n      \"status\": \"409\",\n      \"detail\": \"custom_field with the given slug already exists\"\n    }\n  ]\n}\n"
-    ListOfCustomAPIs:
-      description: List of Custom APIs
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CustomAPI'
-              meta:
-                $ref: '#/components/schemas/PaginationMeta'
-              links:
-                $ref: '#/components/schemas/PaginationLinks'
-    CustomAPI:
-      description: A Custom API
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              data:
-                $ref: '#/components/schemas/CustomAPI'
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Errors'
-          examples:
-            Internal Server Error:
-              summary: Internal server error
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Errors'
-          examples:
-            Not Found:
-              summary: Requested entity not found
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Not Found\",\n      \"status\": \"404\",\n      \"detail\": \"Not found\"\n    }\n  ]\n}\n"
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Errors'
-          examples:
-            Missing Name:
-              summary: Required field missing
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Bad Request\",\n      \"status\": \"400\",\n      \"detail\": \"The field 'name' is required.\"\n    }\n  ]\n}\n"
-    BadFilterError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Errors'
-          examples:
-            Bad Filter:
-              summary: Invalid field specified for filter
-              value: "{\n  \"errors\": [\n    {\n      \"detail\": \"Invalid filter: unknown field [version] specified in search filter, allowed fields are [api_type created_at description id name slug updated_at]\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}\n"
-  parameters:
-    Filter:
-      name: filter
-      in: query
-      required: false
-      description: Filter attributes. For more information, see the [Filtering](/guides/Getting-Started/filtering) section.
-      schema:
-        type: string
-        format: string
-        example: eq(name,"My Wishlist")
-    PageLimit:
-      name: page[limit]
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 100
-    CustomAPIID:
-      name: custom-api-id
-      description: The unique identifier of the Custom API.
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-    CustomAPISort:
-      name: sort
-      in: query
-      description: 'Specifies the order in which Custom APIs will be returned. For more information, see [Sorting](/guides/Getting-Started/sorting).
-
-        '
-      required: false
-      schema:
-        type: string
-        default: -created_at
-        enum:
-        - id
-        - -id
-        - created_at
-        - -created_at
-        - updated_at
-        - -updated_at
-        - api_type
-        - -api_type
-        - name
-        - -name
-        - slug
-        - -slug
-        example: id
-        x-enumDescriptions:
-          id: Sort by UUID string in ascending order
-          -id: Sort by UUID string in descending order
-          created_at: Sort chronologically from oldest to newest creation date
-          -created_at: Sort chronologically from newest to oldest creation date
-          updated_at: Sort chronologically from oldest to newest update date
-          -updated_at: Sort chronologically from newest to oldest update date
-          api_type: Sort API types alphabetically (A-Z)
-          -api_type: Sort API types reverse alphabetically (Z-A)
-          name: Sort names alphabetically (A-Z)
-          -name: Sort names reverse alphabetically (Z-A)
-          slug: Sort slugs alphabetically (A-Z)
-          -slug: Sort slugs reverse alphabetically (Z-A)
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 0
   schemas:
-    CustomAPIRelationships:
-      type: object
-      properties:
-        parent_apis:
-          type: object
-          properties:
-            data:
-              type: array
-              items:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: 'The unique identifier for the related Custom API. When the `type` of an object is set to `api_location` then `id` must be `/v2/extensions`.
-
-                      When the `type` of an object is set to `custom_api`, then `id` must be that of a Custom API that results in a relationship that does not have a depth exceeding 2 and does not result in a cycle.
-
-                      '
-                    example: 652e39d8-d613-493e-8c20-fef99ad6327a
-                  type:
-                    type: string
-                    description: Specifies the type of parent relationship, can be `custom_api` or `api_location`.
-                    enum:
-                    - custom_api
-                    - api_location
     PaginationLinks:
       type: object
       properties:
@@ -386,6 +206,31 @@ components:
       properties:
         timestamps:
           $ref: '#/components/schemas/Timestamps'
+    CustomAPIRelationships:
+      type: object
+      properties:
+        parent_apis:
+          type: object
+          properties:
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: 'The unique identifier for the related Custom API. When the `type` of an object is set to `api_location` then `id` must be `/v2/extensions`.
+
+                      When the `type` of an object is set to `custom_api`, then `id` must be that of a Custom API that results in a relationship that does not have a depth exceeding 2 and does not result in a cycle.
+
+                      '
+                    example: 652e39d8-d613-493e-8c20-fef99ad6327a
+                  type:
+                    type: string
+                    description: Specifies the type of parent relationship, can be `custom_api` or `api_location`.
+                    enum:
+                    - custom_api
+                    - api_location
     Timestamps:
       type: object
       properties:
@@ -397,6 +242,34 @@ components:
           type: string
           description: Specifies the date the entity is last updated.
           example: '2017-01-10T11:41:19.244Z'
+    Errors:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                format: string
+                examples:
+                - '400'
+              title:
+                type: string
+                description: A brief summary of the error.
+                examples:
+                - Bad Request
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                examples:
+                - The field 'name' is required
     PaginationMeta:
       type: object
       properties:
@@ -436,34 +309,6 @@ components:
               type: integer
               description: The total number of pages.
               example: 1
-    Errors:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            type: object
-            required:
-            - status
-            - title
-            properties:
-              status:
-                type: string
-                description: The HTTP response code of the error.
-                format: string
-                examples:
-                - '400'
-              title:
-                type: string
-                description: A brief summary of the error.
-                examples:
-                - Bad Request
-              detail:
-                type: string
-                description: Optional additional detail about the error.
-                examples:
-                - The field 'name' is required
     CustomAPI:
       type: object
       properties:
@@ -528,77 +373,162 @@ components:
           $ref: '#/components/schemas/Meta'
         relationships:
           $ref: '#/components/schemas/CustomAPIRelationships'
-  requestBodies:
-    UpdateCustomAPI:
+  responses:
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            Missing Name:
+              summary: Required field missing
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Bad Request\",\n      \"status\": \"400\",\n      \"detail\": \"The field 'name' is required.\"\n    }\n  ]\n}\n"
+    ListOfCustomAPIs:
+      description: List of Custom APIs
       content:
         application/json:
           schema:
             type: object
-            required:
-            - data
             properties:
               data:
-                type: object
-                required:
-                - type
-                properties:
-                  type:
-                    type: string
-                    description: Specifies the type of the resource object, use `custom_api` for Custom APIs.
-                    const: custom_api
-                  name:
-                    type: string
-                    description: Specifies the name of this Custom API.
-                    minLength: 1
-                    maxLength: 255
-                  description:
-                    type: string
-                    description: Specifies the description for this Custom API.
-                    minLength: 0
-                    maxLength: 255
-                  slug:
-                    type: string
-                    description: 'Specifies a unique slug identifier for the Custom API. The API Entries for the created Custom API will be accessible at the location `/v2/extensions/<slug>`.
-
-                      '
-                    pattern: ^[a-z0-9_-]{1,63}$
-                  allow_upserts:
-                    type: boolean
-                    description: 'Controls whether upsert operations are allowed for Custom API Entries via the `PUT` method. When set to `true`, it allows the creation of new Custom API Entries using `PUT` if the record doesn''t exist, and updates the existing record if it does. When `false`, `PUT` requests can only update existing entries.
-
-                      '
-                    default: false
-                  presentation:
-                    type: object
-                    description: Optional presentation options for the Custom API.
-                    properties:
-                      page:
-                        type:
-                        - string
-                        - 'null'
-                        description: The page where this Custom API should be presented. The available values depend on the deployment and may change.
-                      section:
-                        type:
-                        - string
-                        - 'null'
-                        description: The section within the page. Can only be set when `page` is also set.
-                        maxLength: 64
-                  relationships:
-                    $ref: '#/components/schemas/CustomAPIRelationships'
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomAPI'
+              meta:
+                $ref: '#/components/schemas/PaginationMeta'
+              links:
+                $ref: '#/components/schemas/PaginationLinks'
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
           examples:
-            Update Example:
-              summary: Update a Custom API
-              value:
-                data:
-                  type: custom_api
-                  name: Wishlists
-                  description: Specifies the description for this Custom API.
-                  slug: wishlists
-                  relationships:
-                    parent_apis:
-                      data:
-                      - id: 652e39d8-d613-493e-8c20-fef99ad6327a
-                        type: custom_api
+            Internal Server Error:
+              summary: Internal server error
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
+    CustomAPI:
+      description: A Custom API
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/CustomAPI'
+    BadFilterError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            Bad Filter:
+              summary: Invalid field specified for filter
+              value: "{\n  \"errors\": [\n    {\n      \"detail\": \"Invalid filter: unknown field [version] specified in search filter, allowed fields are [api_type created_at description id name slug updated_at]\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}\n"
+    ConflictError:
+      description: Unable to perform the operation at this time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            Duplicate Custom API:
+              summary: Duplicate Custom API
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Conflict\",\n      \"status\": \"409\",\n      \"detail\": \"custom_api with the given api_type already exists\"\n    }\n  ]\n}\n"
+            Duplicate Custom Field:
+              summary: Duplicate Custom Field
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Conflict\",\n      \"status\": \"409\",\n      \"detail\": \"custom_field with the given slug already exists\"\n    }\n  ]\n}\n"
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            Not Found:
+              summary: Requested entity not found
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Not Found\",\n      \"status\": \"404\",\n      \"detail\": \"Not found\"\n    }\n  ]\n}\n"
+  parameters:
+    CustomAPISort:
+      name: sort
+      in: query
+      description: 'Specifies the order in which Custom APIs will be returned. For more information, see [Sorting](/guides/Getting-Started/sorting).
+
+        '
+      required: false
+      schema:
+        type: string
+        default: -created_at
+        enum:
+        - id
+        - -id
+        - created_at
+        - -created_at
+        - updated_at
+        - -updated_at
+        - api_type
+        - -api_type
+        - name
+        - -name
+        - slug
+        - -slug
+        example: id
+        x-enumDescriptions:
+          id: Sort by UUID string in ascending order
+          -id: Sort by UUID string in descending order
+          created_at: Sort chronologically from oldest to newest creation date
+          -created_at: Sort chronologically from newest to oldest creation date
+          updated_at: Sort chronologically from oldest to newest update date
+          -updated_at: Sort chronologically from newest to oldest update date
+          api_type: Sort API types alphabetically (A-Z)
+          -api_type: Sort API types reverse alphabetically (Z-A)
+          name: Sort names alphabetically (A-Z)
+          -name: Sort names reverse alphabetically (Z-A)
+          slug: Sort slugs alphabetically (A-Z)
+          -slug: Sort slugs reverse alphabetically (Z-A)
+    Filter:
+      name: filter
+      in: query
+      required: false
+      description: Filter attributes. For more information, see the [Filtering](/guides/Getting-Started/filtering) section.
+      schema:
+        type: string
+        format: string
+        example: eq(name,"My Wishlist")
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 0
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
+    CustomAPIID:
+      name: custom-api-id
+      description: The unique identifier of the Custom API.
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+  requestBodies:
     CreateCustomAPI:
       content:
         application/json:
@@ -674,6 +604,76 @@ components:
                   description: Specifies the description for this Custom API.
                   slug: wishlists
                   api_type: wishlist_ext
+                  relationships:
+                    parent_apis:
+                      data:
+                      - id: 652e39d8-d613-493e-8c20-fef99ad6327a
+                        type: custom_api
+    UpdateCustomAPI:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - data
+            properties:
+              data:
+                type: object
+                required:
+                - type
+                properties:
+                  type:
+                    type: string
+                    description: Specifies the type of the resource object, use `custom_api` for Custom APIs.
+                    const: custom_api
+                  name:
+                    type: string
+                    description: Specifies the name of this Custom API.
+                    minLength: 1
+                    maxLength: 255
+                  description:
+                    type: string
+                    description: Specifies the description for this Custom API.
+                    minLength: 0
+                    maxLength: 255
+                  slug:
+                    type: string
+                    description: 'Specifies a unique slug identifier for the Custom API. The API Entries for the created Custom API will be accessible at the location `/v2/extensions/<slug>`.
+
+                      '
+                    pattern: ^[a-z0-9_-]{1,63}$
+                  allow_upserts:
+                    type: boolean
+                    description: 'Controls whether upsert operations are allowed for Custom API Entries via the `PUT` method. When set to `true`, it allows the creation of new Custom API Entries using `PUT` if the record doesn''t exist, and updates the existing record if it does. When `false`, `PUT` requests can only update existing entries.
+
+                      '
+                    default: false
+                  presentation:
+                    type: object
+                    description: Optional presentation options for the Custom API.
+                    properties:
+                      page:
+                        type:
+                        - string
+                        - 'null'
+                        description: The page where this Custom API should be presented. The available values depend on the deployment and may change.
+                      section:
+                        type:
+                        - string
+                        - 'null'
+                        description: The section within the page. Can only be set when `page` is also set.
+                        maxLength: 64
+                  relationships:
+                    $ref: '#/components/schemas/CustomAPIRelationships'
+          examples:
+            Update Example:
+              summary: Update a Custom API
+              value:
+                data:
+                  type: custom_api
+                  name: Wishlists
+                  description: Specifies the description for this Custom API.
+                  slug: wishlists
                   relationships:
                     parent_apis:
                       data:

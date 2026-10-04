@@ -170,15 +170,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 11111111-2222-3333-4444-555555555555
     ErrorResponse:
       required:
       - errors
@@ -187,41 +178,32 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-    ExternalRef:
-      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-      type: string
-      example: abc123
-      maxLength: 2048
-    ScheduleJobType:
-      type: string
-      description: "The type of job. One of the following:\n - `billing-run` - a billing run job.\n - `payment-run` - a payment run job.\n - `notification-run` - a notification run job.\n"
-      enum:
-      - billing-run
-      - payment-run
-      - notification-run
-      example: billing-run
-      x-go-type: model.JobType
-      x-go-type-import:
-        name: model
-        path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-    SubscriptionScheduleType:
-      type: string
-      example: subscription_schedule
-      enum:
-      - subscription_schedule
-    ScheduleCreate:
+    ScheduleUpdate:
       required:
+      - id
       - type
       - attributes
       properties:
+        id:
+          $ref: '#/components/schemas/UUID'
         type:
           $ref: '#/components/schemas/SubscriptionScheduleType'
         attributes:
-          $ref: '#/components/schemas/ScheduleAttributes'
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
+          $ref: '#/components/schemas/ScheduleUpdateAttributes'
+    ScheduleResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/ScheduleAttributes'
+      - $ref: '#/components/schemas/Timestamps'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
     ExternalRefUpdate:
       description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
       type:
@@ -229,73 +211,6 @@ components:
       - 'null'
       example: abc123
       maxLength: 2048
-    OwnerMeta:
-      readOnly: true
-      type: string
-      format: string
-      description: The owner of a resource, either `store` or `organization`.
-      example: store
-    ScheduleResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/ScheduleAttributes'
-      - $ref: '#/components/schemas/Timestamps'
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    Timestamps:
-      required:
-      - created_at
-      - updated_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    ScheduleJob:
-      required:
-      - job_type
-      properties:
-        job_type:
-          $ref: '#/components/schemas/ScheduleJobType'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    Schedule:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionScheduleType'
-        attributes:
-          $ref: '#/components/schemas/ScheduleResponseAttributes'
-        meta:
-          $ref: '#/components/schemas/ScheduleMeta'
     ScheduleAttributes:
       required:
       - specification
@@ -322,18 +237,6 @@ components:
           example: Europe/London
         job:
           $ref: '#/components/schemas/ScheduleJob'
-    ScheduleUpdate:
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionScheduleType'
-        attributes:
-          $ref: '#/components/schemas/ScheduleUpdateAttributes'
     ScheduleMeta:
       readOnly: true
       required:
@@ -348,6 +251,25 @@ components:
           $ref: '#/components/schemas/OwnerMeta'
         timestamps:
           $ref: '#/components/schemas/Timestamps'
+    ExternalRef:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
+    Schedule:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionScheduleType'
+        attributes:
+          $ref: '#/components/schemas/ScheduleResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/ScheduleMeta'
     ScheduleUpdateAttributes:
       properties:
         external_ref:
@@ -372,6 +294,49 @@ components:
           example: Europe/London
         job:
           $ref: '#/components/schemas/ScheduleJob'
+    Timestamps:
+      required:
+      - created_at
+      - updated_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    ScheduleCreate:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/SubscriptionScheduleType'
+        attributes:
+          $ref: '#/components/schemas/ScheduleAttributes'
+    ScheduleJobType:
+      type: string
+      description: "The type of job. One of the following:\n - `billing-run` - a billing run job.\n - `payment-run` - a payment run job.\n - `notification-run` - a notification run job.\n"
+      enum:
+      - billing-run
+      - payment-run
+      - notification-run
+      example: billing-run
+      x-go-type: model.JobType
+      x-go-type-import:
+        name: model
+        path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
     Error:
       required:
       - status
@@ -395,65 +360,42 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-  parameters:
-    Filter:
-      name: filter
-      in: query
-      required: false
-      schema:
-        type: string
-        format: string
-        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
-
-          '
-        example: eq(name,Alan Turing)
-    PageLimit:
-      name: page[limit]
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 100
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 10
+    SubscriptionScheduleType:
+      type: string
+      example: subscription_schedule
+      enum:
+      - subscription_schedule
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
+    ScheduleJob:
+      required:
+      - job_type
+      properties:
+        job_type:
+          $ref: '#/components/schemas/ScheduleJobType'
   responses:
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No plan found
     ValidationError:
       description: Bad request. The request failed validation.
       content:
@@ -467,16 +409,6 @@ components:
                 - title: Validation Error
                   status: '400'
                   detail: 'data.attributes.name: "name" is required'
-    WriteConflictError:
-      description: Write conflict. Unable to perform the operation at this time.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            errors:
-            - title: Write Conflict
-              status: '409'
     ForbiddenError:
       description: Forbidden. The operation is forbidden on this entity.
       content:
@@ -490,6 +422,74 @@ components:
                 - title: Permission denied
                   status: '404'
                   detail: 'Permission denied: plan tenancy mismatch'
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    WriteConflictError:
+      description: Write conflict. Unable to perform the operation at this time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - title: Write Conflict
+              status: '409'
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No plan found
+  parameters:
+    Filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(name,Alan Turing)
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
   securitySchemes:
     BearerToken:
       scheme: bearer

@@ -253,38 +253,6 @@ paths:
       description: US East cluster
 components:
   schemas:
-    UUID:
-      type: string
-      description: The unique identifier.
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 00000000-0000-0000-0000-000000000000
-    Error:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     ErrorResponse:
       type: object
       required:
@@ -353,12 +321,44 @@ components:
           example: 25
         meta:
           $ref: '#/components/schemas/Meta'
+    UUID:
+      type: string
+      description: The unique identifier.
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 00000000-0000-0000-0000-000000000000
     InventoryCreate:
       properties:
         quantity:
           description: The amount of inventory available.
           type: integer
           example: 5
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     Timestamps:
       properties:
         updated_at:
@@ -369,6 +369,16 @@ components:
           description: The date and time a resource was created.
           type: string
           example: '2017-01-10T11:41:19.244842Z'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
     StockUpdateRequest:
       type: object
       required:
@@ -382,53 +392,6 @@ components:
           $ref: '#/components/schemas/StockType'
         attributes:
           $ref: '#/components/schemas/StockUpdateAttributes'
-    StockCreate:
-      type: object
-      required:
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/StockType'
-        attributes:
-          $ref: '#/components/schemas/StockCreateAttributes'
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
-    StockResponseAttributes:
-      type: object
-      required:
-      - available
-      - total
-      - allocated
-      properties:
-        available:
-          type: integer
-          format: int64
-          example: 20
-        allocated:
-          type: integer
-          format: int64
-          example: 10
-        total:
-          type: integer
-          format: int64
-          example: 30
-        locations:
-          $ref: '#/components/schemas/StockLocations'
-    StockMeta:
-      type: object
-      required:
-      - stock_id
-      - timestamps
-      properties:
-        stock_id:
-          $ref: '#/components/schemas/UUID'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps_2'
     StockCreateAttributes:
       type: object
       properties:
@@ -452,6 +415,71 @@ components:
               available: 10
             stevenage_warehouse:
               available: 20
+    NullableLocations:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/NullableLocation'
+    StockCreate:
+      type: object
+      required:
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/StockType'
+        attributes:
+          $ref: '#/components/schemas/StockCreateAttributes'
+    StockResponseAttributes:
+      type: object
+      required:
+      - available
+      - total
+      - allocated
+      properties:
+        available:
+          type: integer
+          format: int64
+          example: 20
+        allocated:
+          type: integer
+          format: int64
+          example: 10
+        total:
+          type: integer
+          format: int64
+          example: 30
+        locations:
+          $ref: '#/components/schemas/StockLocations'
+    Timestamps_2:
+      required:
+      - created_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    StockResponse:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/StockType'
+        attributes:
+          $ref: '#/components/schemas/StockResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/StockMeta'
     NullableLocation:
       type:
       - object
@@ -463,26 +491,10 @@ components:
           type: integer
           format: int64
           example: 20
-    LinkObject:
-      type: object
+    StockUpdateAttributes:
       properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
+        locations:
+          $ref: '#/components/schemas/NullableLocations'
     StockLocations:
       type: object
       additionalProperties:
@@ -504,104 +516,40 @@ components:
             type: integer
             format: int64
             example: 30
-    Timestamps_2:
+    StockMeta:
+      type: object
       required:
-      - created_at
+      - stock_id
+      - timestamps
       properties:
-        updated_at:
-          description: The date and time a resource was updated.
+        stock_id:
+          $ref: '#/components/schemas/UUID'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps_2'
+    LinkObject:
+      type: object
+      properties:
+        href:
           type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
           type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
     StockType:
       type: string
       enum:
       - stock
       default: stock
       example: stock
-    NullableLocations:
+    Links:
       type: object
       additionalProperties:
-        $ref: '#/components/schemas/NullableLocation'
-    StockUpdateAttributes:
-      properties:
-        locations:
-          $ref: '#/components/schemas/NullableLocations'
-    StockResponse:
-      type: object
-      required:
-      - id
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/StockType'
-        attributes:
-          $ref: '#/components/schemas/StockResponseAttributes'
-        meta:
-          $ref: '#/components/schemas/StockMeta'
-  responses:
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: Your request was invalid
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No stock found
-    NotFoundError_2:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No location found
+        $ref: '#/components/schemas/Link'
   parameters:
     PageOffset:
       name: page[offset]
@@ -635,6 +583,58 @@ components:
 
           '
         example: eq(location,new-york)
+  responses:
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: Your request was invalid
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No stock found
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    NotFoundError_2:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No location found
   securitySchemes:
     bearerAuth:
       type: http

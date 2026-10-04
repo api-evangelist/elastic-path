@@ -292,39 +292,6 @@ paths:
       - BearerToken: []
 components:
   schemas:
-    MetaTimestamps:
-      type: object
-      properties:
-        timestamps:
-          type: object
-          properties:
-            created_at:
-              description: The date the address is created.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-            updated_at:
-              description: The date the address is updated.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-    PaginationPage:
-      type: object
-      properties:
-        limit:
-          type: integer
-          description: The maximum number of records per page.
-          example: 25
-        offset:
-          type: integer
-          description: The current offset by number of records.
-          example: 0
-        current:
-          type: integer
-          description: The current page number.
-          example: 1
-        total:
-          type: integer
-          description: The total number of pages.
-          example: 3
     ErrorResponse:
       type: object
       required:
@@ -334,58 +301,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-    AddressResponse:
-      allOf:
-      - $ref: '#/components/schemas/Address'
-      - type: object
-        properties:
-          id:
-            type: string
-            description: The unique identifier for an Address.
-            example: 5f8da740-6680-463e-b31c-190b2db4bf9d
-          meta:
-            $ref: '#/components/schemas/MetaTimestamps'
-          links:
-            type: object
-            properties:
-              self:
-                description: A URL to the specific resource.
-                type: string
-                example: https://useast.api.elasticpath.com/v2/customers/deb6b25f-8451-4211-9a22-95610333df23/addresses
-    CustomerAddressResponse:
-      allOf:
-      - $ref: '#/components/schemas/AddressResponse'
-      - type: object
-        properties:
-          relationships:
-            type: object
-            properties:
-              customer:
-                type: object
-                properties:
-                  id:
-                    description: The ID of the customer.
-                    type: string
-                    example: 11afcf9b-971b-4fdb-8e10-f2ecf970718e
-                  type:
-                    description: The type of object being returned.
-                    type: string
-                    example: customer
-    PaginationResults:
+    PaginationMeta:
       type: object
       properties:
-        total:
-          type: integer
-          description: The total number of results.
-          example: 75
-        total_method:
-          type: string
-          description: The method used to calculate the total. `exact` means the precise count is known, `lower_bound` means the count is at least this value, `observed` means the count is estimated from observations.
-          enum:
-          - exact
-          - lower_bound
-          - observed
-          example: exact
+        page:
+          $ref: '#/components/schemas/PaginationPage'
+        results:
+          $ref: '#/components/schemas/PaginationResults'
     Address:
       type: object
       properties:
@@ -474,6 +396,39 @@ components:
           - 'null'
           description: The URL to the previous page. Null if on the first page.
           example: null
+    MetaTimestamps:
+      type: object
+      properties:
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              description: The date the address is created.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+            updated_at:
+              description: The date the address is updated.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+    CustomerAddressResponse:
+      allOf:
+      - $ref: '#/components/schemas/AddressResponse'
+      - type: object
+        properties:
+          relationships:
+            type: object
+            properties:
+              customer:
+                type: object
+                properties:
+                  id:
+                    description: The ID of the customer.
+                    type: string
+                    example: 11afcf9b-971b-4fdb-8e10-f2ecf970718e
+                  type:
+                    description: The type of object being returned.
+                    type: string
+                    example: customer
     Error:
       type: object
       properties:
@@ -489,27 +444,59 @@ components:
         source:
           type: string
           description: Optional field indicating the source of the error.
-    PaginationMeta:
+    PaginationResults:
       type: object
       properties:
-        page:
-          $ref: '#/components/schemas/PaginationPage'
-        results:
-          $ref: '#/components/schemas/PaginationResults'
+        total:
+          type: integer
+          description: The total number of results.
+          example: 75
+        total_method:
+          type: string
+          description: The method used to calculate the total. `exact` means the precise count is known, `lower_bound` means the count is at least this value, `observed` means the count is estimated from observations.
+          enum:
+          - exact
+          - lower_bound
+          - observed
+          example: exact
+    AddressResponse:
+      allOf:
+      - $ref: '#/components/schemas/Address'
+      - type: object
+        properties:
+          id:
+            type: string
+            description: The unique identifier for an Address.
+            example: 5f8da740-6680-463e-b31c-190b2db4bf9d
+          meta:
+            $ref: '#/components/schemas/MetaTimestamps'
+          links:
+            type: object
+            properties:
+              self:
+                description: A URL to the specific resource.
+                type: string
+                example: https://useast.api.elasticpath.com/v2/customers/deb6b25f-8451-4211-9a22-95610333df23/addresses
+    PaginationPage:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page.
+          example: 25
+        offset:
+          type: integer
+          description: The current offset by number of records.
+          example: 0
+        current:
+          type: integer
+          description: The current page number.
+          example: 1
+        total:
+          type: integer
+          description: The total number of pages.
+          example: 3
   responses:
-    ErrorBadRequest:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            bad-request-error:
-              value:
-                errors:
-                - status: 400
-                  title: Bad Request
-                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
     ErrorNotFound:
       description: Not Found
       content:
@@ -523,6 +510,19 @@ components:
                 - status: 404
                   title: Not Found
                   detail: customer not found
+    ErrorBadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad-request-error:
+              value:
+                errors:
+                - status: 400
+                  title: Bad Request
+                  detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
   securitySchemes:
     BearerToken:
       type: http

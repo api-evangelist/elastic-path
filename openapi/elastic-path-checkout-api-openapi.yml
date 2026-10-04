@@ -300,240 +300,83 @@ paths:
       deprecated: false
 components:
   schemas:
-    AddressCommon:
-      type: object
-      required:
-      - first_name
-      - last_name
-      - line_1
-      - postcode
-      - country
-      properties:
-        first_name:
-          description: First name of the recipient.
-          type: string
-          examples:
-          - John
-        last_name:
-          description: Last name of the recipient.
-          type: string
-          examples:
-          - Doe
-        company_name:
-          description: Company of the recipient.
-          type: string
-          examples:
-          - John Doe Enterprises
-        line_1:
-          description: First line of the address.
-          type: string
-          examples:
-          - 1 Sunny Street
-        line_2:
-          description: Second line of the address.
-          type: string
-          examples:
-          - Apartment 123
-        city:
-          description: City of the address.
-          type: string
-          examples:
-          - Los Angeles
-        postcode:
-          description: Post code of the address.
-          type: string
-          examples:
-          - '92802'
-        county:
-          description: County of the address.
-          type: string
-          examples:
-          - Orange
-        country:
-          description: Country of the address.
-          type: string
-          examples:
-          - US
-        region:
-          description: State, province, or region of the address.
-          type: string
-          examples:
-          - CA
-    RelationshipItem:
-      title: RelationshipItem
-      description: Relationship data entry
-      required:
-      - type
-      - id
+    Customer:
+      title: Customer
       type: object
       properties:
-        type:
-          description: The type of related resource.
-          type: string
-        id:
-          description: The ID of the related resource.
-          type: string
-          format: uuid
-    Contact:
-      title: Contact
-      type: object
-      properties:
-        email:
-          description: The email address of the contact.
-          type: string
-          examples:
-          - johndoe@email.com
         name:
-          description: The name of the contact.
+          description: The name of the customer.
           type: string
           examples:
           - John Doe
-    CondensedPromotionResponse:
-      title: CondensedPromotionResponse
-      type: object
-      properties:
-        type:
-          description: Specifies the type of the resource. Always `promotion`.
+        email:
+          description: The email address of the customer.
           type: string
-          const: promotion
+          format: email
           examples:
-          - promotion
+          - john.doe@example.com
         id:
-          description: Specifies the UUID of the promotion.
+          description: The unique identifier of the customer.
           type: string
           format: uuid
-          readOnly: true
           examples:
-          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
-        name:
-          description: The name of the promotion.
-          type: string
-          examples:
-          - Summer Sale
-        description:
-          description: The description of the promotion.
-          type: string
-          examples:
-          - Get 20% off all summer items
-        automatic:
-          description: Whether the promotion is applied automatically.
-          type: boolean
-          examples:
-          - true
-        promotion_type:
-          description: The type of promotion (for v1 promotions).
-          type: string
-          examples:
-          - discount
-        promotion_source:
-          description: The source of the promotion (for rule promotions).
-          type: string
-          examples:
-          - rule-promotion
-        start:
-          description: The start date and time of the promotion.
-          type: string
-          format: date-time
-          examples:
-          - '2024-06-01T00:00:00Z'
-        end:
-          description: The end date and time of the promotion.
-          type: string
-          format: date-time
-          examples:
-          - '2024-08-31T23:59:59Z'
-    NonNegativeFormattedPriceData:
-      title: NonNegativeFormattedPriceData
-      type: object
-      properties:
-        amount:
-          description: The raw total. Must be non-negative.
-          type: number
-          minimum: 0
-          examples:
-          - 10000
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - $10.00
-    DiscountData:
-      title: DiscountData
-      type: object
-      properties:
-        amount:
-          $ref: '#/components/schemas/OrderPriceData'
-        code:
-          type: string
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        promotion_source:
-          type: string
-          description: The source or origin of the promotion, if applicable.
-        is_cart_discount:
-          type: boolean
-          description: Indicates whether the discount applies to the entire cart.
-        ordinal:
-          type: integer
-          description: Order in which the discount was applied.
-    CustomerCheckout:
-      title: Customer Checkout
+          - e5a0d684-a4af-4919-a348-f66b0b4955e0
+    OrderEntityResponse:
+      title: OrderEntityResponse
       type: object
       properties:
         data:
+          $ref: '#/components/schemas/OrderResponse'
+        included:
+          description: 'Optional included data such as order items, tax items, custom discounts, and promotions.
+
+            '
           type: object
           properties:
-            order_number:
-              description: A user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.
-              type: string
-            external_ref:
-              description: An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
-              type: string
-            customer:
-              type: object
-              properties:
-                id:
-                  description: The ID of the customer.
-                  type: string
-                email:
-                  description: The email of the customer.
-                  type: string
-                name:
-                  description: The name of the customer.
-                  type: string
-            billing_address:
-              $ref: '#/components/schemas/BillingAddress'
-            shipping_address:
-              $ref: '#/components/schemas/ShippingAddress'
-    DiscountFormattedPriceData:
-      title: DiscountFormattedPriceData
+            items:
+              description: Array of order items included in the response.
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItemResponse'
+            tax_items:
+              description: Array of tax items included in the response.
+              type: array
+              items:
+                $ref: '#/components/schemas/TaxItemResponse'
+            custom_discounts:
+              description: Array of custom discounts included in the response.
+              type: array
+              items:
+                $ref: '#/components/schemas/CustomDiscountResponse'
+            promotions:
+              description: Array of promotions included in the response.
+              type: array
+              items:
+                $ref: '#/components/schemas/CondensedPromotionResponse'
+        errors:
+          type: array
+          description: Array of error objects, if any errors occurred.
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    OrderItemFormattedUnitPriceData:
+      title: OrderItemFormattedUnitPriceData
       type: object
       properties:
-        amount:
-          description: The discount amount. Must be non-positive (zero or negative).
-          type: number
-          maximum: 0
-          examples:
-          - -1000
-          - 0
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - -$10.00
-          - $0.00
+        unit:
+          $ref: '#/components/schemas/FormattedPriceData'
+        value:
+          $ref: '#/components/schemas/FormattedPriceData'
+    AddressWithCounty:
+      title: Address with County
+      allOf:
+      - $ref: '#/components/schemas/AddressCommon'
+      - type: object
+        required:
+        - county
+        properties:
+          county:
+            description: County of the address.
+            type: string
     OrderResponse:
       title: OrderResponse
       type: object
@@ -624,481 +467,6 @@ components:
               $ref: '#/components/schemas/SingleRelationship'
             store:
               $ref: '#/components/schemas/SingleRelationship'
-    BillingAddress:
-      title: BillingAddress
-      description: 'Billing address information. You must specify at least one of region (state/province) or county.
-
-        '
-      anyOf:
-      - $ref: '#/components/schemas/AddressWithRegion'
-      - $ref: '#/components/schemas/AddressWithCounty'
-      examples:
-      - first_name: John
-        last_name: Doe
-        company_name: John Doe Enterprises
-        line_1: 1 Sunny Street
-        line_2: Apartment 123
-        city: Los Angeles
-        postcode: '92802'
-        region: CA
-        country: US
-      - first_name: Jane
-        last_name: Smith
-        line_1: 123 Main Street
-        city: London
-        postcode: SW1A 1AA
-        county: Greater London
-        country: GB
-    SingleRelationship:
-      title: SingleRelationship
-      description: Single relationship
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/RelationshipItem'
-    OrderItemFormattedUnitPriceData:
-      title: OrderItemFormattedUnitPriceData
-      type: object
-      properties:
-        unit:
-          $ref: '#/components/schemas/FormattedPriceData'
-        value:
-          $ref: '#/components/schemas/FormattedPriceData'
-    OrderEntityResponse:
-      title: OrderEntityResponse
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/OrderResponse'
-        included:
-          description: 'Optional included data such as order items, tax items, custom discounts, and promotions.
-
-            '
-          type: object
-          properties:
-            items:
-              description: Array of order items included in the response.
-              type: array
-              items:
-                $ref: '#/components/schemas/OrderItemResponse'
-            tax_items:
-              description: Array of tax items included in the response.
-              type: array
-              items:
-                $ref: '#/components/schemas/TaxItemResponse'
-            custom_discounts:
-              description: Array of custom discounts included in the response.
-              type: array
-              items:
-                $ref: '#/components/schemas/CustomDiscountResponse'
-            promotions:
-              description: Array of promotions included in the response.
-              type: array
-              items:
-                $ref: '#/components/schemas/CondensedPromotionResponse'
-        errors:
-          type: array
-          description: Array of error objects, if any errors occurred.
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    FormattedPriceData:
-      title: FormattedPriceData
-      type: object
-      properties:
-        amount:
-          description: The raw total.
-          type: number
-          examples:
-          - 10000
-        currency:
-          description: The currency set for this amount.
-          type: string
-          examples:
-          - USD
-        formatted:
-          description: The formatted total based on the amount and currency.
-          type: string
-          examples:
-          - $10.00
-    RelationshipArray:
-      title: RelationshipArray
-      description: Array of relationships
-      type: object
-      properties:
-        data:
-          description: Individual relationships
-          type: array
-          items:
-            $ref: '#/components/schemas/RelationshipItem'
-    TaxItemResponse:
-      title: TaxItemResponse
-      type: object
-      properties:
-        type:
-          description: Specifies the type of the resource. Always `tax_item`.
-          type: string
-          const: tax_item
-        id:
-          description: Specifies the UUID of the tax item.
-          type: string
-          format: uuid
-          readOnly: true
-          examples:
-          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
-        jurisdiction:
-          description: The jurisdiction for the tax item.
-          type: string
-          examples:
-          - US-CA
-        code:
-          description: The tax code for the tax item.
-          type: string
-          examples:
-          - CA_SALES_TAX
-        name:
-          description: The name of the tax item.
-          type: string
-          examples:
-          - California Sales Tax
-        rate:
-          description: The tax rate as a decimal (e.g., 0.085 for 8.5%).
-          type: number
-          format: float
-          examples:
-          - 0.085
-        amount:
-          description: The tax amount in the smallest currency unit.
-          type: integer
-          examples:
-          - 850
-    AddressWithRegion:
-      title: Address with Region
-      allOf:
-      - $ref: '#/components/schemas/AddressCommon'
-      - type: object
-        required:
-        - region
-        properties:
-          region:
-            description: State, province, or region of the address.
-            type: string
-    OrderMeta:
-      title: OrderMeta
-      type: object
-      properties:
-        timestamps:
-          $ref: '#/components/schemas/OrderTimestamps'
-        display_price:
-          description: Order pricing information including amounts, tax, discounts, and payment details.
-          type: object
-          properties:
-            with_tax:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            without_tax:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            tax:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            discount:
-              $ref: '#/components/schemas/DiscountFormattedPriceData'
-            balance_owing:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            paid:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            authorized:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            without_discount:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            shipping:
-              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
-            shipping_discount:
-              $ref: '#/components/schemas/DiscountFormattedPriceData'
-        is_manual:
-          description: Specifies if the order was created manually.
-          type: boolean
-    OrderPriceData:
-      title: OrderPriceData
-      type: object
-      properties:
-        amount:
-          description: The amount for this item.
-          type: number
-          examples:
-          - 10000
-        currency:
-          description: The currency this item.
-          type: string
-          examples:
-          - USD
-        includes_tax:
-          description: Whether this price is tax inclusive.
-          type: boolean
-          examples:
-          - false
-    CustomAttributes:
-      title: CustomAttributes
-      type: object
-      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
-      additionalProperties:
-        type: object
-        required:
-        - type
-        - value
-        properties:
-          type:
-            type: string
-            description: The type of the custom attribute value.
-            enum:
-            - string
-            - integer
-            - boolean
-            - float
-          value:
-            description: The value of the custom attribute.
-            type:
-            - string
-            - boolean
-            - number
-    AddressWithCounty:
-      title: Address with County
-      allOf:
-      - $ref: '#/components/schemas/AddressCommon'
-      - type: object
-        required:
-        - county
-        properties:
-          county:
-            description: County of the address.
-            type: string
-    Timestamps:
-      type: object
-      properties:
-        created_at:
-          description: The date this was created.
-          type: string
-        updated_at:
-          description: The date this was last updated.
-          type: string
-    Response.ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    CustomDiscountResponse:
-      title: CustomDiscountResponse
-      type: object
-      properties:
-        type:
-          description: Specifies the type of the resource. Always `custom_discount`.
-          type: string
-          const: custom_discount
-        id:
-          description: Specifies the UUID of the custom discount.
-          type: string
-          format: uuid
-          examples:
-          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
-        external_id:
-          description: Specifies an external id for the custom discount.
-          type: string
-          examples:
-          - custom-discount-external-id
-        discount_engine:
-          description: 'Specifies from where the custom discount is applied.
-
-            '
-          type: string
-          examples:
-          - Custom Discount Engine
-        amount:
-          description: The amount of the custom discount.
-          $ref: '#/components/schemas/FormattedPriceData'
-        description:
-          description: Specifies a description for the custom discount.
-          type: string
-          examples:
-          - Custom discount description
-        discount_code:
-          description: Specifies the discount code used for the custom discount.
-          type: string
-          examples:
-          - cart-custom-promo-code
-        relationships:
-          description: Relationships to other resources like cart items
-          type: object
-          properties:
-            item:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                      description: The cart item ID this discount is related to
-                    type:
-                      type: string
-                      enum:
-                      - cart_item
-                      - custom_item
-    ShippingAddress:
-      title: ShippingAddress
-      description: 'Shipping address information. You must specify at least one of region (state/province) or county.
-
-        '
-      allOf:
-      - anyOf:
-        - $ref: '#/components/schemas/AddressWithRegion'
-        - $ref: '#/components/schemas/AddressWithCounty'
-      - type: object
-        properties:
-          phone_number:
-            description: Phone number of the shipping recipient.
-            type: string
-          instructions:
-            description: Delivery instructions.
-            type: string
-      examples:
-      - first_name: John
-        last_name: Doe
-        line_1: 1 Sunny Street
-        line_2: Apartment 123
-        city: Los Angeles
-        postcode: '92802'
-        region: CA
-        country: US
-        instructions: Please leave on porch
-      - first_name: Jane
-        last_name: Smith
-        line_1: 123 Main Street
-        city: London
-        postcode: SW1A 1AA
-        county: Greater London
-        country: GB
-        phone_number: +44 20 7946 0958
-    Response.ErrorItem:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type:
-          - string
-          - integer
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
-        source:
-          type: string
-          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
-        meta:
-          type: object
-          description: Additional metadata associated with the error. May include arbitrary keys.
-          properties:
-            id:
-              type: string
-              description: The resource id associated with the error
-            ids:
-              type: array
-              items:
-                type: string
-                description: The resource ids associated with the error
-            item_ids:
-              type: array
-              items:
-                type: string
-                description: The cart_item ids associated with the error
-            shipping_group_id:
-              type: string
-              description: The shipping group id associated with the error
-            shipping_group_ids:
-              type: array
-              items:
-                type: string
-                description: The shipping group ids associated with the error
-            cart_id:
-              type: string
-              description: The cart id associated with the error
-            code:
-              type: string
-              description: The code associated with the error.
-            order_id:
-              type: string
-              description: The order id associated with the error.
-            sku:
-              type: string
-              description: The SKU associated with the error.
-            email:
-              type: string
-              format: email
-              description: The email address associated with the error.
-            component_product_id:
-              type: string
-              format: uuid
-              description: The component product ID associated with the error.
-            error-meta-key:
-              type: string
-              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
-            value:
-              description: The value associated with the error.
-              oneOf:
-              - type: string
-              - type: integer
-              - type: boolean
-              - type: object
-                additionalProperties: true
-              - type: array
-    AccountCheckout:
-      title: Account Checkout
-      type: object
-      properties:
-        data:
-          type: object
-          properties:
-            order_number:
-              description: A user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.
-              type: string
-            external_ref:
-              description: An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
-              type: string
-            account:
-              type: object
-              properties:
-                id:
-                  description: The account ID.
-                  type: string
-                member_id:
-                  description: The account member ID.
-                  type: string
-            contact:
-              type: object
-              properties:
-                name:
-                  description: The name of the account member.
-                  type: string
-                email:
-                  description: The email address of the account member.
-                  type: string
-                  format: email
-            billing_address:
-              $ref: '#/components/schemas/BillingAddress'
-            shipping_address:
-              $ref: '#/components/schemas/ShippingAddress'
     OrderItemResponse:
       title: OrderItemResponse
       type: object
@@ -1344,27 +712,344 @@ components:
             pricing_option:
               description: Pricing option for the subscription
               type: string
-    Customer:
-      title: Customer
+    DiscountData:
+      title: DiscountData
       type: object
       properties:
-        name:
-          description: The name of the customer.
+        amount:
+          $ref: '#/components/schemas/OrderPriceData'
+        code:
           type: string
-          examples:
-          - John Doe
-        email:
-          description: The email address of the customer.
-          type: string
-          format: email
-          examples:
-          - john.doe@example.com
         id:
-          description: The unique identifier of the customer.
+          type: string
+          format: uuid
+          readOnly: true
+        promotion_source:
+          type: string
+          description: The source or origin of the promotion, if applicable.
+        is_cart_discount:
+          type: boolean
+          description: Indicates whether the discount applies to the entire cart.
+        ordinal:
+          type: integer
+          description: Order in which the discount was applied.
+    AddressCommon:
+      type: object
+      required:
+      - first_name
+      - last_name
+      - line_1
+      - postcode
+      - country
+      properties:
+        first_name:
+          description: First name of the recipient.
+          type: string
+          examples:
+          - John
+        last_name:
+          description: Last name of the recipient.
+          type: string
+          examples:
+          - Doe
+        company_name:
+          description: Company of the recipient.
+          type: string
+          examples:
+          - John Doe Enterprises
+        line_1:
+          description: First line of the address.
+          type: string
+          examples:
+          - 1 Sunny Street
+        line_2:
+          description: Second line of the address.
+          type: string
+          examples:
+          - Apartment 123
+        city:
+          description: City of the address.
+          type: string
+          examples:
+          - Los Angeles
+        postcode:
+          description: Post code of the address.
+          type: string
+          examples:
+          - '92802'
+        county:
+          description: County of the address.
+          type: string
+          examples:
+          - Orange
+        country:
+          description: Country of the address.
+          type: string
+          examples:
+          - US
+        region:
+          description: State, province, or region of the address.
+          type: string
+          examples:
+          - CA
+    NonNegativeFormattedPriceData:
+      title: NonNegativeFormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The raw total. Must be non-negative.
+          type: number
+          minimum: 0
+          examples:
+          - 10000
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - $10.00
+    CustomDiscountResponse:
+      title: CustomDiscountResponse
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the resource. Always `custom_discount`.
+          type: string
+          const: custom_discount
+        id:
+          description: Specifies the UUID of the custom discount.
           type: string
           format: uuid
           examples:
-          - e5a0d684-a4af-4919-a348-f66b0b4955e0
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        external_id:
+          description: Specifies an external id for the custom discount.
+          type: string
+          examples:
+          - custom-discount-external-id
+        discount_engine:
+          description: 'Specifies from where the custom discount is applied.
+
+            '
+          type: string
+          examples:
+          - Custom Discount Engine
+        amount:
+          description: The amount of the custom discount.
+          $ref: '#/components/schemas/FormattedPriceData'
+        description:
+          description: Specifies a description for the custom discount.
+          type: string
+          examples:
+          - Custom discount description
+        discount_code:
+          description: Specifies the discount code used for the custom discount.
+          type: string
+          examples:
+          - cart-custom-promo-code
+        relationships:
+          description: Relationships to other resources like cart items
+          type: object
+          properties:
+            item:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: The cart item ID this discount is related to
+                    type:
+                      type: string
+                      enum:
+                      - cart_item
+                      - custom_item
+    TaxItemResponse:
+      title: TaxItemResponse
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the resource. Always `tax_item`.
+          type: string
+          const: tax_item
+        id:
+          description: Specifies the UUID of the tax item.
+          type: string
+          format: uuid
+          readOnly: true
+          examples:
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        jurisdiction:
+          description: The jurisdiction for the tax item.
+          type: string
+          examples:
+          - US-CA
+        code:
+          description: The tax code for the tax item.
+          type: string
+          examples:
+          - CA_SALES_TAX
+        name:
+          description: The name of the tax item.
+          type: string
+          examples:
+          - California Sales Tax
+        rate:
+          description: The tax rate as a decimal (e.g., 0.085 for 8.5%).
+          type: number
+          format: float
+          examples:
+          - 0.085
+        amount:
+          description: The tax amount in the smallest currency unit.
+          type: integer
+          examples:
+          - 850
+    OrderPriceData:
+      title: OrderPriceData
+      type: object
+      properties:
+        amount:
+          description: The amount for this item.
+          type: number
+          examples:
+          - 10000
+        currency:
+          description: The currency this item.
+          type: string
+          examples:
+          - USD
+        includes_tax:
+          description: Whether this price is tax inclusive.
+          type: boolean
+          examples:
+          - false
+    RelationshipItem:
+      title: RelationshipItem
+      description: Relationship data entry
+      required:
+      - type
+      - id
+      type: object
+      properties:
+        type:
+          description: The type of related resource.
+          type: string
+        id:
+          description: The ID of the related resource.
+          type: string
+          format: uuid
+    SingleRelationship:
+      title: SingleRelationship
+      description: Single relationship
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/RelationshipItem'
+    CondensedPromotionResponse:
+      title: CondensedPromotionResponse
+      type: object
+      properties:
+        type:
+          description: Specifies the type of the resource. Always `promotion`.
+          type: string
+          const: promotion
+          examples:
+          - promotion
+        id:
+          description: Specifies the UUID of the promotion.
+          type: string
+          format: uuid
+          readOnly: true
+          examples:
+          - 662461ad-ddcb-4dbd-8ed7-ade9aa63b5f9
+        name:
+          description: The name of the promotion.
+          type: string
+          examples:
+          - Summer Sale
+        description:
+          description: The description of the promotion.
+          type: string
+          examples:
+          - Get 20% off all summer items
+        automatic:
+          description: Whether the promotion is applied automatically.
+          type: boolean
+          examples:
+          - true
+        promotion_type:
+          description: The type of promotion (for v1 promotions).
+          type: string
+          examples:
+          - discount
+        promotion_source:
+          description: The source of the promotion (for rule promotions).
+          type: string
+          examples:
+          - rule-promotion
+        start:
+          description: The start date and time of the promotion.
+          type: string
+          format: date-time
+          examples:
+          - '2024-06-01T00:00:00Z'
+        end:
+          description: The end date and time of the promotion.
+          type: string
+          format: date-time
+          examples:
+          - '2024-08-31T23:59:59Z'
+    Timestamps:
+      type: object
+      properties:
+        created_at:
+          description: The date this was created.
+          type: string
+        updated_at:
+          description: The date this was last updated.
+          type: string
+    ShippingAddress:
+      title: ShippingAddress
+      description: 'Shipping address information. You must specify at least one of region (state/province) or county.
+
+        '
+      allOf:
+      - anyOf:
+        - $ref: '#/components/schemas/AddressWithRegion'
+        - $ref: '#/components/schemas/AddressWithCounty'
+      - type: object
+        properties:
+          phone_number:
+            description: Phone number of the shipping recipient.
+            type: string
+          instructions:
+            description: Delivery instructions.
+            type: string
+      examples:
+      - first_name: John
+        last_name: Doe
+        line_1: 1 Sunny Street
+        line_2: Apartment 123
+        city: Los Angeles
+        postcode: '92802'
+        region: CA
+        country: US
+        instructions: Please leave on porch
+      - first_name: Jane
+        last_name: Smith
+        line_1: 123 Main Street
+        city: London
+        postcode: SW1A 1AA
+        county: Greater London
+        country: GB
+        phone_number: +44 20 7946 0958
     OrderTimestamps:
       type: object
       properties:
@@ -1377,6 +1062,321 @@ components:
         fully_paid_at:
           description: The date this order was fully paid. Only present for orders with payment status 'paid'.
           type: string
+    CustomAttributes:
+      title: CustomAttributes
+      type: object
+      description: "Specifies custom attributes for cart or order objects. Each attribute includes a top-level key, as well as corresponding type and value entries. Attribute values must correspond to the assigned types.\n\nExample:\n```\n\"custom_attributes\": {\n  \"is_member\": {\n    \"type\": \"boolean\",\n    \"value\": true\n  },\n  \"membership_level\": {\n    \"type\": \"string\",\n    \"value\": \"premium\"\n  }\n}\n```\n"
+      additionalProperties:
+        type: object
+        required:
+        - type
+        - value
+        properties:
+          type:
+            type: string
+            description: The type of the custom attribute value.
+            enum:
+            - string
+            - integer
+            - boolean
+            - float
+          value:
+            description: The value of the custom attribute.
+            type:
+            - string
+            - boolean
+            - number
+    AddressWithRegion:
+      title: Address with Region
+      allOf:
+      - $ref: '#/components/schemas/AddressCommon'
+      - type: object
+        required:
+        - region
+        properties:
+          region:
+            description: State, province, or region of the address.
+            type: string
+    RelationshipArray:
+      title: RelationshipArray
+      description: Array of relationships
+      type: object
+      properties:
+        data:
+          description: Individual relationships
+          type: array
+          items:
+            $ref: '#/components/schemas/RelationshipItem'
+    Response.ErrorItem:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type:
+          - string
+          - integer
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+        source:
+          type: string
+          description: The field or location that caused the validation error. For JSON schema validation errors, this contains the JSON path to the invalid field (e.g., 'data.name', 'request', 'data.items[0].quantity').
+        meta:
+          type: object
+          description: Additional metadata associated with the error. May include arbitrary keys.
+          properties:
+            id:
+              type: string
+              description: The resource id associated with the error
+            ids:
+              type: array
+              items:
+                type: string
+                description: The resource ids associated with the error
+            item_ids:
+              type: array
+              items:
+                type: string
+                description: The cart_item ids associated with the error
+            shipping_group_id:
+              type: string
+              description: The shipping group id associated with the error
+            shipping_group_ids:
+              type: array
+              items:
+                type: string
+                description: The shipping group ids associated with the error
+            cart_id:
+              type: string
+              description: The cart id associated with the error
+            code:
+              type: string
+              description: The code associated with the error.
+            order_id:
+              type: string
+              description: The order id associated with the error.
+            sku:
+              type: string
+              description: The SKU associated with the error.
+            email:
+              type: string
+              format: email
+              description: The email address associated with the error.
+            component_product_id:
+              type: string
+              format: uuid
+              description: The component product ID associated with the error.
+            error-meta-key:
+              type: string
+              description: Custom error metadata key used for additional error context (e.g., in payment rejections).
+            value:
+              description: The value associated with the error.
+              oneOf:
+              - type: string
+              - type: integer
+              - type: boolean
+              - type: object
+                additionalProperties: true
+              - type: array
+    OrderMeta:
+      title: OrderMeta
+      type: object
+      properties:
+        timestamps:
+          $ref: '#/components/schemas/OrderTimestamps'
+        display_price:
+          description: Order pricing information including amounts, tax, discounts, and payment details.
+          type: object
+          properties:
+            with_tax:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            without_tax:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            tax:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            discount:
+              $ref: '#/components/schemas/DiscountFormattedPriceData'
+            balance_owing:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            paid:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            authorized:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            without_discount:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            shipping:
+              $ref: '#/components/schemas/NonNegativeFormattedPriceData'
+            shipping_discount:
+              $ref: '#/components/schemas/DiscountFormattedPriceData'
+        is_manual:
+          description: Specifies if the order was created manually.
+          type: boolean
+    DiscountFormattedPriceData:
+      title: DiscountFormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The discount amount. Must be non-positive (zero or negative).
+          type: number
+          maximum: 0
+          examples:
+          - -1000
+          - 0
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - -$10.00
+          - $0.00
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    AccountCheckout:
+      title: Account Checkout
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            order_number:
+              description: A user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.
+              type: string
+            external_ref:
+              description: An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
+              type: string
+            account:
+              type: object
+              properties:
+                id:
+                  description: The account ID.
+                  type: string
+                member_id:
+                  description: The account member ID.
+                  type: string
+            contact:
+              type: object
+              properties:
+                name:
+                  description: The name of the account member.
+                  type: string
+                email:
+                  description: The email address of the account member.
+                  type: string
+                  format: email
+            billing_address:
+              $ref: '#/components/schemas/BillingAddress'
+            shipping_address:
+              $ref: '#/components/schemas/ShippingAddress'
+    FormattedPriceData:
+      title: FormattedPriceData
+      type: object
+      properties:
+        amount:
+          description: The raw total.
+          type: number
+          examples:
+          - 10000
+        currency:
+          description: The currency set for this amount.
+          type: string
+          examples:
+          - USD
+        formatted:
+          description: The formatted total based on the amount and currency.
+          type: string
+          examples:
+          - $10.00
+    BillingAddress:
+      title: BillingAddress
+      description: 'Billing address information. You must specify at least one of region (state/province) or county.
+
+        '
+      anyOf:
+      - $ref: '#/components/schemas/AddressWithRegion'
+      - $ref: '#/components/schemas/AddressWithCounty'
+      examples:
+      - first_name: John
+        last_name: Doe
+        company_name: John Doe Enterprises
+        line_1: 1 Sunny Street
+        line_2: Apartment 123
+        city: Los Angeles
+        postcode: '92802'
+        region: CA
+        country: US
+      - first_name: Jane
+        last_name: Smith
+        line_1: 123 Main Street
+        city: London
+        postcode: SW1A 1AA
+        county: Greater London
+        country: GB
+    CustomerCheckout:
+      title: Customer Checkout
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            order_number:
+              description: A user-managed, optional field used as an alternative to the existing `order_id`. If provided, the order-number will be sent to Authorize.net instead of the `order_id`, and will appear as the invoice number in Authorize.net transactions.
+              type: string
+            external_ref:
+              description: An optional external ID reference for an order. It can contain alphanumeric characters, special characters, and spaces, and is not required to be unique. The maximum allowed length is 64 characters. It can be used to include an external reference from a separate company system.
+              type: string
+            customer:
+              type: object
+              properties:
+                id:
+                  description: The ID of the customer.
+                  type: string
+                email:
+                  description: The email of the customer.
+                  type: string
+                name:
+                  description: The name of the customer.
+                  type: string
+            billing_address:
+              $ref: '#/components/schemas/BillingAddress'
+            shipping_address:
+              $ref: '#/components/schemas/ShippingAddress'
+    Contact:
+      title: Contact
+      type: object
+      properties:
+        email:
+          description: The email address of the contact.
+          type: string
+          examples:
+          - johndoe@email.com
+        name:
+          description: The name of the contact.
+          type: string
+          examples:
+          - John Doe
   securitySchemes:
     bearerAuth:
       type: http

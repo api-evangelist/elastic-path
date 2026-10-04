@@ -174,20 +174,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 11111111-2222-3333-4444-555555555555
-    SubscriptionSubscriberType:
-      type: string
-      example: subscription_subscriber
-      enum:
-      - subscription_subscriber
     ErrorResponse:
       required:
       - errors
@@ -196,6 +182,71 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
+    FeatureTag:
+      type: string
+      description: A tag to add to the customer's account when entitled to the feature.
+      minLength: 1
+      maxLength: 64
+      pattern: ^[0-9A-Za-z_-]+$
+      example: digital_library_access
+    PaymentAuthority:
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/PaymentAuthorityEPPayments'
+      - $ref: '#/components/schemas/PaymentAuthorityStripe'
+      - $ref: '#/components/schemas/PaymentAuthorityAuthorizeNet'
+      discriminator:
+        propertyName: type
+        mapping:
+          elastic_path_payments_stripe: '#/components/schemas/PaymentAuthorityEPPayments'
+          stripe_payment_intents: '#/components/schemas/PaymentAuthorityStripe'
+          authorize_net: '#/components/schemas/PaymentAuthorityAuthorizeNet'
+      required:
+      - type
+      properties:
+        type:
+          description: The name of the payment gateway facilitating the secure transmission of payment data.
+          type: string
+          example: elastic_path_payments_stripe
+          enum:
+          - authorize_net
+          - elastic_path_payments_stripe
+          - stripe_payment_intents
+          x-go-type: paymentgateways.GatewayName
+          x-go-type-import:
+            name: paymentgateways
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    SubscriberUpdateAttributes:
+      properties:
+        name:
+          type: string
+          description: The name of the subscriber.
+          minLength: 3
+          maxLength: 1024
+          example: John Doe
+        email:
+          type: string
+          format: email
+          description: The email of the subscriber.
+          minLength: 3
+          maxLength: 1024
+          example: john.doe@example.com
+          x-go-type: types.Email
+          x-go-type-import:
+            name: email
+            path: github.com/oapi-codegen/runtime/types
+        payment_authority:
+          $ref: '#/components/schemas/NullablePaymentAuthority'
     PaymentAuthorityStripe:
       writeOnly: true
       type: object
@@ -224,27 +275,24 @@ components:
           minLength: 3
           maxLength: 1024
           example: card_8Diw3FQPhxK27WADPVMeXieP
-    SubscriberUpdateAttributes:
+    SubscriberMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
       properties:
-        name:
-          type: string
-          description: The name of the subscriber.
-          minLength: 3
-          maxLength: 1024
-          example: John Doe
-        email:
-          type: string
-          format: email
-          description: The email of the subscriber.
-          minLength: 3
-          maxLength: 1024
-          example: john.doe@example.com
-          x-go-type: types.Email
-          x-go-type-import:
-            name: email
-            path: github.com/oapi-codegen/runtime/types
-        payment_authority:
-          $ref: '#/components/schemas/NullablePaymentAuthority'
+        feature_entitlements:
+          type: array
+          description: A list of entitlement tags currently active for the subscriber
+          example:
+          - tag1
+          - tag2
+          items:
+            $ref: '#/components/schemas/FeatureTag'
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
     SubscriberAttributes:
       required:
       - name
@@ -284,54 +332,28 @@ components:
           $ref: '#/components/schemas/SubscriptionSubscriberType'
         attributes:
           $ref: '#/components/schemas/SubscriberUpdateAttributes'
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
-    SubscriberResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/SubscriberAttributes'
-      - $ref: '#/components/schemas/Timestamps'
-    FeatureTag:
-      type: string
-      description: A tag to add to the customer's account when entitled to the feature.
-      minLength: 1
-      maxLength: 64
-      pattern: ^[0-9A-Za-z_-]+$
-      example: digital_library_access
-    PaymentAuthority:
-      type: object
-      oneOf:
-      - $ref: '#/components/schemas/PaymentAuthorityEPPayments'
-      - $ref: '#/components/schemas/PaymentAuthorityStripe'
-      - $ref: '#/components/schemas/PaymentAuthorityAuthorizeNet'
-      discriminator:
-        propertyName: type
-        mapping:
-          elastic_path_payments_stripe: '#/components/schemas/PaymentAuthorityEPPayments'
-          stripe_payment_intents: '#/components/schemas/PaymentAuthorityStripe'
-          authorize_net: '#/components/schemas/PaymentAuthorityAuthorizeNet'
+    Timestamps:
+      required:
+      - created_at
+      - updated_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    SubscriberCreate:
       required:
       - type
+      - attributes
       properties:
         type:
-          description: The name of the payment gateway facilitating the secure transmission of payment data.
-          type: string
-          example: elastic_path_payments_stripe
-          enum:
-          - authorize_net
-          - elastic_path_payments_stripe
-          - stripe_payment_intents
-          x-go-type: paymentgateways.GatewayName
-          x-go-type-import:
-            name: paymentgateways
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
-    OwnerMeta:
-      readOnly: true
-      type: string
-      format: string
-      description: The owner of a resource, either `store` or `organization`.
-      example: store
+          $ref: '#/components/schemas/SubscriptionSubscriberType'
+        attributes:
+          $ref: '#/components/schemas/SubscriberAttributes'
     NullablePaymentAuthority:
       type:
       - object
@@ -361,49 +383,6 @@ components:
           x-go-type-import:
             name: paymentgateways
             path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/paymentgateways
-    SubscriberCreate:
-      required:
-      - type
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/SubscriptionSubscriberType'
-        attributes:
-          $ref: '#/components/schemas/SubscriberAttributes'
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    Subscriber:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionSubscriberType'
-        attributes:
-          $ref: '#/components/schemas/SubscriberResponseAttributes'
-        meta:
-          $ref: '#/components/schemas/SubscriberMeta'
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
     PaymentAuthorityAuthorizeNet:
       type: object
       required:
@@ -431,41 +410,15 @@ components:
           minLength: 3
           maxLength: 1024
           example: '1511736979'
-    Timestamps:
-      required:
-      - created_at
-      - updated_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    SubscriberMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        feature_entitlements:
-          type: array
-          description: A list of entitlement tags currently active for the subscriber
-          example:
-          - tag1
-          - tag2
-          items:
-            $ref: '#/components/schemas/FeatureTag'
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
     PaymentAuthorityEPPayments:
       writeOnly: true
       type: object
@@ -517,65 +470,54 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-  parameters:
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 10
-    Filter:
-      name: filter
-      in: query
-      required: false
-      schema:
-        type: string
-        format: string
-        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
-
-          '
-        example: eq(name,Alan Turing)
-    PageLimit:
-      name: page[limit]
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 100
+    SubscriptionSubscriberType:
+      type: string
+      example: subscription_subscriber
+      enum:
+      - subscription_subscriber
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    SubscriberResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/SubscriberAttributes'
+      - $ref: '#/components/schemas/Timestamps'
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
+    Subscriber:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionSubscriberType'
+        attributes:
+          $ref: '#/components/schemas/SubscriberResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/SubscriberMeta'
   responses:
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No plan found
     ValidationError:
       description: Bad request. The request failed validation.
       content:
@@ -589,16 +531,6 @@ components:
                 - title: Validation Error
                   status: '400'
                   detail: 'data.attributes.name: "name" is required'
-    WriteConflictError:
-      description: Write conflict. Unable to perform the operation at this time.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            errors:
-            - title: Write Conflict
-              status: '409'
     ForbiddenError:
       description: Forbidden. The operation is forbidden on this entity.
       content:
@@ -612,6 +544,74 @@ components:
                 - title: Permission denied
                   status: '404'
                   detail: 'Permission denied: plan tenancy mismatch'
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    WriteConflictError:
+      description: Write conflict. Unable to perform the operation at this time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - title: Write Conflict
+              status: '409'
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No plan found
+  parameters:
+    Filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(name,Alan Turing)
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
   securitySchemes:
     BearerToken:
       scheme: bearer

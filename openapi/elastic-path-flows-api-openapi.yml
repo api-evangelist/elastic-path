@@ -280,30 +280,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    UUID:
-      type: string
-      description: A unique identifier for a resource.
-      format: uuid
-      example: 00000000-0000-0000-0000-000000000000
-    FlowsRelationships:
-      type: object
-      description: Relationships are established between different flows/templates entities. For example, a field and an entry are related to a flow as both are attached to it.
-      properties:
-        fields:
-          type: object
-          properties:
-            data:
-              $ref: '#/components/schemas/Relationships'
-    Relationships:
-      title: Relationships
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          type: string
-          description: Represents the type of object being returned.
-          example: brand
     ErrorResponse:
       required:
       - errors
@@ -312,6 +288,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
+    FlowsLinks:
+      type: object
+      description: "Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:\n \n | Property | Description |\n | --- | --- |\n | `current` | Always the current page |\n | `first` | Always the first page |\n | `last` | `null` if there is only one page. |\n | `prev` | `null` if you are on the first page. |\n | `next` | `null` if there is only one page. |\n"
+      properties:
+        self:
+          type: string
+          example: https://euwest.api.elasticpath.com/v2/flows/d2a9b22a-b4b0-456b-bbc7-d8723aaffa84
     Flows:
       title: Flows
       type: object
@@ -364,39 +347,20 @@ components:
               type: string
               description: The date and time a resource is updated.
               example: '2023-10-11T13:02:25.293Z'
-    FlowsUpdateRequest:
-      title: FlowsUpdateRequest
+    UUID:
+      type: string
+      description: A unique identifier for a resource.
+      format: uuid
+      example: 00000000-0000-0000-0000-000000000000
+    FlowsRelationships:
       type: object
+      description: Relationships are established between different flows/templates entities. For example, a field and an entry are related to a flow as both are attached to it.
       properties:
-        data:
+        fields:
           type: object
           properties:
-            description:
-              type: string
-              description: A brief description of a flow/template outlining details such as purpose, usage instructions, and so on.
-              examples:
-              - Extends the default product object
-            enabled:
-              type: boolean
-              examples:
-              - true
-            name:
-              type: string
-              description: The name of a flow/template.
-              examples:
-              - Products
-            id:
-              $ref: '#/components/schemas/UUID'
-            slug:
-              type: string
-              description: A unique slug identifier for a flow/template.
-              examples:
-              - products
-            type:
-              type: string
-              description: Represents the type of object being returned.
-              examples:
-              - flow
+            data:
+              $ref: '#/components/schemas/Relationships'
     FlowsRequest:
       title: FlowsRequest
       type: object
@@ -437,6 +401,39 @@ components:
               description: Represents the type of object being returned.
               examples:
               - flow
+    FlowsUpdateRequest:
+      title: FlowsUpdateRequest
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            description:
+              type: string
+              description: A brief description of a flow/template outlining details such as purpose, usage instructions, and so on.
+              examples:
+              - Extends the default product object
+            enabled:
+              type: boolean
+              examples:
+              - true
+            name:
+              type: string
+              description: The name of a flow/template.
+              examples:
+              - Products
+            id:
+              $ref: '#/components/schemas/UUID'
+            slug:
+              type: string
+              description: A unique slug identifier for a flow/template.
+              examples:
+              - products
+            type:
+              type: string
+              description: Represents the type of object being returned.
+              examples:
+              - flow
     Error:
       required:
       - status
@@ -465,14 +462,42 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    FlowsLinks:
+    Relationships:
+      title: Relationships
       type: object
-      description: "Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:\n \n | Property | Description |\n | --- | --- |\n | `current` | Always the current page |\n | `first` | Always the first page |\n | `last` | `null` if there is only one page. |\n | `prev` | `null` if you are on the first page. |\n | `next` | `null` if there is only one page. |\n"
       properties:
-        self:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
           type: string
-          example: https://euwest.api.elasticpath.com/v2/flows/d2a9b22a-b4b0-456b-bbc7-d8723aaffa84
+          description: Represents the type of object being returned.
+          example: brand
   responses:
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: 400
+                  detail: 'data.attributes.name: "name" is required'
+    NotFound:
+      description: Bad request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: 404
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.
       content:
@@ -487,31 +512,6 @@ components:
                   title: Internal Server Error
                   detail: There was an internal server error, you can report with your request id.
                   request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
-    NotFound:
-      description: Bad request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: 404
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: 400
-                  detail: 'data.attributes.name: "name" is required'
   securitySchemes:
     bearerAuth:
       type: http

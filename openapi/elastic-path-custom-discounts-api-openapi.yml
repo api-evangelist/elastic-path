@@ -336,18 +336,104 @@ paths:
       deprecated: false
 components:
   schemas:
-    CartsBulkCustomDiscounts:
-      title: CartsBulkCustomDiscounts
+    CartsCustomDiscountsObject:
+      title: CartsCustomDiscountsObject
+      type: object
+      required:
+      - amount
+      - description
+      - discount_code
+      - discount_engine
+      - external_id
+      - type
+      properties:
+        amount:
+          type: object
+          oneOf:
+          - type: number
+            examples:
+            - -1000
+          - type: object
+            properties:
+              amount:
+                type: number
+                examples:
+                - -1000
+              currency:
+                type: string
+                examples:
+                - USD
+              formatted:
+                type: string
+                examples:
+                - -$10.00
+        description:
+          description: Specifies a description for the custom discount.
+          type: string
+          examples:
+          - Custom discount description
+        discount_code:
+          description: Specifies the discount code used for the custom discount.
+          type: string
+          examples:
+          - cart-custom-promo-code
+        discount_engine:
+          description: Specifies from where the custom discount is applied. For example, Talon.one.
+          type: string
+          examples:
+          - Custom Discount Engine
+        external_id:
+          description: Specifies an external id for the custom discount.
+          type: string
+          examples:
+          - custom-discount-external-id
+        type:
+          description: Specifies the type of the resource. Always `custom_discount`.
+          type: string
+          const: custom_discount
+        id:
+          description: Specifies the UUID of the custom discount.
+          type: string
+          format: uuid
+        relationships:
+          description: Relationships to other resources like cart items
+          type: object
+          properties:
+            item:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: The item ID this discount is related to
+                    type:
+                      type: string
+                      enum:
+                      - cart_item
+                      - custom_item
+    CartsBulkCustomDiscountsCollectionResponse:
+      title: CartsBulkCustomDiscountsCollectionResponse
       type: object
       properties:
         data:
           type: array
           items:
-            allOf:
-            - $ref: '#/components/schemas/CartsCustomDiscountsObject'
-            - $ref: '#/components/schemas/CartItemBulkCustomDiscountObject'
-        options:
-          $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
+            type: object
+            $ref: '#/components/schemas/CartsCustomDiscountsObject'
+        errors:
+          type: array
+          description: Array of validation or processing errors
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    CartsCustomDiscountsEntityRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/CartsCustomDiscountsResponseObject'
     CartsCustomDiscountsResponseObject:
       title: CartsCustomDiscountsResponse
       type: object
@@ -432,6 +518,30 @@ components:
           description: Array of validation or processing errors
           items:
             $ref: '#/components/schemas/Response.ErrorItem'
+    Response.ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Response.ErrorItem'
+    CartItemBulkCustomDiscountObject:
+      title: CartItemBulkCustomDiscountObject
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/CartsCustomDiscountsObject'
+      - $ref: '#/components/schemas/CustomDiscountRelationshipsCartItemRequest'
+    AddAllOrNothingOptionsObject:
+      title: Add All Or Nothing Options Object
+      type: object
+      properties:
+        add_all_or_nothing:
+          description: When `true`, if an error occurs for any item, no items are added to the cart. When `false`, valid items are added to the cart and the items with errors are reported in the response. Default is `false`.
+          type: boolean
+          examples:
+          - false
     CustomDiscountRelationshipsCartItemRequest:
       title: CustomDiscountRelationshipsCartItemRequest
       type: object
@@ -459,6 +569,32 @@ components:
                       format: uuid
                       examples:
                       - 5601a4b1-9d13-42d3-8fb7-03b35169d1b6
+    CartsCustomDiscountsCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/CartsCustomDiscountsObject'
+    CartsCustomDiscountsEntityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/CartsCustomDiscountsObject'
+    CartsBulkCustomDiscounts:
+      title: CartsBulkCustomDiscounts
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/CartsCustomDiscountsObject'
+            - $ref: '#/components/schemas/CartItemBulkCustomDiscountObject'
+        options:
+          $ref: '#/components/schemas/AddAllOrNothingOptionsObject'
     Response.ErrorItem:
       type: object
       required:
@@ -542,142 +678,6 @@ components:
               - type: object
                 additionalProperties: true
               - type: array
-    CartsCustomDiscountsCollectionResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            type: object
-            $ref: '#/components/schemas/CartsCustomDiscountsObject'
-    AddAllOrNothingOptionsObject:
-      title: Add All Or Nothing Options Object
-      type: object
-      properties:
-        add_all_or_nothing:
-          description: When `true`, if an error occurs for any item, no items are added to the cart. When `false`, valid items are added to the cart and the items with errors are reported in the response. Default is `false`.
-          type: boolean
-          examples:
-          - false
-    CartsBulkCustomDiscountsCollectionResponse:
-      title: CartsBulkCustomDiscountsCollectionResponse
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            type: object
-            $ref: '#/components/schemas/CartsCustomDiscountsObject'
-        errors:
-          type: array
-          description: Array of validation or processing errors
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    CartsCustomDiscountsEntityResponse:
-      type: object
-      properties:
-        data:
-          type: object
-          $ref: '#/components/schemas/CartsCustomDiscountsObject'
-    CartsCustomDiscountsObject:
-      title: CartsCustomDiscountsObject
-      type: object
-      required:
-      - amount
-      - description
-      - discount_code
-      - discount_engine
-      - external_id
-      - type
-      properties:
-        amount:
-          type: object
-          oneOf:
-          - type: number
-            examples:
-            - -1000
-          - type: object
-            properties:
-              amount:
-                type: number
-                examples:
-                - -1000
-              currency:
-                type: string
-                examples:
-                - USD
-              formatted:
-                type: string
-                examples:
-                - -$10.00
-        description:
-          description: Specifies a description for the custom discount.
-          type: string
-          examples:
-          - Custom discount description
-        discount_code:
-          description: Specifies the discount code used for the custom discount.
-          type: string
-          examples:
-          - cart-custom-promo-code
-        discount_engine:
-          description: Specifies from where the custom discount is applied. For example, Talon.one.
-          type: string
-          examples:
-          - Custom Discount Engine
-        external_id:
-          description: Specifies an external id for the custom discount.
-          type: string
-          examples:
-          - custom-discount-external-id
-        type:
-          description: Specifies the type of the resource. Always `custom_discount`.
-          type: string
-          const: custom_discount
-        id:
-          description: Specifies the UUID of the custom discount.
-          type: string
-          format: uuid
-        relationships:
-          description: Relationships to other resources like cart items
-          type: object
-          properties:
-            item:
-              type: object
-              properties:
-                data:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                      description: The item ID this discount is related to
-                    type:
-                      type: string
-                      enum:
-                      - cart_item
-                      - custom_item
-    CartsCustomDiscountsEntityRequest:
-      type: object
-      properties:
-        data:
-          type: object
-          $ref: '#/components/schemas/CartsCustomDiscountsResponseObject'
-    Response.ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Response.ErrorItem'
-    CartItemBulkCustomDiscountObject:
-      title: CartItemBulkCustomDiscountObject
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/CartsCustomDiscountsObject'
-      - $ref: '#/components/schemas/CustomDiscountRelationshipsCartItemRequest'
   securitySchemes:
     bearerAuth:
       type: http

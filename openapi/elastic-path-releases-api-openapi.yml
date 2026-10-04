@@ -259,54 +259,6 @@ paths:
                 $ref: '#/components/schemas/error-response'
 components:
   schemas:
-    release:
-      type: object
-      title: Release
-      description: A catalog release represents a collection of hierarchical product data, price books and catalogs rules.
-      properties:
-        id:
-          description: A unique identifier for the catalog release.
-          type: string
-          x-go-name: ID
-          example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
-        attributes:
-          type: object
-          properties:
-            name:
-              description: The name of a release.
-              type: string
-              example: Clothing
-            published_at:
-              description: The date and time a release was published.
-              type:
-              - string
-              - 'null'
-              format: date-time
-              example: '1970-01-01T00:00:00.000'
-            catalog_id:
-              description: A unique identifier for the catalog.
-              type: string
-              example: 0194f54d-f2a1-4e33-9a6e-9ec366152490
-            description:
-              description: A description of the catalog release.
-              type: string
-              example: Catalog for Store 123
-              default: ''
-            hierarchies:
-              description: An array of hierarchy IDs associated with the release.
-              type: array
-              items:
-                $ref: '#/components/schemas/node-reference'
-              x-go-name: RootNodes
-        relationships:
-          $ref: '#/components/schemas/release-relationships'
-        type:
-          description: This represents the type of object being returned. Always `catalog-release`.
-          type: string
-          x-go-name: Type
-        meta:
-          $ref: '#/components/schemas/release-meta'
-      x-go-name: Release
     release-list-data:
       type: object
       title: ReleaseListData
@@ -318,63 +270,6 @@ components:
             $ref: '#/components/schemas/release'
         links:
           $ref: '#/components/schemas/links'
-    release-data:
-      type: object
-      title: Release Data
-      description: Container for a catalog release.
-      properties:
-        data:
-          $ref: '#/components/schemas/release'
-        links:
-          $ref: '#/components/schemas/links'
-    related-link:
-      description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
-      type: object
-      properties:
-        related:
-          description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
-          type: string
-      required:
-      - related
-    node-reference:
-      type: object
-      title: NodeReference
-      description: Minimum set of information to identify a catalog node.
-      properties:
-        id:
-          description: The unique identifier of a hierarchy.
-          type: string
-          example: 65477ce0-fcb8-436b-a120-3d57979421dd
-          x-go-name: ID
-        label:
-          description: A label for a hierarchy.
-          type: string
-          example: category
-          x-go-name: Label
-        name:
-          description: The name of a hierarchy.
-          type: string
-          example: Formal dresswear
-          x-go-name: Name
-      x-go-name: NodeReference
-    error:
-      type: object
-      title: APIError
-      description: APIError is a json-api style part of an error response.
-      properties:
-        detail:
-          type: string
-          example: not processable
-          x-go-name: Detail
-        status:
-          type: string
-          example: '422'
-          x-go-name: Status
-        title:
-          type: string
-          example: There was a problem processing your request.
-          x-go-name: Title
-      x-go-name: APIError
     release-meta:
       type: object
       title: ReleaseMeta
@@ -468,6 +363,32 @@ components:
           x-go-name: IncludesDraftProducts
       x-go-name: ReleaseMeta
       x-omitempty: true
+    release-relationships:
+      type: object
+      title: ReleaseRelationships
+      description: Relationships are established between different catalog entities. For example, products, hierarchies, price books, and catalog rules are related to a catalog, as they are associated with it.
+      properties:
+        delta:
+          description: A URL to a delta document that describes the changes between catalog releases.
+          type: object
+          properties:
+            links:
+              $ref: '#/components/schemas/related-link'
+        products:
+          description: A URL to all products included in a catalog release.
+          type: object
+          properties:
+            links:
+              $ref: '#/components/schemas/related-link'
+        hierarchies:
+          description: A URL to all hierarchies included in a catalog release.
+          type: object
+          properties:
+            links:
+              $ref: '#/components/schemas/related-link'
+          required:
+          - links
+      x-go-name: ReleaseRelationships
     catalog-release-create-data:
       type: object
       title: CatalogReleaseCreateData
@@ -488,17 +409,6 @@ components:
               - 'null'
               description: If you are publishing a catalog in a store that contains resources from an organization, you must set this to true and you must enable the **Include Organization Resources in Catalog Publishes** checkbox in Commerce Manager. See [**Multi-Store Management Solutions**](/docs/api/pxm/catalog/publish-release).
               x-go-name: IncludeOrganizationResources
-    error-response:
-      type: object
-      title: ErrorResponse
-      description: ErrorResponse is a json-api style Error response.
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/error'
-          x-go-name: Errors
-      x-go-name: ErrorResponse
     links:
       description: Links allow you to move between requests.
       type: object
@@ -533,32 +443,122 @@ components:
           - string
           - 'null'
           format: uri
-    release-relationships:
+    release-data:
       type: object
-      title: ReleaseRelationships
-      description: Relationships are established between different catalog entities. For example, products, hierarchies, price books, and catalog rules are related to a catalog, as they are associated with it.
+      title: Release Data
+      description: Container for a catalog release.
       properties:
-        delta:
-          description: A URL to a delta document that describes the changes between catalog releases.
+        data:
+          $ref: '#/components/schemas/release'
+        links:
+          $ref: '#/components/schemas/links'
+    error-response:
+      type: object
+      title: ErrorResponse
+      description: ErrorResponse is a json-api style Error response.
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/error'
+          x-go-name: Errors
+      x-go-name: ErrorResponse
+    error:
+      type: object
+      title: APIError
+      description: APIError is a json-api style part of an error response.
+      properties:
+        detail:
+          type: string
+          example: not processable
+          x-go-name: Detail
+        status:
+          type: string
+          example: '422'
+          x-go-name: Status
+        title:
+          type: string
+          example: There was a problem processing your request.
+          x-go-name: Title
+      x-go-name: APIError
+    release:
+      type: object
+      title: Release
+      description: A catalog release represents a collection of hierarchical product data, price books and catalogs rules.
+      properties:
+        id:
+          description: A unique identifier for the catalog release.
+          type: string
+          x-go-name: ID
+          example: 8dbb35b2-ef04-477e-974d-e5f3abe6faae
+        attributes:
           type: object
           properties:
-            links:
-              $ref: '#/components/schemas/related-link'
-        products:
-          description: A URL to all products included in a catalog release.
-          type: object
-          properties:
-            links:
-              $ref: '#/components/schemas/related-link'
-        hierarchies:
-          description: A URL to all hierarchies included in a catalog release.
-          type: object
-          properties:
-            links:
-              $ref: '#/components/schemas/related-link'
-          required:
-          - links
-      x-go-name: ReleaseRelationships
+            name:
+              description: The name of a release.
+              type: string
+              example: Clothing
+            published_at:
+              description: The date and time a release was published.
+              type:
+              - string
+              - 'null'
+              format: date-time
+              example: '1970-01-01T00:00:00.000'
+            catalog_id:
+              description: A unique identifier for the catalog.
+              type: string
+              example: 0194f54d-f2a1-4e33-9a6e-9ec366152490
+            description:
+              description: A description of the catalog release.
+              type: string
+              example: Catalog for Store 123
+              default: ''
+            hierarchies:
+              description: An array of hierarchy IDs associated with the release.
+              type: array
+              items:
+                $ref: '#/components/schemas/node-reference'
+              x-go-name: RootNodes
+        relationships:
+          $ref: '#/components/schemas/release-relationships'
+        type:
+          description: This represents the type of object being returned. Always `catalog-release`.
+          type: string
+          x-go-name: Type
+        meta:
+          $ref: '#/components/schemas/release-meta'
+      x-go-name: Release
+    node-reference:
+      type: object
+      title: NodeReference
+      description: Minimum set of information to identify a catalog node.
+      properties:
+        id:
+          description: The unique identifier of a hierarchy.
+          type: string
+          example: 65477ce0-fcb8-436b-a120-3d57979421dd
+          x-go-name: ID
+        label:
+          description: A label for a hierarchy.
+          type: string
+          example: category
+          x-go-name: Label
+        name:
+          description: The name of a hierarchy.
+          type: string
+          example: Formal dresswear
+          x-go-name: Name
+      x-go-name: NodeReference
+    related-link:
+      description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+      type: object
+      properties:
+        related:
+          description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+          type: string
+      required:
+      - related
   parameters:
     channel:
       description: The list of channels in which this catalog can be displayed. A channel is the shopping experience, such as a mobile app or web storefront. If empty, the catalog rule matches all channels. The channel will eventually be included in the bearer token that is used for authorization, but currently, you must set the `EP-Channel` header in your requests.

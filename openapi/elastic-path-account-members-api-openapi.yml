@@ -229,20 +229,15 @@ components:
           type: integer
           description: The total number of results after applying filters, if any, or all results.
           example: 1
-    MetaTimestamps:
+    ErrorResponse:
       type: object
+      required:
+      - errors
       properties:
-        timestamps:
-          type: object
-          properties:
-            created_at:
-              description: The date the resource is created.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-            updated_at:
-              description: The date the resource is updated.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     MetaListPage:
       type: object
       properties:
@@ -262,36 +257,20 @@ components:
           type: integer
           description: The total page count.
           example: 1
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    AccountMemberResponse:
-      allOf:
-      - $ref: '#/components/schemas/AccountMember'
-      - type: object
-        properties:
-          meta:
-            $ref: '#/components/schemas/MetaTimestamps'
-          links:
-            type: object
-            properties:
-              self:
-                description: A URL to the specific resource.
-                type: string
-                example: https://useast.api.elasticpath.com/v2/account-members/908f7849-60da-4e4a-a3b1-51d4cbe3b953
-    MetaList:
+    MetaTimestamps:
       type: object
       properties:
-        page:
-          $ref: '#/components/schemas/MetaListPage'
-        results:
-          $ref: '#/components/schemas/MetaListResults'
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              description: The date the resource is created.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+            updated_at:
+              description: The date the resource is updated.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
     AccountMember:
       type: object
       properties:
@@ -331,6 +310,13 @@ components:
           type: string
           format: email
           example: ron@swanson.com
+    MetaList:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/MetaListPage'
+        results:
+          $ref: '#/components/schemas/MetaListResults'
     Error:
       type: object
       required:
@@ -353,6 +339,20 @@ components:
           description: Optional additional detail about the error.
           examples:
           - The field 'name' is required
+    AccountMemberResponse:
+      allOf:
+      - $ref: '#/components/schemas/AccountMember'
+      - type: object
+        properties:
+          meta:
+            $ref: '#/components/schemas/MetaTimestamps'
+          links:
+            type: object
+            properties:
+              self:
+                description: A URL to the specific resource.
+                type: string
+                example: https://useast.api.elasticpath.com/v2/account-members/908f7849-60da-4e4a-a3b1-51d4cbe3b953
   responses:
     BadRequestError:
       description: Bad Request
@@ -379,6 +379,19 @@ components:
                 errors:
                 - title: Unauthorized
                   status: '401'
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: account not found
     InternalServerError:
       description: Internal server error.
       content:
@@ -393,20 +406,18 @@ components:
                 - title: Internal Server Error
                   status: '500'
                   detail: there was a problem processing your request
-    NotFoundError:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: account not found
   parameters:
+    page-offset:
+      name: page[offset]
+      in: query
+      description: The number of records to offset the results by.
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
     filter:
       name: filter
       in: query
@@ -426,17 +437,6 @@ components:
         format: int64
         minimum: 0
         example: 25
-    page-offset:
-      name: page[offset]
-      in: query
-      description: The number of records to offset the results by.
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 10
   securitySchemes:
     BearerToken:
       type: http

@@ -172,27 +172,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    FeatureUpdate:
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionFeatureType'
-        attributes:
-          $ref: '#/components/schemas/FeatureUpdateAttributes'
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 11111111-2222-3333-4444-555555555555
     ErrorResponse:
       required:
       - errors
@@ -201,34 +180,66 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-    FeatureConfiguration:
-      type: object
+    FeatureTag:
+      type: string
+      description: A tag to add to the customer's account when entitled to the feature.
+      minLength: 1
+      maxLength: 64
+      pattern: ^[0-9A-Za-z_-]+$
+      example: digital_library_access
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    FeatureAccessAttributes:
       required:
       - type
+      - tag
       properties:
         type:
-          description: The type of feature, one of access, promotion or usage.
+          type: string
           enum:
           - access
-          - promotion
-          - usage
           example: access
-          x-go-type: string
-      oneOf:
-      - $ref: '#/components/schemas/FeatureAccessAttributes'
-      - $ref: '#/components/schemas/FeaturePromotionAttributes'
-      - $ref: '#/components/schemas/FeatureUsageAttributes'
-      discriminator:
-        propertyName: type
-        mapping:
-          access: '#/components/schemas/FeatureAccessAttributes'
-          promotion: '#/components/schemas/FeaturePromotionAttributes'
-          usage: '#/components/schemas/FeatureUsageAttributes'
-    ExternalRef:
+        tag:
+          $ref: '#/components/schemas/FeatureTag'
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    Feature:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionFeatureType'
+        attributes:
+          $ref: '#/components/schemas/FeatureResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/FeatureMeta'
+    ExternalRefUpdate:
       description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-      type: string
+      type:
+      - string
+      - 'null'
       example: abc123
       maxLength: 2048
+    FeatureMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      properties:
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
     FeatureAttributes:
       required:
       - name
@@ -249,10 +260,28 @@ components:
           example: Access to over 100 ebooks via the digital library.
         configuration:
           $ref: '#/components/schemas/FeatureConfiguration'
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
+    ExternalRef:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
+    FeaturePromotionAttributes:
+      required:
+      - type
+      - promotions
+      properties:
+        type:
+          type: string
+          enum:
+          - promotion
+          example: promotion
+        promotions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeaturePromotion'
+    FeatureResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/FeatureAttributes'
     FeaturePromotion:
       required:
       - name
@@ -268,89 +297,6 @@ components:
           $ref: '#/components/schemas/FeatureTag'
         promotion_id:
           $ref: '#/components/schemas/UUID'
-    FeatureTag:
-      type: string
-      description: A tag to add to the customer's account when entitled to the feature.
-      minLength: 1
-      maxLength: 64
-      pattern: ^[0-9A-Za-z_-]+$
-      example: digital_library_access
-    FeatureUpdateAttributes:
-      properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRefUpdate'
-        name:
-          type: string
-          description: The name of the feature.
-          minLength: 3
-          maxLength: 1024
-          example: Digital library access
-        description:
-          type:
-          - string
-          - 'null'
-          description: The feature description to display to customers.
-          maxLength: 1024
-          example: Access to over 100 ebooks via the digital library.
-        configuration:
-          $ref: '#/components/schemas/FeatureConfiguration'
-    ExternalRefUpdate:
-      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-      type:
-      - string
-      - 'null'
-      example: abc123
-      maxLength: 2048
-    OwnerMeta:
-      readOnly: true
-      type: string
-      format: string
-      description: The owner of a resource, either `store` or `organization`.
-      example: store
-    FeatureAccessAttributes:
-      required:
-      - type
-      - tag
-      properties:
-        type:
-          type: string
-          enum:
-          - access
-          example: access
-        tag:
-          $ref: '#/components/schemas/FeatureTag'
-    FeatureCreate:
-      required:
-      - type
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/SubscriptionFeatureType'
-        attributes:
-          $ref: '#/components/schemas/FeatureAttributes'
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    FeatureResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/FeatureAttributes'
     FeatureUsageAttributes:
       required:
       - type
@@ -388,53 +334,32 @@ components:
           description: The date and time a resource was created.
           type: string
           example: '2017-01-10T11:41:19.244842Z'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    Feature:
+    SubscriptionFeatureType:
+      type: string
+      example: subscription_feature
+      enum:
+      - subscription_feature
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    FeatureUpdate:
       required:
+      - id
       - type
       - attributes
-      - meta
       properties:
         id:
           $ref: '#/components/schemas/UUID'
         type:
           $ref: '#/components/schemas/SubscriptionFeatureType'
         attributes:
-          $ref: '#/components/schemas/FeatureResponseAttributes'
-        meta:
-          $ref: '#/components/schemas/FeatureMeta'
-    FeatureMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    SubscriptionFeatureType:
-      type: string
-      example: subscription_feature
-      enum:
-      - subscription_feature
-    FeaturePromotionAttributes:
-      required:
-      - type
-      - promotions
-      properties:
-        type:
-          type: string
-          enum:
-          - promotion
-          example: promotion
-        promotions:
-          type: array
-          items:
-            $ref: '#/components/schemas/FeaturePromotion'
+          $ref: '#/components/schemas/FeatureUpdateAttributes'
     Error:
       required:
       - status
@@ -458,65 +383,82 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-  parameters:
-    Filter:
-      name: filter
-      in: query
-      required: false
-      schema:
-        type: string
-        format: string
-        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
-
-          '
-        example: eq(name,Alan Turing)
-    PageLimit:
-      name: page[limit]
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        example: 100
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-        example: 10
+    FeatureCreate:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/SubscriptionFeatureType'
+        attributes:
+          $ref: '#/components/schemas/FeatureAttributes'
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    FeatureConfiguration:
+      type: object
+      required:
+      - type
+      properties:
+        type:
+          description: The type of feature, one of access, promotion or usage.
+          enum:
+          - access
+          - promotion
+          - usage
+          example: access
+          x-go-type: string
+      oneOf:
+      - $ref: '#/components/schemas/FeatureAccessAttributes'
+      - $ref: '#/components/schemas/FeaturePromotionAttributes'
+      - $ref: '#/components/schemas/FeatureUsageAttributes'
+      discriminator:
+        propertyName: type
+        mapping:
+          access: '#/components/schemas/FeatureAccessAttributes'
+          promotion: '#/components/schemas/FeaturePromotionAttributes'
+          usage: '#/components/schemas/FeatureUsageAttributes'
+    FeatureUpdateAttributes:
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRefUpdate'
+        name:
+          type: string
+          description: The name of the feature.
+          minLength: 3
+          maxLength: 1024
+          example: Digital library access
+        description:
+          type:
+          - string
+          - 'null'
+          description: The feature description to display to customers.
+          maxLength: 1024
+          example: Access to over 100 ebooks via the digital library.
+        configuration:
+          $ref: '#/components/schemas/FeatureConfiguration'
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
   responses:
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-                  detail: No plan found
     ValidationError:
       description: Bad request. The request failed validation.
       content:
@@ -530,16 +472,6 @@ components:
                 - title: Validation Error
                   status: '400'
                   detail: 'data.attributes.name: "name" is required'
-    WriteConflictError:
-      description: Write conflict. Unable to perform the operation at this time.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            errors:
-            - title: Write Conflict
-              status: '409'
     ForbiddenError:
       description: Forbidden. The operation is forbidden on this entity.
       content:
@@ -553,6 +485,74 @@ components:
                 - title: Permission denied
                   status: '404'
                   detail: 'Permission denied: plan tenancy mismatch'
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+    WriteConflictError:
+      description: Write conflict. Unable to perform the operation at this time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - title: Write Conflict
+              status: '409'
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
+                  detail: No plan found
+  parameters:
+    Filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(name,Alan Turing)
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+        example: 10
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        example: 100
   securitySchemes:
     BearerToken:
       scheme: bearer

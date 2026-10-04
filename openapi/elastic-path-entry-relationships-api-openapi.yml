@@ -204,6 +204,19 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    UUID:
+      type: string
+      description: A unique identifier for a resource.
+      format: uuid
+      example: 00000000-0000-0000-0000-000000000000
     FlowsEntriesRelationshipsFieldSlugRequest:
       title: FlowsEntriesRelationshipsFieldSlugRequest
       type: object
@@ -221,29 +234,6 @@ components:
                 description: The resource type of the object.
                 examples:
                 - customer
-    UUID:
-      type: string
-      description: A unique identifier for a resource.
-      format: uuid
-      example: 00000000-0000-0000-0000-000000000000
-    Relationships:
-      title: Relationships
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          type: string
-          description: Represents the type of object being returned.
-          example: brand
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
     Error:
       required:
       - status
@@ -272,7 +262,42 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    Relationships:
+      title: Relationships
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          type: string
+          description: Represents the type of object being returned.
+          example: brand
   responses:
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: 400
+                  detail: 'data.attributes.name: "name" is required'
+    NotFound:
+      description: Bad request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: 404
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.
       content:
@@ -287,31 +312,6 @@ components:
                   title: Internal Server Error
                   detail: There was an internal server error, you can report with your request id.
                   request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
-    NotFound:
-      description: Bad request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: 404
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: 400
-                  detail: 'data.attributes.name: "name" is required'
   securitySchemes:
     bearerAuth:
       type: http
