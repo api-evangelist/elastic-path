@@ -132,8 +132,8 @@ components:
                 errors:
                 - title: Not Found
                   status: '404'
-    internal:
-      description: Internal server error. There was a system failure in the platform.
+    write_conflict:
+      description: Write conflict detected
       content:
         application/json:
           schema:
@@ -142,10 +142,9 @@ components:
             internal-server-error:
               value:
                 errors:
-                - status: '500'
-                  title: Internal Server Error
-                  detail: There was an internal server error, you can report with your request id.
-                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+                - title: Conflict
+                  status: '409'
+                  detail: write conflict detected
     bad_request:
       description: Bad request. The request failed validation.
       content:
@@ -172,19 +171,6 @@ components:
                 - title: Failed Validation
                   status: '422'
                   detail: <XYZ> can not be empty
-    write_conflict:
-      description: Write conflict detected
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Conflict
-                  status: '409'
-                  detail: write conflict detected
     forbidden:
       description: Forbidden
       content:
@@ -198,23 +184,21 @@ components:
                 - title: Forbidden
                   status: '403'
                   detail: entity owned by organization
+    internal:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: '500'
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
   schemas:
-    product_templates_request:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                description: The unique identifier of a template.
-              type:
-                type: string
-                enum:
-                - template
-                description: This represents the type of resource object being returned. Always `template`.
     template_response:
       type: object
       properties:
@@ -264,6 +248,37 @@ components:
                 example:
                   missing_ids:
                   - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    product_templates_request:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The unique identifier of a template.
+              type:
+                type: string
+                enum:
+                - template
+                description: This represents the type of resource object being returned. Always `template`.
+  examples:
+    template_response:
+      value:
+        data:
+        - id: 43903bfa-5352-4a3d-9496-c9ab1229a175
+          type: template
+        - id: 50f56ce9-9381-43f6-8a52-5369a8b42e52
+          type: template
+    templates_relationship_request:
+      value:
+        data:
+        - id: 43903bfa-5352-4a3d-9496-c9ab1229a175
+          type: template
+        - id: 50f56ce9-9381-43f6-8a52-5369a8b42e52
+          type: template
   parameters:
     product_id:
       name: productID
@@ -274,21 +289,6 @@ components:
         x-postman-example: '{{productID}}'
       required: true
       description: A unique identifier for the product.
-  examples:
-    templates_relationship_request:
-      value:
-        data:
-        - id: 43903bfa-5352-4a3d-9496-c9ab1229a175
-          type: template
-        - id: 50f56ce9-9381-43f6-8a52-5369a8b42e52
-          type: template
-    template_response:
-      value:
-        data:
-        - id: 43903bfa-5352-4a3d-9496-c9ab1229a175
-          type: template
-        - id: 50f56ce9-9381-43f6-8a52-5369a8b42e52
-          type: template
   securitySchemes:
     bearerAuth:
       type: http

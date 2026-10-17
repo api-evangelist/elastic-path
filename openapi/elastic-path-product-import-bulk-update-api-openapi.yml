@@ -129,6 +129,62 @@ paths:
           - en-CA
         example: en-US
 components:
+  responses:
+    bad_request:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            bad-request:
+              value:
+                errors:
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+    internal:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: '500'
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+  examples:
+    import:
+      value:
+        data:
+          type: pim-job
+          id: 7e1b9ba1-c844-4556-9b16-4ae3f0988b0f
+          attributes:
+            completed_at: null
+            created_at: '2024-01-05T15:27:23.161Z'
+            started_at: null
+            status: pending
+            type: product-import
+            updated_at: '2024-01-05T15:27:23.161Z'
+          meta:
+            x_request_id: fad8c5c0-9546-4e0c-b68e-8a2d809891e5
   schemas:
     single:
       type: object
@@ -137,6 +193,39 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/job'
+    error:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                example: '500'
+              title:
+                type: string
+                description: A brief summary of the error.
+                example: Internal server error
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                example: An internal error has occurred.
+              request_id:
+                type: string
+                description: Internal request ID.
+                example: 00000000-0000-0000-0000-000000000000
+              meta:
+                type: object
+                description: Additional supporting meta data for the error.
+                example:
+                  missing_ids:
+                  - e7d50bd5-1833-43c0-9848-f9d325b08be8
     job:
       type: object
       required:
@@ -245,95 +334,6 @@ components:
               - string
               - 'null'
               description: The entities included in the job. For example, if the job type is `product-export`, the PXM products included in the export.
-    error:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            required:
-            - status
-            - title
-            properties:
-              status:
-                type: string
-                description: The HTTP response code of the error.
-                example: '500'
-              title:
-                type: string
-                description: A brief summary of the error.
-                example: Internal server error
-              detail:
-                type: string
-                description: Optional additional detail about the error.
-                example: An internal error has occurred.
-              request_id:
-                type: string
-                description: Internal request ID.
-                example: 00000000-0000-0000-0000-000000000000
-              meta:
-                type: object
-                description: Additional supporting meta data for the error.
-                example:
-                  missing_ids:
-                  - e7d50bd5-1833-43c0-9848-f9d325b08be8
-  responses:
-    internal:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - status: '500'
-                  title: Internal Server Error
-                  detail: There was an internal server error, you can report with your request id.
-                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
-    bad_request:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            bad-request:
-              value:
-                errors:
-                - title: Bad Request
-                  detail: Could not parse the supplied filter
-                  status: '400'
-    unprocessable_entity:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            failed-validation:
-              value:
-                errors:
-                - title: Failed Validation
-                  status: '422'
-                  detail: <XYZ> can not be empty
-  examples:
-    import:
-      value:
-        data:
-          type: pim-job
-          id: 7e1b9ba1-c844-4556-9b16-4ae3f0988b0f
-          attributes:
-            completed_at: null
-            created_at: '2024-01-05T15:27:23.161Z'
-            started_at: null
-            status: pending
-            type: product-import
-            updated_at: '2024-01-05T15:27:23.161Z'
-          meta:
-            x_request_id: fad8c5c0-9546-4e0c-b68e-8a2d809891e5
   securitySchemes:
     bearerAuth:
       type: http

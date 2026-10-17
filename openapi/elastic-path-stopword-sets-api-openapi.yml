@@ -162,12 +162,28 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-    StopwordSetType:
-      type: string
-      description: Represents the type of object being returned. Always `catalog_search_stopword_set`.
-      example: catalog_search_stopword_set
-      enum:
-      - catalog_search_stopword_set
+    StopwordSetAttributes:
+      type: object
+      required:
+      - stopwords
+      properties:
+        locale:
+          type: string
+          description: '[ISO 639 language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) for the stopwords set. Omit or pass null for the default set. At most one stopwords set per locale is allowed.
+
+            '
+          example: en
+        stopwords:
+          type: array
+          description: The list of stopwords.
+          items:
+            type: string
+          minItems: 1
+          example:
+          - the
+          - a
+          - an
+          - is
     StopwordSetMeta:
       type: object
       required:
@@ -206,6 +222,34 @@ components:
           format: date-time
           description: The date and time the stopword set was last successfully synced.
           example: '2026-03-05T12:01:00Z'
+    StopwordSetResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/StopwordSet'
+    UpdateStopwordSetRequest:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          type: object
+          required:
+          - id
+          - type
+          - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 550e8400-e29b-41d4-a716-446655440000
+              x-go-name: ID
+            type:
+              $ref: '#/components/schemas/StopwordSetType'
+            attributes:
+              $ref: '#/components/schemas/UpdateStopwordSetAttributes'
     CreateStopwordSetRequest:
       type: object
       required:
@@ -240,57 +284,6 @@ components:
       properties:
         results:
           $ref: '#/components/schemas/ListResponseMetaResults'
-    UpdateStopwordSetRequest:
-      type: object
-      required:
-      - data
-      properties:
-        data:
-          type: object
-          required:
-          - id
-          - type
-          - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              example: 550e8400-e29b-41d4-a716-446655440000
-              x-go-name: ID
-            type:
-              $ref: '#/components/schemas/StopwordSetType'
-            attributes:
-              $ref: '#/components/schemas/UpdateStopwordSetAttributes'
-    ResourceOwner:
-      description: The resource owner, either `organization` or `store`.
-      type: string
-      example: organization
-      enum:
-      - organization
-      - store
-      x-go-type: tenancy.Owner
-      x-go-type-import:
-        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
-    StopwordSet:
-      type: object
-      required:
-      - id
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          description: The unique identifier for the stopword set.
-          type: string
-          format: uuid
-          example: 550e8400-e29b-41d4-a716-446655440000
-          x-go-name: ID
-        type:
-          $ref: '#/components/schemas/StopwordSetType'
-        attributes:
-          $ref: '#/components/schemas/StopwordSetAttributes'
-        meta:
-          $ref: '#/components/schemas/StopwordSetMeta'
     ListResponseMetaResults:
       description: Contains the results for the entire collection.
       type: object
@@ -301,28 +294,6 @@ components:
           description: Total number of results for the entire collection.
           type: integer
           example: 100
-    StopwordSetAttributes:
-      type: object
-      required:
-      - stopwords
-      properties:
-        locale:
-          type: string
-          description: '[ISO 639 language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) for the stopwords set. Omit or pass null for the default set. At most one stopwords set per locale is allowed.
-
-            '
-          example: en
-        stopwords:
-          type: array
-          description: The list of stopwords.
-          items:
-            type: string
-          minItems: 1
-          example:
-          - the
-          - a
-          - an
-          - is
     Error:
       required:
       - status
@@ -346,13 +317,36 @@ components:
           example:
             missing_ids:
             - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    StopwordSetResponse:
+    StopwordSet:
       type: object
       required:
-      - data
+      - id
+      - type
+      - attributes
+      - meta
       properties:
-        data:
-          $ref: '#/components/schemas/StopwordSet'
+        id:
+          description: The unique identifier for the stopword set.
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/StopwordSetType'
+        attributes:
+          $ref: '#/components/schemas/StopwordSetAttributes'
+        meta:
+          $ref: '#/components/schemas/StopwordSetMeta'
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
     UpdateStopwordSetAttributes:
       type: object
       required:
@@ -368,6 +362,12 @@ components:
           - the
           - a
           - an
+    StopwordSetType:
+      type: string
+      description: Represents the type of object being returned. Always `catalog_search_stopword_set`.
+      example: catalog_search_stopword_set
+      enum:
+      - catalog_search_stopword_set
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.

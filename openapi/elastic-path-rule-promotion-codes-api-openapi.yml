@@ -541,31 +541,6 @@ paths:
           description: No Content
 components:
   schemas:
-    PromotionCodeMessage:
-      type: object
-      properties:
-        source:
-          type: object
-          description: Information about the affected promotion codes.
-          properties:
-            type:
-              type: string
-              const: promotion_codes
-              description: Indicates that the affected entity is a promotion code.
-            codes:
-              type: array
-              description: A list of promotion codes that triggered the message.
-              items:
-                type: string
-                example: spring2024
-        title:
-          type: string
-          description: A brief title summarizing the message.
-          example: Duplicate code names
-        description:
-          type: string
-          description: A detailed explanation of the message.
-          example: Code names duplicated in other promotions
     GetPromotionCodeResponse:
       type: object
       properties:
@@ -607,82 +582,6 @@ components:
                 created_at:
                   type: string
                   format: date-time
-    PaginationMeta:
-      type: object
-      properties:
-        page:
-          type: object
-          properties:
-            current:
-              type: integer
-              description: Current page number
-            limit:
-              type: integer
-              description: Number of items per page
-            offset:
-              type: integer
-              description: Offset from the first result
-            total:
-              type: integer
-              description: Total number of pages
-        results:
-          type: object
-          properties:
-            total:
-              type: integer
-              description: Total number of results
-            total_method:
-              type: string
-              description: Method used to calculate the total (e.g., 'exact')
-    PaginationLinks:
-      type: object
-      properties:
-        current:
-          type: string
-          format: uri
-          description: URL for the current page of results
-        first:
-          type: string
-          format: uri
-          description: URL for the first page of results
-        last:
-          type: string
-          format: uri
-          description: URL for the last page of results
-        next:
-          type: string
-          format: uri
-          description: URL for the next page of results
-        prev:
-          type: string
-          format: uri
-          description: URL for the previous page of results
-    CreatePromotionCodeResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        type:
-          type: string
-          const: promotion_codes
-        code:
-          type: string
-        uses:
-          type: integer
-        user:
-          type: string
-        consume_unit:
-          type: string
-          enum:
-          - per_application
-          - per_checkout
-        max_uses:
-          type: integer
-        max_uses_per_shopper:
-          $ref: '#/components/schemas/MaxUsesPerShopper'
-        is_for_new_shopper:
-          type: boolean
     PromotionCodesRequest:
       type: object
       properties:
@@ -720,6 +619,68 @@ components:
                   is_for_new_shopper:
                     type: boolean
                     description: A flag indicating whether the coupon is for first-time shoppers. If set to `true`, the discount will only apply if the shopper has never made a payment on any order in the store. If set to `false` or left unset, it will be a regular discount that applies to all shoppers. When this flag is set to `true`, the coupon cannot have usage limitations or be assigned to specific users.
+    CreatePromotionCodeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          const: promotion_codes
+        code:
+          type: string
+        uses:
+          type: integer
+        user:
+          type: string
+        consume_unit:
+          type: string
+          enum:
+          - per_application
+          - per_checkout
+        max_uses:
+          type: integer
+        max_uses_per_shopper:
+          $ref: '#/components/schemas/MaxUsesPerShopper'
+        is_for_new_shopper:
+          type: boolean
+    MaxUsesPerShopper:
+      type: object
+      description: Object for setting max uses per shopper. Only include this object, when you want to set limit per shopper.
+      properties:
+        max_uses:
+          type: integer
+          description: Sets max number of times the code can be used by a shopper. NOTE - This cannot be set with `per_application` consume unit.
+        includes_guests:
+          type: boolean
+          default: false
+          description: The flag to include guest shoppers for the discount with max use restriction. **If this field is provided, the max_uses value is required.** When set to `true`, guest shoppers must have an email associated with the cart to use the code. A guest cart without an email cannot use the code. When set to `false`, guest shoppers cannot use the promo code, even if the cart has an associated guest email.
+    PromotionCodeMessage:
+      type: object
+      properties:
+        source:
+          type: object
+          description: Information about the affected promotion codes.
+          properties:
+            type:
+              type: string
+              const: promotion_codes
+              description: Indicates that the affected entity is a promotion code.
+            codes:
+              type: array
+              description: A list of promotion codes that triggered the message.
+              items:
+                type: string
+                example: spring2024
+        title:
+          type: string
+          description: A brief title summarizing the message.
+          example: Duplicate code names
+        description:
+          type: string
+          description: A detailed explanation of the message.
+          example: Code names duplicated in other promotions
     Response.Error:
       type: object
       properties:
@@ -749,6 +710,29 @@ components:
                     type: array
                     items:
                       type: string
+    PaginationLinks:
+      type: object
+      properties:
+        current:
+          type: string
+          format: uri
+          description: URL for the current page of results
+        first:
+          type: string
+          format: uri
+          description: URL for the first page of results
+        last:
+          type: string
+          format: uri
+          description: URL for the last page of results
+        next:
+          type: string
+          format: uri
+          description: URL for the next page of results
+        prev:
+          type: string
+          format: uri
+          description: URL for the previous page of results
     GetPromotionCodesResponse:
       type: object
       properties:
@@ -760,17 +744,6 @@ components:
           $ref: '#/components/schemas/PaginationLinks'
         meta:
           $ref: '#/components/schemas/PaginationMeta'
-    MaxUsesPerShopper:
-      type: object
-      description: Object for setting max uses per shopper. Only include this object, when you want to set limit per shopper.
-      properties:
-        max_uses:
-          type: integer
-          description: Sets max number of times the code can be used by a shopper. NOTE - This cannot be set with `per_application` consume unit.
-        includes_guests:
-          type: boolean
-          default: false
-          description: The flag to include guest shoppers for the discount with max use restriction. **If this field is provided, the max_uses value is required.** When set to `true`, guest shoppers must have an email associated with the cart to use the code. A guest cart without an email cannot use the code. When set to `false`, guest shoppers cannot use the promo code, even if the cart has an associated guest email.
     CreatePromotionCodesResponse:
       type: object
       properties:
@@ -782,6 +755,33 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PromotionCodeMessage'
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: object
+          properties:
+            current:
+              type: integer
+              description: Current page number
+            limit:
+              type: integer
+              description: Number of items per page
+            offset:
+              type: integer
+              description: Offset from the first result
+            total:
+              type: integer
+              description: Total number of pages
+        results:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Total number of results
+            total_method:
+              type: string
+              description: Method used to calculate the total (e.g., 'exact')
   parameters:
     Authorization:
       name: Authorization

@@ -347,30 +347,35 @@ paths:
       description: US east cluster
 components:
   schemas:
-    ErrorResponse:
-      type: object
+    Import:
       required:
-      - errors
+      - id
+      - type
+      - meta
+      - attributes
       properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    InventoriesImportType:
-      type: string
-      example: inventories_import
-      enum:
-      - inventories_import
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/InventoriesImportType'
+        attributes:
+          $ref: '#/components/schemas/ImportAttributes'
+        meta:
+          $ref: '#/components/schemas/ImportMeta'
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
     InventoriesImportErrorMeta:
       type: object
       required:
@@ -393,6 +398,58 @@ components:
           example: 123
         external_ref:
           $ref: '#/components/schemas/ExternalRef'
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    InventoriesImportError:
+      type: object
+      required:
+      - id
+      - type
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/InventoriesImportErrorType'
+        meta:
+          $ref: '#/components/schemas/InventoriesImportErrorMeta'
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    InventoriesImportType:
+      type: string
+      example: inventories_import
+      enum:
+      - inventories_import
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    InventoriesImportErrorType:
+      type: string
+      example: inventories_import_error
+      enum:
+      - inventories_import_error
+    JobTimestamps:
+      allOf:
+      - $ref: '#/components/schemas/Timestamps'
+      - properties:
+          started_at:
+            description: The date and time a job is started.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
+          finished_at:
+            description: The date and time a job finished.
+            type: string
+            example: '2017-01-10T11:41:19.244842Z'
     ImportRecords:
       type: object
       description: You can track the number of records imported to ensure the completeness, accuracy and integrity of the import. Uploaded shows the number of records ready to be imported. However, this does not mean they are valid objects, only that they have the correct type and their JSON format is properly formatted. Imported shows the number of records that have been both validated and successfully added.
@@ -417,11 +474,48 @@ components:
               example: 50000
           required:
           - stock
-    ExternalRef:
-      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    UUID:
       type: string
-      example: abc123
-      maxLength: 2048
+      description: The unique identifier.
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 00000000-0000-0000-0000-000000000000
+    ImportMeta:
+      readOnly: true
+      required:
+      - timestamps
+      - records
+      properties:
+        timestamps:
+          $ref: '#/components/schemas/JobTimestamps'
+        records:
+          $ref: '#/components/schemas/ImportRecords'
     ImportAttributes:
       required:
       - status
@@ -451,6 +545,11 @@ components:
           x-go-type-import:
             name: model
             path: gitlab.elasticpath.com/commerce-cloud/inventories.svc/internal/domain/model
+    ExternalRef:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
     Timestamps:
       required:
       - created_at
@@ -463,111 +562,26 @@ components:
           description: The date and time a resource was created.
           type: string
           example: '2017-01-10T11:41:19.244842Z'
-    InventoriesImportError:
-      type: object
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
+    Import_2:
       required:
-      - id
-      - type
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/InventoriesImportErrorType'
-        meta:
-          $ref: '#/components/schemas/InventoriesImportErrorMeta'
-    UUID:
-      type: string
-      description: The unique identifier.
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 00000000-0000-0000-0000-000000000000
-    Error:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    JobTimestamps:
-      allOf:
-      - $ref: '#/components/schemas/Timestamps'
-      - properties:
-          started_at:
-            description: The date and time a job is started.
-            type: string
-            example: '2017-01-10T11:41:19.244842Z'
-          finished_at:
-            description: The date and time a job finished.
-            type: string
-            example: '2017-01-10T11:41:19.244842Z'
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    Import:
-      required:
-      - id
       - type
       - meta
       - attributes
       properties:
         id:
-          $ref: '#/components/schemas/UUID'
+          $ref: '#/components/schemas/UUID_2'
         type:
-          $ref: '#/components/schemas/InventoriesImportType'
+          $ref: '#/components/schemas/SubscriptionImportType'
         attributes:
-          $ref: '#/components/schemas/ImportAttributes'
+          $ref: '#/components/schemas/ImportAttributes_2'
         meta:
-          $ref: '#/components/schemas/ImportMeta'
-    InventoriesImportErrorType:
-      type: string
-      example: inventories_import_error
-      enum:
-      - inventories_import_error
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
-    ImportMeta:
-      readOnly: true
-      required:
-      - timestamps
-      - records
-      properties:
-        timestamps:
-          $ref: '#/components/schemas/JobTimestamps'
-        records:
-          $ref: '#/components/schemas/ImportRecords'
+          $ref: '#/components/schemas/ImportMeta_2'
     ErrorResponse_2:
       required:
       - errors
@@ -576,42 +590,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error_2'
-    SubscriptionImportType:
-      type: string
-      example: subscription_import
-      enum:
-      - subscription_import
     SubscriptionImportErrorType:
       type: string
       example: subscription_import_error
       enum:
       - subscription_import_error
-    SubscriptionImportErrorMeta:
-      type: object
-      required:
-      - owner
-      - timestamps
-      - error
-      - field
-      - line_number
-      properties:
-        owner:
-          type: string
-          example: store
-        timestamps:
-          $ref: '#/components/schemas/Timestamps_2'
-        error:
-          type: string
-          example: offering name cannot be empty
-        field:
-          type: string
-          example: name
-        line_number:
-          type: integer
-          description: The line in the imported JSONL file at which the validation error occurred. Starts from 1.
-          example: 123
-        external_ref:
-          $ref: '#/components/schemas/ExternalRef'
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
     ImportRecords_2:
       type: object
       description: You can track the number of records imported to ensure the completeness, accuracy and integrity of the import. Uploaded shows the number of records ready to be imported into Subscriptions. However, this does not mean they are valid subscription objects, only that they have the correct type and their JSON format is properly formatted. Imported shows the number of records that have been both validated and successfully added to Subscriptions.
@@ -666,6 +655,56 @@ components:
           - subscription_subscriber
           - subscription_offering
           - subscription
+    Error_2:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    SubscriptionImportType:
+      type: string
+      example: subscription_import
+      enum:
+      - subscription_import
+    UUID_2:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    ImportMeta_2:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      - records
+      properties:
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/JobTimestamps'
+        records:
+          $ref: '#/components/schemas/ImportRecords_2'
     ImportAttributes_2:
       required:
       - status
@@ -695,28 +734,32 @@ components:
           x-go-type-import:
             name: model
             path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-    Timestamps_2:
+    SubscriptionImportErrorMeta:
+      type: object
       required:
-      - created_at
-      - updated_at
+      - owner
+      - timestamps
+      - error
+      - field
+      - line_number
       properties:
-        updated_at:
-          description: The date and time a resource was updated.
+        owner:
           type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
+          example: store
+        timestamps:
+          $ref: '#/components/schemas/Timestamps_2'
+        error:
           type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    UUID_2:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 11111111-2222-3333-4444-555555555555
+          example: offering name cannot be empty
+        field:
+          type: string
+          example: name
+        line_number:
+          type: integer
+          description: The line in the imported JSONL file at which the validation error occurred. Starts from 1.
+          example: 123
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
     SubscriptionImportError:
       type: object
       required:
@@ -730,62 +773,19 @@ components:
           $ref: '#/components/schemas/SubscriptionImportErrorType'
         meta:
           $ref: '#/components/schemas/SubscriptionImportErrorMeta'
-    Error_2:
+    Timestamps_2:
       required:
-      - status
-      - title
+      - created_at
+      - updated_at
       properties:
-        status:
+        updated_at:
+          description: The date and time a resource was updated.
           type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
           type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    Import_2:
-      required:
-      - type
-      - meta
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID_2'
-        type:
-          $ref: '#/components/schemas/SubscriptionImportType'
-        attributes:
-          $ref: '#/components/schemas/ImportAttributes_2'
-        meta:
-          $ref: '#/components/schemas/ImportMeta_2'
-    OwnerMeta:
-      readOnly: true
-      type: string
-      format: string
-      description: The owner of a resource, either `store` or `organization`.
-      example: store
-    ImportMeta_2:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      - records
-      properties:
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/JobTimestamps'
-        records:
-          $ref: '#/components/schemas/ImportRecords_2'
+          example: '2017-01-10T11:41:19.244842Z'
   responses:
     ValidationError:
       description: Bad request. The request failed validation.
@@ -862,17 +862,6 @@ components:
                   status: '404'
                   detail: No plan found
   parameters:
-    Filter:
-      name: filter
-      in: query
-      required: false
-      schema:
-        type: string
-        format: string
-        description: 'Some Inventories API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
-
-          '
-        example: eq(location,new-york)
     PageOffset:
       name: page[offset]
       description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [**page length**](https://elasticpath.dev/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
@@ -894,17 +883,17 @@ components:
         format: int
         minimum: 0
         example: 100
-    Filter_2:
+    Filter:
       name: filter
       in: query
       required: false
       schema:
         type: string
         format: string
-        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+        description: 'Some Inventories API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
 
           '
-        example: eq(name,Alan Turing)
+        example: eq(location,new-york)
     PageOffset_2:
       name: page[offset]
       description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
@@ -926,6 +915,17 @@ components:
         format: int64
         minimum: 0
         example: 100
+    Filter_2:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(name,Alan Turing)
   securitySchemes:
     bearerAuth:
       type: http

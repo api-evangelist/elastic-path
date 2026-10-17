@@ -169,246 +169,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  schemas:
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    ScheduleUpdate:
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionScheduleType'
-        attributes:
-          $ref: '#/components/schemas/ScheduleUpdateAttributes'
-    ScheduleResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/ScheduleAttributes'
-      - $ref: '#/components/schemas/Timestamps'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    ExternalRefUpdate:
-      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-      type:
-      - string
-      - 'null'
-      example: abc123
-      maxLength: 2048
-    ScheduleAttributes:
-      required:
-      - specification
-      - location
-      - job
-      properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRef'
-        name:
-          type: string
-          description: The name of the schedule.
-          minLength: 3
-          maxLength: 1024
-          example: Daily billing run.
-        specification:
-          type: string
-          description: A cron-style specification of when the jobs should be created. See [**Schedules**](/docs/api/subscriptions/schedules).
-          maxLength: 1024
-          example: 30 0 * * *
-        location:
-          type: string
-          description: The location of the time zone that the schedule operates in. Subscriptions runs on Coordinated Universal Time (UTC) time and conforms to [**RFC 3339**](https://www.rfc-editor.org/rfc/rfc3339).
-          maxLength: 1024
-          example: Europe/London
-        job:
-          $ref: '#/components/schemas/ScheduleJob'
-    ScheduleMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        scheduled_for:
-          type: string
-          format: date-time
-          example: '2017-07-21T17:32:28Z'
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    ExternalRef:
-      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-      type: string
-      example: abc123
-      maxLength: 2048
-    Schedule:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/SubscriptionScheduleType'
-        attributes:
-          $ref: '#/components/schemas/ScheduleResponseAttributes'
-        meta:
-          $ref: '#/components/schemas/ScheduleMeta'
-    ScheduleUpdateAttributes:
-      properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRefUpdate'
-        name:
-          type:
-          - string
-          - 'null'
-          description: The name of the schedule.
-          minLength: 3
-          maxLength: 1024
-          example: Daily billing run.
-        specification:
-          type: string
-          description: A cron-style specification of when the jobs should be created.
-          maxLength: 1024
-          example: 30 0 * * *
-        location:
-          type: string
-          description: The location of the time zone that the schedule operates in.
-          maxLength: 1024
-          example: Europe/London
-        job:
-          $ref: '#/components/schemas/ScheduleJob'
-    Timestamps:
-      required:
-      - created_at
-      - updated_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    ScheduleCreate:
-      required:
-      - type
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/SubscriptionScheduleType'
-        attributes:
-          $ref: '#/components/schemas/ScheduleAttributes'
-    ScheduleJobType:
-      type: string
-      description: "The type of job. One of the following:\n - `billing-run` - a billing run job.\n - `payment-run` - a payment run job.\n - `notification-run` - a notification run job.\n"
-      enum:
-      - billing-run
-      - payment-run
-      - notification-run
-      example: billing-run
-      x-go-type: model.JobType
-      x-go-type-import:
-        name: model
-        path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 11111111-2222-3333-4444-555555555555
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    SubscriptionScheduleType:
-      type: string
-      example: subscription_schedule
-      enum:
-      - subscription_schedule
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
-    OwnerMeta:
-      readOnly: true
-      type: string
-      format: string
-      description: The owner of a resource, either `store` or `organization`.
-      example: store
-    ScheduleJob:
-      required:
-      - job_type
-      properties:
-        job_type:
-          $ref: '#/components/schemas/ScheduleJobType'
   responses:
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: 'data.attributes.name: "name" is required'
     ForbiddenError:
       description: Forbidden. The operation is forbidden on this entity.
       content:
@@ -422,6 +183,19 @@ components:
                 - title: Permission denied
                   status: '404'
                   detail: 'Permission denied: plan tenancy mismatch'
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: 'data.attributes.name: "name" is required'
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.
       content:
@@ -457,18 +231,233 @@ components:
                 - title: Not Found
                   status: '404'
                   detail: No plan found
+  schemas:
+    ScheduleCreate:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/SubscriptionScheduleType'
+        attributes:
+          $ref: '#/components/schemas/ScheduleAttributes'
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    ScheduleAttributes:
+      required:
+      - specification
+      - location
+      - job
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+        name:
+          type: string
+          description: The name of the schedule.
+          minLength: 3
+          maxLength: 1024
+          example: Daily billing run.
+        specification:
+          type: string
+          description: A cron-style specification of when the jobs should be created. See [**Schedules**](/docs/api/subscriptions/schedules).
+          maxLength: 1024
+          example: 30 0 * * *
+        location:
+          type: string
+          description: The location of the time zone that the schedule operates in. Subscriptions runs on Coordinated Universal Time (UTC) time and conforms to [**RFC 3339**](https://www.rfc-editor.org/rfc/rfc3339).
+          maxLength: 1024
+          example: Europe/London
+        job:
+          $ref: '#/components/schemas/ScheduleJob'
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    ScheduleJobType:
+      type: string
+      description: "The type of job. One of the following:\n - `billing-run` - a billing run job.\n - `payment-run` - a payment run job.\n - `notification-run` - a notification run job.\n"
+      enum:
+      - billing-run
+      - payment-run
+      - notification-run
+      example: billing-run
+      x-go-type: model.JobType
+      x-go-type-import:
+        name: model
+        path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
+    Schedule:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionScheduleType'
+        attributes:
+          $ref: '#/components/schemas/ScheduleResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/ScheduleMeta'
+    ExternalRefUpdate:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type:
+      - string
+      - 'null'
+      example: abc123
+      maxLength: 2048
+    ScheduleUpdateAttributes:
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRefUpdate'
+        name:
+          type:
+          - string
+          - 'null'
+          description: The name of the schedule.
+          minLength: 3
+          maxLength: 1024
+          example: Daily billing run.
+        specification:
+          type: string
+          description: A cron-style specification of when the jobs should be created.
+          maxLength: 1024
+          example: 30 0 * * *
+        location:
+          type: string
+          description: The location of the time zone that the schedule operates in.
+          maxLength: 1024
+          example: Europe/London
+        job:
+          $ref: '#/components/schemas/ScheduleJob'
+    ScheduleMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      properties:
+        scheduled_for:
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    ScheduleUpdate:
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/SubscriptionScheduleType'
+        attributes:
+          $ref: '#/components/schemas/ScheduleUpdateAttributes'
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    SubscriptionScheduleType:
+      type: string
+      example: subscription_schedule
+      enum:
+      - subscription_schedule
+    ScheduleJob:
+      required:
+      - job_type
+      properties:
+        job_type:
+          $ref: '#/components/schemas/ScheduleJobType'
+    ScheduleResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/ScheduleAttributes'
+      - $ref: '#/components/schemas/Timestamps'
+    ExternalRef:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
+    Timestamps:
+      required:
+      - created_at
+      - updated_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
   parameters:
-    Filter:
-      name: filter
-      in: query
-      required: false
-      schema:
-        type: string
-        format: string
-        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
-
-          '
-        example: eq(name,Alan Turing)
     PageOffset:
       name: page[offset]
       description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/commerce-cloud/global-project-settings/settings-overview#page-length) store setting is used.
@@ -490,6 +479,17 @@ components:
         format: int64
         minimum: 0
         example: 100
+    Filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
+        description: 'Some Subscriptions API endpoints support filtering. For the general syntax, see [**Filtering**](/guides/Getting-Started/filtering), but you must go to a specific endpoint to understand the attributes and operators an endpoint supports.
+
+          '
+        example: eq(name,Alan Turing)
   securitySchemes:
     BearerToken:
       scheme: bearer

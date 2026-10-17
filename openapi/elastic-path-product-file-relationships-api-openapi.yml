@@ -143,32 +143,86 @@ paths:
         '500':
           $ref: '#/components/responses/internal'
 components:
+  responses:
+    write_conflict:
+      description: Write conflict detected
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Conflict
+                  status: '409'
+                  detail: write conflict detected
+    bad_request:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            bad-request:
+              value:
+                errors:
+                - title: Bad Request
+                  detail: Could not parse the supplied filter
+                  status: '400'
+    unprocessable_entity:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            failed-validation:
+              value:
+                errors:
+                - title: Failed Validation
+                  status: '422'
+                  detail: <XYZ> can not be empty
+    forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Forbidden
+                  status: '403'
+                  detail: entity owned by organization
+    internal:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: '500'
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+    not_found:
+      description: Bad Request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
   schemas:
-    product_files_request:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                description: A unique identifier for a file generated when a file is created.
-                type: string
-              type:
-                description: This represents the type of resource being returned. Always `file`.
-                type: string
-                enum:
-                - file
-              meta:
-                type: object
-                properties:
-                  tags:
-                    description: The files associated with a product.
-                    type: array
-                    items:
-                      type: string
-                additionalProperties: false
     file_response:
       type: object
       properties:
@@ -232,95 +286,31 @@ components:
                 example:
                   missing_ids:
                   - e7d50bd5-1833-43c0-9848-f9d325b08be8
-  responses:
-    not_found:
-      description: Bad Request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: '404'
-    internal:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - status: '500'
-                  title: Internal Server Error
-                  detail: There was an internal server error, you can report with your request id.
-                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
-    unprocessable_entity:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            failed-validation:
-              value:
-                errors:
-                - title: Failed Validation
-                  status: '422'
-                  detail: <XYZ> can not be empty
-    write_conflict:
-      description: Write conflict detected
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Conflict
-                  status: '409'
-                  detail: write conflict detected
-    bad_request:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            bad-request:
-              value:
-                errors:
-                - title: Bad Request
-                  detail: Could not parse the supplied filter
-                  status: '400'
-    forbidden:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Forbidden
-                  status: '403'
-                  detail: entity owned by organization
-  parameters:
-    product_id:
-      name: productID
-      in: path
-      schema:
-        type: string
-        example: 00000000-0000-0000-0000-000000000000
-        x-postman-example: '{{productID}}'
-      required: true
-      description: A unique identifier for the product.
+    product_files_request:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                description: A unique identifier for a file generated when a file is created.
+                type: string
+              type:
+                description: This represents the type of resource being returned. Always `file`.
+                type: string
+                enum:
+                - file
+              meta:
+                type: object
+                properties:
+                  tags:
+                    description: The files associated with a product.
+                    type: array
+                    items:
+                      type: string
+                additionalProperties: false
   examples:
     file_relationship_request:
       value:
@@ -336,6 +326,16 @@ components:
           type: file
         - id: 50f56ce9-9381-43f6-8a52-5369a8b42e52
           type: file
+  parameters:
+    product_id:
+      name: productID
+      in: path
+      schema:
+        type: string
+        example: 00000000-0000-0000-0000-000000000000
+        x-postman-example: '{{productID}}'
+      required: true
+      description: A unique identifier for the product.
   securitySchemes:
     bearerAuth:
       type: http

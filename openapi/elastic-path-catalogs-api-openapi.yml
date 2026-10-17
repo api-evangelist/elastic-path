@@ -189,15 +189,6 @@ components:
         format: int64
         minimum: 0
         maximum: 10000
-    limit:
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
-      name: page[limit]
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
     filter-catalog:
       name: filter
       in: query
@@ -207,25 +198,16 @@ components:
       required: false
       schema:
         type: string
+    limit:
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      name: page[limit]
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
   schemas:
-    prioritized-pricebooks:
-      description: If you want multiple price books for different scenarios, such as seasonal sales, business versus retail pricing, and reward programs, when creating a catalog, you can specify up to five price books. You must configure a priority for your price books. Product prices are displayed in the catalog according to the priority of the price books.
-      type: array
-      maxItems: 5
-      items:
-        type: object
-        properties:
-          id:
-            description: A unique identifier of a price book.
-            type: string
-            format: uuid
-          priority:
-            description: Priority is a number and the price book with the highest number has the highest priority.
-            type: integer
-        required:
-        - priority
-        - id
-        x-go-name: PrioritizedPricebook
     catalog-create-data:
       type: object
       title: CatalogCreateData
@@ -295,53 +277,6 @@ components:
           - attributes
       required:
       - data
-    catalog-list-data:
-      type: object
-      title: CatalogListData
-      description: Container for a list of catalogs.
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/catalog'
-        meta:
-          $ref: '#/components/schemas/page-meta'
-        links:
-          $ref: '#/components/schemas/links'
-      required:
-      - data
-    page-meta:
-      type: object
-      description: Contains the results for the entire collection.
-      title: PageMeta
-      properties:
-        results:
-          description: Total number of results for the entire collection.
-          type: object
-          properties:
-            total:
-              description: Total number of results for the entire collection.
-              type: integer
-              format: int64
-        page:
-          type: object
-          properties:
-            limit:
-              description: The maximum number of records for all pages.
-              type: integer
-              format: int64
-            offset:
-              description: The current offset by number of pages.
-              type: integer
-              format: int64
-            current:
-              description: The current number of pages.
-              type: integer
-              format: int64
-            total:
-              description: The total number of records for the entire collection.
-              type: integer
-              format: int64
     links:
       description: Links allow you to move between requests.
       type: object
@@ -376,35 +311,38 @@ components:
           - string
           - 'null'
           format: uri
-    error-response:
+    page-meta:
       type: object
-      title: ErrorResponse
-      description: ErrorResponse is a json-api style Error response.
+      description: Contains the results for the entire collection.
+      title: PageMeta
       properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/error'
-          x-go-name: Errors
-      x-go-name: ErrorResponse
-    error:
-      type: object
-      title: APIError
-      description: APIError is a json-api style part of an error response.
-      properties:
-        detail:
-          type: string
-          example: not processable
-          x-go-name: Detail
-        status:
-          type: string
-          example: '422'
-          x-go-name: Status
-        title:
-          type: string
-          example: There was a problem processing your request.
-          x-go-name: Title
-      x-go-name: APIError
+        results:
+          description: Total number of results for the entire collection.
+          type: object
+          properties:
+            total:
+              description: Total number of results for the entire collection.
+              type: integer
+              format: int64
+        page:
+          type: object
+          properties:
+            limit:
+              description: The maximum number of records for all pages.
+              type: integer
+              format: int64
+            offset:
+              description: The current offset by number of pages.
+              type: integer
+              format: int64
+            current:
+              description: The current number of pages.
+              type: integer
+              format: int64
+            total:
+              description: The total number of records for the entire collection.
+              type: integer
+              format: int64
     catalog-update-data:
       type: object
       title: CatalogUpdateData
@@ -481,6 +419,51 @@ components:
           - attributes
       required:
       - data
+    prioritized-pricebooks:
+      description: If you want multiple price books for different scenarios, such as seasonal sales, business versus retail pricing, and reward programs, when creating a catalog, you can specify up to five price books. You must configure a priority for your price books. Product prices are displayed in the catalog according to the priority of the price books.
+      type: array
+      maxItems: 5
+      items:
+        type: object
+        properties:
+          id:
+            description: A unique identifier of a price book.
+            type: string
+            format: uuid
+          priority:
+            description: Priority is a number and the price book with the highest number has the highest priority.
+            type: integer
+        required:
+        - priority
+        - id
+        x-go-name: PrioritizedPricebook
+    related-link:
+      description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+      type: object
+      properties:
+        related:
+          description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
+          type: string
+      required:
+      - related
+    error:
+      type: object
+      title: APIError
+      description: APIError is a json-api style part of an error response.
+      properties:
+        detail:
+          type: string
+          example: not processable
+          x-go-name: Detail
+        status:
+          type: string
+          example: '422'
+          x-go-name: Status
+        title:
+          type: string
+          example: There was a problem processing your request.
+          x-go-name: Title
+      x-go-name: APIError
     catalog:
       type: object
       title: Catalog
@@ -590,6 +573,32 @@ components:
       - id
       - type
       - attributes
+    catalog-list-data:
+      type: object
+      title: CatalogListData
+      description: Container for a list of catalogs.
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/catalog'
+        meta:
+          $ref: '#/components/schemas/page-meta'
+        links:
+          $ref: '#/components/schemas/links'
+      required:
+      - data
+    error-response:
+      type: object
+      title: ErrorResponse
+      description: ErrorResponse is a json-api style Error response.
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/error'
+          x-go-name: Errors
+      x-go-name: ErrorResponse
     catalog-data:
       type: object
       title: CatalogData
@@ -601,15 +610,6 @@ components:
           $ref: '#/components/schemas/links'
       required:
       - data
-    related-link:
-      description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
-      type: object
-      properties:
-        related:
-          description: A URL to a related object, for example, catalog rules, hierarchies, price books, products and deltas.
-          type: string
-      required:
-      - related
   securitySchemes:
     bearerAuth:
       type: http

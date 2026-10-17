@@ -408,58 +408,34 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    ErrorResponse:
+    Error:
       required:
-      - errors
+      - status
+      - title
       properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    FieldRelationships:
-      type: object
-      description: Relationships are established between different flow/template entities. For example, a field/attribute is related to a flow/template, as the field/attribute is attached to the flow/template.
-      required:
-      - flow
-      properties:
-        flow:
-          type: object
-          required:
-          - data
-          properties:
-            data:
-              type: object
-              required:
-              - type
-              - id
-              properties:
-                id:
-                  $ref: '#/components/schemas/UUID'
-                type:
-                  type: string
-                  description: Represents the type of object being returned.
-                  example: flow
-    Meta:
-      type: object
-      properties:
-        owner:
+        status:
+          type: integer
+          format: int
+          description: The HTTP response code of the error.
+          example: 500
+        title:
           type: string
-          description: The resource owner, either `organization` or `store`.
-          example: enum
-          enum:
-          - store
-          - organization
-        timestamps:
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        request_id:
+          type: string
+          description: Internal request ID.
+          example: 00000000-0000-0000-0000-000000000000
+        meta:
           type: object
-          properties:
-            created_at:
-              type: string
-              description: The date and time a resource is created.
-              example: '2023-10-11T13:02:25.293Z'
-            updated_at:
-              type: string
-              description: The date and time a resource is updated.
-              example: '2023-10-11T13:02:25.293Z'
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     FieldRequest:
       title: FieldRequest
       type: object
@@ -534,63 +510,11 @@ components:
                   from: 1
                   to: 5
                 type: between
-    FieldLinks:
-      type: object
-      description: 'Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:
-
-
-        | Property | Description |
-
-        | --- | --- |
-
-        | `current` | Always the current page |
-
-        | `first` | Always the first page |
-
-        | `last` | `null` if there is only one page. |
-
-        | `prev` | `null` if you are on the first page. |
-
-        | `next` | `null` if there is only one page. |
-
-        '
-      properties:
-        self:
-          type: string
-          example: https://euwest.api.elasticpath.com/v2/flows/3cf3ad3f-b12c-4a08-a6ab-05e6aab0122c/fields/c1c788d1-f1c7-4b90-938f-f158f3353c66
     UUID:
       type: string
       description: A unique identifier for a resource.
       format: uuid
       example: 00000000-0000-0000-0000-000000000000
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: integer
-          format: int
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        request_id:
-          type: string
-          description: Internal request ID.
-          example: 00000000-0000-0000-0000-000000000000
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     Field:
       title: Field
       type: object
@@ -677,43 +601,82 @@ components:
           $ref: '#/components/schemas/FieldLinks'
         relationships:
           $ref: '#/components/schemas/FieldRelationships'
-    FieldValidationRules:
+    Meta:
       type: object
-      description: An array of validation rule objects. See [Field/attribute Validation Rules](#fieldattribute-validation-rules).
       properties:
-        type:
+        owner:
           type: string
-          description: The validation you use depends on the `field_type` of the field/attribute. Each validation rule is expressed as a validation rule object.
+          description: The resource owner, either `organization` or `store`.
           example: enum
           enum:
-          - enum
-          - email
-          - slug
-          - between
-          - one-to-many
-          - one-to-one
-        options:
-          anyOf:
-          - type: array
-            description: An array of valid string values.
-            items:
+          - store
+          - organization
+        timestamps:
+          type: object
+          properties:
+            created_at:
               type: string
-          - type: object
-            description: An object containing `from` and `to` integers.
-            properties:
-              from:
+              description: The date and time a resource is created.
+              example: '2023-10-11T13:02:25.293Z'
+            updated_at:
+              type: string
+              description: The date and time a resource is updated.
+              example: '2023-10-11T13:02:25.293Z'
+    FieldRelationships:
+      type: object
+      description: Relationships are established between different flow/template entities. For example, a field/attribute is related to a flow/template, as the field/attribute is attached to the flow/template.
+      required:
+      - flow
+      properties:
+        flow:
+          type: object
+          required:
+          - data
+          properties:
+            data:
+              type: object
+              required:
+              - type
+              - id
+              properties:
+                id:
+                  $ref: '#/components/schemas/UUID'
                 type:
-                - integer
-                - string
-                example: 1
-              to:
-                type:
-                - integer
-                - string
-                example: 5
-        to:
+                  type: string
+                  description: Represents the type of object being returned.
+                  example: flow
+    FieldLinks:
+      type: object
+      description: 'Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:
+
+
+        | Property | Description |
+
+        | --- | --- |
+
+        | `current` | Always the current page |
+
+        | `first` | Always the first page |
+
+        | `last` | `null` if there is only one page. |
+
+        | `prev` | `null` if you are on the first page. |
+
+        | `next` | `null` if there is only one page. |
+
+        '
+      properties:
+        self:
           type: string
-          example: customer
+          example: https://euwest.api.elasticpath.com/v2/flows/3cf3ad3f-b12c-4a08-a6ab-05e6aab0122c/fields/c1c788d1-f1c7-4b90-938f-f158f3353c66
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     FieldUpdateRequest:
       title: FieldUpdateRequest
       type: object
@@ -764,7 +727,56 @@ components:
               description: Represents the object being returned.
               examples:
               - field
+    FieldValidationRules:
+      type: object
+      description: An array of validation rule objects. See [Field/attribute Validation Rules](#fieldattribute-validation-rules).
+      properties:
+        type:
+          type: string
+          description: The validation you use depends on the `field_type` of the field/attribute. Each validation rule is expressed as a validation rule object.
+          example: enum
+          enum:
+          - enum
+          - email
+          - slug
+          - between
+          - one-to-many
+          - one-to-one
+        options:
+          anyOf:
+          - type: array
+            description: An array of valid string values.
+            items:
+              type: string
+          - type: object
+            description: An object containing `from` and `to` integers.
+            properties:
+              from:
+                type:
+                - integer
+                - string
+                example: 1
+              to:
+                type:
+                - integer
+                - string
+                example: 5
+        to:
+          type: string
+          example: customer
   responses:
+    NotFound:
+      description: Bad request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: 404
     ValidationError:
       description: Bad request. The request failed validation.
       content:
@@ -778,18 +790,6 @@ components:
                 - title: Validation Error
                   status: 400
                   detail: 'data.attributes.name: "name" is required'
-    NotFound:
-      description: Bad request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: 404
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.
       content:

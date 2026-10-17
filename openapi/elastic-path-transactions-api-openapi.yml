@@ -133,6 +133,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
+    UUID:
+      type: string
+      description: The unique identifier.
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 00000000-0000-0000-0000-000000000000
+    Meta:
+      allOf:
+      - $ref: '#/components/schemas/Timestamps'
     TransactionCreate:
       required:
       - action
@@ -165,17 +176,30 @@ components:
           format: int64
           example: 5
           minimum: 1
-    Meta:
-      allOf:
-      - $ref: '#/components/schemas/Timestamps'
-    UUID:
-      type: string
-      description: The unique identifier.
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 00000000-0000-0000-0000-000000000000
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: 500
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     Transaction:
       required:
       - type
@@ -225,30 +249,6 @@ components:
           example: 5
         timestamps:
           $ref: '#/components/schemas/Timestamps'
-    Error:
-      type: object
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     Timestamps:
       properties:
         updated_at:
@@ -259,16 +259,6 @@ components:
           description: The date and time a resource was created.
           type: string
           example: '2017-01-10T11:41:19.244842Z'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
     Meta_2:
       type: object
       required:
@@ -276,6 +266,91 @@ components:
       properties:
         timestamps:
           $ref: '#/components/schemas/Timestamps_2'
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    TransactionResponse:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/StockTransactionType'
+        attributes:
+          $ref: '#/components/schemas/TransactionResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/Meta_2'
+    TransactionCreateAttributes:
+      required:
+      - action
+      - quantity
+      properties:
+        product_id:
+          $ref: '#/components/schemas/UUID'
+        action:
+          description: "The type of action being performed by this transaction.\n\n - **increment** - use this when you want to make products available for purchase, for example, when you have received stock from a supplier.\n\n - **decrement** - Use this when you want to remove stock from product inventory.\n\n - **allocate** - Use this when you want to allocate stock, normally to a reseller who sells on the stock.\n\n - **deallocate** - Use this when you want to deallocate any previously allocated stock.\n\n - **set** - Use this when you want to set total stock to a specific value.\n"
+          type: string
+          enum:
+          - increment
+          - decrement
+          - allocate
+          - deallocate
+          - set
+          example: allocate
+          x-go-type: model.TransactionAction
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/inventories.svc/internal/domain/model
+        quantity:
+          description: The amount of stock affected by the stock transaction.
+          type: integer
+          format: int64
+          example: 5
+          minimum: 0
+        location:
+          description: The slug of the location that the transaction should act on.
+          type: string
+          minLength: 1
+          maxLength: 128
+          example: milton-keynes-warehouse
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    TransactionCreate_2:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/StockTransactionType'
+        attributes:
+          $ref: '#/components/schemas/TransactionCreateAttributes'
+    StockTransactionType:
+      type: string
+      enum:
+      - stock-transaction
+      default: stock-transaction
+      example: stock-transaction
     TransactionResponseAttributes:
       type: object
       required:
@@ -335,87 +410,12 @@ components:
           description: The date and time a resource was created.
           type: string
           example: '2017-01-10T11:41:19.244842Z'
-    TransactionCreate_2:
-      required:
-      - type
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/StockTransactionType'
-        attributes:
-          $ref: '#/components/schemas/TransactionCreateAttributes'
-    TransactionResponse:
-      type: object
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/StockTransactionType'
-        attributes:
-          $ref: '#/components/schemas/TransactionResponseAttributes'
-        meta:
-          $ref: '#/components/schemas/Meta_2'
-    TransactionCreateAttributes:
-      required:
-      - action
-      - quantity
-      properties:
-        product_id:
-          $ref: '#/components/schemas/UUID'
-        action:
-          description: "The type of action being performed by this transaction.\n\n - **increment** - use this when you want to make products available for purchase, for example, when you have received stock from a supplier.\n\n - **decrement** - Use this when you want to remove stock from product inventory.\n\n - **allocate** - Use this when you want to allocate stock, normally to a reseller who sells on the stock.\n\n - **deallocate** - Use this when you want to deallocate any previously allocated stock.\n\n - **set** - Use this when you want to set total stock to a specific value.\n"
-          type: string
-          enum:
-          - increment
-          - decrement
-          - allocate
-          - deallocate
-          - set
-          example: allocate
-          x-go-type: model.TransactionAction
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/inventories.svc/internal/domain/model
-        quantity:
-          description: The amount of stock affected by the stock transaction.
-          type: integer
-          format: int64
-          example: 5
-          minimum: 0
-        location:
-          description: The slug of the location that the transaction should act on.
-          type: string
-          minLength: 1
-          maxLength: 128
-          example: milton-keynes-warehouse
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
-    StockTransactionType:
-      type: string
-      enum:
-      - stock-transaction
-      default: stock-transaction
-      example: stock-transaction
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
   parameters:
     PageOffset:
       name: page[offset]

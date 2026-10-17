@@ -164,229 +164,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  schemas:
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    Link:
-      anyOf:
-      - $ref: '#/components/schemas/LinkURI'
-      - $ref: '#/components/schemas/LinkObject'
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-      example: http://example.com/articles/1/comments
-    ExternalRefUpdate:
-      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-      type:
-      - string
-      - 'null'
-      example: abc123
-      maxLength: 2048
-    ExternalRef:
-      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
-      type: string
-      example: abc123
-      maxLength: 2048
-    ProrationPolicyCreate:
-      required:
-      - type
-      - attributes
-      properties:
-        type:
-          $ref: '#/components/schemas/ProrationPolicyType'
-        attributes:
-          $ref: '#/components/schemas/ProrationPolicyAttributes'
-    ProrationPolicyResponseAttributes:
-      allOf:
-      - $ref: '#/components/schemas/ProrationPolicyAttributes'
-    ProrationPolicyType:
-      type: string
-      example: subscription_proration_policy
-      enum:
-      - subscription_proration_policy
-    Timestamps:
-      required:
-      - created_at
-      - updated_at
-      properties:
-        updated_at:
-          description: The date and time a resource was updated.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-        created_at:
-          description: The date and time a resource was created.
-          type: string
-          example: '2017-01-10T11:41:19.244842Z'
-    ProrationPolicyAttributes:
-      required:
-      - name
-      - rounding
-      properties:
-        name:
-          type: string
-          description: A name for the proration policy.
-          example: Main Policy
-          minLength: 3
-          maxLength: 1024
-        rounding:
-          type: string
-          description: 'When rounding in proration, you must decide how to round the units of time used to calculate the charges.
-
-
-            - round up to the next unit, ensuring subscribers are charged slightly more to cover any partial use.
-
-            - round down to the previous whole unit, providing subscribers with a slight benefit by not charging for partial use.
-
-            - round to the nearest whole unit, whether up or down, based on standard rounding rules. For example, rounding 0.5 up and rounding 0.5 down.
-
-            '
-          enum:
-          - up
-          - down
-          - nearest
-          example: up
-          x-go-type: model.ProrationPolicyRounding
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-        external_ref:
-          $ref: '#/components/schemas/ExternalRef'
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      x-go-type: uuid.UUID
-      x-go-type-import:
-        name: uuid
-        path: github.com/google/uuid
-      example: 11111111-2222-3333-4444-555555555555
-    ProrationPolicyUpdate:
-      required:
-      - id
-      - type
-      - attributes
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/ProrationPolicyType'
-        attributes:
-          $ref: '#/components/schemas/ProrationPolicyUpdateAttributes'
-    Error:
-      required:
-      - status
-      - title
-      properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    ProrationPolicyMeta:
-      readOnly: true
-      required:
-      - owner
-      - timestamps
-      properties:
-        owner:
-          $ref: '#/components/schemas/OwnerMeta'
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    ProrationPolicyUpdateAttributes:
-      properties:
-        external_ref:
-          $ref: '#/components/schemas/ExternalRefUpdate'
-        name:
-          type: string
-          description: The name of the proration policy.
-          minLength: 3
-          maxLength: 1024
-          example: Main Policy
-        rounding:
-          type: string
-          description: Whether to round up or down
-          enum:
-          - up
-          - down
-          - nearest
-          example: up
-          x-go-type: model.ProrationPolicyRounding
-          x-go-type-import:
-            name: model
-            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
-    LinkObject:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          example: http://example.com/articles/1/comments
-        title:
-          type: string
-          example: Comments
-        describedby:
-          type: string
-          format: uri
-          example: http://example.com/schemas/article-comments
-    ProrationPolicy:
-      required:
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
-          $ref: '#/components/schemas/ProrationPolicyType'
-        attributes:
-          $ref: '#/components/schemas/ProrationPolicyResponseAttributes'
-        meta:
-          $ref: '#/components/schemas/ProrationPolicyMeta'
-    Links:
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/Link'
-    OwnerMeta:
-      readOnly: true
-      type: string
-      format: string
-      description: The owner of a resource, either `store` or `organization`.
-      example: store
   responses:
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            missing-name:
-              value:
-                errors:
-                - title: Validation Error
-                  status: '400'
-                  detail: 'data.attributes.name: "name" is required'
     ForbiddenError:
       description: Forbidden. The operation is forbidden on this entity.
       content:
@@ -400,6 +178,19 @@ components:
                 - title: Permission denied
                   status: '404'
                   detail: 'Permission denied: plan tenancy mismatch'
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing-name:
+              value:
+                errors:
+                - title: Validation Error
+                  status: '400'
+                  detail: 'data.attributes.name: "name" is required'
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.
       content:
@@ -435,6 +226,215 @@ components:
                 - title: Not Found
                   status: '404'
                   detail: No plan found
+  schemas:
+    LinkObject:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          example: http://example.com/articles/1/comments
+        title:
+          type: string
+          example: Comments
+        describedby:
+          type: string
+          format: uri
+          example: http://example.com/schemas/article-comments
+    ProrationPolicyAttributes:
+      required:
+      - name
+      - rounding
+      properties:
+        name:
+          type: string
+          description: A name for the proration policy.
+          example: Main Policy
+          minLength: 3
+          maxLength: 1024
+        rounding:
+          type: string
+          description: 'When rounding in proration, you must decide how to round the units of time used to calculate the charges.
+
+
+            - round up to the next unit, ensuring subscribers are charged slightly more to cover any partial use.
+
+            - round down to the previous whole unit, providing subscribers with a slight benefit by not charging for partial use.
+
+            - round to the nearest whole unit, whether up or down, based on standard rounding rules. For example, rounding 0.5 up and rounding 0.5 down.
+
+            '
+          enum:
+          - up
+          - down
+          - nearest
+          example: up
+          x-go-type: model.ProrationPolicyRounding
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+        external_ref:
+          $ref: '#/components/schemas/ExternalRef'
+    ProrationPolicyUpdate:
+      required:
+      - id
+      - type
+      - attributes
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/ProrationPolicyType'
+        attributes:
+          $ref: '#/components/schemas/ProrationPolicyUpdateAttributes'
+    ProrationPolicyType:
+      type: string
+      example: subscription_proration_policy
+      enum:
+      - subscription_proration_policy
+    Links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Link'
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Link:
+      anyOf:
+      - $ref: '#/components/schemas/LinkURI'
+      - $ref: '#/components/schemas/LinkObject'
+    OwnerMeta:
+      readOnly: true
+      type: string
+      format: string
+      description: The owner of a resource, either `store` or `organization`.
+      example: store
+    ExternalRefUpdate:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type:
+      - string
+      - 'null'
+      example: abc123
+      maxLength: 2048
+    ProrationPolicyResponseAttributes:
+      allOf:
+      - $ref: '#/components/schemas/ProrationPolicyAttributes'
+    ProrationPolicyMeta:
+      readOnly: true
+      required:
+      - owner
+      - timestamps
+      properties:
+        owner:
+          $ref: '#/components/schemas/OwnerMeta'
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
+    Error:
+      required:
+      - status
+      - title
+      properties:
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        meta:
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    ProrationPolicyUpdateAttributes:
+      properties:
+        external_ref:
+          $ref: '#/components/schemas/ExternalRefUpdate'
+        name:
+          type: string
+          description: The name of the proration policy.
+          minLength: 3
+          maxLength: 1024
+          example: Main Policy
+        rounding:
+          type: string
+          description: Whether to round up or down
+          enum:
+          - up
+          - down
+          - nearest
+          example: up
+          x-go-type: model.ProrationPolicyRounding
+          x-go-type-import:
+            name: model
+            path: gitlab.elasticpath.com/commerce-cloud/subscriptions.svc/internal/domain/model
+    ProrationPolicy:
+      required:
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          $ref: '#/components/schemas/ProrationPolicyType'
+        attributes:
+          $ref: '#/components/schemas/ProrationPolicyResponseAttributes'
+        meta:
+          $ref: '#/components/schemas/ProrationPolicyMeta'
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      x-go-type: uuid.UUID
+      x-go-type-import:
+        name: uuid
+        path: github.com/google/uuid
+      example: 11111111-2222-3333-4444-555555555555
+    ExternalRef:
+      description: A unique attribute that you could use to contain information from another company system, for example. The maximum length is 2048 characters.
+      type: string
+      example: abc123
+      maxLength: 2048
+    ProrationPolicyCreate:
+      required:
+      - type
+      - attributes
+      properties:
+        type:
+          $ref: '#/components/schemas/ProrationPolicyType'
+        attributes:
+          $ref: '#/components/schemas/ProrationPolicyAttributes'
+    Timestamps:
+      required:
+      - created_at
+      - updated_at
+      properties:
+        updated_at:
+          description: The date and time a resource was updated.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+        created_at:
+          description: The date and time a resource was created.
+          type: string
+          example: '2017-01-10T11:41:19.244842Z'
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+      example: http://example.com/articles/1/comments
   parameters:
     PageOffset:
       name: page[offset]

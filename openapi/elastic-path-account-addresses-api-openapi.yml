@@ -292,22 +292,6 @@ paths:
       - BearerToken: []
 components:
   schemas:
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    PaginationMeta:
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PaginationPage'
-        results:
-          $ref: '#/components/schemas/PaginationResults'
     AccountAddressResponse:
       allOf:
       - $ref: '#/components/schemas/AddressResponse'
@@ -327,35 +311,21 @@ components:
                     description: The type of object being returned.
                     type: string
                     example: account
-    PaginationLinks:
+    Error:
       type: object
       properties:
-        current:
+        status:
+          type: integer
+          description: The HTTP response code of the error.
+        title:
           type: string
-          description: The URL to the current page.
-          example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=0&page[limit]=25
-        first:
+          description: A brief summary of the error.
+        detail:
           type: string
-          description: The URL to the first page.
-          example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=0&page[limit]=25
-        last:
-          type:
-          - string
-          - 'null'
-          description: The URL to the last page. May be null if the total is unknown.
-          example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=50&page[limit]=25
-        next:
-          type:
-          - string
-          - 'null'
-          description: The URL to the next page. Null if on the last page.
-          example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=25&page[limit]=25
-        prev:
-          type:
-          - string
-          - 'null'
-          description: The URL to the previous page. Null if on the first page.
-          example: null
+          description: Optional additional detail about the error.
+        source:
+          type: string
+          description: Optional field indicating the source of the error.
     Address:
       type: object
       properties:
@@ -429,21 +399,6 @@ components:
               description: The date the address is updated.
               type: string
               example: '2021-02-23T09:40:33.882Z'
-    Error:
-      type: object
-      properties:
-        status:
-          type: integer
-          description: The HTTP response code of the error.
-        title:
-          type: string
-          description: A brief summary of the error.
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-        source:
-          type: string
-          description: Optional field indicating the source of the error.
     PaginationResults:
       type: object
       properties:
@@ -459,6 +414,51 @@ components:
           - lower_bound
           - observed
           example: exact
+    PaginationLinks:
+      type: object
+      properties:
+        current:
+          type: string
+          description: The URL to the current page.
+          example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=0&page[limit]=25
+        first:
+          type: string
+          description: The URL to the first page.
+          example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=0&page[limit]=25
+        last:
+          type:
+          - string
+          - 'null'
+          description: The URL to the last page. May be null if the total is unknown.
+          example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=50&page[limit]=25
+        next:
+          type:
+          - string
+          - 'null'
+          description: The URL to the next page. Null if on the last page.
+          example: https://useast.api.elasticpath.com/v2/accounts/deb6b25f-8451-4211-9a22-95610333df23/addresses?page[offset]=25&page[limit]=25
+        prev:
+          type:
+          - string
+          - 'null'
+          description: The URL to the previous page. Null if on the first page.
+          example: null
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PaginationPage'
+        results:
+          $ref: '#/components/schemas/PaginationResults'
     AddressResponse:
       allOf:
       - $ref: '#/components/schemas/Address'
@@ -497,19 +497,6 @@ components:
           description: The total number of pages.
           example: 3
   responses:
-    ErrorNotFound:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found-error:
-              value:
-                errors:
-                - status: 404
-                  title: Not Found
-                  detail: account not found
     ErrorBadRequest:
       description: Bad Request
       content:
@@ -523,6 +510,19 @@ components:
                 - status: 400
                   title: Bad Request
                   detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    ErrorNotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - status: 404
+                  title: Not Found
+                  detail: account not found
   securitySchemes:
     BearerToken:
       type: http

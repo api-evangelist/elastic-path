@@ -280,52 +280,39 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    ErrorResponse:
+    Error:
       required:
-      - errors
+      - status
+      - title
       properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    FlowsLinks:
-      type: object
-      description: "Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:\n \n | Property | Description |\n | --- | --- |\n | `current` | Always the current page |\n | `first` | Always the first page |\n | `last` | `null` if there is only one page. |\n | `prev` | `null` if you are on the first page. |\n | `next` | `null` if there is only one page. |\n"
-      properties:
-        self:
+        status:
+          type: integer
+          format: int
+          description: The HTTP response code of the error.
+          example: 500
+        title:
           type: string
-          example: https://euwest.api.elasticpath.com/v2/flows/d2a9b22a-b4b0-456b-bbc7-d8723aaffa84
-    Flows:
-      title: Flows
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        type:
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
           type: string
-          description: A unique identifier for a flow/template.
-          example: flow
-        name:
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
+        request_id:
           type: string
-          description: The name of a flow/template.
-          example: Products
-        slug:
-          type: string
-          description: A unique identifier of a flow/template.
-          example: products
-        description:
-          type: string
-          description: A short description for a flow/template.
-          example: Extends the default product object
-        enabled:
-          type: boolean
-          example: true
-        links:
-          $ref: '#/components/schemas/FlowsLinks'
-        relationships:
-          $ref: '#/components/schemas/FlowsRelationships'
+          description: Internal request ID.
+          example: 00000000-0000-0000-0000-000000000000
         meta:
-          $ref: '#/components/schemas/Meta'
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    UUID:
+      type: string
+      description: A unique identifier for a resource.
+      format: uuid
+      example: 00000000-0000-0000-0000-000000000000
     Meta:
       type: object
       properties:
@@ -347,20 +334,13 @@ components:
               type: string
               description: The date and time a resource is updated.
               example: '2023-10-11T13:02:25.293Z'
-    UUID:
-      type: string
-      description: A unique identifier for a resource.
-      format: uuid
-      example: 00000000-0000-0000-0000-000000000000
-    FlowsRelationships:
+    FlowsLinks:
       type: object
-      description: Relationships are established between different flows/templates entities. For example, a field and an entry are related to a flow as both are attached to it.
+      description: "Links allow you to move between requests. Single entities use a `self` parameter with a link to that specific resource. Listing pages use the following:\n \n | Property | Description |\n | --- | --- |\n | `current` | Always the current page |\n | `first` | Always the first page |\n | `last` | `null` if there is only one page. |\n | `prev` | `null` if you are on the first page. |\n | `next` | `null` if there is only one page. |\n"
       properties:
-        fields:
-          type: object
-          properties:
-            data:
-              $ref: '#/components/schemas/Relationships'
+        self:
+          type: string
+          example: https://euwest.api.elasticpath.com/v2/flows/d2a9b22a-b4b0-456b-bbc7-d8723aaffa84
     FlowsRequest:
       title: FlowsRequest
       type: object
@@ -401,6 +381,16 @@ components:
               description: Represents the type of object being returned.
               examples:
               - flow
+    Relationships:
+      title: Relationships
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          type: string
+          description: Represents the type of object being returned.
+          example: brand
     FlowsUpdateRequest:
       title: FlowsUpdateRequest
       type: object
@@ -434,45 +424,67 @@ components:
               description: Represents the type of object being returned.
               examples:
               - flow
-    Error:
+    ErrorResponse:
       required:
-      - status
-      - title
+      - errors
       properties:
-        status:
-          type: integer
-          format: int
-          description: The HTTP response code of the error.
-          example: 500
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
-        request_id:
-          type: string
-          description: Internal request ID.
-          example: 00000000-0000-0000-0000-000000000000
-        meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
-    Relationships:
-      title: Relationships
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Flows:
+      title: Flows
       type: object
       properties:
         id:
           $ref: '#/components/schemas/UUID'
         type:
           type: string
-          description: Represents the type of object being returned.
-          example: brand
+          description: A unique identifier for a flow/template.
+          example: flow
+        name:
+          type: string
+          description: The name of a flow/template.
+          example: Products
+        slug:
+          type: string
+          description: A unique identifier of a flow/template.
+          example: products
+        description:
+          type: string
+          description: A short description for a flow/template.
+          example: Extends the default product object
+        enabled:
+          type: boolean
+          example: true
+        links:
+          $ref: '#/components/schemas/FlowsLinks'
+        relationships:
+          $ref: '#/components/schemas/FlowsRelationships'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    FlowsRelationships:
+      type: object
+      description: Relationships are established between different flows/templates entities. For example, a field and an entry are related to a flow as both are attached to it.
+      properties:
+        fields:
+          type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Relationships'
   responses:
+    NotFound:
+      description: Bad request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: 404
     ValidationError:
       description: Bad request. The request failed validation.
       content:
@@ -486,18 +498,6 @@ components:
                 - title: Validation Error
                   status: 400
                   detail: 'data.attributes.name: "name" is required'
-    NotFound:
-      description: Bad request. Not Found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Not Found
-                  status: 404
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.
       content:

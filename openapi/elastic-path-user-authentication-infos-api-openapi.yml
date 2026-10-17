@@ -376,93 +376,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    MetaListResults:
-      type: object
-      properties:
-        total:
-          type: integer
-          description: The total number of results after applying filters, if any, or all results.
-          example: 1
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-        links:
-          $ref: '#/components/schemas/SelfLink'
-    MetaListPage:
-      type: object
-      properties:
-        limit:
-          type: integer
-          description: The maximum number of records per page for this response. You can set this value up to 100.
-          example: 25
-        current:
-          type: integer
-          description: The current page.
-          example: 0
-        offset:
-          type: integer
-          description: The current offset by number of records, not pages. Offset is zero-based.
-          example: 0
-        total:
-          type: integer
-          description: The total page count.
-          example: 1
-    UUID:
-      type: string
-      description: The unique identifier.
-      format: uuid
-      example: deb6b25f-8451-4211-9a22-95610333df23
-    UserAuthenticationInfo:
-      type: object
-      properties:
-        type:
-          type: string
-          description: Specifies the type of object. Set this value to `user_authentication_info`.
-          const: user_authentication_info
-        name:
-          type: string
-          description: Specifies the name of the user.
-          example: Ron Swanson
-        given_name:
-          type:
-          - string
-          - 'null'
-          description: Specifies the given name of the user.
-          example: Ron
-        family_name:
-          type:
-          - string
-          - 'null'
-          description: Specifies the family name of the user.
-          example: Swanson
-        middle_name:
-          type:
-          - string
-          - 'null'
-          description: Specifies the given name of the user.
-          example: Ulysses
-        email:
-          type: string
-          description: Specifies the email address of the user.
-          format: email
-          example: ron@swanson.com
-      required:
-      - type
-      - name
-      - email
-    SelfLink:
-      type: object
-      properties:
-        self:
-          description: A URL to the specific resource.
-          type: string
-          format: uri
     MetaList:
       type: object
       properties:
@@ -470,6 +383,33 @@ components:
           $ref: '#/components/schemas/MetaListPage'
         results:
           $ref: '#/components/schemas/MetaListResults'
+    Error:
+      type: object
+      required:
+      - status
+      - title
+      properties:
+        title:
+          type: string
+          description: A brief summary of the error.
+          examples:
+          - Bad Request
+        status:
+          type: string
+          format: string
+          description: The HTTP response code of the error.
+          examples:
+          - '400'
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          examples:
+          - The field 'name' is required
+    UUID:
+      type: string
+      description: The unique identifier.
+      format: uuid
+      example: deb6b25f-8451-4211-9a22-95610333df23
     UserAuthenticationInfoResponse:
       allOf:
       - $ref: '#/components/schemas/UserAuthenticationInfo'
@@ -509,28 +449,88 @@ components:
                 type: string
                 format: uri
                 example: https://useast.api.elasticpath.com/v2/authentication-realms/deb6b25f-8451-4211-9a22-95610333df23/user-authentication-info/abc123
-    Error:
+    MetaListResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results after applying filters, if any, or all results.
+          example: 1
+    UserAuthenticationInfo:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Specifies the type of object. Set this value to `user_authentication_info`.
+          const: user_authentication_info
+        name:
+          type: string
+          description: Specifies the name of the user.
+          example: Ron Swanson
+        given_name:
+          type:
+          - string
+          - 'null'
+          description: Specifies the given name of the user.
+          example: Ron
+        family_name:
+          type:
+          - string
+          - 'null'
+          description: Specifies the family name of the user.
+          example: Swanson
+        middle_name:
+          type:
+          - string
+          - 'null'
+          description: Specifies the given name of the user.
+          example: Ulysses
+        email:
+          type: string
+          description: Specifies the email address of the user.
+          format: email
+          example: ron@swanson.com
+      required:
+      - type
+      - name
+      - email
+    MetaListPage:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The maximum number of records per page for this response. You can set this value up to 100.
+          example: 25
+        current:
+          type: integer
+          description: The current page.
+          example: 0
+        offset:
+          type: integer
+          description: The current offset by number of records, not pages. Offset is zero-based.
+          example: 0
+        total:
+          type: integer
+          description: The total page count.
+          example: 1
+    SelfLink:
+      type: object
+      properties:
+        self:
+          description: A URL to the specific resource.
+          type: string
+          format: uri
+    ErrorResponse:
       type: object
       required:
-      - status
-      - title
+      - errors
       properties:
-        title:
-          type: string
-          description: A brief summary of the error.
-          examples:
-          - Bad Request
-        status:
-          type: string
-          format: string
-          description: The HTTP response code of the error.
-          examples:
-          - '400'
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          examples:
-          - The field 'name' is required
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+        links:
+          $ref: '#/components/schemas/SelfLink'
   responses:
     BadRequestError:
       description: Bad Request
@@ -545,6 +545,20 @@ components:
                 - title: Bad Request
                   status: '400'
                   detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value:
+                errors:
+                - title: Internal Server Error
+                  status: '500'
+                  detail: there was a problem processing your request
     UnprocessableEntityError:
       description: Unprocessable Entity
       content:
@@ -571,20 +585,6 @@ components:
                 - title: Not Found
                   status: '404'
                   detail: Resource not found
-    InternalServerError:
-      description: Internal server error.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            internal-server-error:
-              summary: Internal server error
-              value:
-                errors:
-                - title: Internal Server Error
-                  status: '500'
-                  detail: there was a problem processing your request
   parameters:
     filter:
       name: filter

@@ -51,8 +51,8 @@ paths:
       - $ref: '#/components/parameters/product_id'
 components:
   responses:
-    not_found:
-      description: Bad Request. Not Found.
+    write_conflict:
+      description: Write conflict detected
       content:
         application/json:
           schema:
@@ -61,22 +61,9 @@ components:
             internal-server-error:
               value:
                 errors:
-                - title: Not Found
-                  status: '404'
-    internal:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - status: '500'
-                  title: Internal Server Error
-                  detail: There was an internal server error, you can report with your request id.
-                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+                - title: Conflict
+                  status: '409'
+                  detail: write conflict detected
     bad_request:
       description: Bad request. The request failed validation.
       content:
@@ -103,19 +90,6 @@ components:
                 - title: Failed Validation
                   status: '422'
                   detail: <XYZ> can not be empty
-    write_conflict:
-      description: Write conflict detected
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/error'
-          examples:
-            internal-server-error:
-              value:
-                errors:
-                - title: Conflict
-                  status: '409'
-                  detail: write conflict detected
     forbidden:
       description: Forbidden
       content:
@@ -129,6 +103,32 @@ components:
                 - title: Forbidden
                   status: '403'
                   detail: entity owned by organization
+    internal:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - status: '500'
+                  title: Internal Server Error
+                  detail: There was an internal server error, you can report with your request id.
+                  request_id: 635da56d-75a1-43cd-b696-7ab119756b3a
+    not_found:
+      description: Bad Request. Not Found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            internal-server-error:
+              value:
+                errors:
+                - title: Not Found
+                  status: '404'
   parameters:
     product_id:
       name: productID
@@ -140,22 +140,6 @@ components:
       required: true
       description: A unique identifier for the product.
   schemas:
-    component_products_response:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                description: The unique identifier of a product component generated when a product is created.
-              type:
-                type: string
-                enum:
-                - product
-                description: This represents the type of resource object being returned. Always `product`.
     error:
       required:
       - errors
@@ -189,6 +173,22 @@ components:
                 example:
                   missing_ids:
                   - e7d50bd5-1833-43c0-9848-f9d325b08be8
+    component_products_response:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The unique identifier of a product component generated when a product is created.
+              type:
+                type: string
+                enum:
+                - product
+                description: This represents the type of resource object being returned. Always `product`.
   examples:
     component_products_relationship_response:
       value:

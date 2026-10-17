@@ -140,85 +140,40 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
-  responses:
-    ListOfCustomAPIRolePolicies:
-      description: List of Custom API Role Policies
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CustomAPIRolePolicy'
-              meta:
-                $ref: '#/components/schemas/PaginationMeta'
-              links:
-                $ref: '#/components/schemas/PaginationLinks'
-    ValidationError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Errors'
-          examples:
-            missing-name:
-              summary: Required field missing
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Bad Request\",\n      \"status\": \"400\",\n      \"detail\": \"The field 'name' is required.\"\n    }\n  ]\n}\n"
-    CustomAPIRolePolicy:
-      description: A Custom API Role Policy
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              data:
-                $ref: '#/components/schemas/CustomAPIRolePolicy'
-    InternalServerError:
-      description: Internal server error. There was a system failure in the platform.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Errors'
-          examples:
-            internal-server-error:
-              summary: Internal server error
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
-    BadFilterError:
-      description: Bad request. The request failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Errors'
-          examples:
-            missing-name:
-              summary: Required field missing
-              value: "{\n  \"errors\": [\n    {\n      \"detail\": \"Invalid filter: unknown field [version] specified in search filter, allowed fields are [api_type created_at description id name slug updated_at]\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}\n"
-    ConflictError:
-      description: Unable to perform the operation at this time.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Errors'
-          examples:
-            duplicate-custom-api:
-              summary: Duplicate Custom API
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Conflict\",\n      \"status\": \"409\",\n      \"detail\": \"custom_api with the given api_type already exists\"\n    }\n  ]\n}\n"
-            duplicate-custom-field:
-              summary: Duplicate Custom Field
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Conflict\",\n      \"status\": \"409\",\n      \"detail\": \"custom_field with the given slug already exists\"\n    }\n  ]\n}\n"
-    NotFoundError:
-      description: Not found. The requested entity does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Errors'
-          examples:
-            not-found:
-              summary: Requested entity not found
-              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Not Found\",\n      \"status\": \"404\",\n      \"detail\": \"Not found\"\n    }\n  ]\n}\n"
   schemas:
+    Errors:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+            - status
+            - title
+            properties:
+              status:
+                type: string
+                description: The HTTP response code of the error.
+                format: string
+                examples:
+                - '400'
+              title:
+                type: string
+                description: A brief summary of the error.
+                examples:
+                - Bad Request
+              detail:
+                type: string
+                description: Optional additional detail about the error.
+                examples:
+                - The field 'name' is required
+    Meta:
+      type: object
+      properties:
+        timestamps:
+          $ref: '#/components/schemas/Timestamps'
     CustomAPIRolePolicy:
       type: object
       properties:
@@ -279,55 +234,6 @@ components:
           $ref: '#/components/schemas/LinkURI'
           description: Always `null` if on the first page.
           example: null
-    LinkURI:
-      type:
-      - string
-      - 'null'
-      format: uri
-    Meta:
-      type: object
-      properties:
-        timestamps:
-          $ref: '#/components/schemas/Timestamps'
-    Timestamps:
-      type: object
-      properties:
-        created_at:
-          type: string
-          description: Specifies the date the entity is created.
-          example: '2017-01-10T11:41:19.244Z'
-        updated_at:
-          type: string
-          description: Specifies the date the entity is last updated.
-          example: '2017-01-10T11:41:19.244Z'
-    Errors:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            type: object
-            required:
-            - status
-            - title
-            properties:
-              status:
-                type: string
-                description: The HTTP response code of the error.
-                format: string
-                examples:
-                - '400'
-              title:
-                type: string
-                description: A brief summary of the error.
-                examples:
-                - Bad Request
-              detail:
-                type: string
-                description: Optional additional detail about the error.
-                examples:
-                - The field 'name' is required
     PaginationMeta:
       type: object
       properties:
@@ -389,64 +295,100 @@ components:
                   enum:
                   - standard_user_role
                   - standard_shopper_role
-  parameters:
-    CustomAPIRolePolicyId:
-      name: custom-api-role-policy-id
-      description: The ID of the Custom API Role Policy.
-      in: path
-      required: true
-      schema:
-        type: string
-      example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
-    CustomAPIRolePolicySort:
-      name: sort
-      description: Specifies the order in which Custom API Role Policies will be returned.
-      in: query
-      required: false
-      schema:
-        type: string
-        enum:
-        - id
-        - -id
-        - created_at
-        - -created_at
-        - updated_at
-        - -updated_at
-        example: id
-        x-enumDescriptions:
-          id: Sort in increasing order of ID
-          -id: Sort in decreasing order of ID
-          created_at: Sort in increasing order of creation
-          -created_at: Sort in decreasing order of creation
-          updated_at: Sort in increasing order of last update
-          -updated_at: Sort in decreasing order of last update
-    Filter:
-      name: filter
-      description: Filter attributes. For more information, see the [Filtering](/guides/Getting-Started/filtering) section.
-      in: query
-      required: false
-      schema:
-        type: string
-        format: string
-    PageOffset:
-      name: page[offset]
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-    PageLimit:
-      name: page[limit]
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
+    Timestamps:
+      type: object
+      properties:
+        created_at:
+          type: string
+          description: Specifies the date the entity is created.
+          example: '2017-01-10T11:41:19.244Z'
+        updated_at:
+          type: string
+          description: Specifies the date the entity is last updated.
+          example: '2017-01-10T11:41:19.244Z'
+    LinkURI:
+      type:
+      - string
+      - 'null'
+      format: uri
+  responses:
+    BadFilterError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            missing-name:
+              summary: Required field missing
+              value: "{\n  \"errors\": [\n    {\n      \"detail\": \"Invalid filter: unknown field [version] specified in search filter, allowed fields are [api_type created_at description id name slug updated_at]\",\n      \"status\": \"400\",\n      \"title\": \"Bad Request\"\n    }\n  ]\n}\n"
+    ConflictError:
+      description: Unable to perform the operation at this time.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            duplicate-custom-api:
+              summary: Duplicate Custom API
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Conflict\",\n      \"status\": \"409\",\n      \"detail\": \"custom_api with the given api_type already exists\"\n    }\n  ]\n}\n"
+            duplicate-custom-field:
+              summary: Duplicate Custom Field
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Conflict\",\n      \"status\": \"409\",\n      \"detail\": \"custom_field with the given slug already exists\"\n    }\n  ]\n}\n"
+    CustomAPIRolePolicy:
+      description: A Custom API Role Policy
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/CustomAPIRolePolicy'
+    ListOfCustomAPIRolePolicies:
+      description: List of Custom API Role Policies
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomAPIRolePolicy'
+              meta:
+                $ref: '#/components/schemas/PaginationMeta'
+              links:
+                $ref: '#/components/schemas/PaginationLinks'
+    ValidationError:
+      description: Bad request. The request failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            missing-name:
+              summary: Required field missing
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Bad Request\",\n      \"status\": \"400\",\n      \"detail\": \"The field 'name' is required.\"\n    }\n  ]\n}\n"
+    InternalServerError:
+      description: Internal server error. There was a system failure in the platform.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            internal-server-error:
+              summary: Internal server error
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Internal Server Error\",\n      \"status\": \"500\",\n      \"detail\": \"there was a problem processing your request\"\n    }\n  ]\n}\n"
+    NotFoundError:
+      description: Not found. The requested entity does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errors'
+          examples:
+            not-found:
+              summary: Requested entity not found
+              value: "{\n  \"errors\": [\n    {\n      \"title\": \"Not Found\",\n      \"status\": \"404\",\n      \"detail\": \"Not found\"\n    }\n  ]\n}\n"
   requestBodies:
     UpdateCustomAPIRolePolicy:
       content:
@@ -551,6 +493,64 @@ components:
                       data:
                         id: it-developer
                         type: standard_user_role
+  parameters:
+    CustomAPIRolePolicySort:
+      name: sort
+      description: Specifies the order in which Custom API Role Policies will be returned.
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+        - id
+        - -id
+        - created_at
+        - -created_at
+        - updated_at
+        - -updated_at
+        example: id
+        x-enumDescriptions:
+          id: Sort in increasing order of ID
+          -id: Sort in decreasing order of ID
+          created_at: Sort in increasing order of creation
+          -created_at: Sort in decreasing order of creation
+          updated_at: Sort in increasing order of last update
+          -updated_at: Sort in decreasing order of last update
+    PageOffset:
+      name: page[offset]
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+    CustomAPIRolePolicyId:
+      name: custom-api-role-policy-id
+      description: The ID of the Custom API Role Policy.
+      in: path
+      required: true
+      schema:
+        type: string
+      example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+    PageLimit:
+      name: page[limit]
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+    Filter:
+      name: filter
+      description: Filter attributes. For more information, see the [Filtering](/guides/Getting-Started/filtering) section.
+      in: query
+      required: false
+      schema:
+        type: string
+        format: string
   securitySchemes:
     bearerAuth:
       type: http

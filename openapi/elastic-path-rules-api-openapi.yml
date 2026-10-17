@@ -206,123 +206,139 @@ paths:
               schema:
                 $ref: '#/components/schemas/error-response'
 components:
+  parameters:
+    filter-rule:
+      name: filter
+      in: query
+      description: 'This endpoint supports filtering. See [Filtering](#filtering).
+
+        '
+      required: false
+      schema:
+        type: string
+    offset:
+      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. You would normally increment the page offset by multiples of the page limit to paginate through the results.
+      name: page[offset]
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        maximum: 10000
+    limit:
+      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
+      name: page[limit]
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
   schemas:
-    catalog-rule-validator-request:
+    rule-schedule:
       type: object
+      title: Catalog Schedule
+      description: A period of time during which a catalog is valid
       properties:
-        data:
-          type: object
-          required:
-          - match_type
-          properties:
-            match_type:
-              type: string
-              enum:
-              - filter
-              - similarity
-              - conflict
-              - resolve_for_shopper
-              description: "The type of matching operation to perform on catalog rules:\n\n- **filter**: Advanced rule filtering with AND logic. Returns rules that match ALL specified criteria.\n\n- **similarity**: Finds rules similar to the supplied rule using OR logic. Returns rules sorted by similarity score (highest first) with metadata indicating:\n  - Similarity score based on matching criteria (name: 100pts, account/customer/channel/tags: 5pts each, catalog: 3pts, pricebooks: 2pts, schedules: 2pts)  \n  - Whether the rule is active at the supplied match_date\n  - Whether the rule would be resolved for a shopper context\n\n- **conflict**: Checks for conflicts between the supplied rule and existing rules. Returns rules that would conflict if the new rule were created.\n\n- **resolve_for_shopper**: Determines the exact catalog rule that would be applied for a given shopper context. Returns the single most specific matching rule or defaults to \"Default Catalog Resolution\".\n"
-            channels:
-              description: The list of channels in which this catalog can be displayed. A channel is the shopping experience, such as a mobile app or web storefront. If empty, the catalog rule matches all channels. The channel will eventually be included in the bearer token that is used for authorization, but currently, you must set the `EP-Channel` header in your requests.
-              type:
-              - array
-              - 'null'
-              items:
-                type: string
-            tags:
-              description: A list of user-defined tags that can be used to further restrict the eligibility criteria for this rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
-              type:
-              - array
-              - 'null'
-              items:
-                type: string
-            account_ids:
-              type:
-              - array
-              - 'null'
-              items:
-                type: string
-              description: List of account IDs.
-            account_tag_ids:
-              type:
-              - array
-              - 'null'
-              items:
-                type: string
-              description: List of account tag UUIDs.
-            customer_ids:
-              type:
-              - array
-              - 'null'
-              items:
-                type: string
-              description: List of customer IDs.
-            pricebook_ids:
-              type:
-              - array
-              - 'null'
-              items:
-                type: string
-              description: List of pricebook IDs.
-            schedules:
-              type:
-              - array
-              - 'null'
-              items:
-                type: object
-                properties:
-                  valid_from:
-                    type: string
-                    format: date-time
-                  valid_to:
-                    type: string
-                    format: date-time
-            name:
-              type:
-              - string
-              - 'null'
-              description: The name of the catalog rule.
-            catalog_id:
-              type:
-              - string
-              - 'null'
-              description: The id of the catalog to match against.
-            match_date:
-              type:
-              - string
-              - 'null'
-              format: date-time
-              description: The date to match against the schedules.
-    rule-data:
+        valid_from:
+          description: Matches the date and time that the catalog is displayed from.
+          type:
+          - string
+          - 'null'
+          example: '2020-09-22T09:00:00'
+          format: date-time
+          x-go-name: ValidFrom
+        valid_to:
+          description: Matches the date and time the catalog is displayed to.
+          type:
+          - string
+          - 'null'
+          example: '2020-09-22T09:00:00'
+          format: date-time
+          x-go-name: ValidTo
+      x-go-name: RuleSchedule
+    rule-list-data:
       type: object
-      title: CatalogRuleData
-      description: Container for a single catalog rule.
+      title: CatalogRuleListData
+      description: Container for a list of catalog rules.
       properties:
+        meta:
+          $ref: '#/components/schemas/page-meta'
         data:
-          $ref: '#/components/schemas/rule'
+          type: array
+          items:
+            $ref: '#/components/schemas/rule'
         links:
           $ref: '#/components/schemas/links'
       required:
       - data
-    prioritized-pricebooks:
-      description: If you want multiple price books for different scenarios, such as seasonal sales, business versus retail pricing, and reward programs, when creating a catalog, you can specify up to five price books. You must configure a priority for your price books. Product prices are displayed in the catalog according to the priority of the price books.
-      type: array
-      maxItems: 5
-      items:
-        type: object
-        properties:
-          id:
-            description: A unique identifier of a price book.
-            type: string
-            format: uuid
-          priority:
-            description: Priority is a number and the price book with the highest number has the highest priority.
-            type: integer
-        required:
-        - priority
-        - id
-        x-go-name: PrioritizedPricebook
+    rule-meta:
+      type: object
+      title: ruleMeta
+      description: A rule's metadata.
+      properties:
+        similarity_score:
+          description: "Indicates the similarity score of the rule to the supplied validation request. \nThe score is calculated based on matching criteria:\n- **Name match**: 100 points (exact match)\n- **Account IDs**: 5 points per matching account\n- **Customer IDs**: 5 points per matching customer  \n- **Channels**: 5 points per matching channel\n- **Tags**: 5 points per matching tag\n- **Catalog ID**: 3 points (exact match)\n- **Pricebook IDs**: 2 points per matching pricebook\n- **Schedules**: 2 points per overlapping schedule\n\nHigher scores indicate greater similarity. Rules are sorted by similarity score in descending order.\n"
+          type:
+          - integer
+          - 'null'
+          example: 100
+          x-go-name: SimilarityScore
+          x-omitempty: true
+        active:
+          description: will the rule be active at the supplied match date/time?
+          type: boolean
+          example: false
+          default: false
+          x-go-name: Active
+        resolved_for_shopper:
+          description: Indicates whether this rule will be the one resolved for a shopper viewing the catalog at the supplied match date/time
+          type: boolean
+          example: true
+          default: false
+        release_id:
+          type:
+          - string
+          - 'null'
+          description: The unique identifier of the published release of the catalog for the rule
+          x-omitempty: true
+      x-go-name: ruleMeta
+      x-omitempty: true
+    links:
+      description: Links allow you to move between requests.
+      type: object
+      properties:
+        self:
+          description: Single entities use a `self` parameter with a link the specific resource.
+          type:
+          - string
+          - 'null'
+          format: uri
+        first:
+          description: Always the first page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        last:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        prev:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
+        next:
+          description: This is `null` if there is only one page.
+          type:
+          - string
+          - 'null'
+          format: uri
     rule-update-data:
       type: object
       title: CatalogRuleUpdateData
@@ -445,51 +461,24 @@ components:
               description: The total number of records for the entire collection.
               type: integer
               format: int64
-    links:
-      description: Links allow you to move between requests.
-      type: object
-      properties:
-        self:
-          description: Single entities use a `self` parameter with a link the specific resource.
-          type:
-          - string
-          - 'null'
-          format: uri
-        first:
-          description: Always the first page.
-          type:
-          - string
-          - 'null'
-          format: uri
-        last:
-          description: This is `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-        prev:
-          description: This is `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-        next:
-          description: This is `null` if there is only one page.
-          type:
-          - string
-          - 'null'
-          format: uri
-    error-response:
-      type: object
-      title: ErrorResponse
-      description: ErrorResponse is a json-api style Error response.
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/error'
-          x-go-name: Errors
-      x-go-name: ErrorResponse
+    prioritized-pricebooks:
+      description: If you want multiple price books for different scenarios, such as seasonal sales, business versus retail pricing, and reward programs, when creating a catalog, you can specify up to five price books. You must configure a priority for your price books. Product prices are displayed in the catalog according to the priority of the price books.
+      type: array
+      maxItems: 5
+      items:
+        type: object
+        properties:
+          id:
+            description: A unique identifier of a price book.
+            type: string
+            format: uuid
+          priority:
+            description: Priority is a number and the price book with the highest number has the highest priority.
+            type: integer
+        required:
+        - priority
+        - id
+        x-go-name: PrioritizedPricebook
     error:
       type: object
       title: APIError
@@ -508,38 +497,93 @@ components:
           example: There was a problem processing your request.
           x-go-name: Title
       x-go-name: APIError
-    rule-meta:
+    catalog-rule-validator-request:
       type: object
-      title: ruleMeta
-      description: A rule's metadata.
       properties:
-        similarity_score:
-          description: "Indicates the similarity score of the rule to the supplied validation request. \nThe score is calculated based on matching criteria:\n- **Name match**: 100 points (exact match)\n- **Account IDs**: 5 points per matching account\n- **Customer IDs**: 5 points per matching customer  \n- **Channels**: 5 points per matching channel\n- **Tags**: 5 points per matching tag\n- **Catalog ID**: 3 points (exact match)\n- **Pricebook IDs**: 2 points per matching pricebook\n- **Schedules**: 2 points per overlapping schedule\n\nHigher scores indicate greater similarity. Rules are sorted by similarity score in descending order.\n"
-          type:
-          - integer
-          - 'null'
-          example: 100
-          x-go-name: SimilarityScore
-          x-omitempty: true
-        active:
-          description: will the rule be active at the supplied match date/time?
-          type: boolean
-          example: false
-          default: false
-          x-go-name: Active
-        resolved_for_shopper:
-          description: Indicates whether this rule will be the one resolved for a shopper viewing the catalog at the supplied match date/time
-          type: boolean
-          example: true
-          default: false
-        release_id:
-          type:
-          - string
-          - 'null'
-          description: The unique identifier of the published release of the catalog for the rule
-          x-omitempty: true
-      x-go-name: ruleMeta
-      x-omitempty: true
+        data:
+          type: object
+          required:
+          - match_type
+          properties:
+            match_type:
+              type: string
+              enum:
+              - filter
+              - similarity
+              - conflict
+              - resolve_for_shopper
+              description: "The type of matching operation to perform on catalog rules:\n\n- **filter**: Advanced rule filtering with AND logic. Returns rules that match ALL specified criteria.\n\n- **similarity**: Finds rules similar to the supplied rule using OR logic. Returns rules sorted by similarity score (highest first) with metadata indicating:\n  - Similarity score based on matching criteria (name: 100pts, account/customer/channel/tags: 5pts each, catalog: 3pts, pricebooks: 2pts, schedules: 2pts)  \n  - Whether the rule is active at the supplied match_date\n  - Whether the rule would be resolved for a shopper context\n\n- **conflict**: Checks for conflicts between the supplied rule and existing rules. Returns rules that would conflict if the new rule were created.\n\n- **resolve_for_shopper**: Determines the exact catalog rule that would be applied for a given shopper context. Returns the single most specific matching rule or defaults to \"Default Catalog Resolution\".\n"
+            channels:
+              description: The list of channels in which this catalog can be displayed. A channel is the shopping experience, such as a mobile app or web storefront. If empty, the catalog rule matches all channels. The channel will eventually be included in the bearer token that is used for authorization, but currently, you must set the `EP-Channel` header in your requests.
+              type:
+              - array
+              - 'null'
+              items:
+                type: string
+            tags:
+              description: A list of user-defined tags that can be used to further restrict the eligibility criteria for this rule. Requests populate the catalog rule tag using the `EP-Context-Tag` header.
+              type:
+              - array
+              - 'null'
+              items:
+                type: string
+            account_ids:
+              type:
+              - array
+              - 'null'
+              items:
+                type: string
+              description: List of account IDs.
+            account_tag_ids:
+              type:
+              - array
+              - 'null'
+              items:
+                type: string
+              description: List of account tag UUIDs.
+            customer_ids:
+              type:
+              - array
+              - 'null'
+              items:
+                type: string
+              description: List of customer IDs.
+            pricebook_ids:
+              type:
+              - array
+              - 'null'
+              items:
+                type: string
+              description: List of pricebook IDs.
+            schedules:
+              type:
+              - array
+              - 'null'
+              items:
+                type: object
+                properties:
+                  valid_from:
+                    type: string
+                    format: date-time
+                  valid_to:
+                    type: string
+                    format: date-time
+            name:
+              type:
+              - string
+              - 'null'
+              description: The name of the catalog rule.
+            catalog_id:
+              type:
+              - string
+              - 'null'
+              description: The id of the catalog to match against.
+            match_date:
+              type:
+              - string
+              - 'null'
+              format: date-time
+              description: The date to match against the schedules.
     rule:
       type: object
       title: Catalog Rule
@@ -631,43 +675,28 @@ components:
       - id
       - type
       - attributes
-    rule-list-data:
+    rule-data:
       type: object
-      title: CatalogRuleListData
-      description: Container for a list of catalog rules.
+      title: CatalogRuleData
+      description: Container for a single catalog rule.
       properties:
-        meta:
-          $ref: '#/components/schemas/page-meta'
         data:
-          type: array
-          items:
-            $ref: '#/components/schemas/rule'
+          $ref: '#/components/schemas/rule'
         links:
           $ref: '#/components/schemas/links'
       required:
       - data
-    rule-schedule:
+    error-response:
       type: object
-      title: Catalog Schedule
-      description: A period of time during which a catalog is valid
+      title: ErrorResponse
+      description: ErrorResponse is a json-api style Error response.
       properties:
-        valid_from:
-          description: Matches the date and time that the catalog is displayed from.
-          type:
-          - string
-          - 'null'
-          example: '2020-09-22T09:00:00'
-          format: date-time
-          x-go-name: ValidFrom
-        valid_to:
-          description: Matches the date and time the catalog is displayed to.
-          type:
-          - string
-          - 'null'
-          example: '2020-09-22T09:00:00'
-          format: date-time
-          x-go-name: ValidTo
-      x-go-name: RuleSchedule
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/error'
+          x-go-name: Errors
+      x-go-name: ErrorResponse
     rule-create-data:
       type: object
       title: CatalogRuleCreateData
@@ -753,35 +782,6 @@ components:
           - attributes
       required:
       - data
-  parameters:
-    offset:
-      description: The current offset by number of records, not pages. Offset is zero-based. The maximum records you can offset is 10,000. You would normally increment the page offset by multiples of the page limit to paginate through the results.
-      name: page[offset]
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 0
-        maximum: 10000
-    limit:
-      description: The maximum number of records per page for this response. You can set this value up to 100. If no page size is set, the [page length](/docs/api/settings/settings-introduction#page-length) store setting is used.
-      name: page[limit]
-      in: query
-      required: false
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    filter-rule:
-      name: filter
-      in: query
-      description: 'This endpoint supports filtering. See [Filtering](#filtering).
-
-        '
-      required: false
-      schema:
-        type: string
   securitySchemes:
     bearerAuth:
       type: http

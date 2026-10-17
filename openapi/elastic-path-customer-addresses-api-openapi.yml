@@ -292,22 +292,21 @@ paths:
       - BearerToken: []
 components:
   schemas:
-    ErrorResponse:
-      type: object
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    PaginationMeta:
+    Error:
       type: object
       properties:
-        page:
-          $ref: '#/components/schemas/PaginationPage'
-        results:
-          $ref: '#/components/schemas/PaginationResults'
+        status:
+          type: integer
+          description: The HTTP response code of the error.
+        title:
+          type: string
+          description: A brief summary of the error.
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+        source:
+          type: string
+          description: Optional field indicating the source of the error.
     Address:
       type: object
       properties:
@@ -367,6 +366,35 @@ components:
           type: string
           description: A two digit code for the country this address is in, expressed as per the ISO 3166-2 standard.
           example: GB
+    MetaTimestamps:
+      type: object
+      properties:
+        timestamps:
+          type: object
+          properties:
+            created_at:
+              description: The date the address is created.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+            updated_at:
+              description: The date the address is updated.
+              type: string
+              example: '2021-02-23T09:40:33.882Z'
+    PaginationResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: The total number of results.
+          example: 75
+        total_method:
+          type: string
+          description: The method used to calculate the total. `exact` means the precise count is known, `lower_bound` means the count is at least this value, `observed` means the count is estimated from observations.
+          enum:
+          - exact
+          - lower_bound
+          - observed
+          example: exact
     PaginationLinks:
       type: object
       properties:
@@ -396,20 +424,6 @@ components:
           - 'null'
           description: The URL to the previous page. Null if on the first page.
           example: null
-    MetaTimestamps:
-      type: object
-      properties:
-        timestamps:
-          type: object
-          properties:
-            created_at:
-              description: The date the address is created.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
-            updated_at:
-              description: The date the address is updated.
-              type: string
-              example: '2021-02-23T09:40:33.882Z'
     CustomerAddressResponse:
       allOf:
       - $ref: '#/components/schemas/AddressResponse'
@@ -429,36 +443,22 @@ components:
                     description: The type of object being returned.
                     type: string
                     example: customer
-    Error:
+    ErrorResponse:
+      type: object
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    PaginationMeta:
       type: object
       properties:
-        status:
-          type: integer
-          description: The HTTP response code of the error.
-        title:
-          type: string
-          description: A brief summary of the error.
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-        source:
-          type: string
-          description: Optional field indicating the source of the error.
-    PaginationResults:
-      type: object
-      properties:
-        total:
-          type: integer
-          description: The total number of results.
-          example: 75
-        total_method:
-          type: string
-          description: The method used to calculate the total. `exact` means the precise count is known, `lower_bound` means the count is at least this value, `observed` means the count is estimated from observations.
-          enum:
-          - exact
-          - lower_bound
-          - observed
-          example: exact
+        page:
+          $ref: '#/components/schemas/PaginationPage'
+        results:
+          $ref: '#/components/schemas/PaginationResults'
     AddressResponse:
       allOf:
       - $ref: '#/components/schemas/Address'
@@ -497,19 +497,6 @@ components:
           description: The total number of pages.
           example: 3
   responses:
-    ErrorNotFound:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          examples:
-            not-found-error:
-              value:
-                errors:
-                - status: 404
-                  title: Not Found
-                  detail: customer not found
     ErrorBadRequest:
       description: Bad Request
       content:
@@ -523,6 +510,19 @@ components:
                 - status: 400
                   title: Bad Request
                   detail: 'Validation failed: field ''Name'' on the ''min'' tag.'
+    ErrorNotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not-found-error:
+              value:
+                errors:
+                - status: 404
+                  title: Not Found
+                  detail: customer not found
   securitySchemes:
     BearerToken:
       type: http

@@ -39,57 +39,6 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    ErrorResponse:
-      required:
-      - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-    SearchableFieldMeta:
-      type: object
-      required:
-      - owner
-      properties:
-        owner:
-          $ref: '#/components/schemas/ResourceOwner'
-    ListResponseMeta:
-      type: object
-      required:
-      - results
-      properties:
-        results:
-          $ref: '#/components/schemas/ListResponseMetaResults'
-    ResourceOwner:
-      description: The resource owner, either `organization` or `store`.
-      type: string
-      example: organization
-      enum:
-      - organization
-      - store
-      x-go-type: tenancy.Owner
-      x-go-type-import:
-        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
-    SearchableField:
-      type: object
-      required:
-      - id
-      - type
-      - attributes
-      - meta
-      properties:
-        id:
-          description: A unique identifier of the field.
-          type: string
-          example: name
-          x-go-name: ID
-        type:
-          $ref: '#/components/schemas/SearchableFieldType'
-        attributes:
-          $ref: '#/components/schemas/SearchableFieldAttributes'
-        meta:
-          $ref: '#/components/schemas/SearchableFieldMeta'
     FieldType:
       type: string
       description: The type of the field.
@@ -104,29 +53,29 @@ components:
       x-go-type-import:
         name: model
         path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/model
-    SearchableFieldsResponse:
-      type: object
+    Error:
       required:
-      - data
-      - meta
+      - status
+      - title
       properties:
-        data:
-          type: array
-          description: A collection of searchable fields.
-          items:
-            $ref: '#/components/schemas/SearchableField'
+        status:
+          type: string
+          description: The HTTP response code of the error.
+          example: '500'
+        title:
+          type: string
+          description: A brief summary of the error.
+          example: Internal server error
+        detail:
+          type: string
+          description: Optional additional detail about the error.
+          example: An internal error has occurred.
         meta:
-          $ref: '#/components/schemas/ListResponseMeta'
-    ListResponseMetaResults:
-      description: Contains the results for the entire collection.
-      type: object
-      required:
-      - total
-      properties:
-        total:
-          description: Total number of results for the entire collection.
-          type: integer
-          example: 100
+          type: object
+          description: Additional supporting meta data for the error.
+          example:
+            missing_ids:
+            - e7d50bd5-1833-43c0-9848-f9d325b08be8
     SearchableFieldAttributes:
       type: object
       required:
@@ -154,35 +103,86 @@ components:
           description: 'For configuring language specific tokenization, e.g. jp for Japanese. Default: en which also broadly supports most European languages. For valid values, see [ISO 639 language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes).'
           default: en
           example: en
-    Error:
+    SearchableFieldMeta:
+      type: object
       required:
-      - status
-      - title
+      - owner
       properties:
-        status:
-          type: string
-          description: The HTTP response code of the error.
-          example: '500'
-        title:
-          type: string
-          description: A brief summary of the error.
-          example: Internal server error
-        detail:
-          type: string
-          description: Optional additional detail about the error.
-          example: An internal error has occurred.
+        owner:
+          $ref: '#/components/schemas/ResourceOwner'
+    SearchableFieldsResponse:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          description: A collection of searchable fields.
+          items:
+            $ref: '#/components/schemas/SearchableField'
         meta:
-          type: object
-          description: Additional supporting meta data for the error.
-          example:
-            missing_ids:
-            - e7d50bd5-1833-43c0-9848-f9d325b08be8
+          $ref: '#/components/schemas/ListResponseMeta'
+    SearchableField:
+      type: object
+      required:
+      - id
+      - type
+      - attributes
+      - meta
+      properties:
+        id:
+          description: A unique identifier of the field.
+          type: string
+          example: name
+          x-go-name: ID
+        type:
+          $ref: '#/components/schemas/SearchableFieldType'
+        attributes:
+          $ref: '#/components/schemas/SearchableFieldAttributes'
+        meta:
+          $ref: '#/components/schemas/SearchableFieldMeta'
+    ListResponseMetaResults:
+      description: Contains the results for the entire collection.
+      type: object
+      required:
+      - total
+      properties:
+        total:
+          description: Total number of results for the entire collection.
+          type: integer
+          example: 100
+    ListResponseMeta:
+      type: object
+      required:
+      - results
+      properties:
+        results:
+          $ref: '#/components/schemas/ListResponseMetaResults'
+    ErrorResponse:
+      required:
+      - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
     SearchableFieldType:
       description: Represents the type of object being returned. Always `catalog_searchable_field`.
       type: string
       example: catalog_searchable_field
       enum:
       - catalog_searchable_field
+    ResourceOwner:
+      description: The resource owner, either `organization` or `store`.
+      type: string
+      example: organization
+      enum:
+      - organization
+      - store
+      x-go-type: tenancy.Owner
+      x-go-type-import:
+        path: gitlab.elasticpath.com/commerce-cloud/ncl-projects/paragon/catalog-search.svc/internal/domain/tenancy
   responses:
     InternalServerError:
       description: Internal server error. There was a system failure in the platform.
